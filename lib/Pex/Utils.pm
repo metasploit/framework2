@@ -341,4 +341,58 @@ sub SourceIP {
     return $res;
 }
 
+sub DataTree {
+  my $data = shift;
+  return(_DataTreeDispatch($data, 0) . "\n");
+}
+
+sub _DataTreeDispatch {
+  my $data = shift;
+  my $indent = shift;
+  if(ref($data) eq '') {
+    return(_DataTreeScalar($data, $indent));
+  }
+  elsif(ref($data) eq 'ARRAY') {
+    return(_DataTreeArray($data, $indent));
+  }
+  elsif(ref($data) eq 'HASH') {
+    return(_DataTreeHash($data, $indent));
+  }
+}
+
+sub _DataTreeScalar {
+  my $scalar = shift;
+  my $indent = shift;
+  return(' ' x $indent . $scalar);
+}
+sub _DataTreeArray {
+  my $array = shift;
+  my $indent = shift;
+  my $text;
+  $text .= ' ' x $indent;
+  $text .= "[\n";
+  foreach my $element (@{$array}) {
+    $text .= _DataTreeDispatch($element, $indent + 1) . ",\n";
+  }
+
+  $text .= ' ' x $indent;
+  $text .= "]";
+  return($text);
+}
+sub _DataTreeHash {
+  my $hash = shift;
+  my $indent = shift;
+  my $text;
+  $text .= ' ' x $indent;
+  $text .= "{\n";
+  foreach my $key (keys(%{$hash})) {
+    $text .= ' ' x ($indent + 1);
+    $text .= "$key =>\n" . _DataTreeDispatch($hash->{$key}, $indent + 1) . ",\n";
+  }
+
+  $text .= ' ' x $indent;
+  $text .= "}";
+  return($text);
+}
+
 1;
