@@ -462,7 +462,7 @@ sub SMBNegotiateClear {
 
     # XXX - use leftover vs request because SetSize doesn't work right here...
     my $neg_res = $STNegRes->copy;
-    $neg_res->Fill($smb_res->{'LeftOver'});
+    $neg_res->Fill($smb_res->LeftOver);
     
     
     print Pex::Utils::BufferPerl($smb_res->Get('request'))."\n";
