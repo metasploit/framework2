@@ -30,9 +30,8 @@ use File::Spec::Functions;
 
 my $envDebug = 0;
 
-
 sub Version {
-    return "2.1";
+  return("2.2-unstable");
 }
 
 sub new {
