@@ -697,11 +697,13 @@ sub SessionCommand {
 	my $sid		= $state->{'SID'} + 0;
 	my $cmd		= $state->{'CMD'};
 	my $cmdurl	= "/SESSIONS?MODE=COMMAND&amp;SID=$sid&amp;CMD=";
+
+	my $verify	= 'javascript:if(!confirm("Are you sure that you want to kill this session?")){return false; }';
 	my $cmdbar	=
 	"<div class='textBold' class='CommandBar'>\n".
 	"<ul id='CommandBarList'>\n".
 	"<li>Session Commands:".
-	"<li><a href='".$cmdurl."DIE'>Session::Kill</a>".
+	"<li><a href='".$cmdurl."DIE' onClick='$verify'>Session::Kill</a>".
 	"<li><a href='".$cmdurl."INT'>Session::Break</a>".
 	"<li><a href='http://metasploit.com/' target='_blank'>Metasploit::Website</a>".
 	"<li><a href='http://s1.amazon.com/exec/varzea/pay/T2FKAC37FCOAYS/104-6179093-5143961' target='_blank'>Metasploit::Donate</a>".		
@@ -1801,7 +1803,7 @@ qq[
 
 						# Interrupt via magic command string :(
 						if ($cmd eq 'INT') {
-							$out .= "Session interrupt request ($epid)...";
+							$out .= "Session interrupt request...";
 							$eout->printflush();
 							$eout->printflush("!^! MSF_INTERRUPT\n");
 							kill INT => $epid;
