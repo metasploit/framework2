@@ -385,6 +385,7 @@ sub Encode {
 
     $success = 1;
     $encodedPayload->SetNops($nops);
+	$encodedPayload->SetNopGen($nop, $badChars);
     last;
   }
 

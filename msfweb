@@ -20,7 +20,6 @@
 #	1. IP-based access control
 #	2. Basic HTTP authentication
 #	3. SSL mode support
-#	4. Payloads
 #	5. Encoders
 #	6. Admin
 #	7. Logs

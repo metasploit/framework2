@@ -48,15 +48,16 @@ sub _HandleConsole {
 		$_->autoflush(1);
 	}
 
-	my $selector = IO::Select->new($pLocalIn, $pRemoteOut);
-
 	# Open up the session log and write the header
 	$self->StartLog;
 
 LOOPER:
 
 	while ($loop) {
-	
+
+		# Avoid interesting select bugs...
+		my $selector = IO::Select->new($pLocalIn, $pRemoteOut);	
+		
 		# Check to see if the local or remote side have data
 		my @ready = $selector->can_read;
 		
@@ -72,7 +73,6 @@ LOOPER:
 			
 				# Read the data from the console
 				my $data = $self->PipeRead($pLocalIn);
-				# print "READ: localIn($pLocalIn) $data\n";
 				last LOOPER if ! defined($data);
 			
 				# Log the plain data before filter	
@@ -83,7 +83,6 @@ LOOPER:
 
 				# Write data back to the remote end
 				my $ret = $self->PipeWrite($pRemoteIn, $data);
-				# print "WRITE: remoteIn($pRemoteIn) $ret ($data)\n";
 				last LOOPER if ! defined($ret);
 			}
 			
@@ -91,8 +90,7 @@ LOOPER:
 			elsif ( $ready eq $pRemoteOut ) {
 			
 				# Read the data from the remote end
-				my $data = $self->PipeRead($pRemoteOut);
-				# print "READ: RemoteOut($pRemoteOut) $data\n";				
+				my $data = $self->PipeRead($pRemoteOut);				
 				last LOOPER if ! defined($data);
 				
 				# Convert the data if required
@@ -103,12 +101,14 @@ LOOPER:
 
 				# Write data back to the console
 				my $ret = $self->PipeWrite($pLocalOut, $data);
-				# print "WRITE: localOut($pLocalOut) $ret ($data)\n";
 				last LOOPER if ! defined($ret);
 			}
 		}
+		
+		# Destroy the selector object
+		undef($selector);
 	}
-
+	
 	# Close down the session log
 	$self->StopLog;
 

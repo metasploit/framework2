@@ -21,17 +21,12 @@ use File::Spec::Functions;
 use File::Basename;
 
 my $defaults = {
-  'Encoder' => 'Msf::Encoder::PexFnstenvMov',
-  'Nop'     => 'Msf::Nop::Pex',
-  'DebugLevel' => 0,
-  'Logging' => 0,
-#  'Console' => 'Msf::PayloadComponent::TextConsole',
-  'AlternateExit' => 2,
-# These are defaulting in Pex::Socket too, but these defaults will override
-# the Pex defaults if thats what you want.
-# OUT OF DATE NOW
-#  'Msf::Socket::SocketTimeout' => 10,
-#  'Msf::Socket::SocketTimeoutLoop' => .5,
+  'Encoder'			=> 'Msf::Encoder::PexFnstenvMov',
+  'Nop'				=> 'Msf::Nop::Pex',
+  'DebugLevel'		=> 0,
+  'Logging'			=> 0,
+  'AlternateExit'	=> 2,
+  'RandomNops'		=> 1,
 };
 
 sub PopulateConfig {

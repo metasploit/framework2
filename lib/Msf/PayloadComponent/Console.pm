@@ -52,7 +52,7 @@ sub PipeLocalOut {
 	$self->{'PipeLocalOut'} = shift() if @_;
 		
 	if (! exists($self->{'PipeLocalOut'})) {
-		$self->{'PipeLocalOut'} = IO::Handle->new_from_fd(1, '<');	
+		$self->{'PipeLocalOut'} = IO::Handle->new_from_fd(1, '>');	
 	} 
 	
 	return $self->{'PipeLocalOut'};
@@ -124,7 +124,7 @@ sub PipeRemoteOut {
 	$self->{'PipeRemoteOut'} = shift() if @_;
 		
 	if (! exists($self->{'PipeRemoteOut'})) {
-		$self->{'PipeRemoteOut'} = IO::Handle->new_from_fd(1, '<');	
+		$self->{'PipeRemoteOut'} = IO::Handle->new_from_fd(1, '>');	
 	} 
 	
 	# Set the PipeRemoteName to the IP address of the socket
@@ -215,13 +215,33 @@ sub PipeWrite {
 	my $ret;
 	
 	if ($type  =~ /IO::Socket/) {
-		eval { $ret = $pipe->send($data) };	
-		if ($ret <= 0 || $@) {
-			return;
+		my $ecnt = 0;
+		while ( length($data) ) {
+			eval { $ret = $pipe->send($data) };
+
+			# Handle system errors
+			if ($ret <= 0 || $@) {
+				return;
+			}
+			
+			# Maximum of two seconds
+			return if $ecnt > 8;
+			
+			# How much is left to send?
+			$data = substr($data, $ret);
+
+			# Handle partial sends
+			if (length($data) && ++$ecnt) {
+				select(undef, undef, undef, 0.25);
+				next;
+			}
 		}
 	}
 	elsif ($type =~ /IO::Handle/) {
-		$ret = $pipe->syswrite($data);
+		my $block = $pipe->blocking;
+		$pipe->blocking(1);
+		$ret = $pipe->printflush($data);
+		$pipe->blocking($block);
 		return if $ret <= 0;
 	}
 	
