@@ -6,6 +6,17 @@ use base 'Msf::PayloadComponent::ConnectionHandler';
 use IO::Socket::INET;
 use IO::Select;
 
+my $info = {
+  'Keys' => ['findsock'],
+};
+
+sub new {
+  my $class = shift;
+  my $self = $class->SUPER::new(@_);
+  $self->_Info($self->MergeHash($info, $self->_Info));
+  return($self);
+}
+
 sub ChildHandler {
   my $self = shift;
   my $sock = shift;

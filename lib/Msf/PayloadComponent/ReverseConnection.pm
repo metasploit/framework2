@@ -12,6 +12,7 @@ my $info = {
       'LHOST'         =>  [1, 'ADDR', 'Local address to receive connection'],
       'LPORT'         =>  [1, 'PORT', 'Local port to receive connection', 4321],
     },
+  'Keys' => ['reverse'],
 };
 
 sub new {

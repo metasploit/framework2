@@ -149,7 +149,9 @@ sub DumpExploitSummary {
   if ($exploit->Payload) {
     $output .= "Payload Information:\n";
     $output .= "    Space: " . $exploit->PayloadSpace . "\n";
-    $output .= "    Avoid: " . length($exploit->PayloadBadChars) . " characters\n\n";
+    $output .= "    Avoid: " . length($exploit->PayloadBadChars) . " characters\n";
+    $output .= "  " . ($exploit->PayloadKeysType eq 'or' ? '|' : '&');
+    $output .= " Keys: " . join(' ', @{$exploit->PayloadKeysParsed}) . "\n\n";
   }
 
   my $desc = $self->WordWrap($exploit->Description, 4, 66);
@@ -172,6 +174,7 @@ sub DumpPayloadSummary {
   $output .= "Needs Admin: " . ($p->Priv ? "Yes" : "No") . "\n";
   $output .= " Multistage: " . ($p->Multistage ? "Yes" : "No") . "\n";
   $output .= " Total Size: " . $p->Size . "\n";
+  $output .= "       Keys: " . join(' ', @{$p->Keys}) . "\n";
   $output .= "\n";
 
   $output .= "Provided By:\n";
