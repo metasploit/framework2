@@ -24,6 +24,8 @@ use POSIX;
 use Pex;
 use CGI qw/:standard/;
 
+chdir($RealBin);
+
 Msf::UI::ActiveStateSucks();
 
 my $ui = Msf::TextUI->new($RealBin);

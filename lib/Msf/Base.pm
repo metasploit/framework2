@@ -419,12 +419,12 @@ sub ModuleEndName {
 
 sub ScriptPath {
   my $self = shift;
-  return "$Bin/$Script";
+  return "$RealBin/$Script";
 }
 
 sub ScriptBase {
   my $Self = shift;
-  return $Bin;
+  return $RealBin;
 }
 
 
