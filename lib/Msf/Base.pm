@@ -34,7 +34,7 @@ use Pex::Text;
 my $envDebug = 0;
 
 sub Version {
-  return("2.2-unstable");
+  return("2.2-alpha");
 }
 
 sub new {
@@ -118,7 +118,19 @@ sub GetEnv {
       print "Get $key => " . $env->{$key} . "\n" if($envDebug);
       return($env->{$key});
     }
+    
+    # Case insensitive matching for the newbies/typos
+    foreach my $ekey (keys(%{$env})) {
+      if (lc($ekey) eq lc($key)) {
+        print STDERR "[*] WARNING: the correct case of the '$ekey' variable is '$key'\n";
+        $env->{$key} = $env->{$ekey};
+        delete($env->{$ekey});
+        return $env->{$key};
+      }
+    }
   }
+
+  
   return;
 }
 

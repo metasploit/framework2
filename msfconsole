@@ -185,30 +185,21 @@ sub Load {
     $nops     = { };
     
     foreach my $key (sort(keys(%{$exploitsIndex}))) {
-        my $name = $key;
-        $name =~ s/.*:://g;
-        $exploits->{$name} = $exploitsIndex->{$key};
-        $exploitsIndex->{$name} = $key;
+        $exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
     }
     
     foreach my $key (sort(keys(%{$encodersIndex}))) {
-        my $name = $key;
-        $name =~ s/.*:://g;
-        $encoders->{$name} = $encodersIndex->{$key};
-        # $encodersIndex->{$name} = $key;
+        $encoders->{$encodersIndex->{$key}->SelfEndName} = $encodersIndex->{$key};
     } 
        
     foreach my $key (sort(keys(%{$nopsIndex}))) {
-        my $name = $key;
-        $name =~ s/.*:://g;
-        $nops->{$name} = $nopsIndex->{$key};
-        # $nopsIndex->{$name} = $key;
+        $nops->{$nopsIndex->{$key}->SelfEndName} = $nopsIndex->{$key};
     }    
     
-    # XXX - Migrate this back to package name once Name is fixed in payloads 
     foreach my $key (keys(%{$payloadsIndex})) {
-        $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
+        $payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
     }
+
 
     # Important, reload the exploit object in state
     if($state->{'Mode'} eq 'Exploit') {
@@ -224,7 +215,7 @@ sub gSave {
     my $cmd = shift;
     $ui->SaveTempEnv($state->{'Exploit'}->{'Name'}) if($state->{'Mode'} eq 'Exploit');
     $ui->SaveConfig;
-    print "Saved config to: " . $ui->ConfigFile . "\n";
+    print "Saved configuration to: " . $ui->ConfigFile . "\n";
 }
 
 sub gVersion { print "msfconsole version $VERSION\n" }
@@ -627,10 +618,10 @@ sub xUpdateAddrCache
     }
 }
 
+
 #
 # TAB COMPLETION ROUTINES
 #
-
 
 sub xCreateSetList
 {
