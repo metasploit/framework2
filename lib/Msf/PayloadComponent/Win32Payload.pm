@@ -54,26 +54,38 @@ sub InitWin32 {
 
 sub Size {
     my $self = shift;
-    my $size = 0;
-    $size += length($self->{'Win32Payload'}->{'Payload'});
-    $size++; # take into account the prepended clear direction instruction
+#    my $size = 0;
+#    $size += length($self->{'Win32Payload'}->{'Payload'});
+#    $size++; # take into account the prepended clear direction instruction
+    my $size = length($self->Build);
     $self->PrintDebugLine(3, "Win32Payload: returning Size of $size");
     return $size;
 }
 
-sub Build {
-    my $self = shift;
-    my $payload  = $self->{'Win32Payload'}->{'Payload'};
+sub Win32Payload {
+  my $self = shift;
+  return($self->{'Win32Payload'});
+}
 
-    my $exit_offset = $self->{'Win32Payload'}->{'Offsets'}->{'EXITFUNC'}->[0];
+sub Build {
+  my $self = shift;
+  return($self->BuildWin32($self->Win32Payload));
+}
+
+sub BuildWin32 {
+    my $self = shift;
+    my $win32Hash = shift;
+    my $payload  = $win32Hash->{'Payload'};
+
+    my $exit_offset = $win32Hash->{'Offsets'}->{'EXITFUNC'}->[0];
     my $generated = $payload;    
 
-    my $opts = $self->{'Win32Payload'}->{'Offsets'};
+    my $opts = $win32Hash->{'Offsets'};
     
     foreach my $opt (keys(%{ $opts })) {
         next if $opt eq 'EXITFUNC';
         
-        my ($offset, $opack) = @{ $self->{'Win32Payload'}->{'Offsets'}->{$opt} };
+        my ($offset, $opack) = @{ $win32Hash->{'Offsets'}->{$opt} };
         my $type = $opts->{$opt}->[1];    
         
         $self->PrintDebugLine(3, "Win32Payload: opt=$opt type=$type");   
