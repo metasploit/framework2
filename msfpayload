@@ -30,6 +30,7 @@ no utf8;
 no locale;
 
 Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
 
 my $ui = Msf::TextUI->new($RealBin);
 my $FRAMEVERSION = $ui->Version;

@@ -37,11 +37,6 @@ sub LoadConsole {
   # Get our session IO
   my $sid = $self->GetVar('_SessionID');
 
-  # Remove any current cache file
-  my $cache_file = $self->GetVar('_CacheDir'). sprintf("/cache%.8x.dat", $sid);
-  unlink($cache_file);
-
-
   $out = "[*] Shell started on ".
          "<a href='/SESSIONS?MODE=LOAD&SID=$sid' target='_blank'>".
 		 "session $sid</a><br>\n";

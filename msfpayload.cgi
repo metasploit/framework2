@@ -30,6 +30,7 @@ no locale;
 chdir($RealBin);
 
 Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
 
 my $ui = Msf::TextUI->new($RealBin);
 my $VERSION = $ui->Version;

@@ -28,7 +28,10 @@ my $SSL_ISSUER   = '/C=US/ST=Texas/L=San Antonio/O=The Metasploit Project/OU=Dev
 my $SSL_CERTS    = "$RealBin/docs";
 
 select(STDOUT); $|++;
-        
+
+# Check for buggy versions of perl with utf-8 locale set
+BrokenUTF8();
+ 
 # Determine if SSL support is enabled
 BEGIN
 {
@@ -676,4 +679,31 @@ sub EscapeURI {
 	for (0..255) { $escapes{chr($_)} = sprintf("%%%02X", $_) }
 	$path =~ s/([^A-Za-z0-9\-_.!~*'()\/])/$escapes{$1}/eg;
     return $path;
+}
+
+sub BrokenUTF8 {
+	if ( $] > 5.008 && $] < 5.008002 )
+	 {
+	 	my $badver;
+		
+		# Check LANG first
+		$badver = ($ENV{'LANG'} =~ /utf/i) ? 1 : 0;
+		
+		# LC_ALL overrides LANG if its set
+		if (defined($ENV{'LC_ALL'})) {
+			$badver = ($ENV{'LC_ALL'} =~ /utf/i) ? 1 : 0;
+		}
+		
+		return if ! $badver;
+	 
+		print STDERR qq|
+[*] This version of Perl ($]) contains a buggy utf-8 implementation. If you
+    would like to use this version with the Metasploit Framework, you must
+    set the LC_ALL environment variable to 'C'. For example:
+
+    \$ export LC_ALL=C; ./msfconsole
+	
+|;
+	exit(0);
+	}
 }

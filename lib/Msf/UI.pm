@@ -495,4 +495,32 @@ Please see docs/QUICKSTART.cygwin for more info.
     exit(0);
 }
 
+
+sub BrokenUTF8 {
+	if ( $] > 5.008 && $] < 5.008002 )
+	 {
+	 	my $badver;
+		
+		# Check LANG first
+		$badver = ($ENV{'LANG'} =~ /utf/i) ? 1 : 0;
+		
+		# LC_ALL overrides LANG if its set
+		if (defined($ENV{'LC_ALL'})) {
+			$badver = ($ENV{'LC_ALL'} =~ /utf/i) ? 1 : 0;
+		}
+		
+		return if ! $badver;
+	 
+		print STDERR qq|
+[*] This version of Perl ($]) contains a buggy utf-8 implementation. If you
+    would like to use this version with the Metasploit Framework, you must
+    set the LC_ALL environment variable to 'C'. For example:
+
+    \$ export LC_ALL=C; ./msfconsole
+	
+|;
+	exit(0);
+	}
+}
+
 1;

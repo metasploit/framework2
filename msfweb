@@ -29,6 +29,7 @@ no utf8;
 no locale;
 
 Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
 
 my $ui = Msf::WebUI->new($RealBin);
 my $VERSION = $ui->Version;
@@ -50,7 +51,6 @@ my $moduleList	= { };
 my $modules	    = { };
 my $burl;
 my %args;
-
 
 # Cache control date
 my $cache_start = HTTPDate();
@@ -144,13 +144,18 @@ if (! -d $config{'CacheDir'}) {
 }
 
 # Check to see if we can write files to the cache directory
-if (! -d $config{'CacheDir'} || ! open(T, ">>".$config{'CacheDir'}.'/.test') ) {
+if (! -d $config{'CacheDir'} || ! open(T, ">>".$config{'CacheDir'}.'/.test_'.$$) ) {
 	print STDERR "ERROR: the specified cache directory is not accessible: $!\n";
 	exit(1);
 }
-unlink($config{'CacheDir'}.'/.test') && close(T);
+unlink($config{'CacheDir'}.'/.test_'.$$) && close(T);
 $ui->SetTempEnv('_CacheDir', $config{'CacheDir'} );
 
+# Create a cache prefix based on the master pid
+# This prevents locking issues in Cygwin...
+$ui->SetTempEnv('_CachePath', sprintf('%s/%.4x_', $config{'CacheDir'}, $$));
+
+# XXX Clear old session logs on startup
 
 # Verify that the specified theme actually exists
 if (! -r  $config{'ThemeDir'} .'/'. $config{'Theme'} .'/style.css') {
@@ -269,6 +274,7 @@ sub ProcessResRequest {
 		my $data;
 		
 		if ( open (X, "<$icondir/$path") ) {
+			binmode (X);
 			while (<X>) { $data .= $_ }
 			close (X);
 		}
@@ -291,6 +297,7 @@ sub ProcessResRequest {
 			my $data;
 
 			if ( open (X, "<$theme/$path") ) {
+				binmode (X);
 				while (<X>) { $data .= $_ }
 				close (X);
 			}
@@ -797,7 +804,7 @@ sub SessionUpdate {
 	my $idle = 0;
 	my $tick = time();
 	
-	my $cache_file = $ui->GetEnv('_CacheDir'). sprintf("/cache%.8x.dat", $sid);
+	my $cache_file = $ui->GetEnv('_CachePath'). sprintf("cache%.8x.dat", $sid);
 	my $cache_data;
 
 	my $count = 10;
@@ -813,6 +820,8 @@ sub SessionUpdate {
 		exit(0);
 	}
 	
+	binmode(CACHE);
+	
 	while (1) {
 		$res = undef;
 		
@@ -824,14 +833,6 @@ sub SessionUpdate {
 		seek(FILE, 0, 0);
 		my $init_data = <CACHE>;
 		
-		# If it changed, reset the file markers
-		if ($init_data =~ m/\s+INIT:([0-9]{1,15})\s+/) {
-			if ($init != $1) {
-				$init = $1;
-				$foff = 0;
-			}
-		}
-
 		# Seek to the last data marker
 		seek(CACHE, $foff, 0);
 		
@@ -1713,7 +1714,7 @@ qq[
 	# The main process will keep our IPC open as long as we stay alive
 	if ($epid) {
 		
-		my $cache_file = $ui->GetEnv('_CacheDir').sprintf("/cache%.8x.dat", $sid);
+		my $cache_file = $ui->GetEnv('_CachePath').sprintf("cache%.8x.dat", $sid);
 		
 		# Wait for the go-ahead message from the parent
 		my $ok = $pout->getline;
@@ -1743,20 +1744,24 @@ qq[
 			exit(0);		
 		};
 		
-		
 		my $info = IPCHashToData(%sess);
 		$pout->printflush("INFO $sid $info\n");
 		
-
+		# Remove the cache file if it already exists
 		unlink($cache_file);
-		if (! open (CACHE, ">>$cache_file")) {
-			print STDERR "Could not open cache file: ($cache_file) $!\n";
+
+		# Open the file again for real this time
+		if (! open (CACHE, '>', $cache_file)) {
+			print STDERR "Could not create cache file: ($cache_file) $!\n";
 			$eout->close;
 			$pout->close;
-			exit(0);
+			exit(0);		
 		}
+		
+		# Set binary mode in case we need it
+		binmode(CACHE);	
 
-		my $cache = IO::Handle->new_from_fd(fileno(CACHE), ">");
+		my $cache = IO::Handle->new_from_fd(fileno(CACHE), 'w');
 		
 		if (not defined($cache)) {
 			print STDERR "Could not open cache file descriptor: ($cache_file) $!\n";
@@ -2320,6 +2325,8 @@ sub Log {
 		print STDERR "FATAL: could not open the log file '". $self->LogFile ."': $!\n";
 		exit(0);
 	}
+	
+	binmode(X);
 	
 	$msg = $self->TermEscape($msg);
 	

@@ -26,9 +26,13 @@ use Pex::Nasm::Ndisasm;
 use Pex;
 
 use Msf::ColPrint;
+use Msf::TextUI;
 
 no utf8;
 no locale;
+
+Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
 
 my $VERSION = '$Revision$';
 
