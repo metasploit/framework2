@@ -29,7 +29,7 @@ sub new {
 }
 
 my $table = [
-# XXX: RDY/WRY, call, FPU shit?
+# XXX: call?
   [ \&Inssethi, [ ], ],					# sethi
   [ \&Insarithmetic, [ 1, 0 ], ],			# add
   [ \&Insarithmetic, [ 1, 1 ], ],			# and
@@ -65,6 +65,8 @@ my $table = [
   [ \&Insarithmetic, [ 2, 37 ], ],			# sll
   [ \&Insarithmetic, [ 2, 38 ], ],			# srl
   [ \&Insarithmetic, [ 2, 39 ], ],			# sra
+  [ \&Insarithmetic, [ 4, 40 ], ],			# rdy
+  [ \&Insarithmetic, [ 3, 48 ], ],			# wry
   [ \&Insbranch, [ 0 ] ],				# bn[,a]
   [ \&Insbranch, [ 1 ] ],				# be[,a]
   [ \&Insbranch, [ 2 ] ],				# ble[,a]
@@ -102,16 +104,31 @@ sub Inssethi {
 
 sub Insarithmetic {
   my $ref = shift;
+  my $dst = get_dst_reg();
 
-# Use one src reg with a signed 13-bit immediate (non-0)
-  if(($ref->[0] == 0 || int(rand(2))) && $ref->[0] != 2)
+# WRY fix-ups.
+  if($ref->[0] == 3)
   {
-    return pack("N", ((2 << 30) | (get_dst_reg() << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | (1 << 13) | (int(rand((1 << 13) - 1)) + 1)));
+    $dst = 0;
+    $ref->[0] = 1; 
+  }
+
+# 0, ~1, !2, ~3, !4
+# Use one src reg with a signed 13-bit immediate (non-0)
+  if(($ref->[0] == 0) || ($ref->[0] == 1 && int(rand(2))))
+  {
+    return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | (1 << 13) | (int(rand((1 << 13) - 1)) + 1)));
+  }
+# RDY
+  elsif($ref->[0] == 4)
+  {
+# $ref->[1] could be replaced with a static value since this only encodes for one function but it's done this way for consistancy.
+    return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19)));
   }
 # Use two src regs
   else
   {
-    return pack("N", ((2 << 30) | (get_dst_reg() << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | get_src_reg()));
+    return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | get_src_reg()));
   }
 }
 
