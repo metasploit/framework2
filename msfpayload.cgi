@@ -232,7 +232,7 @@ sub DisplayHeader {
                 BODY 
                 {
                     background:     white;
-                    font-family:    Verdana, Tahoma, Arial, Helvetica, sans-serif;
+                    font-family:    Verdana, Arial, Helvetica, Tahoma, sans-serif;
                     color:          black;
                     font-size:      14pt;
                     margin:         0;
@@ -245,22 +245,46 @@ sub DisplayHeader {
 
             </style>            
         </head>
+        <body bgcolor='white' text='black'>
+        <font face='Verdana, Arial, Helvetica, Tahoma, sans-serif' size='2'>
     ];
 }
 
 sub DisplayFooter {
+    print "</font>\n";
     print $query->end_html();
 }
 
 sub DisplayPayloads {
     print "<br><center>Metasploit v$VERSION Payload Index</center><br>\n";
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
+    
+    my $ost={};
     foreach my $p (sort(keys(%{$payloads})))
     {
-        print CreatePayloadRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit' value='$p'>",
-                         $payloads->{$p}->Description . $query->end_form);
+        my $pos = $payloads->{$p}->OS;
+        my $par = $payloads->{$p}->Arch;
+        if (ref($pos) ne 'ARRAY' || scalar(@{$pos}) > 1) {
+            $ost->{'other'}->{'generic'}->{$p}++;
+        } else {
+            $ost->{$pos->[0]}->{$par->[0]}->{$p}++;
+        }
+    }
+    foreach my $arch (keys(%{$ost})) {
+        foreach my $proc (keys(%{$ost->{$arch}})) {
+            print "<tr><td>\n";
+            print "[$proc/$arch]<br><blockquote>\n";
+            foreach my $pay (keys(%{$ost->{$arch}->{$proc}})) {
+                my $x = $ost->{$arch}->{$proc}->{$pay};
+                print "$x\n";
+            }
+            print "</blockquote>\n";
+            print "</td></tr>\n";
+        }
     }
     print "</table><br>";
+#    print CreatePayloadRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit' value='$p'>",
+#                         $payloads->{$p}->Description . $query->end_form);
 }
 
 sub PrintRow {
