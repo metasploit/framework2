@@ -180,7 +180,7 @@ exit(0);
 
 sub DisplayHeader {
     my $title = shift;
-    print $query->start_html($title),
+    print $query->start_html(-title => $title, -style=>{'src'=>'/metasploit.css'});
 }
 
 sub DisplayFooter {
@@ -188,12 +188,13 @@ sub DisplayFooter {
 }
 
 sub DisplayPayloads {
-    print $query->start_form;
+
     
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     foreach my $p (sort(keys(%{$payloads})))
     {
-        print CreateRow("<input type='radio' name='PAYLOAD' value='$p'>", "<b>$p</b>", $payloads->{$p}->Description);
+        print CreateRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit value='$p'>",
+                         $payloads->{$p}->Description . $query->end_form);
     }
     print "</table><br>";
     
