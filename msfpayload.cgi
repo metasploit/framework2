@@ -219,7 +219,7 @@ exit(0);
 
 sub DisplayHeader {
     my $title = shift;
-    print $query->start_html(-title => $title, -style=>{'src'=>'/metasploit.css'});
+    print $query->start_html(-title => $title, -style=>GetStyle());
 }
 
 sub DisplayFooter {
@@ -257,4 +257,26 @@ sub CreatePayloadRow {
     foreach (@_) { $res .= "<td>$_</td>" }
     $res .= "</tr>\n";
     return($res);
+}
+
+sub GetStyle {
+return qq
+[
+        <style>
+            BODY 
+            {
+                background:     white;
+                font-family:    Verdana, Tahoma, Arial, Helvetica, sans-serif;
+                color:          black;
+                font-size:      14pt;
+                margin:         0;
+            }
+
+            A:link          { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:active        { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:visited       { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:hover         { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+
+        </style>
+];
 }

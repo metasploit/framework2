@@ -166,10 +166,30 @@ sub ProcessRequest
 
 sub HTML_Header
 {
-    return "
+    return qq
+    [
     <html>
-    <head><title>Metasploit Framework Web Console v$VERSION</title></head>
-    <body bgcolor='white' text='black'>";
+    <head>
+        <title>Metasploit Framework Web Console v$VERSION</title>
+        <style>
+            BODY 
+            {
+                background:     white;
+                font-family:    Verdana, Tahoma, Arial, Helvetica, sans-serif;
+                color:          black;
+                font-size:      14pt;
+                margin:         0;
+            }
+
+            A:link          { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:active        { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:visited       { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:hover         { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+
+        </style>
+    </head>
+    <body bgcolor='white' text='black'>
+    ];
 }
 
 sub HTML_Footer
@@ -225,15 +245,16 @@ sub ExploitList
 {
     my $res;
 
-    $res .= "<table align='center' padding=6 border=0 cellspacing=0 width=600>\n";
-    $res .= "<tr><td colspan=2 align='left'><b><h2>Available Exploits</h2></b></td></tr>\n";
-   
+    $res .= "<table align='center' padding=6 border=0 cellspacing=0 width=750>\n";
+    $res .= "<tr><td colspan=2 align='left'><b><h2>Metasploit v$VERSION Exploit Index</h2></b></td></tr>\n";
 
     foreach my $x (sort(keys(%{$exploits})))
     {
-        $res .= "<tr><td> . </td><td>".
-                "<a href='/MODE=SUMMARY&MODULE=$x'>" . 
-                $exploits->{$x}->Name . "</a></td></tr>\n";
+        $res .= "<tr><td> <li> </td><td>".
+                "<a href='/MODE=SUMMARY&MODULE=".
+                URLEncode($x)."'>". 
+                $exploits->{$x}->Name. 
+                "</a></td></tr>\n";
     }
 
     $res .= "</table>\n";
@@ -257,8 +278,7 @@ sub ExploitSummary
     $desc =~ s/\</\&lt;/g;
     $desc =~ s/\>/\&gt;/g;
     
-    $res = "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
-    
+    $res = "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
     
     foreach my $item (qw(Name Version))
     {
@@ -304,7 +324,7 @@ sub ExploitPayload
 
     if (defined($x->Payload) )
     {
-        $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
+        $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
         
         foreach my $k (sort(keys(%{ $matches })))
         {
@@ -333,7 +353,7 @@ sub ExploitOptions
     my $x = $exploits->{$module};
     my $p = $payloads->{$state->{'PAYLOAD'}};
     
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
         
     if (defined($x->Payload) && ! $state->{"PAYLOAD"})
     {
@@ -456,7 +476,7 @@ sub ExploitExec
     }
     
     
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
     
     if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
     {
