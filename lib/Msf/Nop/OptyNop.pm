@@ -27,7 +27,7 @@ my $synWeight = 3;
 
 # Print a . for all simple (codeLen == 1/SetReg) and print a + for all the
 # more complicated instructions.  Nice to use to tune synWeight.
-my $debug = 1;
+my $debug = 2;
 
 my $none  = 0;
 my $reg1  = 1;
@@ -355,7 +355,7 @@ my $table = [
   [ "\xd3\xf8",           2, $reg1, [ $sreg1 ] ], # sar reg1, cl
  
   # lie, make codelen == 2, and do a custom check for div by zero
-  [ "\xd4",               2, $none, [ $eax ], \&_InsHandlerDiv ], # /* aam $imm8 */
+  [ "\xd4\x00",           2, $none, [ $eax ], \&_InsHandlerDiv ], # /* aam $imm8 */
   [ "\xd5",               2, $none, [ $eax ]    ], # /* aad $imm8 */
   [ "\xd6",               1, $none, [ $eax ]    ], # /* # salc */
 
@@ -436,7 +436,7 @@ sub _GenerateSled {
   my $data = "\x00" x $len;
   my $pos = $len;
 
-  my ($c1, $c2) = (0, 1);
+  my ($c1, $c2) = (1, 0);
 
   my $lastIndex;
 
@@ -452,9 +452,9 @@ sub _GenerateSled {
     # Check to see if it's a one byte codelen type that wants SetRegs called
     if($self->_InsHandler(0, $index, $pos, $len, $data, $lastIndex)) {
       if($debug == 2) {
-        $synWeight = ($c1 / $c2) ** 2;
+        $synWeight = ($c2 / $c1);
       }
-      next if(int(rand($synWeight)) != 0);
+      next if(rand($synWeight) < .5);
       $pos--;
       substr($data, $pos, 1, $self->_SetRegs(substr($code, -1, 1), $index));
       print STDERR "." if($debug);
@@ -659,6 +659,7 @@ sub _InsHandlerJmp {
   elsif($type == 1) {
     my $byte = substr($data, $pos, 1);
 
+    return(1) if(ord($byte) == 0xff);
     return(0) if(ord($byte) > 0x7f);
     return(0) if(ord($byte) > ($len - $pos - 1));
 
