@@ -528,7 +528,6 @@ sub XorKeyScanDword
                 for my $iD (1 .. 255)
                 {
                     next if (exists($lu[3]->{$iD}) || $avh{$iD});
-                    print STDERR "XorKeySCan: returning $iA $iB $iC $iD\n";
                     return unpack("L", pack("CCCC", $iA, $iB, $iC, $iD));
                 }
             }
