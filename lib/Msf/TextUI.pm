@@ -70,7 +70,7 @@ sub DumpPayloads {
   my $col = Msf::ColPrint->new(2, 4);
   foreach my $key (sort(keys(%{$payloads}))) {
     $col->AddRow($key,
-        $payloads->{$key}->Description);
+        $payloads->{$key}->Name);
   }
   return($col->GetOutput);
 }
