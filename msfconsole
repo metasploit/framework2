@@ -265,7 +265,7 @@ sub gUnknown
     {
         xMsg($cmd, "command not found");
     } else {
-        system($cmd, @args);
+        system($cmd . join(" ", @args));
     }
 }
 
