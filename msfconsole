@@ -625,7 +625,7 @@ sub eExploit
             if ($phand)
             {
                 xMsg("exploit", "starting handler $phand");
-                my $res = $handler->$phand($p, $opt, $child);
+                my $res = $handler->$phand($payload, $ui, $child);
                 kill('TERM', $child);
 
                 if (! $res)
@@ -635,7 +635,7 @@ sub eExploit
                 }
 
             } else {
-                xMsg("exploit", "no handler for payload type: " . $p->Type());
+                xMsg("exploit", "no handler for payload type: " . $payload->Type());
             }
         }
         
@@ -660,7 +660,7 @@ sub xMsg
 sub xCallback 
 { 
     my @args = @_;
-    my $c = $statetbl->{'CONF'};
+    my $c = $state->{'CONF'};
     my $e = $console->_env;
     if ($c->{'LOGGING'})
     {
@@ -675,16 +675,16 @@ sub xCallback
                             $args[1]->peerhost . ":" . $args[1]->peerport);
 
             my ($currfd, $currfn);
-            $currfn = time() . "_". $statetbl->{'X'}->{'module'} . "_" . 
+            $currfn = time() . "_". $state->{'X'}->{'module'} . "_" . 
                       $args[1]->sockhost . "." . $args[1]->sockport . "_" .
                       $args[1]->peerhost . "_" . $args[1]->peerport . ".log";
                       
             if (open($currfd, ">".$c->{'CONFDIR'} . "/logs/$currfn"))
             {
-                $statetbl->{'CURRLOG'} = $currfd;
+                $state->{'CURRLOG'} = $currfd;
                 
                 print $currfd "   Time: " . scalar(localtime()) . "\n";
-                print $currfd "   Name: " . $statetbl->{'X'}->{'object'}->Name . "\n";
+                print $currfd "   Name: " . $state->{'X'}->{'object'}->Name . "\n";
                 print $currfd "Options:";
                 foreach my $var (keys(%{$e})) { print $currfd " $var=" . $e->{$var} }
                 print $currfd "\n\n";
@@ -694,13 +694,13 @@ sub xCallback
         if ($args[0] eq "CLOSED")
         {
             $mlog .= xLogEntry("Connection closed");
-            close($statetbl->{'CURRLOG'});
+            close($state->{'CURRLOG'});
         } 
 
 
         if ($args[0] eq "DATA")
         {
-            my $currfd = $statetbl->{'CURRLOG'};
+            my $currfd = $state->{'CURRLOG'};
             my $flow = ($args[1] eq "CLIENT") ? ">>" : "<<";
             print $currfd time().$flow." ".$args[2]."\n";
         }
@@ -719,9 +719,9 @@ sub xLogEntry
     my ($msg) = @_;
     my $info;
     
-    if (exists($statetbl->{'X'}) && exists($statetbl->{'X'}->{'object'}))
+    if (exists($state->{'X'}) && exists($state->{'X'}->{'object'}))
     {
-        $info = $statetbl->{'X'}->{'object'}->Name();
+        $info = $state->{'X'}->{'object'}->Name();
     }
     
     return scalar(localtime()) . " '$info' $msg\n";
@@ -829,13 +829,13 @@ sub xDisplayPayload
 
 sub xGetAddressCache
 {
-    my $cache = $statetbl->{'CacheAddress'};
+    my $cache = $state->{'CacheAddress'};
     return keys(%{$cache});
 }
 
 sub xAddAddressCache
 {
-    $statetbl->{'CacheAddress'}->{shift()}++
+    $state->{'CacheAddress'}->{shift()}++
 }
 
 
@@ -846,13 +846,13 @@ sub xAddAddressCache
 
 sub xCreateSetList
 {
-    if ($statetbl->{"MODE"} eq "Main") { return () } 
+    if ($state->{"MODE"} eq "Main") { return () } 
     
-    if ($statetbl->{"MODE"} eq "Exploit") 
+    if ($state->{"MODE"} eq "Exploit") 
     {
         my %options = ();
         
-        my $x = $statetbl->{"X"}->{"object"};
+        my $x = $state->{"X"}->{"object"};
         my $e = $console->getEnv();
         my $p = $e->{'PAYLOAD'};
 
@@ -871,15 +871,15 @@ sub xCreateSetList
 
 sub xCreateSetValueList
 {
-    if ($statetbl->{"MODE"} eq "Main") { return () } 
+    if ($state->{"MODE"} eq "Main") { return () } 
     
-    if ($statetbl->{"MODE"} eq "Exploit") 
+    if ($state->{"MODE"} eq "Exploit") 
     {
         my %results = ();
         
-        my $n = $statetbl->{'X'}->{'SETNAME'};
-        my $x = $statetbl->{'X'}->{'object'};
-        my $v = $statetbl->{'X'}->{'payloads'};
+        my $n = $state->{'X'}->{'SETNAME'};
+        my $x = $state->{'X'}->{'object'};
+        my $v = $state->{'X'}->{'payloads'};
         my $e = $console->getEnv();
         my $p = $e->{'PAYLOAD'};
 
@@ -936,13 +936,13 @@ sub xTabCompletion
     
     if (lc($cmd) eq "show")
     {
-        if ($statetbl->{'MODE'} eq "Main")
+        if ($state->{'MODE'} eq "Main")
         {
             my @matches = $console->_term->completion_matches($text, \&xTabCompletionShowMain);
             return(@matches);
         }
         
-        if ($statetbl->{'MODE'} eq "Exploit")
+        if ($state->{'MODE'} eq "Exploit")
         {
             my @matches = $console->_term->completion_matches($text, \&xTabCompletionShowExploit);
             return(@matches);        
@@ -986,7 +986,7 @@ sub xTabCompletion
         
         if (! $args[1] || (! $args[2] && ($args[1] && $text)))
         {
-            $statetbl->{'X'}->{'SETNAME'} = $args[0];
+            $state->{'X'}->{'SETNAME'} = $args[0];
             my @matches = $console->_term->completion_matches($text, \&xTabCompletionSetValue);
             return(@matches);        
         }
@@ -1015,7 +1015,7 @@ sub xTabCompletion
 
         unless ($state) {
 	        $list_index = 0;
-            @name = sort(keys(%vcmds));
+            @name = sort(keys(%virtualCmds));
         }
 
         # Return the next name which partially matches from the
