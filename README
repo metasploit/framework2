@@ -1,0 +1,13 @@
+[ Metasploit Framework v2.0 BETA ]
+
+
+The following components are disabled in this release:
+
+    - msfweb
+    - msfconsole session logging
+    - win32 prefork capability
+    
+    
+The following is a list of known bugs:
+
+    - The BSD bind and findsock payloads are buggy

@@ -1,1 +1,0 @@
-What if the subtract dword has a badchar in it, could we detect this and pad by 4 a couple of times and try to rid it?

