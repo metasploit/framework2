@@ -5,6 +5,10 @@ Pre-Release Tasks
  - Flush out Pex::x86
 
  - Add raw mode support to Pex::Socket (spoof)
+    * How do we handle Spoof option on non-UDP socket
+    * How is recv() handled, we dont want to break exploits
+    * Raw mode sets DF flag right now, cant send > MTU
+ 
  - Exchange exploit sucks, remove it or fix it
 
 

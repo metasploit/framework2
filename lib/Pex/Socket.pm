@@ -21,8 +21,8 @@ use IO::Select;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(socks_setup);
-our @EXPORT_OK = qw(socks_setup);
+our @EXPORT;
+our @EXPORT_OK;
 
 my $SSL_SUPPORT;
 
@@ -49,7 +49,6 @@ sub new {
   $self->SetConnectTimeout(30) if(!exists($hash->{'ConnectTimeout'}));
   $self->SetRecvTimeout(10) if(!exists($hash->{'RecvTimeout'}));
   $self->SetRecvTimeoutLoop(.5) if(!exists($hash->{'RecvTimeoutLoop'}));
-
   $self->Init;
   return($self);
 }
@@ -71,9 +70,15 @@ sub SetOptions {
     }
     $self->UseSSL($use);
   }
+  
   if(exists($hash->{'Timeout'})) {
     $self->SetTimeout($hash->{'Timeout'});
   }
+  
+  if(exists($hash->{'SpoofIP'})) {
+    $self->SetSpoofIP($hash->{'SpoofIP'});
+  }  
+  
   return;
 }
 
@@ -112,6 +117,16 @@ sub AddProxy {
   
   $self->SetError('Invalid proxy type specified');
   return;
+}
+
+sub SetSpoofIP {
+    my $self = shift;
+    $self->{'SpoofIP'} = shift;
+}
+
+sub GetSpoofIP {
+    my $self = shift;
+    return($self->{'SpoofIP'});
 }
 
 sub SetConnectTimeout {
