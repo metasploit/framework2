@@ -1,5 +1,30 @@
- MetaSploit Framework TODO 
-===========================
+Its about time to get this motha released, seperate this file into two sections,
+Things that should be done before this release, and things that can wait.
+
+(I just moved my stuff, you move your stuff).
+
+Things that MUST be done
+========================
+
+ - Fix AutoOpts, how to handle?  Possible when we are going to use a exploit, for example to check or exploit, call a function like Init, and this could process AutoOpts, and SetTempEnv for all of its key/val pairs...
+
+- Write a quickstart users guide, enough to get them up and running in a few
+  paragraphs. (I'll do this).
+
+- Get some basic developer docs, although the bulk of this can wait a week or
+  two.
+
+- Fixed the PoPToP exploit to use hardcoded strings, and remove all my random
+  pptp protocol stuff.
+
+- Get a logo in ascii art form for msfcli and msfconsole and probably msfweb
+  (imgs would be harder in msfweb right?).
+
+Things that can wait
+====================
+
+ - Get the Encoder/Nop routines fixed so they will follow a specified
+   precedence, and then fall through all the other ones on failure.
 
  - Finish rewriting the configuration and logging system in msfconsole
 
@@ -8,7 +33,11 @@
  - Rewrite BSD bind payload (SIGSYS error after listen call) [LSD one is also broken]
 
  - Determine WTF Advanced options are supposed to do and how they should be set
-
- - Fix AutoOpts, how to handle?  Possible when we are going to use a exploit, for example to check or exploit, call a function like Init, and this could process AutoOpts, and SetTempEnv for all of its key/val pairs...
+(can this be removed?)
 
 - Right now LoadTempEnv, will set the TempEnv to the actual stored hash, so you are modifing the stored hash also, this is nice because you don't have to SaveTempEnv before you do a save, but it isn't really intended behavior.  Load should "load" a copy, you should be able to make changes and ditch it without affecting the saved copy.  Maybe this should be changed, and LoadTempEnv should create a copy like SaveTempEnv does.
+
+Things that can wait a while, or never get done
+===============================================
+
+- Template system for msfweb, skinz baby
