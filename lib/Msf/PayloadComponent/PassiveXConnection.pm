@@ -418,7 +418,6 @@ sub StartMonitoringTunnelData
 	# If parent or error, return up...
 	if ($pid)
 	{
-		$self->ChildPid($pid);
 		return 1;
 	}
 
@@ -492,6 +491,8 @@ sub ProcessHttpTunnelClient
 	my $self = shift;
 	my ($client, $request) = @{{@_}}{qw/client request/};
 
+	$self->PrintDebugLine(3, "PX: Reading in HTTP request...");
+
 	# If the request was not passed to us, read it now
 	$request = $self->ReadHttpRequest(
 		client => $client) if (not defined($request));
@@ -504,6 +505,8 @@ sub ProcessHttpTunnelClient
 		return 0;
 	}
 
+	$self->PrintDebugLine(3, "PX: Processing HTTP request: " . $request->{'uri'});
+
 	# If the remote side is passing data in, pass it along to the server side of
 	# the local TCP connection
 	if ($request->{'uri'} eq '/tunnel_in')
@@ -514,6 +517,8 @@ sub ProcessHttpTunnelClient
 		# the connection
 		if (length($data))
 		{
+			$self->PrintDebugLine(3, "PX: Transmitting " . length($data) . " bytes to local half.");
+
 			$self->WriteFull(
 				sock   => $self->GetServerSideSock(),
 				buf    => $data,
@@ -602,6 +607,8 @@ sub TransmitLocalDataToHttpClient
 		"\r\n" .
 		"$data";
 	my $length = length($response);
+
+	$self->PrintDebugLine(3, "PX: Transmitting " . length($data) . " bytes to remote half.");
 
 	# Write the entire response
 	$self->WriteFull(
