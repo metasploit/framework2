@@ -708,7 +708,7 @@ sub xCreateSetList
 
 sub xCreateSetValueList
 {
-    if ($state->{"Mode"} eq "Main") { return () } 
+    if ($state->{"Mode"} eq "Main") { return ' ' } 
     
     if ($state->{"Mode"} eq "Exploit") 
     {
@@ -755,6 +755,8 @@ sub xCreateSetValueList
         if ($type eq "ADDR") { return xGetAddressCache() }
         if ($type eq "BOOL") { return ("TRUE", "FALSE") }
         if ($type eq "FILE") { return undef }
+        if ($type eq "PATH") { return undef }
+        return ' ';
     }
 }
 
@@ -763,7 +765,8 @@ sub xTabCompletion
     my ($text, $line, $start, $end) = @_;
     my ($cmd, @args) = split(/\s+/, $line);
     
-    $state->{'TabVals'} = [ ];
+    # default to match of space
+    $state->{'TabVals'} = [' '];
     
     # this handles command matching
     if ($start == 0) { $state->{'TabVals'} = [sort(keys(%virtualCmds))] }
@@ -802,9 +805,14 @@ sub xTabCompletion
             $state->{'TabVals'} = [sort(xCreateSetValueList())];
         }
     }
-       
-    if (lc($cmd) eq "exec") {  return () }   
-           
+    
+    # revert to file completion for non-commands
+    if (! exists($virtualCmds{$cmd})) {
+        $state->{'TabVals'} = []; 
+    }
+    
+    
+
     my @matches = $console->_term->completion_matches($text, \&xTabCompletionMatcher);
     return(@matches); 
 }
