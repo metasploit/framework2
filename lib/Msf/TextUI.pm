@@ -110,7 +110,7 @@ sub DumpExploitSummary {
   $output .=   "    " . $exploit->Author . "\n\n";
   
   $output .=   "Available Targets:\n";
-  foreach ($exploit->Targets) { $output .= "    " . $_ . "\n" }
+  foreach ($exploit->TargetsList) { $output .= "    " . $_ . "\n" }
   
   $output .= "\n";
   $output .= "Available Options:\n";
@@ -249,7 +249,7 @@ sub Targets {
   my $self = shift;
   my $exploit = $self->GetTempEnv('_Exploit');
 
-  my @targets = $exploit->Targets;
+  my @targets = $exploit->TargetsList;
   if(!@targets) {
     $self->PrintLine('[*] This exploit does not define any targets.');
     return;
@@ -305,7 +305,7 @@ sub Exploit {
     return if($payload->PrintError);
   }
 
-  my @targets = $exploit->Targets;
+  my @targets = $exploit->TargetsList;
   my $target = $self->GetEnv('TARGET');
 
   if(defined($target) && !defined($targets[$target])) {

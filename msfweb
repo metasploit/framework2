@@ -372,11 +372,11 @@ sub ExploitOptions
                 "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
     
-    if (scalar($x->Targets))
+    if (scalar($x->TargetsList))
     {
         my $tidx = 0;
         $res .= "<tr><td colspan=6><br><b>Available Targets:</b><blockquote>\n";
-        foreach my $tgt ($x->Targets)
+        foreach my $tgt ($x->TargetsList)
         {
             $res .= "<input type='radio' name='OPT_TARGET' value='$tidx'> $tgt<br>\n";
             $tidx++;

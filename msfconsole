@@ -594,7 +594,7 @@ sub xCreateSetList
         }
         
         if ($x->Payload) { $options{"PAYLOAD"}++ }
-        if ($x->Targets) { $options{"TARGET"}++  }
+        if ($x->TargetsList) { $options{"TARGET"}++  }
 
         return(keys(%options));
     }
@@ -620,7 +620,7 @@ sub xCreateSetValueList
         if (uc($n) eq "TARGET")
         {
             my $tidx = 0;
-            foreach ($x->Targets) { $results{$tidx}++ ; $tidx++;}
+            foreach ($x->TargetsList) { $results{$tidx}++ ; $tidx++;}
             return keys(%results);
         }
         
