@@ -616,24 +616,31 @@ sub SessionUpdate {
 
 
 sub PayloadList {
+	my $state = shift;
 	my $mtype = 'payloads';
-	if (! $args{'r'} || ! defined( $moduleList->{$mtype} )) {
-		$moduleList->{$mtype} = ModuleList($mtype);
+	my $mfilt = exists($state->{'FILTER'}) ? $state->{'FILTER'} : 'ALL';
+	
+	if (! $args{'r'} || ! defined( $moduleList->{$mtype}->{$mfilt} )) {
+		$moduleList->{$mtype}->{$mfilt} = ModuleList($mtype, $mfilt);
 	} 
-	return $moduleList->{$mtype};
+	return $moduleList->{$mtype}->{$mfilt};
 }
 
 sub ExploitList {
+	my $state = shift;
 	my $mtype = 'exploits';
-	if (! $args{'r'} || ! defined( $moduleList->{$mtype} )) {
-		$moduleList->{$mtype} = ModuleList($mtype);
+	my $mfilt = exists($state->{'FILTER'}) ? $state->{'FILTER'} : 'ALL';
+	
+	if (! $args{'r'} || ! defined( $moduleList->{$mtype}->{$mfilt} )) {
+		$moduleList->{$mtype}->{$mfilt} = ModuleList($mtype, $mfilt);
 	} 
-	return $moduleList->{$mtype};
+	return $moduleList->{$mtype}->{$mfilt};
 }
 
 sub ModuleList
 {
 	my $mtype = shift;
+	my $mfilt = shift;
     my $mList;
 	my @links;
 	
@@ -641,53 +648,78 @@ sub ModuleList
 	my $mKeys		= $moduleKeys->{$mtype};
 	my $mOS			= $moduleOS->{$mtype};
 	my $mArch		= $moduleArch->{$mtype};
-			
-	# Navigation header
-	$mList = "<div align='center' class='navHead'>Navigation Keys<br/><br/>\n";
+	my $mALL		= {};
+
+
+	$mList  = "<form action='/".uc($mtype)."' method='GET'>\n";
+	$mList .= "<div align='center' class='navHead'>\n";
+	$mList .= "<select name='FILTER' onChange='javascript:form.submit()'>\n";
+	$mList .= "<option value='ALL'>&nbsp;\n";
+	
 	
 	# List of mKeys
 	if (scalar(keys %{ $mKeys } )) {
-		my @links = ();
+		$mList .= "<option value='ALL'>--- Exploit Key ---\n";
 		foreach my $kname  (sort( keys %{ $mKeys }) ) {
-			push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';
+			$mList .= "<option value='$kname' $sel> EKey::$kname\n";
 			$moduleMerge->{$kname} = $mKeys->{$kname};
+			if ($mfilt eq 'ALL') {
+				foreach my $mname (@{ $mKeys->{$kname} }) {
+					$mALL->{$mname}++;
+				}
+			}
 		}
-		$mList .= join(" | ", @links) . "<br/><br/>\n";
 	}
 	
-		
 	# List of mOS
 	if (scalar(keys %{ $mOS } )) {
-		my @links = ();	
+		$mList .= "<option value='ALL'>&nbsp;\n";	
+		$mList .= "<option value='ALL'>--- Operating System ---\n";	
 		foreach my $kname (sort( keys %{ $mOS }) ) {
-			push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';		
+			$mList .= "<option value='$kname' $sel> OpSys::$kname\n";
 			$moduleMerge->{$kname} = $mOS->{$kname};
+			if ($mfilt eq 'ALL') {
+				foreach my $mname (@{ $mOS->{$kname} }) {
+					$mALL->{$mname}++;
+				}
+			}			
 		}
-		$mList .= join(" | ", @links) . "<br/><br/>\n";
 	}
 
 	# List of mArch
 	if (scalar(keys %{ $mArch } )) {
-		my @links = ();
+		$mList .= "<option value='ALL'>&nbsp;\n";	
+		$mList .= "<option value='ALL'>--- Architecture  ---\n";
 		foreach my $kname (sort( keys %{ $mArch}) ) {
-			push @links, "<a href='#$kname' class='nav'>$kname</a> ";
-			$moduleMerge->{$kname} = $mArch->{$kname};		
+			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';		
+			$mList .= "<option value='$kname' $sel> Arch::$kname\n";
+			$moduleMerge->{$kname} = $mArch->{$kname};
+			if ($mfilt eq 'ALL') {
+				foreach my $mname (@{ $mArch->{$kname} }) {
+					$mALL->{$mname}++;
+				}
+			}		
 		}
-		$mList .= join(" | ", @links) . "<br/><br/>\n";
+		$mList .= "</select>\n";
 	}
 	
-	$mList .= "</div><br\>\n";
+	$mList .= "</select><input type='submit' value=' Filter Selection '></div></form><br\>\n";
 
-	# Generate a frame for each unique key, os, and arch
-	foreach my $kname (	sort( keys %{ $moduleMerge }) ) {
-	
-		$mList .= qq[
-<a name='$kname'><br/></a>        
+	if ($mfilt eq 'ALL') {
+		$moduleMerge->{'ALL'} = [ keys %{ $mALL } ];
+	}
+
+
+
+	$mList .= qq[
+<a name='Modules'><br/></a>        
 <table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' bgcolor='black'>        
 	<tr><td>
     <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' bgcolor='white'>
     <tr>
-		<td class='nav' align='left'> $kname </td>
+		<td class='nav' align='left'> Modules </td>
     	<td class='listBody' align='right'><a href='#Top'>Top</a></td>
 	</tr>
 	<tr><td class='listBody' align='center' colspan=2>
@@ -696,7 +728,7 @@ sub ModuleList
 ];
 
 	# Dump out all of the matching modules for this key, os, or arch
-	foreach my $ename (sort @{ $moduleMerge->{$kname} }) {
+	foreach my $ename (sort @{ $moduleMerge->{$mfilt} }) {
 		$mList .= "<tr><td>  -  <a href='/". uc($mtype) ."?MODE=SELECT&";
 		$mList .= "MODULE=".URLEncode($ename)."'>".$modules->{$mtype}->{$ename}->Name."</a>";
 		$mList .= "</td></tr>\n";
@@ -709,7 +741,6 @@ sub ModuleList
 </td></tr></table>
 ];
 
-	}
     return $mList;
 }
 
@@ -1594,7 +1625,7 @@ sub IPCHashToData {
 
 sub ListColor {
 	my $color = shift;
-	return ($color eq '#ffffff') ? '#dddddd' : '#ffffff';
+	return ($color eq '#ffffff') ? '#eeeeee' : '#ffffff';
 }
 
 sub LoadAllModules {

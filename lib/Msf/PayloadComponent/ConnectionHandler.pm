@@ -52,12 +52,7 @@ sub ParentHandler {
   while(!$self->StopHandling) {
     if($self->CheckHandler) {
       if($self->PipeRemoteIn) { 
-        if($self->PipeRemoteIn eq $self->PipeRemoteOut) {
-          $self->PrintLine('[*] Got connection from ' . $self->PipeRemoteIn->peerhost . ':' . $self->PipeRemoteIn->peerport);
-        }
-        else {
-          $self->PrintLine('[*] Got connection IN: ' . $self->PipeRemoteIn->peerhost . ':' . $self->PipeRemoteIn->peerport . ' OUT: ' . $self->PipeRemoteOut->peerhost . ':' . $self->PipeRemoteOut->peerport);
-        }
+          $self->PrintLine('[*] Got connection from ' . $self->PipeRemoteSrc);
       }
       $self->KillChild;
       $killedChild = 1;
