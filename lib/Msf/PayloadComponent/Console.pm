@@ -254,5 +254,19 @@ sub PipeInfo {
 	return $pInfo;
 }
 
+sub PipeClose {
+	my $self	= shift;
+	my $pipe 	= @_ ? shift() : return;
+	my $pType	= ref($pipe);
+	
+	if ($pType =~ /IO::Socket/) {
+		eval { $pipe->shutdown(2); };
+		$pipe->close;
+	}
+	
+	if ($pType =! /IO::Handle/) {
+		$pipe->close;
+	}
+}
 
 1;

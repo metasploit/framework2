@@ -89,15 +89,8 @@ sub SetupHandler {
 
 sub ShutdownHandler {
 	my $self = shift;
-
-	if($self->PipeRemoteIn) {
-		$self->PipeRemoteIn->shutdown(2);
-		$self->PipeRemoteIn->close;
-	}
-	if($self->PipeRemoteOut) {
-		$self->PipeRemoteOut->shutdown(2);
-		$self->PipeRemoteOut->close;
-	}
+	$self->PipeClose($self->PipeRemoteIn);
+	$self->PipeClose($self->PipeRemoteOut);
 }
 
 sub CheckHandler {

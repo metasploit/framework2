@@ -197,6 +197,7 @@ sub HandleConnection {
 	$sock->blocking(1);
 	eval { $sock->send(pack('V', length($upload))); };
 	eval { $sock->send($upload); };
+	$self->PrintLine('[*] Upload completed');
 }
 
 1;
