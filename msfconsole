@@ -179,8 +179,8 @@ sub ProcessScript {
 
 sub Load {
 
-    my $tmpDL = $ui->GetTempEnv('DebugLevel');
-    $ui->UnsetTempEnv('DebugLevel');
+#    my $tmpDL = $ui->GetTempEnv('DebugLevel');
+#    $ui->UnsetTempEnv('DebugLevel');
 
     $exploitsIndex = $ui->LoadExploits;
     $payloadsIndex = $ui->LoadPayloads;
@@ -210,12 +210,22 @@ sub Load {
 
     # Important, reload the exploit object in state
     if($state->{'Mode'} eq 'Exploit') {
-      $state->{'Exploit'}->{'Exploit'} = $exploits->{$state->{'Exploit'}->{'Name'}};
+      my $exploit = $exploits->{$state->{'Exploit'}->{'Name'}};
+
+      # check to make sure the module reloaded, it could have had errors..
+      if(!$exploit) {
+        xMsg('reload', 'Error reloading current exploit, moving back to Main.');
+        eBack();
+      }
+      # ok, call gUse to reload tab completetion, etc
+      else {
+        gUse('use', $state->{'Exploit'}->{'Name'});
+      }
     }
     
-    if ($tmpDL) {
-        $ui->SetTempEnv('DebugLevel', $tmpDL);
-    }
+#    if ($tmpDL) {
+#        $ui->SetTempEnv('DebugLevel', $tmpDL);
+#    }
 }
 
 sub gSave {
@@ -553,6 +563,8 @@ sub eCheck {
 }
 
 sub eExploit {
+  # if reload failed, and bumped us out to main...
+  return if($state->{'Mode'} ne 'Exploit');
   xUpdateAddrCache();
   SaveTemp();
   FillTemp();
@@ -625,6 +637,7 @@ sub xUpdateAddrCache
     if ($x->Payload && $p && exists($payloads->{$p}))
     {
         $p = $payloads->{$p};
+	$p->_Load;
         foreach (keys(%{$p->UserOpts})) {
             next if $p->UserOpts->{$_}->[1] ne 'ADDR';
             $options{$_}++;
@@ -665,6 +678,7 @@ sub xCreateSetList
         if ($x->Payload && $p && exists($payloads->{$p}))
         {
             $p = $payloads->{$p};
+	    $p->_Load;
             foreach (keys(%{$p->UserOpts})) { $options{$_}++ }
             foreach (keys(%{$p->Advanced})) { $options{$_}++ }
         }
@@ -871,7 +885,10 @@ sub FillTemp {
   my $payloadName = $ui->GetEnv('PAYLOAD');
   $ui->SetTempEnv('_PayloadName', $payloadName);
   my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
-  $ui->SetTempEnv('_Payload', $validPayloads->{$payloadName});
+  my $payload = $validPayloads->{$payloadName};
+  # make sure the OO stuff is good for whoever might use this...
+  $payload->_Load if($payload);
+  $ui->SetTempEnv('_Payload', $payload);
   $ui->SetTempEnv('_ValidPayloads', $validPayloads);
 }
 
