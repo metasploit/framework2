@@ -125,6 +125,7 @@ while (1)
     if ($stateMode eq 'Exploit') { foreach (keys(%exploitCmds)){ $virtualCmds{$_} = $exploitCmds{$_} } }
     
     my ($cmd, @args) = $console->readCommand();
+    last if(!defined($cmd));
 
     if (exists($virtualCmds{$cmd})) {
         $virtualCmds{$cmd}->[0]($cmd, @args);
@@ -132,6 +133,8 @@ while (1)
         gUnknown($cmd, @args);
     }
 }
+
+print "\n";
 
 sub Load {
     $exploitsIndex = $ui->LoadExploits;

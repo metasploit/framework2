@@ -77,6 +77,7 @@ sub readCommand {
   my $self = shift;
   while(1) {
     my $line = $self->_term->readline($self->_prompt);
+    return if(!defined($line));
     next if(length($line) == 0);
     $line =~ s/^\s*//g;
     $line =~ s/\s*$//g;
