@@ -110,7 +110,7 @@ sub MGMT_INQ_IF_IDS {
     return if ! $s->Tcp($host, $port);
 
     $s->Send(Bind(UUID('MGMT'), '1.0', DCEXFERSYNTAX(), '2'));
-    $res = $s->Recv(60, 5);
+    $res = $s->Recv(60, 10);
     $rpc = DecodeResponse($res);
     
     if ($rpc->{'AckResult'} != 0) {
@@ -119,7 +119,7 @@ sub MGMT_INQ_IF_IDS {
     }
 
     $s->Send(Request(0));
-    $res = $s->Recv(-1, 5);
+    $res = $s->Recv(-1, 10);
     $rpc = DecodeResponse($res);
     
     if ($rpc->{'Type'} eq 'fault') {
