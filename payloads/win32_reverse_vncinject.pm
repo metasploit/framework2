@@ -11,9 +11,8 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Connect back and inject a VNC server into the remote process',
   'Authors'      => [
-                        'Matt Miller <mmiller@hick.org> [Unknown License]'
+                        'Matt Miller <mmiller@hick.org> [Unknown License]',
                         'Jarkko Turkulainen <jt@klake.org> [Unknown License]',
-
                     ],
   'UserOpts'     => { 
                         'DLL'     => [1, 'PATH', 'The full path the VNC service dll'],
