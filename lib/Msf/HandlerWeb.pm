@@ -70,16 +70,16 @@ sub shell_proxy
             # XXX - no access control!!!
             my $victim = $s->accept();
 
-            $victim->send("[*] Welcome to the Shell Proxy :)\n");
+            $victim->send("[*] Welcome to the Shell Proxy :)\r\n");
             
             if ($args[0]->can("sockhost"))
             {
-                $victim->send("[*] Connected to " . $args[0]->peerhost . ":" . $args[0]->peerport . "\n\n");
+                $victim->send("[*] Connected to " . $args[0]->peerhost . ":" . $args[0]->peerport . "\r\n\r\n");
             }
             
             # In the ghetto, the mighty ghetto, some coders write like this...
             eval("\$self->SUPER::$pump(\$victim, \@args)");
-            $victim->send("[*] Exiting Shell Proxy...\n");
+            $victim->send("[*] Exiting Shell Proxy...\r\n");
             $victim->close();
             undef($victim);
             exit(0);            
