@@ -370,7 +370,6 @@ sub Exploit {
     $self->SetTempEnv('EncodedPayload', $encodedPayload);
   }
 
-
 #fixme
   if(!defined($payload)) {
     $exploit->Exploit;
@@ -385,12 +384,12 @@ sub Exploit {
       $payload->ParentHandler;
     }
     else {
+      srand();
       $exploit->Exploit;
       sleep(1);
       exit(0);
     }
   }
-
 
   print "\n";
 
@@ -406,7 +405,7 @@ sub PrintAsciiLogo {
 |  Y Y  \  ___/|  |  / __ \_\___ \ |  |_> >  |_(  <_> )  ||  |
 |__|_|  /\___  >__| (____  /____  >|   __/|____/\____/|__||__|
       \/     \/  0x90    \/     \/ |__|
-'; # jbl + figlet
+'; # jbl
 
 }
 
