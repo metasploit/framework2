@@ -563,6 +563,7 @@ sub SessionUpdate {
 
 		# If there is a new data, display it
 		if ($res) {
+			$res .= "<script language='javascript'>self.scrollTo(0, 100000)</script>";
 			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
 			$tick = time();
 			$idle = 0;
