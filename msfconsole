@@ -47,7 +47,7 @@ my $exploits;
 my $payloads;
 
 my %opts;
-getopts('hvu:', \%opts);
+getopts('hvs:', \%opts);
 
 Usage() if($opts{'h'});
 Version() if($opts{'v'});
@@ -63,8 +63,6 @@ Load();
 
 my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
 $console->tabCompletion(\&xTabCompletion);
-
-gUse('use', $opts{'u'}) if(exists($opts{'u'}));
 
 # virtual command table
 my %virtualCmds = ();
@@ -123,26 +121,47 @@ printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n",
        scalar(keys(%{$payloads}))
 );
 
+ProcessCmd('use', shift(@ARGV)) if(@ARGV);
+ProcessScript($opts{'s'}) if(exists($opts{'s'}));
+
 while (1)
 {
-    %virtualCmds = %globalCmds;
-    
-    my $stateMode = $state->{'Mode'};
-    
-    if ($stateMode eq 'Main')    { foreach (keys(%mainCmds)){ $virtualCmds{$_} = $mainCmds{$_} } }
-    if ($stateMode eq 'Exploit') { foreach (keys(%exploitCmds)){ $virtualCmds{$_} = $exploitCmds{$_} } }
-    
-    my ($cmd, @args) = $console->readCommand();
-    last if(!defined($cmd));
+    last if(!ProcessCmd($console->readCommand()));
+}
+print "\n";
 
-    if (exists($virtualCmds{$cmd})) {
-        $virtualCmds{$cmd}->[0]($cmd, @args);
-    } else {
-        gUnknown($cmd, @args);
-    }
+sub ProcessCmd {
+  my $cmd = shift;
+  my @args = @_;
+
+  %virtualCmds = %globalCmds;
+  
+  my $stateMode = $state->{'Mode'};
+    
+  if ($stateMode eq 'Main')    { foreach (keys(%mainCmds)){ $virtualCmds{$_} = $mainCmds{$_} } }
+  if ($stateMode eq 'Exploit') { foreach (keys(%exploitCmds)){ $virtualCmds{$_} = $exploitCmds{$_} } }
+    
+  return(0) if(!defined($cmd));
+
+  if(exists($virtualCmds{$cmd})) {
+    $virtualCmds{$cmd}->[0]($cmd, @args);
+  }
+  else {
+    gUnknown($cmd, @args);
+  }
+  return(1);
 }
 
-print "\n";
+sub ProcessScript {
+  my $file = shift;
+  open(INFILE, "<$file") or die("Cannot open script: $file: $!\n");
+  local $/;
+  my $data = <INFILE>;
+  close(INFILE);
+  foreach my $line (split("\n", $data)) {
+    ProcessCmd(Pex::PsuedoShell->parseCommands($line));
+  }
+}
 
 sub Load {
 
@@ -806,11 +825,11 @@ sub FillTemp {
 
 sub Usage {
     print STDERR qq{
-  Usage: $0 <options>
+  Usage: $0 <options> <exploit>
 Options:
          -h             You're looking at me baby
          -v             List version information
-         -u  <exploit>  Start console using this exploit
+         -s   <file>    Process file of console commands
 
 };
     exit(0);
