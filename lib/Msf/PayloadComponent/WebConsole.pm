@@ -4,18 +4,17 @@ package Msf::PayloadComponent::WebConsole;
 use strict;
 use IO::Handle;
 use IO::Select;
-use base 'Msf::PayloadComponents::TextConsole';
-use vars qw{ @ISA };
+use base 'Msf::PayloadComponent::TextConsole';
 
 sub ConsoleIn {
     my $self = shift;
-    return $self->{WebShell} if exists($self->{WebShell});
+    return $self->{'WebShell'} if exists($self->{'WebShell'});
     return $self->SUPER::ConsoleIn;
 }
 
 sub ConsoleOut {
     my $self = shift;
-    return $self->{WebShell} if exists($self->{WebShell});
+    return $self->{'WebShell'} if exists($self->{'WebShell'});
     return $self->SUPER::ConsoleOut;
 }
 
@@ -34,7 +33,7 @@ sub HandleConsole {
   );  
   
   if (! $sock) {
-    print $self->ConsoleOut "WebConsole: HandleConsole(): Failed to bind a port for the proxy shell: $!\n";
+    $brow->send("WebConsole: HandleConsole(): Failed to bind a port for the proxy shell: $!\n");
     return;
   }
   
@@ -46,11 +45,13 @@ sub HandleConsole {
     "<a href='telnet://$addr:".$sock->sockport."'>".
     "$addr:".$sock->sockport."</a><br>\n"
   )
-    
- 
 
-  # Close socket to browser
   # Accept connection from user
+  my $sel = IO::Select->new($sock);
+  my $clock = time();
+
+
+
   # Map connected socket to ConsoleIn, ConsoleOut
   # Call upwards to TextConsole's HandleConsole
 
