@@ -23,7 +23,6 @@ my $info =
   'Arch'         => [  ],
   'Priv'         => 0,
   'OS'           => [ 'solaris' ],
-  'Keys'         => ['cmd'], 
   'Size'         => '',
 };
 

@@ -23,7 +23,7 @@ my $defaults =
 {
   'Name'        => 'No Name',
   'Version'     => '0.0',
-  'Authors'     => [ 'No Author' ],
+  'Authors'     => [ ],
   'Arch'        => [ ],
   'OS'          => [ ],
   'Keys'        => [ ],

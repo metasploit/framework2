@@ -396,9 +396,18 @@ sub MergeHashRec {
     if(!defined($hash1->{$_})) {
       $hash{$_} = $hash2->{$_};
     }
-    # recurse if both are has ref's
+    # recurse if both are hash refs
     elsif(ref($hash1->{$_}) eq 'HASH' && ref($hash2->{$_}) eq 'HASH') {
       $hash{$_} = $self->MergeHashRec($hash1->{$_}, $hash2->{$_});
+    }
+    # recurse if both are array refs
+    elsif(ref($hash1->{$_}) eq 'ARRAY' && ref($hash2->{$_}) eq 'ARRAY') {
+      my (@res, %uhash);
+      foreach my $kval (@{$hash1->{$_}}, @{$hash2->{$_}}) { 
+        if (ref($kval)) { push @res, $kval } 
+        else            { $uhash{$kval}++  }
+      }
+      $hash{$_} = [ @res, keys(%uhash) ];
     }
   }
   return(\%hash);
