@@ -4,11 +4,9 @@ use vars qw{@ISA};
 
 sub _Import {
   my $class = shift;
-    print STDERR "StagePayload IMPORT $_\n";
   @ISA = ();
   foreach (@_) {
     eval("use $_");
-    print STDERR "StagePayload IMPORT $_\n";
     unshift(@ISA, $_);
   }
 }
