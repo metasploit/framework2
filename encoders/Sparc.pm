@@ -64,15 +64,15 @@ sub EncodePayload {
     $xor_key = unpack('V', pack('N', $xor_key));
 
     my $encoder = 
+	Pex::SPARC::set($xor_key, "l1").
         "\x20\xbf\xff\xff".   # /* bn,a  _start - 4 */
         "\x20\xbf\xff\xff".   # /* bn,a  _start     */
         "\x7f\xff\xff\xff".   # /* call  _start + 4 */
-	Pex::SPARC::set($xor_key, "l7").
-        "\xea\x03\xe0\x28".   # /* ld    [%o7 + 0x28],%l7 */
-        "\xaa\x9d\x40\x17".   # /* xorcc %l5,%l7,%l5 */
-        "\xea\x23\xe0\x28".   # /* st    %l5,[%o7 + 0x28] */
-        "\xae\x05\xc0\x15".   # /* add   %l7,%l5,%l7 */
-        "\x81\xdb\xe0\x28".   # /* flush %o7 + 0x28 */
+        "\xea\x03\xe0\x20".   # /* ld    [%o7 + 0x20],%l7 */
+        "\xaa\x9d\x40\x11".   # /* xorcc %l5,%l1,%l5 */
+        "\xea\x23\xe0\x20".   # /* st    %l5,[%o7 + 0x20] */
+        "\xa2\x04\x40\x15".   # /* add   %l1,%l5,%l1 */
+        "\x81\xdb\xe0\x20".   # /* flush %o7 + 0x20 */
         "\x12\xbf\xff\xfb".   # /* bnz   dec_loop */
         "\x9e\x03\xe0\x04";   # /* add   %o7,4,%o7 */
     

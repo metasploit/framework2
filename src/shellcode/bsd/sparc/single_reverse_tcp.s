@@ -28,19 +28,15 @@ main:
 	ta	0x08
 
 	st	%o0, [ %sp - 0x08 ]
-	xor	%o1, %o1, %o1
-	mov	0x5a, %g1 
+	mov	3, %o1
+dup2_loop:
+	subcc	%o1, 1, %o1
+	mov	0x5a, %g1
 	ta	0x08
 
 	ld	[ %sp - 0x08 ], %o0
-	mov	1, %o1
-	ta	0x08
+	bnz	dup2_loop
 
-	ld	[ %sp - 0x08 ], %o0
-	mov	2, %o1
-	ta	0x08
-
-	ld	[ %sp - 0x08 ], %o0
 	set	0xff027a68, %l0
 	set	0xc0a8020a, %l1
 	std	%l0, [ %sp - 0x10 ]
