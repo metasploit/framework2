@@ -42,6 +42,14 @@ sub StopHandling {
 
 sub ParentHandler {
   my $self = shift;
+
+  # clear the StopHandling bit
+  $self->StopHandling(0);
+
+  # already killed child
+  my $killedChild = 0;
+
+  # Setup sighandle to set StopHandling bit
   my $sigHandler = sub {
     $self->SigHandler;
   };
@@ -63,14 +71,21 @@ sub ParentHandler {
         }
       }
       $self->KillChild;
+      $killedChild = 1;
       $self->HandleConnection;
       $self->HandleConsole;
       last;
     }
-    last if(waitpid($self->ChildPid, WNOHANG) != 0);
+
+    # child is dead
+    if(waitpid($self->ChildPid, WNOHANG) != 0) {
+      $killedChild = 1;
+      last;
+    }
     sleep(1);
   }
 
+  $self->KillChild if(!$killedChild);
   $self->ShutdownHandler;
 
   ($SIG{'TERM'}, $SIG{'INT'}) = ($osigTerm, $osigInt);
