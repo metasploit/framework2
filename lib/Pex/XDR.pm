@@ -63,7 +63,7 @@ sub Decode_lchar {
 	my $char = unpack("N", $$str_ref);
 	$$str_ref = substr($$str_ref, 4);
 
-	return chr(unpack("N", $char) & 0xff);
+	return chr($char & 0xff);
 }
 
 # XXX: HyperInt
