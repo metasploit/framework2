@@ -181,7 +181,7 @@ sub Send {
     last if($sent == length($data));
 
     $data = substr($data, $sent);
-    if(!--$failed) {
+    if(!$sent && !--$failed) {
       $self->SetError("Send retry limit reached.");
       return(0);
     }
