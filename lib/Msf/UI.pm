@@ -104,46 +104,58 @@ sub MatchPayloads {
   my $match = { };
 
 CHECK:
-  foreach my $payloadName (keys(%$payloads)) 
-  {
-    my $valid = 0;
+  foreach my $payloadName (keys(%$payloads)) {
     my $payload = $payloads->{$payloadName};
 
     # Match the OS arrays of both the exploits and payloads
-    if (scalar(@{$exploit->OS}))
-    {
-        foreach my $os (@{$payload->OS})
-        {
-            $valid++ if scalar(grep { $_ eq $os } @{$exploit->OS});
-        }
-        next if ! $valid;
-        $valid--;
+    # If an exploit has say 2 os's (linux and bsd maybe)
+    # we will match all payloads that are linux or bsd
+    if(@{$exploit->OS}) {
+      my $valid = 0;
+      foreach my $os (@{$payload->OS}) {
+        $valid = 1 if(scalar(grep { $_ eq $os } @{$exploit->OS}));
+      }
+      if(!$valid) {
+        # OS is not in payload
+        $self->PrintDebugLine(3, $payload->Name . " failed, didn't match OS");
+        next CHECK;
+      }
     }
     
     # Match the Arch arrays of both the exploits and payloads
-    if (scalar(@{$exploit->Arch}))
-    {
-        foreach my $arch (@{$payload->Arch})
-        {
-            $valid++ if scalar(grep { $_ eq $arch } @{$exploit->Arch});
-        }
-        next if ! $valid;
-        $valid--;
-    }    
+    if(@{$exploit->Arch}) {
+      my $valid = 0;
+      foreach my $arch (@{$payload->Arch}) {
+        $valid = 1 if(scalar(grep { $_ eq $arch } @{$exploit->Arch}));
+      }
+      if(!$valid) {
+        # Arch is not in payload
+        $self->PrintDebugLine(3, $payload->Name . " failed, didn't match Arch");
+        next CHECK;
+      }
+    }
 
     # If the exploit has a any keys set, we need to make sure that the
     # matched payload also has the same keys. This allows us to create
-    # specific payloads for wierd exploit scenarios (for instance, where
-    # the process doesn't have a valid heap
-
+    # specific payloads for weird exploit scenarios (for instance, where
+    # the process doesn't have a valid heap (hdm)
     foreach my $key (@{$exploit->Keys}) {
-      next CHECK if ! (scalar(grep { $_ eq $key } @{$payload->Keys}));
+      if(!scalar(grep { $_ eq $key } @{$payload->Keys})) {
+        $self->PrintDebugLine(3, $payload->Name . " failed, keys do not match");
+        next CHECK;
+      }
     }
     
-    next if($exploit->Priv < $payload->Priv);
+    if($exploit->Priv < $payload->Priv) {
+      $self->PrintDebugLine(3, $payload->Name . " failed, payload needs more priviledge than exploit provides");
+      next CHECK;
+    }
 
     #fixme Eventually we should also factor in the Encoder Size, even though we will catch it in Encode
-    next if (defined($exploit->Payload->{'Size'}) && $exploit->Payload->{'Size'} < $payload->Size);
+    if($exploit->Size < $payload->Size) {
+      $self->PrintDebugLine(3, $payload->Name . " failed, payload is too large for exploit, Exploit: " . $exploit->Size . " Payload: " . $payload->Size);
+      next CHECK;
+    }
 
     $match->{$payloadName} = $payloads->{$payloadName};
   }
