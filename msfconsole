@@ -567,7 +567,6 @@ sub xUpdateAddrCache
     # scan environments and add to the cache
     foreach (keys(%options)) {
         my $value = $ui->GetTempEnv($_) || $ui->GetEnv($_) || undef;
-        print "$_ => $value\n";
         next if ! $value;
         $state->{'CacheAddress'}->{$value}++;
     }
