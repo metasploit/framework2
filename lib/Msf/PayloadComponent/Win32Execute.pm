@@ -44,13 +44,12 @@ sub Build {
 # This gets overloaded by subclass
 sub CommandString {
   my $self = shift;
-  return "";
+  return('');
 }
 
 sub Size {
   my $self = shift;
-  my $cmd  = $self->CommandString || '';
-  return($self->SUPER::Size + length($cmd) + 1);
+  return($self->SUPER::Size + length($self->CommandString) + 1);
 }
 
 
