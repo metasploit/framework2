@@ -107,7 +107,6 @@ if (! $action)
     PrintRow("Privileged",      ($p->Priv ? "Yes" : "No"));
     PrintRow("Multistage",      ($p->Multistage ? "Yes" : "No"));
     PrintRow("Supported OS",    join(" ", @{$p->OS()}));
-    PrintRow("Handler Type",    $p->Type);
     PrintRow("Total Size",      $p->Size);
 
     if (scalar(keys(%{$p->UserOpts})))

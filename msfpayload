@@ -86,7 +86,6 @@ if (! $action || $action =~ /^S/)
     print "  Privileged: " . ($p->Priv ? "Yes" : "No") . "\n";
     print "  Multistage: " . ($p->Multistage ? "Yes" : "No") . "\n";
     print "Supported OS: " . join(" ", @{$p->OS()}) . "\n";
-    print "Handler Type: " . $p->Type . "\n";
     print "  Total Size: " . $p->Size . "\n\n";
     
     if (scalar(keys(%{$p->UserOpts})))
