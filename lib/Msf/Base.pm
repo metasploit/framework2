@@ -31,7 +31,7 @@ sub _TempEnvs {
   my $self = shift;
   $Msf::Base::TempEnvs = shift if(@_);
   $Msf::Base::TempEnvs = { } if(!defined($Msf::Base::TempEnvs));
-  return($Msf::Base::TempEnv);
+  return($Msf::Base::TempEnvs);
 }
 sub _Error {
   my $self = shift;
@@ -42,30 +42,47 @@ sub _Error {
 sub GetEnv {
   my $self = shift;
   my $key = shift;
+  my @envs = ($self->GetTempEnv, $self->GetGlobalEnv);
+  print join(' ', caller()) if($envDebug >= 3);
+  foreach my $env (@envs) {
+    if(defined($key)) {
+      print "Get $key => " . $env->{$key} . "\n" if($envDebug);
+      return($env->{$key});
+    }
+  }
+#fixme more than two envs...
+  return($self->MergeHash($envs[0], $envs[1]));
+}
+
+#fixme SetEnv...
+
+sub GetGlobalEnv {
+  my $self = shift;
+  my $key = shift;
   my $env = $self->_Env;
   print join(' ', caller()) if($envDebug >= 3);
   if(defined($key)) {
-    print "Get $key => " . $env->{$key} . "\n" if($envDebug);
+    print "GetGlobal $key => " . $env->{$key} . "\n" if($envDebug);
     return($env->{$key});
   }
 
   return($env);
 }
 
-sub SetEnv {
+sub SetGlobalEnv {
   my $self = shift;
   my @pairs = @_;
 
   my $env = $self->_Env;
 
   for(my $i = 0; $i < @pairs; $i += 2) {
-    print "Set $pairs[$i] => " . $pairs[$i + 1] . "\n" if($envDebug);
+    print "SetGlobal $pairs[$i] => " . $pairs[$i + 1] . "\n" if($envDebug);
     $env->{$pairs[$i]} = $pairs[$i + 1];
   }
   return($env);
 }
 
-sub UnsetEnv {
+sub UnsetGlobalEnv {
   my $self = shift;
   my $key = shift;
   if(!defined($key)) {
@@ -103,11 +120,24 @@ sub SetTempEnv {
 sub UnsetTempEnv {
   my $self = shift;
   my $key = shift;
+  print "UnsetTempEnv $key\n" if($envDebug);
   if(!defined($key)) {
     $self->_TempEnv({ });
   }
   else {
     delete($self->_TempEnv->{$key});
+  }
+}
+
+sub DeleteTempEnv {
+  my $self = shift;
+  my $key = shift;
+  if(!defined($key)) {
+    $self->_TempEnvs({ });
+    $self->_TempEnv({ });
+  }
+  else {
+    delete($self->_TempEnvs->{$key});
   }
 }
 
@@ -119,12 +149,15 @@ sub GetTempEnvs {
 sub SaveTempEnv {
   my $self = shift;
   my $name = shift;
-  $self->_TempEnvs->{$name} = $self->_TempEnv;
+  print "SaveTempEnv $name\n" if($envDebug);
+  my %copy = %{$self->_TempEnv};
+  $self->_TempEnvs->{$name} = \%copy;
 }
 
 sub LoadTempEnv {
   my $self = shift;
   my $name = shift;
+  print "LoadTempEnv $name\n" if($envDebug);
   $self->_TempEnv($self->_TempEnvs->{$name});
   return($self->_TempEnv);
 }
