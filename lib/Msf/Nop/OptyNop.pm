@@ -181,8 +181,8 @@ my $table = [
   # \x65 -> gs segnment override prefix
 
   # prefixin mixin
-  [ "\x66",               2, $prefix | $osize | $none, [ ], \&_InsHandlerPrefix ], # operand size
-  [ "\x67",               2, $prefix | $asize | $none, [ ], \&_InsHandlerPrefix ], # address size
+  [ "\x66\x00",               2, $prefix | $osize | $none, [ ], \&_InsHandlerPrefix ], # operand size
+  [ "\x67\x00",               2, $prefix | $asize | $none, [ ], \&_InsHandlerPrefix ], # address size
 
   [ "\x68",               5, $none, [ $esp ]    ], # /* pushl $imm32 */
   [ "\x69\xc0",           6, $reg2, [ $sreg2 ]  ], # imul reg2, reg1, imm32
