@@ -13,6 +13,9 @@
 #
 #
 
+# This module is based on pysmb, the Nessus smb_nt.inc, and Authen::NTLM
+# Its a ghetto hack, but it works for what we need
+
 package Pex::SMB;
 use Pex;
 use Pex::Struct;
@@ -167,14 +170,14 @@ my $STSMB = Pex::Struct->new
     'error_code'    => 'b_u_16',
     'flags1'        => 'u_8',
     'flags2'        => 'l_u_16',
-    'pid_high'      => 'b_u_16',
-    'signature1'    => 'b_u_32',
-    'signature2'    => 'b_u_32',
-    'reserved2'     => 'b_u_16',
-    'tree_id'       => 'b_u_16',
-    'process_id'    => 'b_u_16',
-    'user_id',      => 'b_u_16',
-    'multiplex_id'  => 'b_u_16',
+    'pid_high'      => 'l_u_16',
+    'signature1'    => 'l_u_32',
+    'signature2'    => 'l_u_32',
+    'reserved2'     => 'l_u_16',
+    'tree_id'       => 'l_u_16',
+    'process_id'    => 'l_u_16',
+    'user_id',      => 'l_u_16',
+    'multiplex_id'  => 'l_u_16',
     'request'       => 'string',
 ]);
 $STSMB->Set
@@ -211,8 +214,8 @@ $STNetbios->Set
     'byte_count'    => 0,
 );
 
-# Protocol Negotiation Response
-my $STNegRes = Pex::Struct->new
+# LANMAN Protocol Negotiation Response
+my $STNegResLM = Pex::Struct->new
 ([
     'word_count'    => 'u_8',
     'dialect'       => 'l_u_16',
@@ -228,11 +231,10 @@ my $STNegRes = Pex::Struct->new
     'key_len'       => 'l_u_16',
     'reserved'      => 'l_u_16',
     'bcc_len'       => 'l_u_16',
-    'enc_key'       => 'string'
-    
+    'enc_key'       => 'string',
 ]);
-$STNegRes->SetSizeField( 'enc_key' => 'key_len' );
-$STNegRes->Set
+$STNegResLM->SetSizeField( 'enc_key' => 'key_len' );
+$STNegResLM->Set
 (
     'word_count'    => 0,
     'dialect'       => 0,
@@ -250,14 +252,220 @@ $STNegRes->Set
     'bcc_len'       => 0,
 );
 
-#################################
-# actual class code starts here #
-#################################
+# NTLM Protocol Negotiation Response
+my $STNegResNT = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'dialect'       => 'l_u_16',
+    'sec_mode'      => 'u_8',
+    'max_mpx'       => 'l_u_16',
+    'max_vcs'       => 'l_u_16',
+    'max_buff'      => 'l_u_32',
+    'max_raw'       => 'l_u_32',    
+    'sess_key'      => 'l_u_32',
+    'caps'          => 'l_u_32',
+    'dos_time'      => 'l_u_32',
+    'dos_date'      => 'l_u_32',
+    'time_zone'     => 'l_u_16',
+    'key_len'       => 'u_8',
+    'bcc_len'       => 'l_u_16',
+    'enc_key'       => 'string',
+    'domain'        => 'string',
+    
+]);
+$STNegResNT->SetSizeField( 'enc_key' => 'key_len' );
+$STNegResNT->Set
+(
+    'word_count'    => 0,
+    'dialect'       => 0,
+    'sec_mode'      => 0,
+    'max_mpx'       => 0,
+    'max_vcs'       => 0,
+    'max_buff'      => 0,
+    'max_raw'       => 0,
+    'sess_key'      => 0,
+    'caps'          => 0,
+    'dos_time'      => 0,
+    'dos_date'      => 0,
+    'time_zone'     => 0,
+    'key_len'       => 0,
+    'bcc_len'       => 0,
+);
+
+
+# SMB Session Setup LM
+my $STSetupXLM = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',    
+    'max_buff'      => 'l_u_16',
+    'max_mpx'       => 'l_u_16',
+    'vc_num'        => 'l_u_16',
+    'sess_key'      => 'l_u_32',
+    'pass_len'      => 'l_u_16',
+    'reserved2'     => 'l_u_32',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STSetupXLM->SetSizeField( 'request' => 'bcc_len' );
+$STSetupXLM->Set
+(
+    'word_count'    => 0,
+    'x_cmd'         => 0,
+    'reserved1'     => 0,
+    'x_off'         => 0,  
+    'max_buff'      => 0,
+    'max_mpx'       => 0,
+    'vc_num'        => 0,
+    'sess_key'      => 0,
+    'pass_len'      => 0,
+    'reserved2'     => 0,
+    'bcc_len'       => 0,
+);
+
+# SMB Session Setup NT
+my $STSetupXNT = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',    
+    'max_buff'      => 'l_u_16',
+    'max_mpx'       => 'l_u_16',
+    'vc_num'        => 'l_u_16',
+    'sess_key'      => 'l_u_32',
+    'pass_len_lm'   => 'l_u_16',
+    'pass_len_nt'   => 'l_u_16',
+    'reserved2'     => 'l_u_32',
+    'caps'          => 'l_u_32',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STSetupXNT->SetSizeField( 'request' => 'bcc_len' );
+$STSetupXNT->Set
+(
+    'word_count'    => 0,
+    'x_cmd'         => 0,
+    'reserved1'     => 0,
+    'x_off'         => 0,  
+    'max_buff'      => 0,
+    'max_mpx'       => 0,
+    'vc_num'        => 0,
+    'sess_key'      => 0,
+    'pass_len_lm'   => 0,
+    'pass_len_nt'   => 0,
+    'reserved2'     => 0,
+    'caps'          => 0,
+    'bcc_len'       => 0,
+);
+
+# SMB Session SetupX Response (w/null X)
+my $STSetupXRes = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',    
+    'action'        => 'l_u_16',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STSetupXRes->Set
+(
+    'word_count'    => 0,
+    'x_cmd'         => 0,
+    'reserved1'     => 0,
+    'x_off'         => 0,  
+    'action'        => 0,
+    'bcc_len'       => 0,
+);
+
+
+
+my $STTConnectX = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',
+    'flags'         => 'l_u_16', 
+    'pass_len'      => 'l_u_16',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STTConnectX->SetSizeField( 'request' => 'bcc_len' );
+$STTConnectX->Set
+(
+    'word_count'    => 0,
+    'x_cmd'         => 0,
+    'reserved1'     => 0,
+    'x_off'         => 0,  
+    'flags'         => 0,
+    'pass_len'      => 0,
+    'bcc_len'       => 0,
+);
+
+
+# SMB Session TreeConnectX Response (w/null X)
+my $STTConnectXRes = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',    
+    'support'       => 'l_u_16',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STTConnectXRes->SetSizeField( 'request' => 'bcc_len' );
+$STTConnectXRes->Set
+(
+    'word_count'    => 0,
+    'x_cmd'         => 0,
+    'reserved1'     => 0,
+    'x_off'         => 0,  
+    'support'       => 0,
+    'bcc_len'       => 0,
+);
+
+
+my $STTrans = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',
+    'flags'         => 'l_u_16', 
+    'pass_len'      => 'l_u_16',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STTrans->SetSizeField( 'request' => 'bcc_len' );
+$STTrans->Set
+(
+    'word_count'    => 0,
+    'x_cmd'         => 0,
+    'reserved1'     => 0,
+    'x_off'         => 0,  
+    'flags'         => 0,
+    'pass_len'      => 0,
+    'bcc_len'       => 0,
+);
+
+
+######################################
+# This actual class code starts here #
+######################################
 
 sub new {
     my $cls = shift();
     my $arg = shift() || { };
     my $self = bless $arg, $cls;
+    $self->NativeOS('Unix');
+    $self->NativeLM('Metasploit Framework');
+    return $self;
 }
 
 sub Socket { 
@@ -266,14 +474,127 @@ sub Socket {
     return $self->{'Socket'};
 }
 
-sub SetError {
+sub Error {
     my $self = shift;
-    $self->{'LastError'} = shift if @_;
+    $self->{'LastError'} = shift if @_;    
+    return $self->{'LastError'};
 }
 
-sub GetError {
+sub Encrypted {
     my $self = shift;
-    return $self->{'LastError'};
+    $self->{'Encrypted'} = shift if @_;
+    return $self->{'Encrypted'};
+}
+
+sub Dialect {
+    my $self = shift;
+    $self->{'Dialect'} = shift if @_;
+    return $self->{'Dialect'};
+}
+
+sub SessionID {
+    my $self = shift;
+    $self->{'SessionID'} = shift if @_;
+    return $self->{'SessionID'};
+}
+
+sub ChallengeKey {
+    my $self = shift;
+    $self->{'ChallengeKey'} = shift if @_;
+    return $self->{'ChallengeKey'};
+}
+
+sub NativeOS {
+    my $self = shift;
+    $self->{'NativeOS'} = shift if @_;
+    return $self->{'NativeOS'};
+}
+
+sub NativeLM {
+    my $self = shift;
+    $self->{'NativeLM'} = shift if @_;
+    return $self->{'NativeLM'};
+}
+
+sub DefaultDomain {
+    my $self = shift;
+    $self->{'DefaultDomain'} = shift if @_;
+    return $self->{'DefaultDomain'};
+}
+
+sub AuthUser {
+    my $self = shift;
+    $self->{'AuthUser'} = shift if @_;
+    return $self->{'AuthUser'};
+}
+
+sub AuthUserID {
+    my $self = shift;
+    $self->{'AuthUserID'} = shift if @_;
+    return $self->{'AuthUserID'};
+}
+
+sub MultiplexID {
+    my $self = shift;
+    if (! exists($self->{'MultiplexID'})) {
+        $self->{'MultiplexID'} = rand() * 0xffff;
+    }
+    return $self->{'MultiplexID'};
+}
+
+sub TreeID {
+    my $self = shift;
+    
+    if (! $self->{'Trees'}) {
+        $self->{'Trees'} = { };
+    }
+    
+    my $trees = $self->{'Trees'};
+    my $tree_name = shift if @_;
+    my $tree_tid  = shift if @_;
+    
+    if ($tree_tid) {
+        $trees->{$tree_name} = $tree_tid;
+    }
+    
+    if ($tree_name) {
+        return $trees->{$tree_name};
+    }
+}
+
+sub CryptLM {
+    my $self = shift;
+    my $pass = shift;
+    my $chal = shift;
+    
+    $pass = substr($pass, 0, 14);
+    $pass =~ tr/a-z/A-Z/;
+    $pass .= ("\x00" x (14-length($pass)));
+    my $res = SMBDES::E_P16($pass);
+    $res .= ("\x00" x (21-length($res)));
+    $res = SMBDES::E_P24($res, $chal);
+    return $res;
+}
+
+sub CryptNT {
+    my $self = shift;
+    my $pass = shift;
+    my $chal = shift;
+    
+    my $res = SMBMD4::MD4($self->NTUnicode($pass));
+    $res .= ("\x00" x (21-length($res)));
+    $res = SMBDES::E_P24($res, $chal);
+    return $res;
+}
+
+sub NTUnicode {
+    my $self = shift;
+    my $data = shift;
+    my $res;
+    foreach (split(//, $data)) {
+        $res.= pack('v', ord($_));
+    }
+    return $res;
 }
 
 sub NBName {
@@ -297,35 +618,8 @@ sub NBRedir {
     return ("CA" x 15)."AA";
 }
 
-# return a 28 + strlen(data) + (odd(data)?0:1) long string
-sub SMBUnicode {
-    my $self = shift();
-    my $data = shift() || $self;
-    my $res;
-    
-    foreach my $c (split(//, $data)) {
-        $res .= $c . "\x00";
-    }
-    
-    $res .= ("\x00" x 7);
-    
-    if ( length($data) & 1) {
-        $res .= "\x00\x00\x19\x00\x02\x00";
-    } else {
-        $res .= "\x19\x00\x02\x00";
-    }
- 
-    return $res;   
-}
 
-# Return a unique ID to use for SMB transactions
-sub SMBMultiplexID {
-    my $self = shift;
-    if (! exists($self->{'MultiplexID'})) {
-        $self->{'MultiplexID'} = rand() * 0xffff;
-    }
-    return $self->{'MultiplexID'};
-}
+
 
 sub SMBRecv {
     my $self = shift();
@@ -333,7 +627,7 @@ sub SMBRecv {
     my $head = $sock->Recv(4);
     
     if (! $head || length($head) != 4) {
-        $self->SetError('Incomplete header read');
+        $self->Error('Incomplete header read');
         return;
     }
     
@@ -347,7 +641,7 @@ sub SMBRecv {
     my $end = $sock->Recv($len);
     
     if (! $end || length($end) != $len) {
-        $self->SetError('Incomplete body read');
+        $self->Error('Incomplete body read');
     }
     return($head.$end);
 }
@@ -368,7 +662,7 @@ sub SMBSessionRequest {
     my $res = $self->SMBRecv();
     
     if (! $res) {
-        $self->SetError('Session request failed on read');
+        $self->Error('Session request failed on read');
         return;
     }
     
@@ -377,12 +671,12 @@ sub SMBSessionRequest {
 
     # Handle negative session request responses
     if ($smb_res->Get('type') == 0x83) {
-        $self->SetError('Session denied with code '.ord($smb_res->Get('request')));
+        $self->Error('Session denied with code '.ord($smb_res->Get('request')));
         return;
     }
    
     if ($smb_res->Get('type') != 0x82) {
-        $self->SetError('Session returned unknown response: '.$smb_res->Get('type'));
+        $self->Error('Session returned unknown response: '.$smb_res->Get('type'));
         return; 
     }
     
@@ -391,23 +685,10 @@ sub SMBSessionRequest {
 
 sub SMBNegotiate {
     my $self = shift;
-    my $res;
-    
-    if ($self->{'Encrypted'}) {
-        $res = $self->SMBNegotiateNTLM;
-    } else {
-        $res = $self->SMBNegotiateClear;
-    }
-    return $res;
-}
-
-sub SMBNegotiateNTLM {
-
-}
-
-sub SMBNegotiateClear {
-    my $self = shift;
     my $sock = $self->Socket;
+    my $dias = shift;
+ 
+    return if $self->Error;
  
     my $ses = $STSession->copy;
     my $smb = $STSMB->copy;
@@ -420,8 +701,17 @@ sub SMBNegotiateClear {
         "LM1.2X002",
     );
     
+    if ($self->Encrypted) {
+        push @dialects, "NT LANMAN 1.0";
+        push @dialects, "NT LM 0.12";
+    }
+    
     my $offer;
-    foreach (@dialects) { $offer.= "\x02".$_."\x00" }
+    if (! $dias) {
+        foreach (@dialects) { $offer.= "\x02".$_."\x00" }
+    } else {
+        $offer = $dias;
+    }
 
     $neg->Set ('data' => $offer);
     
@@ -430,7 +720,7 @@ sub SMBNegotiateClear {
         'command'       => SMB_COM_NEGOTIATE,
         'flags1'        => 0x18,
         'flags2'        => 0x2001,
-        'multiplex_id'  => $self->SMBMultiplexID,
+        'multiplex_id'  => $self->MultiplexID,
         'request'       => $neg->Fetch
     );
     
@@ -439,7 +729,7 @@ sub SMBNegotiateClear {
     my $res = $self->SMBRecv();
     
     if (! $res) {
-        $self->SetError('Negotiate failed due to null response');
+        $self->Error('Negotiate failed due to null response');
         return;
     }
     
@@ -448,2938 +738,834 @@ sub SMBNegotiateClear {
 
     my $smb_res = $STSMB->copy;
     $smb_res->Fill($ses_res->Get('request'));
-    
-    print "Session: " .length($ses_res->Get('request')) . " | " . $smb_res->Length."\n";
-    print "length: ". length($smb_res->{'LeftOver'})."\n";
-    print "length: ". length($smb_res->Get('request'))."\n";
-    print Pex::Text::BufferPerl($smb_res->{'LeftOver'})."\n";
-    
- 
+    $smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+
     if ($smb_res->Get('error_class') != 0) {
-        $self->SetError('Negotiate returned NT status '.$smb_res->Get('error_class'));
+        $self->Error('Negotiate returned NT status '.$smb_res->Get('error_class'));
         return;
     }
 
     if ($smb_res->Get('command') != SMB_COM_NEGOTIATE) {
-        $self->SetError('Negotiate returned command '.$smb_res->Get('command'));
+        $self->Error('Negotiate returned command '.$smb_res->Get('command'));
         return;
     }
 
-    # XXX - use leftover vs request because SetSize doesn't work right here...
-    my $neg_res = $STNegRes->copy;
-    $neg_res->Fill($smb_res->{'LeftOver'});
 
+    # Parse the negotiation response based on the dialect recieved
+    my $dia = unpack('v', substr($smb_res->Get('request'), 1, 2));
+    $self->Dialect($dialects[$dia]);
+
+    my $neg_res;
     
-    print "length: ". length($smb_res->{'LeftOver'})."\n";
-    print "Word Count: " .$neg_res->Get('word_count')."\n";
+    if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {
+        $neg_res = $STNegResLM->copy;
+    } 
+
+    if ($self->Dialect =~ /^(NT LANMAN 1.0|NT LM 0.12)$/) {
+        $neg_res = $STNegResNT->copy;
+    }
+    
+    if (! $neg_res) {
+        $self->Error('Negotiate returned unsupported dialect '.$dia);
+        return;       
+    }
+    
+    $neg_res->Fill($smb_res->Get('request'));
+
+    my $extra_len = $neg_res->Get('bcc_len') - $neg_res->Get('key_len');
+    if ($extra_len) {
+        $neg_res->Set('domain' => substr($smb_res->Get('request'), ($extra_len * -1)));
+        $self->DefaultDomain($neg_res->Get('domain'));
+    }
+    
+    $self->ChallengeKey($neg_res->Get('enc_key'));
+    $self->SessionID($neg_res->Get('sess_key'));
+    
+    return $neg_res;
+}
+
+sub SMBSessionSetup {
+    my $self = shift;
+   
+    if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {
+        return $self->SMBSessionSetupClear(@_);
+    } 
+
+    if ($self->Dialect =~ /^(NT LANMAN 1.0|NT LM 0.12)$/) {
+        return $self->SMBSessionSetupNTLM(@_);
+    }
+    
+    $self->Error('SMBSessionSetup does not know dialect '.$self->Dialect);
+    return;
+}
+
+sub SMBSessionSetupClear {
+    my $self = shift;
+    my $user = @_ ? shift : "";
+    my $pass = @_ ? shift : "";
+    my $wdom = @_ ? shift : "";
+    my $sock = $self->Socket;
+    
+    return if $self->Error;
+       
+    my $data = $pass . "\x00".
+               $user . "\x00".
+               $wdom . "\x00".
+               $self->NativeOS."\x00".
+               $self->NativeLM."\x00";
+    
+    my $log = $STSetupXLM->copy;
+    $log->Set
+    (
+        'word_count' => 10,
+        'x_cmd'      => 255,
+        'max_buff'   => 4356,
+        'max_mpx'    => 2,
+        'pass_len'   => length($pass)+1,
+        'bcc_len'    => length($data),
+        'request'    => $data,
+        'sess_key'   => $self->SessionID,
+    );
+    
+    my $ses = $STSession->copy;
+    my $smb = $STSMB->copy;
+    $smb->Set
+    (
+        'command'       => SMB_COM_SESSION_SETUP_ANDX,
+        'flags1'        => 0x18,
+        'flags2'        => 0x2001,
+        'multiplex_id'  => $self->MultiplexID,
+        'request'       => $log->Fetch,
+    );
+    
+    $ses->Set('type' => 0, 'flags' => 0, 'request' => $smb->Fetch);
+    $sock->Send($ses->Fetch);
+    my $res = $self->SMBRecv();
+    
+    if (! $res) {
+        $self->Error('Session setup failed due to null response');
+        return;
+    }
+    
+    my $ses_res = $STSession->copy;
+    $ses_res->Fill($res);
+
+    my $smb_res = $STSMB->copy;
+    $smb_res->Fill($ses_res->Get('request'));
+    $smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+
+    if ($smb_res->Get('error_class') != 0) {
+        $self->Error('Session setup returned NT status '.$smb_res->Get('error_class'));
+        return;
+    }
+
+    if ($smb_res->Get('command') != SMB_COM_SESSION_SETUP_ANDX) {
+        $self->Error('Session setup returned command '.$smb_res->Get('command'));
+        return;
+    }
+    
+    my $log_res = $STSetupXRes->copy;
+    $log_res->Fill($smb_res->Get('request'));
+
+    if ($log_res->Get('action') == 1) {
+        $self->AuthUser("NULL");
+    } else {
+        $self->AuthUser($user);
+    }
+
+    $self->AuthUserID($smb_res->Get('user_id'));
+    
+    return $log_res;    
+    
+}
+
+sub SMBSessionSetupNTLM {
+    my $self = shift;
+    my $user = @_ ? shift : "";
+    my $pass = @_ ? shift : "";
+    my $wdom = @_ ? shift : "";  
+    my $sock = $self->Socket;
+    
+    return if $self->Error;
+    
+    # Only supports NTLMv1 right now
+    
+    my $data = $self->CryptLM($pass, $self->ChallengeKey).
+               $self->CryptNT($pass, $self->ChallengeKey).
+               $user . "\x00".
+               $wdom . "\x00".
+               $self->NativeOS."\x00".
+               $self->NativeLM."\x00";
+    
+    my $log = $STSetupXNT->copy;
+    $log->Set
+    (
+        'word_count' => 13,
+        'x_cmd'      => 255,
+        'max_buff'   => 17408,
+        'max_mpx'    => 62880,
+        'pass_len_lm'  => 24,
+        'pass_len_nt'  => 24,
+        'bcc_len'    => length($data),
+        'request'    => $data,
+        'sess_key'   => $self->SessionID,        
+    );
+    
+    my $ses = $STSession->copy;
+    my $smb = $STSMB->copy;
+    $smb->Set
+    (
+        'command'       => SMB_COM_SESSION_SETUP_ANDX,
+        'flags1'        => 0x18,
+        'flags2'        => 0x2001,
+        'multiplex_id'  => $self->MultiplexID,
+        'request'       => $log->Fetch,
+    );
+    
+    $ses->Set('type' => 0, 'flags' => 0, 'request' => $smb->Fetch);
+    $sock->Send($ses->Fetch);
+    my $res = $self->SMBRecv();
+    
+    if (! $res) {
+        $self->Error('Session setup failed due to null response');
+        return;
+    }
+    
+    my $ses_res = $STSession->copy;
+    $ses_res->Fill($res);
+
+    my $smb_res = $STSMB->copy;
+    $smb_res->Fill($ses_res->Get('request'));
+    $smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+
+    if ($smb_res->Get('error_class') != 0) {
+        $self->Error('Session setup returned NT status '.$smb_res->Get('error_class'));
+        return;
+    }
+
+    if ($smb_res->Get('command') != SMB_COM_SESSION_SETUP_ANDX) {
+        $self->Error('Session setup returned command '.$smb_res->Get('command'));
+        return;
+    }
+    
+    my $log_res = $STSetupXRes->copy;
+    $log_res->Fill($smb_res->Get('request'));
+
+    if ($log_res->Get('action') == 1) {
+        $self->AuthUser("NULL");
+    } else {
+        $self->AuthUser($user);
+    }
+    
+    $self->AuthUserID($smb_res->Get('user_id'));
+    
+    return $log_res;        
+}
 
 
-    return $smb_res;
+sub SMBTConnect {
+    my $self = shift;
+    my $share = @_ ? shift : "\\\\127.0.0.1\\IPC\$";
+    my $pass  = @_ ? shift : '';
+    my $sock = $self->Socket;
+    
+    return if $self->Error;
+    
+
+    my $data = $pass  ."\x00".
+               $share ."\x00".
+               "?????"."\x00";
+    
+    my $log = $STTConnectX->copy;
+    $log->Set
+    (
+        'word_count' => 4,
+        'x_cmd'      => 255,
+        'bcc_len'    => length($data),
+        'request'    => $data,
+    );
+
+    $log->Set('pass_len' => length($pass) + 1);
+    print "Pass Len: ".$log->Get('pass_len')."\n";
+    
+    my $ses = $STSession->copy;
+    my $smb = $STSMB->copy;
+    $smb->Set
+    (
+        'command'       => SMB_COM_TREE_CONNECT_ANDX,
+        'flags1'        => 0x18,
+        'flags2'        => 0x2001,
+        'multiplex_id'  => $self->MultiplexID,
+        'user_id'       => $self->AuthUserID,
+        'request'       => $log->Fetch,
+    );
+    
+    $ses->Set('type' => 0, 'flags' => 0, 'request' => $smb->Fetch);
+    $sock->Send($ses->Fetch);
+    my $res = $self->SMBRecv();
+    
+    if (! $res) {
+        $self->Error('Tree connect failed due to null response');
+        return;
+    }
+    
+    my $ses_res = $STSession->copy;
+    $ses_res->Fill($res);
+
+    my $smb_res = $STSMB->copy;
+    $smb_res->Fill($ses_res->Get('request'));
+    $smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+
+    if ($smb_res->Get('error_class') != 0) {
+        $self->Error('Tree connect returned NT status '.$smb_res->Get('error_class'));
+        return;
+    }
+
+    if ($smb_res->Get('command') != SMB_COM_TREE_CONNECT_ANDX) {
+        $self->Error('Tree connect returned command '.$smb_res->Get('command'));
+        return;
+    }
+    
+    my $log_res = $STTConnectXRes->copy;
+    $log_res->Fill($smb_res->Get('request'));
+    
+    $self->TreeID($share, $smb_res->Get('tree_id'));
+  
+    return $log_res;       
+}
+
+
+sub SMBTrans {
+    my $self = shift;
+    my $share = @_ ? shift : "\\\\127.0.0.1\\IPC\$";
+    my $pass  = @_ ? shift : '';
+    my $sock = $self->Socket;
+    
+    return if $self->Error;
+    
+
+    my $data = $pass  ."\x00".
+               $share ."\x00".
+               "?????"."\x00";
+    
+    my $log = $STTConnectX->copy;
+    $log->Set
+    (
+        'word_count' => 4,
+        'x_cmd'      => 255,
+        'bcc_len'    => length($data),
+        'request'    => $data,
+    );
+
+    $log->Set('pass_len' => length($pass) + 1);
+    print "Pass Len: ".$log->Get('pass_len')."\n";
+    
+    my $ses = $STSession->copy;
+    my $smb = $STSMB->copy;
+    $smb->Set
+    (
+        'command'       => SMB_COM_TREE_CONNECT_ANDX,
+        'flags1'        => 0x18,
+        'flags2'        => 0x2001,
+        'multiplex_id'  => $self->MultiplexID,
+        'user_id'       => $self->AuthUserID,
+        'request'       => $log->Fetch,
+    );
+    
+    $ses->Set('type' => 0, 'flags' => 0, 'request' => $smb->Fetch);
+    $sock->Send($ses->Fetch);
+    my $res = $self->SMBRecv();
+    
+    if (! $res) {
+        $self->Error('Tree connect failed due to null response');
+        return;
+    }
+    
+    my $ses_res = $STSession->copy;
+    $ses_res->Fill($res);
+
+    my $smb_res = $STSMB->copy;
+    $smb_res->Fill($ses_res->Get('request'));
+    $smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+
+    if ($smb_res->Get('error_class') != 0) {
+        $self->Error('Tree connect returned NT status '.$smb_res->Get('error_class'));
+        return;
+    }
+
+    if ($smb_res->Get('command') != SMB_COM_TREE_CONNECT_ANDX) {
+        $self->Error('Tree connect returned command '.$smb_res->Get('command'));
+        return;
+    }
+    
+    my $log_res = $STTConnectXRes->copy;
+    $log_res->Fill($smb_res->Get('request'));
+    
+    $self->TreeID($share, $smb_res->Get('tree_id'));
+  
+    return $log_res;       
+}
+
+
+
+############################################
+# This is straight from Authen::NTLM::DES  #
+############################################
+
+package SMBDES;
+
+my ($loop, $loop2);
+$loop = 0;
+$loop2 = 0;
+
+my $perm1 = [57, 49, 41, 33, 25, 17, 9,
+             1, 58, 50, 42, 34, 26, 18,
+	     10, 2, 59, 51, 43, 35, 27,
+	     19, 11, 3, 60, 52, 44, 36,
+	     63, 55, 47, 39, 31, 23, 15,
+	     7, 62, 54, 46, 38, 30, 22,
+	     14, 6, 61, 53, 45, 37, 29,
+	     21, 13, 5, 28, 20, 12, 4];
+my $perm2 = [14, 17, 11, 24, 1, 5,
+             3, 28, 15, 6, 21, 10,
+	     23, 19, 12, 4, 26, 8,
+	     16, 7, 27, 20, 13, 2,
+	     41, 52, 31, 37, 47, 55,
+	     30, 40, 51, 45, 33, 48,
+	     44, 49, 39, 56, 34, 53,
+	     46, 42, 50, 36, 29, 32];
+my $perm3 = [58, 50, 42, 34, 26, 18, 10, 2,
+             60, 52, 44, 36, 28, 20, 12, 4,
+	     62, 54, 46, 38, 30, 22, 14, 6,
+	     64, 56, 48, 40, 32, 24, 16, 8,
+	     57, 49, 41, 33, 25, 17, 9, 1,
+	     59, 51, 43, 35, 27, 19, 11, 3,
+	     61, 53, 45, 37, 29, 21, 13, 5,
+	     63, 55, 47, 39, 31, 23, 15, 7];
+my $perm4 = [32, 1, 2, 3, 4, 5,
+             4, 5, 6, 7, 8, 9,
+	     8, 9, 10, 11, 12, 13,
+	     12, 13, 14, 15, 16, 17,
+	     16, 17, 18, 19, 20, 21,
+	     20, 21, 22, 23, 24, 25,
+	     24, 25, 26, 27, 28, 29,
+	     28, 29, 30, 31, 32, 1];
+my $perm5 = [16, 7, 20, 21, 29, 12, 28, 17,
+             1, 15, 23, 26, 5, 18, 31, 10,
+	     2, 8, 24, 14, 32, 27, 3, 9,
+	     19, 13, 30, 6, 22, 11, 4, 25];
+my $perm6 = [40, 8, 48, 16, 56, 24, 64, 32,
+             39, 7, 47, 15, 55, 23, 63, 31,
+	     38, 6, 46, 14, 54, 22, 62, 30,
+	     37, 5, 45, 13, 53, 21, 61, 29,
+	     36, 4, 44, 12, 52, 20, 60, 28,
+	     35, 3, 43, 11, 51, 19, 59, 27,
+	     34, 2, 42, 10, 50, 18, 58, 26,
+	     33, 1, 41,  9, 49, 17, 57, 25];
+my $sc = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1];
+my $sbox = [
+[
+[14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7],
+[0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8],
+[4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0],
+[15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13]
+],
+[
+[15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10],
+[3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5],
+[0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15],
+[13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9]
+],
+[
+[10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8],
+[13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1],
+[13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7],
+[1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12]
+],
+[
+[7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15],
+[13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9],
+[10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4],
+[3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14]
+],
+[
+[2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9],
+[14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6],
+[4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14],
+[11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3]
+],
+[
+[12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11],
+[10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8],
+[9,14,15,5,2,8,12,3,7,0,4,10,1,13,11,6],
+[4,3,2,12,9,5,15,10,11,14,1,7,6,0,8,13]
+],
+[
+[4,11,2,14,15,0,8,13,3,12,9,7,5,10,6,1],
+[13,0,11,7,4,9,1,10,14,3,5,12,2,15,8,6],
+[1,4,11,13,12,3,7,14,10,15,6,8,0,5,9,2],
+[6,11,13,8,1,4,10,7,9,5,0,15,14,2,3,12]
+],
+[
+[13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7],
+[1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2],
+[7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8],
+[2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11]
+]
+];
+
+sub E_P16
+{
+  my ($p14) = @_;
+  my $sp8 = [0x4b, 0x47, 0x53, 0x21, 0x40, 0x23, 0x24, 0x25];
+
+  my $p7 = substr($p14, 0, 7);
+  my $p16 = smbhash($sp8, $p7);
+  $p7 = substr($p14, 7, 7);
+  $p16 .= smbhash($sp8, $p7);
+  return $p16;
+}
+
+sub E_P24
+{
+  my ($p21, $c8_str) = @_;
+  my @c8 = map {ord($_)} split(//, $c8_str);
+  my $p24 = smbhash(\@c8, substr($p21, 0, 7));
+  $p24 .= smbhash(\@c8, substr($p21, 7, 7));
+  $p24 .= smbhash(\@c8, substr($p21, 14, 7));
+}
+
+sub permute
+{
+  my ($out, $in, $p, $n) = @_;
+  my $i;
+
+  foreach $i (0..($n-1))
+  {
+    $out->[$i] = $in->[$p->[$i]-1];
+  }
+}
+
+sub lshift
+{
+  my ($d, $count, $n) = @_;
+  my (@out, $i);
+
+  foreach $i (0..($n-1))
+  {
+    $out[$i] = $d->[($i+$count)%$n];
+  }
+  foreach $i (0..($n-1))
+  {
+    $d->[$i] = $out[$i];
+  }
+}
+
+sub xor
+{
+  my ($out, $in1, $in2, $n) = @_;
+  my $i;
+
+  foreach $i (0..($n-1))
+  {
+    $out->[$i] = $in1->[$i]^$in2->[$i];
+  }
+}
+
+sub dohash
+{
+  my ($out, $in, $key) = @_;
+  my ($i, $j, $k, @pk1, @c, @d, @cd,
+      @ki, @pd1, @l, @r, @rl);
+
+  &permute(\@pk1, $key, $perm1, 56);
+
+  foreach $i (0..27)
+  {
+    $c[$i] = $pk1[$i];
+    $d[$i] = $pk1[$i+28];
+  }
+  foreach $i (0..15)
+  {
+    my @array;
+    &lshift(\@c, $sc->[$i], 28);
+    &lshift(\@d, $sc->[$i], 28);
+    @cd = (@c, @d);
+    &permute(\@array, \@cd, $perm2, 48);
+    $ki[$i] = \@array;
+  }
+  &permute(\@pd1, $in, $perm3, 64);
+
+  foreach $j (0..31)
+  {
+    $l[$j] = $pd1[$j];
+    $r[$j] = $pd1[$j+32];
+  }
+
+  foreach $i (0..15)
+  {
+    my (@er, @erk, @b, @cb, @pcb, @r2);
+    permute(\@er, \@r, $perm4, 48);
+    &xor(\@erk, \@er, $ki[$i], 48);
+    foreach $j (0..7)
+    {
+      foreach $k (0..5)
+      {
+	$b[$j][$k] = $erk[$j*6+$k];
+      }
+    }
+    foreach $j (0..7)
+    {
+      my ($m, $n);
+      $m = ($b[$j][0]<<1) | $b[$j][5];
+      $n = ($b[$j][1]<<3) | ($b[$j][2]<<2) | ($b[$j][3]<<1) | $b[$j][4];
+      foreach $k (0..3)
+      {
+	$b[$j][$k] = ($sbox->[$j][$m][$n] & (1<<(3-$k)))? 1: 0;
+      }
+    }
+    foreach $j (0..7)
+    {
+      foreach $k (0..3)
+      {
+	$cb[$j*4+$k] = $b[$j][$k];
+      }
+    }
+    &permute(\@pcb, \@cb, $perm5, 32);
+    &xor(\@r2, \@l, \@pcb, 32);
+    foreach $j (0..31)
+    {
+      $l[$j] = $r[$j];
+      $r[$j] = $r2[$j];
+    }
+  }
+  @rl = (@r, @l);
+  &permute($out, \@rl, $perm6, 64);
+}
+
+sub str_to_key
+{
+  my ($str) = @_;
+  my $i;
+  my @key;
+  my $out;
+  my @str = map {ord($_)} split(//, $str);
+  $key[0] = $str[0]>>1;
+  $key[1] = (($str[0]&0x01)<<6) | ($str[1]>>2);
+  $key[2] = (($str[1]&0x03)<<5) | ($str[2]>>3);
+  $key[3] = (($str[2]&0x07)<<4) | ($str[3]>>4);
+  $key[4] = (($str[3]&0x0f)<<3) | ($str[4]>>5);
+  $key[5] = (($str[4]&0x1f)<<2) | ($str[5]>>6);
+  $key[6] = (($str[5]&0x3f)<<1) | ($str[6]>>7);
+  $key[7] = $str[6]&0x7f;
+  foreach $i (0..7)
+  {
+    $key[$i] = 0xff&($key[$i]<<1);
+  }
+  return \@key;
+}
+
+sub smbhash
+{
+  my ($in, $key) = @_;
+
+  my $key2 = &str_to_key($key);
+  my ($i, $div, $mod, @in, @outb, @inb, @keyb, @out);
+  foreach $i (0..63)
+  {
+    $div = int($i/8); $mod = $i%8;
+    $inb[$i] = ($in->[$div] & (1<<(7-($mod))))? 1: 0;
+    $keyb[$i] = ($key2->[$div] & (1<<(7-($mod))))? 1: 0;
+    $outb[$i] = 0;
+  }
+  &dohash(\@outb, \@inb, \@keyb);
+  foreach $i (0..7)
+  {
+    $out[$i] = 0;
+  }
+  foreach $i (0..63)
+  {
+    $out[int($i/8)] |= (1<<(7-($i%8))) if ($outb[$i]);
+  }
+  my $out = pack("C8", @out);
+  return $out;
+}
+
+############################################
+# This is straight from Authen::NTLM::MD4  #
+############################################
+package SMBMD4;
+
+my ($A, $B, $C, $D);
+my (@X, $M);
+
+sub MD4
+{
+  my ($in) = @_;
+
+  my ($i, $pos);
+  my $len = length($in);
+  my $b = $len * 8;
+  $in .= "\0"x128;
+  $A = 0x67452301;
+  $B = 0xefcdab89;
+  $C = 0x98badcfe;
+  $D = 0x10325476;
+  $pos = 0;
+  while ($len > 64)
+  {
+    &copy64(substr($in, $pos, 64));
+    &mdfour64;
+    $pos += 64;
+    $len -= 64;
+  }
+  my $buf = substr($in, $pos, $len);
+  $buf .= sprintf "%c", 0x80;
+  if ($len <= 55)
+  {
+    $buf .= "\0"x(55-$len);
+    $buf .= pack("V", $b);
+    $buf .= "\0"x4;
+    &copy64($buf);
+    &mdfour64;
+  }
+  else
+  {
+    $buf .= "\0"x(120-$len);
+    $buf .= pack("V", $b);
+    $buf .= "\0"x4;
+    &copy64(substr($buf, 0, 64));
+    &mdfour64;
+    &copy64(substr($buf, 64, 64));
+    &mdfour64;
+  }
+  my $out = pack("VVVV", $A, $B, $C, $D);
+  return $out;
+}
+
+sub F
+{
+  my ($X, $Y, $Z) = @_;
+  my $res = ($X&$Y) | ((~$X)&$Z);
+  return $res;
+}
+
+sub G
+{
+  my ($X, $Y, $Z) = @_;
+
+  return ($X&$Y) | ($X&$Z) | ($Y&$Z);
+}
+
+sub H
+{
+  my ($X, $Y, $Z) = @_;
+
+  return $X^$Y^$Z;
+}
+
+sub lshift
+{
+  my ($x, $s) = @_;
+
+  $x &= 0xffffffff;
+  return (($x<<$s)&0xffffffff) | ($x>>(32-$s));
+}
+
+sub ROUND1
+{
+  my ($a, $b, $c, $d, $k, $s) = @_;
+  my $e = &add($a, &F($b, $c, $d), $X[$k]);
+  return &lshift($e, $s);
+}
+
+sub ROUND2
+{
+  my ($a, $b, $c, $d, $k, $s) = @_;
+
+  my $e = &add($a, &G($b, $c, $d), $X[$k], 0x5a827999);
+  return &lshift($e, $s);
+}
+
+sub ROUND3
+{
+  my ($a, $b, $c, $d, $k, $s) = @_;
+
+  my $e = &add($a, &H($b, $c, $d), $X[$k], 0x6ed9eba1);
+  return &lshift($e, $s);
+}
+
+sub mdfour64
+{
+  my ($i, $AA, $BB, $CC, $DD);
+  @X = unpack("N16", $M);
+  $AA = $A;
+  $BB = $B;
+  $CC = $C;
+  $DD = $D;
+
+  $A = &ROUND1($A,$B,$C,$D, 0, 3); $D = &ROUND1($D,$A,$B,$C, 1, 7);
+  $C = &ROUND1($C,$D,$A,$B, 2,11); $B = &ROUND1($B,$C,$D,$A, 3,19);
+  $A = &ROUND1($A,$B,$C,$D, 4, 3); $D = &ROUND1($D,$A,$B,$C, 5, 7);
+  $C = &ROUND1($C,$D,$A,$B, 6,11); $B = &ROUND1($B,$C,$D,$A, 7,19);
+  $A = &ROUND1($A,$B,$C,$D, 8, 3); $D = &ROUND1($D,$A,$B,$C, 9, 7);
+  $C = &ROUND1($C,$D,$A,$B,10,11); $B = &ROUND1($B,$C,$D,$A,11,19);
+  $A = &ROUND1($A,$B,$C,$D,12, 3); $D = &ROUND1($D,$A,$B,$C,13, 7);
+  $C = &ROUND1($C,$D,$A,$B,14,11); $B = &ROUND1($B,$C,$D,$A,15,19);
+
+  $A = &ROUND2($A,$B,$C,$D, 0, 3); $D = &ROUND2($D,$A,$B,$C, 4, 5);
+  $C = &ROUND2($C,$D,$A,$B, 8, 9); $B = &ROUND2($B,$C,$D,$A,12,13);
+  $A = &ROUND2($A,$B,$C,$D, 1, 3); $D = &ROUND2($D,$A,$B,$C, 5, 5);
+  $C = &ROUND2($C,$D,$A,$B, 9, 9); $B = &ROUND2($B,$C,$D,$A,13,13);
+  $A = &ROUND2($A,$B,$C,$D, 2, 3); $D = &ROUND2($D,$A,$B,$C, 6, 5);
+  $C = &ROUND2($C,$D,$A,$B,10, 9); $B = &ROUND2($B,$C,$D,$A,14,13);
+  $A = &ROUND2($A,$B,$C,$D, 3, 3); $D = &ROUND2($D,$A,$B,$C, 7, 5);
+  $C = &ROUND2($C,$D,$A,$B,11, 9); $B = &ROUND2($B,$C,$D,$A,15,13);
+
+  $A = &ROUND3($A,$B,$C,$D, 0, 3); $D = &ROUND3($D,$A,$B,$C, 8, 9);
+  $C = &ROUND3($C,$D,$A,$B, 4,11); $B = &ROUND3($B,$C,$D,$A,12,15);
+  $A = &ROUND3($A,$B,$C,$D, 2, 3); $D = &ROUND3($D,$A,$B,$C,10, 9);
+  $C = &ROUND3($C,$D,$A,$B, 6,11); $B = &ROUND3($B,$C,$D,$A,14,15);
+  $A = &ROUND3($A,$B,$C,$D, 1, 3); $D = &ROUND3($D,$A,$B,$C, 9, 9);
+  $C = &ROUND3($C,$D,$A,$B, 5,11); $B = &ROUND3($B,$C,$D,$A,13,15);
+  $A = &ROUND3($A,$B,$C,$D, 3, 3); $D = &ROUND3($D,$A,$B,$C,11, 9);
+  $C = &ROUND3($C,$D,$A,$B, 7,11); $B = &ROUND3($B,$C,$D,$A,15,15);
+
+  $A = &add($A, $AA); $B = &add($B, $BB);
+  $C = &add($C, $CC); $D = &add($D, $DD);
+  $A &= 0xffffffff; $B &= 0xffffffff;
+  $C &= 0xffffffff; $D &= 0xffffffff;
+  map {$_ = 0} @X;
+}
+
+sub copy64
+{
+  my ($in) = @_;
+
+  $M = pack("V16", unpack("N16", $in));
+}
+
+# see note at top of this file about this function
+sub add
+{
+  my (@nums) = @_;
+  my ($r_low, $r_high, $n_low, $n_high);
+  my $num;
+  $r_low = $r_high = 0;
+  foreach $num (@nums)
+  {
+    $n_low = $num & 0xffff;
+    $n_high = ($num&0xffff0000)>>16;
+    $r_low += $n_low;
+    ($r_low&0xf0000) && $r_high++;
+    $r_low &= 0xffff;
+    $r_high += $n_high;
+    $r_high &= 0xffff;
+  }
+  return ($r_high<<16)|$r_low;
 }
 
 
 1;
 
 __END__
-
-
-package Pex::SMB::Protocol::NBS;
-use Pex::Struct;
-use strict;
-
-# NetBIOS Session Structure
-my $STNBSession = Pex::Struct->new
-([
-    'type'          => 'u_8',
-    'flags'         => 'u_8',
-    'requestLen'    => 'b_u_16',
-    'request'       => 'string'
-]);
-$STNBSession->SetSizeField( 'request' => 'requestLen' );
-$STNBSession->Set
-(
-    'type'  => 0,
-    'flags' => 0,
-);
-
-sub new {
-    my $cls = shift;
-    my $arg = shift;
-    my $self = bless { }, $cls;
-    $self->{'Struct'} = $STNBSession->copy;
-    $self->Fill($arg);
-    return $self;
-}
-
-sub Fill {
-    my $self = shift;
-    my $data = shift;
-    return if !defined($data);
-    $self->{'Struct'}->Fill($data);
-}
-
-sub Set {
-    my $self = shift;
-    return $self->{'Struct'}->Set(@_);
-}
-
-sub Get {
-    my $self = shift;
-    return $self->{'Struct'}->Get(@_);
-}
-
-
-package Pex::SMB::Protocol::SMB;
-use Pex::Struct;
-use strict;
-
-# SMB Packet Structure
-my $STSMBHeader = Pex::Struct->new
-([
-    'smbmagic'      => 'b_u_32',
-    'command'       => 'u_8',
-    'error_class'   => 'u_8',
-    'reserved1'     => 'u_8',
-    'error_code'    => 'b_u_16',
-    'flags1'        => 'u_8',
-    'flags2'        => 'l_u_16',
-    'pid_high'      => 'b_u_16',
-    'signature1'    => 'b_u_32',
-    'signature2'    => 'b_u_32',
-    'reserved2'     => 'b_u_16',
-    'tree_id'       => 'b_u_16',
-    'process_id'    => 'b_u_16',
-    'user_id',      => 'b_u_16',
-    'multiplex_id'  => 'b_u_16',
-    'request'       => 'string',
-]);
-$STSMBHeader->Set
-(
-    'smbmagic'      => 0xff534d42,
-    'command'       => 0,
-    'error_class'   => 0,
-    'reserved1'     => 0,
-    'error_code'    => 0,
-    'flags1'        => 0,
-    'flags2'        => 0,
-    'pid_high'      => 0,
-    'signature1'    => 0,
-    'signature2'    => 0,
-    'reserved2'     => 0,
-    'tree_id'       => 0,
-    'process_id'    => $$,
-    'user_id'       => 0,
-    'multiplex_id'  => 0,
-);
-
-sub new {
-    my $cls = shift;
-    my $arg = shift;
-    my $self = bless { }, $cls;
-    $self->{'Struct'} = $STSMBHeader->copy;
-    $self->Fill($arg);
-    return $self;
-}
-
-sub Fill {
-    my $self = shift;
-    my $data = shift;
-    return if !defined($data);
-    $self->{'Struct'}->Fill($data);
-    $self->{'Struct'}->Set('request' => $self->{'Struct'}->{'LeftOver'});
-}
-
-sub Set {
-    my $self = shift;
-    return $self->{'Struct'}->Set(@_);
-}
-
-sub Get {
-    my $self = shift;
-    return $self->{'Struct'}->Get(@_);
-}
-
-
-# hdm - 04.12.04 - approved
-ddidata = string("Not Applicable");
-
-# -*- Fundamental -*-
-# smb_nt.inc 
-# $Revision$
-#
-
-
-global_var multiplex_id, g_mhi, g_mlo;
-
-multiplex_id = rand();
-g_mhi = multiplex_id / 256;
-g_mlo = multiplex_id % 256;
-
-
-function kb_smb_name()
-{
- return string(get_kb_item("SMB/name"));
-}
-
-function kb_smb_domain()
-{
- return string(get_kb_item("SMB/domain"));
-}
-
-function kb_smb_login()
-{
- return string(get_kb_item("SMB/login"));
-}
-
-function kb_smb_password()
-{
- return string(get_kb_item("SMB/password"));
-}
-
-function kb_smb_transport()
-{
- local_var r;
- r = get_kb_item("SMB/transport");
-
- if ( r ) return int(r);
- else return 445;
-}
-
-
-#-----------------------------------------------------------------#
-# Reads a SMB packet						  #
-#-----------------------------------------------------------------#
-function smb_recv(socket, length)
-{
-   local_var header, len, trailer;
-
-   header = recv(socket:socket, length:4, min:4);
-   if (strlen(header) < 4)return(NULL);
-   len = 256 * ord(header[2]);
-   len += ord(header[3]);
-   if (len == 0)return(header);
-   trailer = recv(socket:socket, length:len, min:len);
-   if(strlen(trailer) < len )return(NULL);
-   return strcat(header, trailer);
-}
-
-#-----------------------------------------------------------------#
-# Convert a netbios name to the netbios network format            #
-#-----------------------------------------------------------------#
-function netbios_name(orig)
-{
- ret = "";
- len = strlen(orig);
- for(i=0;i<16;i=i+1)
- {
-   if(i >= len)
-   {
-     c = "CA";
-   }
-   else
-   {
-     o = ord(orig[i]);
-     odiv = o/16;
-     odiv = odiv + ord("A");
-     omod = o%16;
-     omod = omod + ord("A");
-     c = raw_string(odiv, omod);
-   }
- ret = ret+c;
- }
- return(ret); 
-}
-
-#--------------------------------------------------------------#
-# Returns the netbios name of a redirector                     #
-#--------------------------------------------------------------#
-
-function netbios_redirector_name()
-{
- ret = crap(data:"CA", length:30);
- ret = ret+"AA";
- return(ret); 
-}
-
-#-------------------------------------------------------------#
-# return a 28 + strlen(data) + (odd(data)?0:1) long string    #
-#-------------------------------------------------------------#
-function unicode(data)
-{
- len = strlen(data);
- ret = raw_string(ord(data[0]));
- 
- for(i=1;i<len;i=i+1)
- {
-  ret = string(ret, raw_string(0, ord(data[i])));
- }
- 
- 
- if(!(len & 1)){even = 1;}
- else even = 0;
- 
-
- for(i=0;i<7;i=i+1)
-  ret = ret + raw_string(0);
-  
-  
- if(even)
-  {
-  ret = ret + raw_string(0x00, 0x00, 0x19, 0x00, 0x02, 0x00);
-  }
- else
-  ret = ret + raw_string(0x19, 0x00, 0x02, 0x00);
- 
-  
- return(ret);
-}
-
-
-
-
-#----------------------------------------------------------#
-# Request a new SMB session                                #
-#----------------------------------------------------------#
-function smb_session_request(soc, remote)
-{
- trp = kb_smb_transport();
- # We don't need to request a session when talking on top of
- # port 445
- if(trp == 445)
-  return(TRUE);
-  
- nb_remote = netbios_name(orig:remote);
- nb_local  = netbios_redirector_name();
- 
- session_request = raw_string(0x81, 0x00, 0x00, 0x44) + 
-		  raw_string(0x20) + 
-		  nb_remote +
-		  raw_string(0x00, 0x20)    + 
-		  nb_local  + 
-		  raw_string(0x00);
-
- send(socket:soc, data:session_request);
- r = smb_recv(socket:soc, length:4000);
- if(ord(r[0])==0x82)return(r);
- else return(FALSE);
-}
-
-#------------------------------------------------------------#
-# Extract the UID from the result of smb_session_setup()     #
-#------------------------------------------------------------#
-
-function session_extract_uid(reply)
-{
- low = ord(reply[32]);
- high = ord(reply[33]);
- ret = high * 256;
- ret = ret + low;
- return(ret);
-}
-
-
-
-#-----------------------------------------------------------#
-# Negociate (pseudo-negociate actually) the protocol        #
-# of the session                                            #
-#-----------------------------------------------------------#
-
-function smb_neg_prot_cleartext(soc)
-{
- neg_prot = raw_string
-   	(
-	 0x00,0x00,
-	 0x00, 0x89, 0xFF, 0x53, 0x4D, 0x42, 0x72, 0x00,
-	 0x00, 0x00, 0x00, 0x18, 0x01, 0x20, 0x00, 0x00,
-	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	 0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00,
-	 g_mlo, g_mhi, 0x00, 0x66, 0x00, 0x02, 0x50, 0x43,
-	 0x20, 0x4E, 0x45, 0x54, 0x57, 0x4F, 0x52, 0x4B,
-	 0x20, 0x50, 0x52, 0x4F, 0x47, 0x52, 0x41, 0x4D,
-	 0x20, 0x31, 0x2E, 0x30, 0x00, 0x02, 0x4D, 0x49,
-	 0x43, 0x52, 0x4F, 0x53, 0x4F, 0x46, 0x54, 0x20,
-	 0x4E, 0x45, 0x54, 0x57, 0x4F, 0x52, 0x4B, 0x53,
-	 0x20, 0x31, 0x2E, 0x30, 0x33, 0x00, 0x02, 0x4D,
-	 0x49, 0x43, 0x52, 0x4F, 0x53, 0x4F, 0x46, 0x54,
-	 0x20, 0x4E, 0x45, 0x54, 0x57, 0x4F, 0x52, 0x4B,
-	 0x53, 0x20, 0x33, 0x2e, 0x30, 0x00, 0x02, 0x4c,
-	 0x41, 0x4e, 0x4d, 0x41, 0x4e, 0x31, 0x2e, 0x30,
-	 0x00, 0x02, 0x4c, 0x4d, 0x31, 0x2e, 0x32, 0x58,
-	 0x30, 0x30, 0x32, 0x00, 0x02, 0x53, 0x61, 0x6d,
-	 0x62, 0x61, 0x00
-	 );
-	 
- send(socket:soc, data:neg_prot);
- r = smb_recv(socket:soc, length:4000);
- if(strlen(r) < 10)return(FALSE);
- if(ord(r[9])==0)return(r);
- else return(FALSE);
-}
-
-
-
-function smb_neg_prot_NTLMv1(soc)
-{
- local_var neg_prot, r;
- 
- neg_prot = raw_string
-   	(
-	 0x00, 0x00, 0x00, 0xA4, 0xFF, 0x53,
-	 0x4D, 0x42, 0x72, 0x00, 0x00, 0x00, 0x00, 0x08,
-	 0x01, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	 0x4D, 0x0B, 0x00, 0x00, g_mlo, g_mhi, 0x00, 0x81,
-	 0x00, 0x02
-	 ) + "PC NETWORK PROGRAM 1.0" + raw_string(0x00, 0x02) +
-	 "MICROSOFT NETWORKS 1.03" + raw_string(0x00, 0x02) + 
-	 "MICROSOFT NETWORKS 3.0"  + raw_string(0x00, 0x02) + 
-	 "LANMAN1.0" + raw_string(0x00, 0x02) + 
-	 "LM1.2X002" + raw_string(0x00, 0x02) + 
-	 "Samba" +     raw_string(0x00, 0x02) +
-	 "NT LANMAN 1.0" + raw_string(0x00, 0x02) +
-	 "NT LM 0.12" + raw_string(0x00);
-	 
-	 
- send(socket:soc, data:neg_prot);
- r = smb_recv(socket:soc, length:4000);
- if(strlen(r) < 38)return(NULL);
- if(ord(r[9])==0)return(string(r));
- else return(NULL);
-}
-
-function smb_neg_prot(soc)
-{
- if(defined_func("nt_owf_gen"))
-   return smb_neg_prot_NTLMv1(soc:soc);
- else 
-  return smb_neg_prot_cleartext(soc:soc);
-}
-
-
-function smb_neg_prot_value(prot)
-{
- return(ord(prot[37]));
-}
-
-function smb_neg_prot_cs(prot)
-{
- if(smb_neg_prot_value(prot:prot) < 7)
-  return NULL;
-  
- return substr(prot, 73, 73 + 8);
-}
- 
-function smb_neg_prot_domain(prot)
-{
- local_var i, ret;
- ret = NULL;
- for(i=81;i<strlen(prot);i+=2)
- {
-  if(ord(prot[i]) == 0) break;
-  else ret += prot[i];
- }
- return ret;
-}
-
-#------------------------------------------------------#
-# Set up a session                                     #
-#------------------------------------------------------#
-function smb_session_setup_cleartext(soc, login, password, domain)
-{
-  local_var extra, native_os, native_lanmanager, len, bcc;
-  local_var len_hi, len_lo, bcc_hi_n, bcc_lo;
-  local_var pass_len_hi, pass_len_lo;
-  extra = 0;
-  native_os = "Unix";
-  native_lanmanager = "Nessus";
-  if(!domain)domain = "MYGROUP";
-
-  if(domain) extra = 3+ strlen(domain) + strlen(native_os) + strlen(native_lanmanager);
-  else extra = strlen(native_os) + strlen(native_lanmanager) + 2;
-
-
-  
-  len = strlen(login) + strlen(password) + 57 + extra;
-  bcc = 2 + strlen(login) + strlen(password) + extra;
-  
-  len_hi = len / 256;
-  len_low = len % 256;
-  
-  bcc_hi = bcc / 256;
-  bcc_lo = bcc % 256;
-  
-  pass_len = strlen(password) + 1 ;
-  pass_len_hi = pass_len / 256;
-  pass_len_lo = pass_len % 256;
-
-  #if (typeof(login) == "int")    display("HORROR! login=",    login, "\n");
-  #if (typeof(password) == "int") display("HORROR! password=", password, "\n");
-  if (! login) login="";
-  if (! password) password="";
-  
-  st = raw_string(0x00,0x00,
-    	  len_hi, len_low, 0xFF, 0x53, 0x4D, 0x42, 0x73, 0x00,
-	  0x00, 0x00, 0x00, 0x18, 0x01, 0x20, 0x00, 0x00,
-	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	  0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00,
-	  0x00, 0x00, 0x0A, 0xFF, 0x00, 0x00, 0x00, 0x04,
-	  0x11, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	  0x00, pass_len_lo,  pass_len_hi, 0x00, 0x00, 0x00, 0x00, bcc_lo,
-	  bcc_hi) + password + raw_string(0) + login + raw_string(0x00);
-	  
-  if(domain)
-  	st = st + domain + raw_string(0x00);	
-	
-  st = st + native_os + raw_string(0x00) + native_lanmanager + raw_string(0x00);
-  	  
-  send(socket:soc, data:st);
-  r = smb_recv(socket:soc, length:1024); 
-  if(strlen(r) < 9)return(NULL);
-  if(ord(r[9])==0)return(r);
-  else return(NULL);
-}	   
-
-
-function smb_session_setup_NTLMvN(soc, login, password, domain, cs, version)
-{
-  local_var extra, native_os, native_lanmanager, len, bcc;
-  local_var len_hi, len_lo, bcc_hi_n, bcc_lo;
-  local_var plen;
-  
-  local_var NT_H, LM_H, lm, nt;
-  local_var ntlmv2_hash;
-  
-  
-
-  if(version == 1)
-  {
-  	if(password)
-  	{
-  	NT_H = nt_owf_gen(password);
-  	LM_H = lm_owf_gen(password);
-  
-	lm   = NTLMv1_HASH(cryptkey:cs, passhash:LM_H);
-  	nt   = NTLMv1_HASH(cryptkey:cs, passhash:NT_H);
-  	}
-  }
-  else 
-  {
-    	if(password)
-	{
-	 NT_H = nt_owf_gen(password);
-	 ntlmv2_hash = ntv2_owf_gen(owf:NT_H, login:login, domain:domain);
-	 lm = NTLMv2_HASH(cryptkey:cs, passhash:ntlmv2_hash, length:8);
-	 nt = NTLMv2_HASH(cryptkey:cs, passhash:ntlmv2_hash, length:64);
-	}
-  }
-  
-  
-  extra = 0;
-  native_os = "Unix";
-  native_lanmanager = "Nessus";
-  if(!domain)domain = "WORKGROUP";
-
-  if(domain) extra = 3 + strlen(domain) + strlen(native_os) + strlen(native_lanmanager);
-  else extra = strlen(native_os) + strlen(native_lanmanager) + 2;
-
-
-  
-  len = strlen(login) + strlen(lm) + strlen(nt) + 62 + extra;
-  bcc = 1 + strlen(login) + strlen(lm) + strlen(nt) + extra;
-  
-  
-  len_hi = len / 256;
-  len_low = len % 256;
-  
-  bcc_hi = bcc / 256;
-  bcc_lo = bcc % 256;
-  
-  if(password) {
-  	plen_lm = strlen(lm);
-	plen_nt = strlen(nt);
-  	} else {
-	 	plen_lm = 0;
-		plen_nt = 0;
-		plen = 0;
-		}
-  
-  pass_len_hi = pass_len / 256;
-  pass_len_lo = pass_len % 256;
-  
- 
-  
-
-  if (! login) login="";
-  if (! password) password="";
-  
-  st = raw_string(0x00,0x00,
-    	  len_hi, len_low, 0xFF, 0x53,
-	  0x4D, 0x42, 0x73, 0x00, 0x00, 0x00, 0x00, 0x08,
-	  0x01, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	  0x00, 0x28, 0x00, 0x00, g_mlo, g_mhi, 0x0D, 0xFF,
-	  0x00, 0x00, 0x00, 0x00, 0x44, 0x02, 0x00, 0xA0,
-	  0xF5, 0x00, 0x00, 0x00, 0x00, plen_lm, 0x00, plen_nt,
-	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	  0x00, bcc_lo, bcc_hi) + lm + nt + toupper(login) + 
-	  raw_string(0);
-	  
-  if(domain)
-  	st += domain + raw_string(0x00);	
-	
-  st += native_os + raw_string(0x00) + native_lanmanager + raw_string(0x00);
-  	  
-  send(socket:soc, data:st);
-  r = smb_recv(socket:soc, length:1024); 
-  if(strlen(r) < 9)return(FALSE);
-  if(ord(r[9])==0)return(r);
-  else return(FALSE);
-}	   
-
-
-function smb_session_setup(soc, login, password, domain, prot)
-{
- local_var ct, ret, ntlmv1;
- 
- ct = get_kb_item("SMB/dont_send_in_cleartext");
- ntlmv1 = get_kb_item("SMB/dont_send_ntlmv1");
- 
- if( smb_neg_prot_value(prot:prot) < 7 )
-  {
-  if(ct == "yes") return NULL;
-  else return smb_session_setup_cleartext(soc:soc, login:login, password:password, domain:domain);
-  }
- else
-  {
-  ret = smb_session_setup_NTLMvN(soc:soc, login:login, password:password, domain:domain, cs:smb_neg_prot_cs(prot:prot), version:2);
-  if(!ret && !ntlmv1) ret = smb_session_setup_NTLMvN(soc:soc, login:login, password:password, domain:domain, cs:smb_neg_prot_cs(prot:prot), version:1);
-  return ret;
-  }
-}
-
-
-
-#------------------------------------------------------#
-# connection to a remote share                         #
-#------------------------------------------------------#		
-#
-# connection to the remote IPC share
-#		
-function smb_tconx(soc,name,uid, share)
-{
-
- high = uid / 256;
- low = uid % 256;
- len = 48 + strlen(name) + strlen(share) + 6;
- ulen = 5 + strlen(name) + strlen(share) + 6;
- 
- 
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, len, 0xFF, 0x53, 0x4D, 0x42, 0x75, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x01, 0x20, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x28, low, high,
-		  0x00, 0x00, 0x04, 0xFF, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x01, 0x00, ulen, 0x00, 0x00, 0x5C, 0x5C) +
-	name + 
-	raw_string(0x5C) + share +raw_string(0x00) +
-	"?????"  + raw_string(0x00);
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:1024);
- if(strlen(r) < 10)return(FALSE);
- if(ord(r[9])==0)return(r);
- else return(FALSE);		   	 
-
-}
-
-#------------------------------------------------------#
-# Extract the TID from the result of smb_tconx()       #
-#------------------------------------------------------#
-function tconx_extract_tid(reply)
-{
- if(strlen(reply) < 30) return(FALSE);
- low = ord(reply[28]);
- high = ord(reply[29]);
- ret = high * 256;
- ret = ret + low;
- return(ret);
-}
-
-
-#--------------------------------------------------------#
-# Request the creation of a pipe to winreg. We will      #
-# then use it to do our work                             #
-#--------------------------------------------------------#
-function smbntcreatex(soc, uid, tid)
-{
- tid_high = tid / 256;
- tid_low  = tid % 256;
- 
- uid_high = uid / 256;
- uid_low  = uid % 256;
- 
-  req = raw_string(0x00, 0x00,
-  		   0x00, 0x5B, 0xFF, 0x53, 0x4D, 0x42, 0xA2, 0x00,
-		   0x00, 0x00, 0x00, 0x18, 0x03, 0x00, 0x50, 0x81,
-		   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		   0x00, 0x00, tid_low, tid_high, 0x00, 0x28, uid_low, uid_high,
-		   g_mlo, g_mhi, 0x18, 0xFF, 0x00, 0x00, 0x00, 0x00,
-		   0x07, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00,
-		   0x00, 0x00, 0x9F, 0x01, 0x02, 0x00, 0x00, 0x00,
-		   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		   0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00,
-		   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
-		   0x00, 0x00, 0x00, 0x08, 0x00, 0x5C, 0x77, 0x69,
-		   0x6e, 0x72, 0x65, 0x67, 0x00);
-
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4000);
- if(strlen(r) < 10)return(FALSE);
- if(ord(r[9])==0x00)return(r);
- else return(FALSE);
-}
-
-
-#--------------------------------------------------------#
-# Extract the ID of our pipe from the result             #
-# of smbntcreatex()                                      #
-#--------------------------------------------------------#
-
-function smbntcreatex_extract_pipe(reply)
-{
- if(strlen(reply) < 44) return(FALSE);
- low = ord(reply[42]);
- high = ord(reply[43]);
- 
- ret = high * 256;
- ret = ret + low;
- return(ret);
-}
-
-
-
-#---------------------------------------------------------#
-# Determines whether the registry is accessible           #
-#---------------------------------------------------------#
-		
-function pipe_accessible_registry(soc, uid, tid, pipe)
-{
- tid_low = tid % 256;
- tid_high = tid / 256;
- uid_low = uid % 256;
- uid_high = uid / 256;
- pipe_low = pipe % 256;
- pipe_high = pipe / 256;
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x94, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x03, 0x00, 0x1B, 0x81,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_low, tid_high, 0x00, 0x28, uid_low, uid_high,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x48, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4C,
-		  0x00, 0x48, 0x00, 0x4C, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_low, pipe_high, 0x51, 0x00, 0x5C, 0x50, 0x49,
-		  0x50, 0x45, 0x5C, 0x00, 0x00, 0x00, 0x05, 0x00,
-		  0x0B, 0x00, 0x10, 0x00, 0x00, 0x00, 0x48, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x16,
-		  0x30, 0x16, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0xd0,
-		  0x8c, 0x33, 0x44, 0x22, 0xF1, 0x31, 0xAA, 0xAA,
-		  0x90, 0x00, 0x38, 0x00, 0x10, 0x03, 0x01, 0x00,
-		  0x00, 0x00, 0x04, 0x5D, 0x88, 0x8A, 0xEB, 0x1C,
-		  0xc9, 0x11, 0x9F, 0xE8, 0x08, 0x00, 0x2B, 0x10,
-		  0x48, 0x60, 0x02, 0x00, 0x00, 0x00);	  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- if(strlen(r) < 10)return(FALSE);
- if(ord(r[9])==0)return(r);
- else return(FALSE);
-}
-
-
-#----------------------------------------------------------#
-# Step 1                                                   #
-#----------------------------------------------------------#
-
-function registry_access_step_1(soc, uid, tid, pipe)
-{
- tid_low = tid % 256;
- tid_high = tid / 256;
- uid_low = uid % 256;
- uid_high = uid / 256;
- pipe_low = pipe % 256;
- pipe_high = pipe / 256;
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x78, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x03, 0x80, 0x1D, 0x83,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_low, tid_high, 0x00, 0x28, uid_low, uid_high,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x24, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x24, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_low, pipe_high, 0x35, 0x00, 0x00, 0x5c, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x00, 0x5c, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x24, 0x00,
-		  0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0C, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x10, 0xFF,
-		  0x12, 0x00, 0x30, 0x39, 0x01, 0x00, 0x00, 0x00,
-		  0x00, 0x02);
-		  
-
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- if(strlen(r) < 10)return(FALSE);
- if(ord(r[9])==0)return(r);
- else return(FALSE);
-}
-
-
-#---------------------------------------------------------------------#
-# Get the key                                                         #
-#---------------------------------------------------------------------#
-		 
-function registry_get_key(soc, uid, tid, pipe, key, reply)
-{
- local_var _na_start, i;
-
- key_len = strlen(key) + 1;
- key_len_hi = key_len / 256;
- key_len_lo = key_len % 256;
- 
- 
- 
- tid_low = tid % 256;
- tid_high = tid / 256;
- uid_low = uid % 256;
- uid_high = uid / 256;
- pipe_low = pipe % 256;
- pipe_high = pipe / 256;
- uc = unicode(data:key);
- 
- len = 148 + strlen(uc);
- 
- len_hi = len / 256;
- len_lo = len % 256;
- 
- 
- z = 40 + strlen(uc);
- z_lo = z % 256;
- z_hi = z / 256;
- 
- y = 81 + strlen(uc);
- y_lo = y % 256;
- y_hi = y / 256;
- 
- x = 64 + strlen(uc);
- x_lo = x % 256;
- x_hi = x / 256;
- 
- if(strlen(reply) < 17)exit(0);
- magic1 = raw_string(ord(reply[16]), ord(reply[17]));
- 
- req = raw_string(0x00, 0x00,
- 		  len_hi, len_lo, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x03, 0x80)
-		  +
-		  magic1 +
-		 raw_string(
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00,tid_low, tid_high, 0x00, 0x28, uid_low, uid_high,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, x_lo, x_hi, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, x_lo, x_hi, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_low, pipe_high, y_lo, y_hi, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x00, 0xb9, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, x_lo, x_hi,
-		  0x00, 0x00, 0x02, 0x00, 0x00, 0x00, z_lo, z_hi,
-		  0x00, 0x00, 0x00, 0x00, 0x0F, 0x00);
-		  
- magic = raw_string(ord(reply[84]));
- for(i=1;i<20;i=i+1)
- {
-  magic = magic + raw_string(ord(reply[84+i]));
- }
- 
- x = strlen(key) + strlen(key) + 2;
- x_lo = x % 256;
- x_hi = x / 256;
- 
- req = req + magic + raw_string(x_lo, x_hi, 0x0A, 0x02, 0x00, 0xEC,
- 		0xFD, 0x7F, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, key_len_lo, key_len_hi, 0x00, 0x00) +
-		uc;
-		  
-
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- if(strlen(r) < 10)return(FALSE);
- 
- len = ord(r[2])*256;
- len = len + ord(r[3]);
- if(len < 100)return(FALSE);
-
-  # pull the last 4 bytes off the end
- _na_start = (strlen(r) - 4);
- for (_na_cnt = 0; _na_cnt < 4; _na_cnt++)
-     _na_data = _na_data + r[_na_start + _na_cnt];
-
- # access denied, returned by Windows XP+
- if (_na_data == raw_string(0x05,0x00,0x00,0x00))
-    return(FALSE);
-
- if(ord(r[9])==0)return(r);
- else return(FALSE);
-}
-
-
-
-#------------------------------------------------------------------#
-# Return TRUE if someone else than the admin group, the owner      #
-# and the local system can modify the key                          #
-#------------------------------------------------------------------#
-
-function registry_key_writeable_by_non_admin(security_descriptor)
-{
- local_var r, num_aces, size, start, s, i, mask, z, id_auth, num_auth, sub_auth, k, n, sid;
- local_var WRITE, ADMIN_SID, LOCAL_SYSTEM_SID, CREATOR_OWNER_SID; 
- 
- 
-  if(isnull(security_descriptor))
-  	return(NULL);
-	
-  # write mask
- WRITE = 0x00010000 | 0x00040000 | 0x00080000 | 0x00000002 | 0x000004;
-
- # sids - written the nessus way
-
- ADMIN_SID = "1-000005-32-544";
- LOCAL_SYSTEM_SID = "1-000005-18";
- CREATOR_OWNER_SID = "1-000003-0";
-
-
- r = security_descriptor;
- num_aces = 0;
- num_aces = ord(r[135]);
- num_aces = ord(r[134])+ num_aces*256;
- num_aces = ord(r[133])+ num_aces*256;
- num_aces = ord(r[132])+ num_aces*256;
- start = 137;
- 
- size = 0;
- s = start;
-
- for(i=0;i<num_aces;i=i+1)
- {
-  z = ord(r[s+2]);
-  z = ord(r[s+1])+z*256;
-  mask = ord(r[s+6]);
-  mask = ord(r[s+5])+mask*256;
-  mask = ord(r[s+4])+mask*256;
-  mask = ord(r[s+3])+mask*256;
-  
-  id_auth = ord(r[s+14]);
-  id_auth = string(ord(r[s+13]), id_auth);
-  id_auth = string(ord(r[s+12]), id_auth);
-  id_auth = string(ord(r[s+11]), id_auth);
-  id_auth = string(ord(r[s+10]), id_auth);
-  id_auth = string(ord(r[s+9]), id_auth);
-  
-  num_auths = ord(r[s+8]);
-  sub_auths = "";
-  k = 15;
-  for(c = 0;c < num_auths; c = c+1)
-  {
-  n = ord(r[s+k+3]);
-  n = ord(r[s+k+2])+n*256;
-  n = ord(r[s+k+1])+n*256;
-  n = ord(r[s+k])+n*256;
-  k = k + 4;
-  sub_auths = string(sub_auths,"-",n);
-  }
-  
-  sid = string(ord(r[s+7]), "-", id_auth, sub_auths);
-  # display("sid = ", sid, "\n");
-  if(mask & WRITE){
-    #     display("writeable by ", sid, "\n");
-    #	  display(mask & WRITE, "\n");
-	
-	 if((sid != ADMIN_SID) &&  
-	    (sid != LOCAL_SYSTEM_SID) && 
-	    (sid != CREATOR_OWNER_SID))
-	 {
-	   #display("sid != ", CREATOR_OWNER_SID, "\n");
-	   #display(mask, "\n");
-	   return(TRUE);
-	 }
-      }
-  s = s + z;
- } 
- return(FALSE);
-}
-
-
-#---------------------------------------------------------------------#
-# Get the security descriptor for a key                               #
-#---------------------------------------------------------------------#
-
-
-
-function registry_get_key_security(soc, uid, tid, pipe, reply)
-{
- local_var magic, req, r, tid_low, tid_high, uid_low, uid_high, pipe_low, pipe_high;
- 
- tid_low = tid % 256;
- tid_high = tid / 256;
- 
- uid_low = uid % 256;
- uid_high = uid / 256;
- 
- pipe_low = pipe % 256;
- pipe_high = pipe / 256;
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x90, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x03, 0x80, 0x00, 0x83,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_low, tid_high, 0x00, 0x28, uid_low, uid_high,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x3C, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x3C, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_low, pipe_high, 0x4D, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0xEE, 0xD5, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x3C, 0x00,
-		  0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x24, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x0c, 0x00);
- if(strlen(reply) < 104)return(FALSE);
- 
- magic = raw_string(ord(reply[84]));		  
- for(i=1;i<20;i=i+1)
- {
-  magic = magic + raw_string(ord(reply[84+i]));
- }
- 
- req = req + magic + raw_string(0x04) + crap(data:raw_string(0), length:15);
- 
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:65535);
- 
- 
- len1 =  ord(r[strlen(r) - 12]);
- len2 = ord(r[strlen(r) - 11]);
- len3 = ord(r[strlen(r) - 10]);
- len4 = ord(r[strlen(r) - 9]);
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x9C, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x03, 0x80, 0x00, 0x83,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_low, tid_high, 0x00, 0x28, uid_low, uid_high,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x48, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x48, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_low, pipe_high, 0x59, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0xEE, 0xD5, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x48, 0x00,
-		  0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x30, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x0c, 0x00);
-		  
-  req = req + magic + raw_string(0x04, 0x00, 0x00, 0x00, 0x38, 0x8d,
-       0x07, 0x00, len1, len2, len3, len4, 0x00, 0x00,
-       0x00, 0x00, len1, len2, len3, len4, 0x00, 0x00,
-       0x00, 0x00, 0x00, 0x00, 0x00, 0x00);		  
-	
-	
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:65535);
- if(strlen(r) < 150)return(NULL);
- return(r);
-}
-
- 
-#---------------------------------------------------------------------#
-# returns 'TRUE' if <key> exists				      #
-#---------------------------------------------------------------------#
-function registry_key_exists(key)
-{
- local_var name, domain, _smb_port, login, pass, soc, r, uid, tid, pipe, ret, prot;
- local_var magic, flag, i;
- 
-name =  kb_smb_name();
-if(!name)exit(0);
-
-
-domain = kb_smb_domain();
-_smb_port = kb_smb_transport();
-if(!_smb_port)exit(0);
-
-
-if(!get_port_state(_smb_port))return(FALSE);
-
-login = kb_smb_login();
-pass  = kb_smb_password();
-
-if(!login)login = "";
-if(!pass) pass = "";
-
-	  
-soc = open_sock_tcp(_smb_port);
-if ( ! soc ) return NULL;
-
-#
-# Request the session
-# 
-r = smb_session_request(soc:soc,  remote:name);
-if(!r)return(FALSE);
-
-#
-# Negociate the protocol
-#
-prot = smb_neg_prot(soc:soc);
-if(!prot)return(FALSE);
-
-
-#
-# Set up our session
-#
-r = smb_session_setup(soc:soc, login:login, password:pass, domain:domain, prot:prot);
-if(!r)return(FALSE);
-# and extract our uid
-uid = session_extract_uid(reply:r);
-
-
-#
-# Connect to the remote IPC and extract the TID
-# we are attributed
-#      
-r = smb_tconx(soc:soc, name:name, uid:uid, share:"IPC$");
-# and extract our tree id
-tid = tconx_extract_tid(reply:r);
-if(!tid)return(NULL);
-
-#
-# Create a pipe to \winreg
-#
-r = smbntcreatex(soc:soc, uid:uid, tid:tid);
-if(!r)return(NULL);
-# and extract its ID
-pipe = smbntcreatex_extract_pipe(reply:r);
-
-#
-# Setup things
-#
-
-
-
-r = pipe_accessible_registry(soc:soc, uid:uid, tid:tid, pipe:pipe);
-if(!r)return(FALSE);
-r = registry_access_step_1(soc:soc, uid:uid, tid:tid, pipe:pipe);
-r2 = registry_get_key(soc:soc, uid:uid, tid:tid, pipe:pipe, key:key, reply:r);
-close(soc);
-if ( ! r2 && strlen(r2) < 104) return NULL;
-flag = 0;
-for(i=1;i<20;i=i+1)
- {
-  if ( ord(r2[84+i]) != 0 ) flag = 1;
- }
-
-if ( flag ) return TRUE;
-else return NULL;
-
-}
-		 
-#---------------------------------------------------------------------#
-# returns 'TRUE' if <key> is writeable				      #
-#---------------------------------------------------------------------#
-
-
-function registry_get_acl(key)
-{
- local_var name, domain, _smb_port, login, pass, soc, r, uid, tid, pipe, ret, prot;
- 
-name =  kb_smb_name();
-if(!name)exit(0);
-
-
-domain = kb_smb_domain();
-_smb_port = kb_smb_transport();
-if(!_smb_port)exit(0);
-
-
-if(!get_port_state(_smb_port))return(FALSE);
-
-login = kb_smb_login();
-pass  = kb_smb_password();
-
-if(!login)login = "";
-if(!pass) pass = "";
-
-	  
-soc = open_sock_tcp(_smb_port);
-if ( ! soc ) return NULL;
-
-#
-# Request the session
-# 
-r = smb_session_request(soc:soc,  remote:name);
-if(!r)return(FALSE);
-
-#
-# Negociate the protocol
-#
-prot = smb_neg_prot(soc:soc);
-if(!prot)return(FALSE);
-
-
-#
-# Set up our session
-#
-r = smb_session_setup(soc:soc, login:login, password:pass, domain:domain, prot:prot);
-if(!r)return(FALSE);
-# and extract our uid
-uid = session_extract_uid(reply:r);
-
-
-#
-# Connect to the remote IPC and extract the TID
-# we are attributed
-#      
-r = smb_tconx(soc:soc, name:name, uid:uid, share:"IPC$");
-# and extract our tree id
-tid = tconx_extract_tid(reply:r);
-if(!tid)return(NULL);
-
-#
-# Create a pipe to \winreg
-#
-r = smbntcreatex(soc:soc, uid:uid, tid:tid);
-if(!r)return(NULL);
-# and extract its ID
-pipe = smbntcreatex_extract_pipe(reply:r);
-
-#
-# Setup things
-#
-
-
-
-r = pipe_accessible_registry(soc:soc, uid:uid, tid:tid, pipe:pipe);
-if(!r)return(FALSE);
-r = registry_access_step_1(soc:soc, uid:uid, tid:tid, pipe:pipe);
-if(strlen(key))
-{
-r2 = registry_get_key(soc:soc, uid:uid, tid:tid, pipe:pipe, key:key, reply:r);
-}
-else r2 = r;
-
-
-if(r2)
- {
- r3 =  registry_get_key_security(soc:soc, uid:uid, tid:tid, pipe:pipe, reply:r2);
- close(soc);
- 
- if(strlen(r3) < 100)return(NULL);
- return(r3);
- }
-return(NULL);
-}
-
-#---------------------------------------------------------------------#
-# Get an item of type reg_sz from the key                             #
-#---------------------------------------------------------------------#
-
-function unicode2(data)
-{
- len = strlen(data);
- ret = raw_string(0, ord(data[0]));
- 
- for(i=1;i<len;i=i+1)
- {
-  ret = ret + raw_string(0, ord(data[i]));
- }
- if(len & 1)ret = ret + raw_string(0x00, 0x00); 
- else ret = ret + raw_string(0x00, 0x00, 0x00, 0x63);
- return(ret);
-}
-
-
-function registry_get_item_sz(soc, uid, tid, pipe, item, reply)
-{
- local_var i;
- item_len = strlen(item) + 1;
- item_len_lo = item_len % 256;
- item_len_hi = item_len / 256;
- 
- uc2 = unicode2(data:item);
- len = 188 + strlen(uc2);
- len_lo = len % 256;
- len_hi = len / 256;
- 
- tid_low = tid % 256;
- tid_high = tid / 256;
- uid_low = uid % 256;
- uid_high = uid / 256;
- pipe_low = pipe % 256;
- pipe_high = pipe / 256;
- 
- bcc = 121 + strlen(uc2);
- bcc_lo = bcc % 256;
- bcc_hi = bcc / 256;
- 
- y = 80 + strlen(uc2);
- y_lo = y % 256;
- y_hi = y / 256;
- 
- z = 104 + strlen(uc2);
- z_lo = z % 256;
- z_hi = z / 256;
- req = raw_string(0x00, 0x00,
- 		  len_hi, len_lo, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x03, 0x80, 0x1D, 0x83,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_low, tid_high, 0x00, 0x28, uid_low, uid_high,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, z_lo, z_hi, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, z_lo, z_hi, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_low, pipe_high, bcc_lo, bcc_hi, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x00, 0x5C, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, z_lo, z_hi,
-		  0x00, 0x00, 0x03, 0x00, 0x00, 0x00, y_lo, y_hi,
-		  0x00, 0x00, 0x00, 0x00, 0x11, 0x00);
-		  
- if(strlen(reply) < 104)return(FALSE);
- magic = raw_string(ord(reply[84]));
- for(i=1;i<20;i=i+1)
- {
-  magic = magic + raw_string(ord(reply[84+i]));
- }
-
- x = 2 + strlen(item) + strlen(item);
- x_lo = x % 256;
- x_hi = x / 256;
-  
- y = y + 3;
- y_lo = y % 256;
- y_hi = y / 256;
- 
-  req = req + magic + raw_string(x_lo, x_hi, 0x0A, 0x02, 0x00, 0xEC,
-  		0xFD, 0x7F, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, item_len_lo, item_len_hi, 0x00)
-		
-		+ uc2	+ 
-		raw_string(0x00, 0x34, 0xFF,
-		0x12, 0x00, 0xEF, 0x10, 0x40, 0x00, 0x18, 0x1E,
-		0x7c, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0xFF,
-		0x12, 0x00, 0x00, 0x04, 0x00, 0x00, 0x30, 0xFF,
-		0x12, 0x00, 0x00, 0x00, 0x00, 0x00);
-		
- send(socket:soc, data:req);
- req = smb_recv(socket:soc, length:4000);		
- return(req);
-}		  
-
-#------------------------------------------------------#
-# Decode the reply from the registry                   #
-#------------------------------------------------------#
-
-function registry_decode_binary(data)
-{
- local_var i, o, len, index;
-
- len = ord(data[2])*256;
- len = len + ord(data[3]);
- if(len < 130)return(NULL);
- 
- data_offset = ord(data[52])*256;
- data_offset = data_offset + ord(data[51]) + 4;
- data_len = ord(data[data_offset+43]);
- data_len = data_len * 256;
- data_len = data_len + ord(data[data_offset+44]);
- index = data_offset + 48;
- o = "";
- data_len = data_len - 2;
- for(i=0;i<data_len;i=i+1)
- {
-   o = string(o, raw_string(ord(data[index+i])));
- }
- return(o);
-}
-
-
-
-function registry_decode_sz(data)
-{
- local_var i, o, len, index;
-
- len = ord(data[2])*256;
- len = len + ord(data[3]);
- if(len < 130)return(NULL);
- 
- data_offset = ord(data[52])*256;
- data_offset = data_offset + ord(data[51]) + 4;
- data_len = ord(data[data_offset+43]);
- data_len = data_len * 256;
- data_len = data_len + ord(data[data_offset+44]);
- index = data_offset + 48;
- o = "";
- data_len = data_len - 2;
- 
- for(i=0;i<data_len;i=i+2)
- {
-   o = string(o, raw_string(ord(data[index+i])));
- }
- return(o);
-}
-
-#---------------------------------------------------------------------#
-#---------------------------------------------------------------------#
-# Get an item of type reg_dword from the key                          #
-#---------------------------------------------------------------------#
-
-function registry_get_item_dword(soc, uid, tid, pipe, item, reply)
-{
- item_len = strlen(item) + 1;
- item_len_lo = item_len % 256;
- item_len_hi = item_len / 256;
- 
- uc2 = unicode2(data:item);
- len = 188 + strlen(uc2);
- len_lo = len % 256;
- len_hi = len / 256;
- 
- tid_low = tid % 256;
- tid_high = tid / 256;
- uid_low = uid % 256;
- uid_high = uid / 256;
- pipe_low = pipe % 256;
- pipe_high = pipe / 256;
- 
- bcc = 121 + strlen(uc2);
- bcc_lo = bcc % 256;
- bcc_hi = bcc / 256;
- 
- y = 80 + strlen(uc2);
- y_lo = y % 256;
- y_hi = y / 256;
- 
- z = 104 + strlen(uc2);
- z_lo = z % 256;
- z_hi = z / 256;
- req = raw_string(0x00, 0x00,
- 		  len_hi, len_lo, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x03, 0x80, 0x1D, 0x83,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_low, tid_high, 0x00, 0x28, uid_low, uid_high,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, z_lo, z_hi, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, z_lo, z_hi, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_low, pipe_high, bcc_lo, bcc_hi, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x00, 0x5C, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, z_lo, z_hi,
-		  0x00, 0x00, 0x03, 0x00, 0x00, 0x00, y_lo, y_hi,
-		  0x00, 0x00, 0x00, 0x00, 0x11, 0x00);
-		  
- magic = raw_string(ord(reply[84]));
- for(i=1;i<20;i=i+1)
- {
-   magic = magic + raw_string(ord(reply[84+i]));
- }
-
-
- x = 2 + strlen(item) + strlen(item);
- x_lo = x % 256;
- x_hi = x / 256;
-  
- y = y + 3;
- y_lo = y % 256;
- y_hi = y / 256;
- 
-  req = req + magic + raw_string(x_lo, x_hi, 0x0A, 0x02, 0x00, 0xEC,
-  		0xFD, 0x7F, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, item_len_lo, item_len_hi, 0x00)
-		
-		+ uc2	+ 
-		raw_string(0x00, 0x34, 0xFF,
-		0x12, 0x00, 0xEF, 0x10, 0x40, 0x00, 0x18, 0x1E,
-		0x7c, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0xFF,
-		0x12, 0x00, 0x00, 0x04, 0x00, 0x00, 0x30, 0xFF,
-		0x12, 0x00, 0x00, 0x00, 0x00, 0x00);
-		
- send(socket:soc, data:req);
- req = smb_recv(socket:soc, length:4000);		
- return(req);
-}		  
-
-#------------------------------------------------------#
-# Decode the reply from the registry                   #
-#------------------------------------------------------#
-
-function registry_decode_dword(data)
-{
- len = ord(data[2])*256;
- len = len + ord(data[3]);
- if(len < 126)return(NULL);
- 
- data_offset = ord(data[52])*256;
- data_offset = data_offset + ord(data[51]) + 4;
- data_len = ord(data[data_offset+43]);
- data_len = data_len * 256;
- data_len = data_len + ord(data[data_offset+44]);
- index = data_offset + 48;
- o = "";
- for(i=data_len;i>0;i=i-1)
- {
-   t *= 256;
-   t += ord(data[index+i-1]);
- }
-
- return(t);
-}
-			  
-		 
-#---------------------------------------------------------------------#
-# registry_get_dword()						      #
-#---------------------------------------------------------------------#
-
-
-function registry_get_dword(key, item)
-{
- local_var name, port, login, pass, soc, dom, r, prot, value;
- 
- if ( get_kb_item("SMB/samba") ) exit(0);
- 
- port = kb_smb_transport();
- if(!port)exit(0);
-
- name = kb_smb_name();
- if(!name)exit(0);
-
-
- if(!get_port_state(port))return(FALSE);
-
- login = kb_smb_login();
- pass  = kb_smb_password();
-
-if(!login)login = "";
-if(!pass) pass = "";
-
- dom = kb_smb_domain();
-	  
- soc = open_sock_tcp(port);
- if(!soc)exit(0);
-
- #
- # Request the session
- # 
- r = smb_session_request(soc:soc,  remote:name);
- if(!r){ close(soc); return NULL;}
-
- #
- # Negociate the protocol
- #
- prot = smb_neg_prot(soc:soc);
- if(!prot) { close(soc); return NULL;}
-
-
- #
- # Set up our session
- #
- r = smb_session_setup(soc:soc, login:login, password:pass, domain:dom, prot:prot);
- if(!r){ close(soc); return NULL;}
- # and extract our uid
- uid = session_extract_uid(reply:r);
-
- #
- # Connect to the remote IPC and extract the TID
- # we are attributed
- #      
- r = smb_tconx(soc:soc, name:name, uid:uid, share:"IPC$");
- # and extract our tree id
- tid = tconx_extract_tid(reply:r);
-
-
- #
- # Create a pipe to \winreg
- #
- r = smbntcreatex(soc:soc, uid:uid, tid:tid);
- if(!r){ close(soc); return(NULL); }
- # and extract its ID
- pipe = smbntcreatex_extract_pipe(reply:r);
-
- #
- # Setup things
- #
- r = pipe_accessible_registry(soc:soc, uid:uid, tid:tid, pipe:pipe);
- if(!r){ close(soc); return(NULL); }
- r = registry_access_step_1(soc:soc, uid:uid, tid:tid, pipe:pipe);
-
- r2 = registry_get_key(soc:soc, uid:uid, tid:tid, pipe:pipe, key:key, reply:r);
- if(r2)
- {
- r3 =  registry_get_item_dword(soc:soc, uid:uid, tid:tid, pipe:pipe, item:item, reply:r2);
- value = registry_decode_dword(data:r3);
- close(soc);
- return(value); 
- }
- close(soc);
- return NULL;
-}
-			  
-#---------------------------------------------------------------------#
-# registry_get_binary()						      #
-#---------------------------------------------------------------------#
-function registry_get_binary(key, item)
-{
- local_var name, _smb_port, login, pass, domain, soc, uid, tid, r, prot, pipe;
-
-if ( get_kb_item("SMB/samba") ) exit(0);
-
-name = kb_smb_name();
-if(!name)exit(0);
-
-_smb_port = kb_smb_transport();
-if(!_smb_port)exit(0);
-
-if(!get_port_state(_smb_port))return(FALSE);
-
-login = kb_smb_login();
-pass  = kb_smb_password();
-
-domain = kb_smb_domain();
-
-if(!login)login = "";
-if(!pass) pass = "";
-
-	  
-soc = open_sock_tcp(_smb_port);
-if(!soc)return(FALSE);
-
-#
-# Request the session
-# 
-r = smb_session_request(soc:soc,  remote:name);
-if(!r) { close(soc); return(FALSE); }
-
-#
-# Negociate the protocol
-#
-prot = smb_neg_prot(soc:soc);
-if(!prot){ close(soc); return(FALSE); }
-
-
-#
-# Set up our session
-#
-r = smb_session_setup(soc:soc, login:login, password:pass, domain:domain, prot:prot);
-if(!r){ close(soc); return(FALSE); }
-# and extract our uid
-uid = session_extract_uid(reply:r);
-
-#
-# Connect to the remote IPC and extract the TID
-# we are attributed
-#      
-r = smb_tconx(soc:soc, name:name, uid:uid, share:"IPC$");
-# and extract our tree id
-tid = tconx_extract_tid(reply:r);
-if(!tid){ close(soc); return(FALSE); }
-
-#
-# Create a pipe to \winreg
-#
-r = smbntcreatex(soc:soc, uid:uid, tid:tid);
-if(!r){ close(soc); return(FALSE);}
-# and extract its ID
-pipe = smbntcreatex_extract_pipe(reply:r);
-
-#
-# Setup things
-#
-r = pipe_accessible_registry(soc:soc, uid:uid, tid:tid, pipe:pipe);
-if(!r){ close(soc); return(FALSE); }
-r = registry_access_step_1(soc:soc, uid:uid, tid:tid, pipe:pipe);
-
-r2 = registry_get_key(soc:soc, uid:uid, tid:tid, pipe:pipe, key:key, reply:r);
-if(r2)
-{
- r3 =  registry_get_item_sz(soc:soc, uid:uid, tid:tid, pipe:pipe, item:item, reply:r2);
- value = registry_decode_binary(data:r3);
- close(soc);
- return(value);
-}
-close(soc);
-return(FALSE);
-}
-		 
-#---------------------------------------------------------------------#
-# registry_get_sz()						      #
-#---------------------------------------------------------------------#
-
-
-function registry_get_sz(key, item)
-{
- local_var name, _smb_port, login, pass, domain, soc, uid, tid, r, prot, pipe;
-
-if ( get_kb_item("SMB/samba") ) exit(0);
-
-name = kb_smb_name();
-if(!name)exit(0);
-
-_smb_port = kb_smb_transport();
-if(!_smb_port)exit(0);
-
-if(!get_port_state(_smb_port))return(FALSE);
-
-login = kb_smb_login();
-pass  = kb_smb_password();
-
-domain = kb_smb_domain();
-
-if(!login)login = "";
-if(!pass) pass = "";
-
-	  
-soc = open_sock_tcp(_smb_port);
-if(!soc)return(FALSE);
-
-#
-# Request the session
-# 
-r = smb_session_request(soc:soc,  remote:name);
-if(!r) { close(soc); return(FALSE); }
-
-#
-# Negociate the protocol
-#
-prot = smb_neg_prot(soc:soc);
-if(!prot){ close(soc); return(FALSE); }
-
-
-#
-# Set up our session
-#
-r = smb_session_setup(soc:soc, login:login, password:pass, domain:domain, prot:prot);
-if(!r){ close(soc); return(FALSE); }
-# and extract our uid
-uid = session_extract_uid(reply:r);
-
-#
-# Connect to the remote IPC and extract the TID
-# we are attributed
-#      
-r = smb_tconx(soc:soc, name:name, uid:uid, share:"IPC$");
-# and extract our tree id
-tid = tconx_extract_tid(reply:r);
-if(!tid){ close(soc); return(FALSE); }
-
-#
-# Create a pipe to \winreg
-#
-r = smbntcreatex(soc:soc, uid:uid, tid:tid);
-if(!r){ close(soc); return(FALSE);}
-# and extract its ID
-pipe = smbntcreatex_extract_pipe(reply:r);
-
-#
-# Setup things
-#
-r = pipe_accessible_registry(soc:soc, uid:uid, tid:tid, pipe:pipe);
-if(!r){ close(soc); return(FALSE); }
-r = registry_access_step_1(soc:soc, uid:uid, tid:tid, pipe:pipe);
-
-r2 = registry_get_key(soc:soc, uid:uid, tid:tid, pipe:pipe, key:key, reply:r);
-if(r2)
-{
- r3 =  registry_get_item_sz(soc:soc, uid:uid, tid:tid, pipe:pipe, item:item, reply:r2);
- value = registry_decode_sz(data:r3);
- close(soc);
- return(value);
-}
-close(soc);
-return(FALSE);
-}
-
-#---------------------------------------------------------------------------#
-# SAM related functions							    #
-#---------------------------------------------------------------------------#
-
-#------------------------------------------------------#
-# Open a pipe to \samr                                 #
-#------------------------------------------------------#
-function OpenPipeToSamr(soc, uid, tid)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- 
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x60, 0xFF, 0x53, 0x4D, 0x42, 0xA2, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x18, 0xFF, 0x00, 0xDE, 0xDE, 0x00,
-		  0x0A, 0x00, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 
-		  0x00, 0x00, 0x9F, 0x01, 0x02, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00,
-		  0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x02, 0x00,
-		  0x00, 0x00, 0x03, 0x0D, 0x00, 0x00, 0x5C, 0x00,
-		  0x73, 0x00, 0x61, 0x00, 0x6D, 0x00, 0x72, 0x00,
-		  0x00, 0x00);
-		  
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- if(strlen(r) < 42) return(FALSE);
- else {
- 	low = ord(r[42]);
-	hi  = ord(r[43]);
-	ret = hi * 256;
-	ret = ret + low;
-	return(ret);
-      }
-}
-
-function samr_smbwritex(soc, tid, uid, pipe)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- 
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x88, 0xFF, 0x53, 0x4D, 0x42, 0x2F, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x0E, 0xFF, 0x00, 0xDE, 0xDE, pipe_lo,
-		  pipe_hi, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
-		  0xFF, 0x08, 0x00, 0x48, 0x00, 0x00, 0x00, 0x48,
-		  0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x49,
-		  0x00, 0xEE, 0x05, 0x00, 0x0B, 0x03, 0x10, 0x00,
-		  0x00, 0x00, 0x48, 0x00, 0x00, 0x00, 0x01, 0x00,
-		  0x00, 0x00, 0xB8, 0x10, 0xB8, 0x10, 0x00, 0x00,
-		  0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x01, 0x00, 0x78, 0x57, 0x34, 0x12, 0x34, 0x12,
-		  0xCD, 0xAB, 0xEF, 0x00, 0x01, 0x23, 0x45, 0x67,
-		  0x89, 0xAC, 0x01, 0x00, 0x00, 0x00, 0x04, 0x5D,
-		  0x88, 0x8A, 0xEB, 0x1C, 0xC9, 0x11, 0x9F, 0xE8,
-		  0x08, 0x00, 0x2B, 0x10, 0x48, 0x60, 0x02, 0x00,
-		  0x00, 0x00);
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
-}		
-
-
-function samr_smbreadx(soc, tid, uid, pipe)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x3B, 0xFF, 0x53, 0x4D, 0x42, 0x2E, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x0C, 0xFF, 0x00, 0xDE, 0xDE, pipe_lo,
-	       pipe_hi, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00,
-		  0x04, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x04, 0x00, 
-		  0x00, 0x00, 0x00, 0x00, 0x00);
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
-
-}		    
-
-#------------------------------------------------------#
-# Returns the unicode representation of <name>         #
-#------------------------------------------------------#
-function samr_uc(name)
-{
- ret = "";
- for(i=0;i<strlen(name);i=i+1)
- {
-  ret = ret + raw_string(0) + name[i];
- }
- return(ret);
-}
-
-
-
-#------------------------------------------------------#
-# Connects to the remote SAM                           #
-#------------------------------------------------------#
-function SamrConnect2(soc, tid, uid, pipe, name)
-{
- samr_smbwritex(soc:soc, tid:tid, uid:uid, pipe:pipe);
- samr_smbreadx(soc:soc, tid:tid, uid:uid, pipe:pipe);
- 
- l = strlen(name);
- odd = l % 2;
- 
- if(odd)p = 0;
- else p = 2;
- 
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- 
- l = 3 + strlen(name);
- l_h = l / 256;
- l_l = l % 256;
- 
-
- tot_len = 134 + strlen(name) + strlen(name) + p;
- tot_len_h = tot_len / 256;
- tot_len_l = tot_len % 256;
- 
- bcc = 67 + strlen(name) + strlen(name) + p;
- bcc_lo = bcc % 256;
- bcc_hi = bcc / 256;
- 
- total_data_count = 50 + strlen(name) + strlen(name) + p;
- total_data_count_lo = total_data_count % 256;
- total_data_count_hi = total_data_count / 256;
- 
- req = raw_string(0x00, 0x00,
- 		  tot_len_h, tot_len_l, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00,total_data_count_lo, total_data_count_hi, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, total_data_count_lo, total_data_count_hi, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, bcc_lo, bcc_hi, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0xAF, 0x47, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, total_data_count_lo, total_data_count_hi,
-		  0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x28, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x39, 0x00, 0x60, 0x60,
-		  0x13, 0x00, l_l, l_h, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, l_l, l_h, 0x00, 0x00, 0x5C, 0x00,
-		  0x5C) + samr_uc(name:name) + raw_string(0x00, 0x00, 0x00);
-		  
-  if(p)req = req + raw_string(0xC9, 0x11); # 0x02, 0x00, 0x00, 0x00);
-  
-  req = req +  raw_string(0x30, 0x00, 0x00, 0x00);
- #display(strlen(req), "\n");		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);		  
- #display("--->", strlen(r), "\n");
- #
- # We return a handle to the remote SAM
- #		  
- 
- samrhdl = "";
- _len = strlen(r);
- if(_len < 24)
- 	return(FALSE);
-	
- _len = _len - 24;
- for(i=0;i<20;i=i+1)
- {
-  samrhdl = samrhdl + raw_string(ord(r[i+_len]));
-  #display(hex(ord(r[i+_len])), " ");
- }
- #display("\n");
- #display("samhdl : ", strlen(samrhdl), "\n");
- return(samrhdl);
-}
-
-
-#--------------------------------------------------------------#
-# This function is probably SamrEnumerateDomainsInSamServer()  #
-# but I'm not sure of that, so I changed its name to           #
-# _SamrEnumDomains()                                           #
-#                                                              #
-# This function only returns the first domain it obtains       #
-#--------------------------------------------------------------#
-function _SamrEnumDomains(soc, uid, tid, pipe, samrhdl)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x88, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x34, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x34, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, 0x45, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0xAF, 0x47, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x34, 0x00,
-		  0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x1C, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x06, 0x00) + samrhdl +
-	raw_string(0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
-		  0x00, 0x00);
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);		  
- if(strlen(r) < 137)return(FALSE);
- 
- len_lo = ord(r[136]);
- len_hi = ord(r[137]);
- 
- len = len_hi * 256;
- len = len + len_lo;
- dom = "";
- len = len*2;
- maxlen = strlen(r);
- if(maxlen < len)return(FALSE);
- for(i=0;i<len;i=i+2)
- {
-  if(maxlen < 139+i)return(FALSE);
-  dom = dom + raw_string(ord(r[139+i]), ord(r[140+i]));
- }
- #display(dom, "\n");
- return(dom);  
-}
-
-
-#------------------------------------------------------#
-# Returns the sid from the domain <dom>                #
-#------------------------------------------------------#
-
-function SamrDom2Sid(soc, tid, uid, pipe, samrhdl, dom)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- #display(strlen(dom), "<-dom\n");
- tot_len = 148 + strlen(dom);
- tot_len_hi = tot_len / 256;
- tot_len_lo = tot_len % 256;
- 
- bcc = 81 + strlen(dom);
- bcc_lo = bcc % 256;
- bcc_hi = bcc / 256;
- 
- tot_dat_count = 64 + strlen(dom);
- tot_dat_count_lo = tot_dat_count % 256;
- tot_dat_count_hi = tot_dat_count / 256;
- 
- dom_len = strlen(dom);
- dom_len = dom_len / 2;
- dom_len_lo = dom_len % 256;
- dom_len_hi = dom_len / 256;
-  
- dom_t_len =  dom_len + 1;
- dom_t_len_lo = dom_t_len % 256;
- dom_t_len_hi = dom_t_len / 256;
- 
- dom_m_len = dom_len * 2;
- dom_m_len_lo = dom_m_len % 256;
- dom_m_len_hi = dom_m_len / 256;
- 
- dom_mm_len = dom_m_len + 2;
- dom_mm_len_lo = dom_mm_len % 256;
- dom_mm_len_hi = dom_mm_len / 256;
- 
- 
- req = raw_string(0x00, 0x00,
- 		 tot_len_hi, tot_len_lo, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		 0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		 0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		 g_mlo, g_mhi, 0x10, 0x00, 0x00, tot_dat_count_lo, tot_dat_count_hi, 0x00,
-		 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		 0x00, tot_dat_count_lo, tot_dat_count_hi, 0x54, 0x00, 0x02, 0x00, 0x26,
-		 0x00, pipe_lo, pipe_hi, bcc_lo, bcc_hi, 0x00, 0x5C, 0x00,
-		 0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		 0x5C, 0x00, 0x00, 0x00, 0xAF, 0x47, 0x05, 0x00,
-		 0x00, 0x03, 0x10, 0x00, 0x00, 0x00, tot_dat_count_lo, tot_dat_count_hi,
-		 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x38, 0x00,
-		 0x00, 0x00, 0x00, 0x00, 0x05, 0x00) + samrhdl + 
-   raw_string(	 dom_m_len_lo, dom_m_len_hi, dom_mm_len_lo, dom_mm_len_hi, 0x40, 0x7B,
-   		 0x13, 0x00, dom_t_len_lo, dom_t_len_hi, 0x00, 0x00, 0x00, 0x00,
-		 0x00, 0x00, dom_len_lo, dom_len_hi, 0x00) + dom + raw_string(0x00);
-		 
-  send(socket:soc, data:req);
-  r = smb_recv(socket:soc, length:4096);
-  if(strlen(r) < 88)return(FALSE);
-  #display(ord(r[88]), "\n");  
-  
-  _sid = "";
-  
-  for(i=0;i<28;i=i+1)
-  {
-   _sid = _sid + raw_string(ord(r[88+i]));
-   #display(hex(ord(r[88+i])),  " ");
-  }
-  #display("\n");
-  return(_sid);
-}
-
-
-#------------------------------------------------------#
-# Opens a policy handle to a given domain              #
-#------------------------------------------------------#
-function SamrOpenDomain(soc, tid, uid, pipe, samrhdl, sid)
-{
-
- #display("sid = ", strlen(sid), "\n");
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- 
- len = 132 + strlen(sid);
- len_h = len / 256;
- len_l = len % 256;
-
- tdc = 48 + strlen(sid);
- tdc_l = tdc % 256;
- tdc_h = tdc / 256;
- 
- bcc = tdc + 17;
- bcc_l = bcc % 256;
- bcc_h = bcc / 256;
- req = raw_string(0x00, 0x00,
- 		  0x00, 0xA0, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x4C, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x4C, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, 0x5D, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x33, 0x00, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x4C, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x34, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x07, 0x00) + samrhdl +
-	raw_string(0x00, 0x02, 0x00, 0x00) + sid;
-		  
-		  
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- if(strlen(r) < 30)
- 	return(FALSE);
-	
- #display(strlen(r),"\n");
- samrhdl = "";
- _len = strlen(r);
- _len = _len - 24;
- _z = 0;
- for(i=0;i<20;i=i+1)
- {
-  if(ord(r[i+_len]) == 0)_z = _z + 1;
-  samrhdl = samrhdl + raw_string(ord(r[i+_len]));
-  #display(hex(ord(r[i+_len])), " ");
- }
- #display("\n");
- #display("samhdl : ", strlen(samrhdl), "\n");
- if(_z == 20)return(NULL);
- 
- return(samrhdl);
-}		  
-
-
-#------------------------------------------------------#
-# NetUserModalsGet - does not work yet		       #
-#------------------------------------------------------#
-function SamrQueryDomainInfo(soc, tid, uid, pipe, samrhdl,  level)
-{
- #display("sid = ", strlen(sid), "\n");
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x82, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x2e, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x2e, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, 0x3f, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x45, 0x00, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x2E, 0x00,
-		  0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x16, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x08, 0x00) + samrhdl +
-	raw_string(level % 256, level / 256);
-		  
-		  
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- if(strlen(r) < 30)
- 	return(FALSE);
-
- return r;	
-}		  
-
-
-function SamrOpenBuiltin(soc, tid, uid, pipe, samrhdl)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
-
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x94, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x40, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x40, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, 0x51, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x40, 0x00,
-		  0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x28, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x07, 0x00) + samrhdl +
-       raw_string(            0x80, 0x02, 0x00, 0x00, 0x01, 0x00,
-       		  0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x05, 0x20, 0x00, 0x00, 0x00);
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- builtinhdl = "";
- _len = strlen(r);
- _len = _len - 24;
- _z  = 0;
- for(i=0;i<20;i=i+1)
- { 
-  if(ord(r[i+_len]) == 0)_z = _z + 1;
-  builtinhdl = builtinhdl + raw_string(ord(r[i+_len]));
-  #display(hex(ord(r[i+_len])), " ");
- }
- if(_z == 20)return(NULL);
-#display("\n");
-#display("builtinhdl : ", strlen(builtinhdl), "\n");
- return(builtinhdl);
- 
- 		  
-}
-
-
-#------------------------------------------------------#
-# Converts a username to its rid                       #
-#------------------------------------------------------#
-function SamrLookupNames(soc, uid, tid, pipe, name, domhdl)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- usr = samr_uc(name:name);
- len = 164 + strlen(usr);
- len_hi = len / 256;
- len_lo = len % 256;
-
- 
- 
- tdc = 80 + strlen(usr);
- tdc_l = tdc % 256;
- tdc_h = tdc / 256;
- 
- bcc = tdc + 17;
- bcc_l = bcc % 256;
- bcc_h = bcc / 256;
- 
- x = strlen(usr) / 2;
- x_h = x / 256;
- x_l = x % 256;
- 
- y = x + 1;
- y_h = y / 256;
- y_l = y % 256;
- 
- z = strlen(usr);
- z_l = z % 256;
- z_h = z / 256;
- 
- t = z + 2;
- t_l = t % 256;
- t_h = t / 256;
- 
- 
- req = raw_string(0x00, 0x00, 
- 		  len_hi, len_lo, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, tdc_l, tdc_h, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, tdc_l, tdc_h, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, bcc_l, bcc_h, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0xAF, 0x47, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, tdc_l, tdc_h,
-		  0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x44, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x11, 0x00) + domhdl +
-		  raw_string(0x01, 0x00, 0x00, 0x00, 0xE8, 0x03,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-		  0x00, 0x00, z_l, z_h, t_l, t_h, 0xD8, 0x0E, 
-		  0x41, 0x00, y_l, y_h, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, x_l, x_h, 0x00) + usr + 
-		  raw_string(0x00);
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);		
- 
- if(strlen(r) < 100)return(FALSE);
- 
- _rid = "";
-##display("RID : ");
- _z = 0;
- for(i=0;i<4;i=i+1)
- {
-  if(ord(r[96+i]) == 0)_z = _z + 1;
-#  ##display(hex(ord(r[96+i])), " ");
-  _rid = _rid + raw_string(ord(r[96+i]));
- }
-##display("\n");
- if(_z == 4)return(NULL);
- 
- return(_rid);
-}
-
-#--------------------------------------------------------#
-# Opens a policy handle to a given user                  #
-#--------------------------------------------------------#
-function SamrOpenUser(soc, uid, tid, pipe, samrhdl, rid)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- len = 176;
- len_hi = len / 256;
- len_lo = len % 256;
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x88, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x34, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x34, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, 0x45, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x33, 0x00, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x34, 0x00,
-		  0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x1c, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x22, 0x00) + samrhdl +
-	raw_string(0x1B, 0x01, 0x02, 0x00) + rid;
-
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- if(strlen(r) < 100)return(FALSE);
- 
- _usrhdl = "";
- _len = strlen(r);
- _len = _len - 24;
- #display("usrhdl = ");
- _z = 0;
- for(i=0;i<20;i=i+1)
- {
-  if(ord(r[i+_len]) == 0)_z = _z + 1;
-  _usrhdl = _usrhdl + raw_string(ord(r[i+_len]));
-  #display(hex(ord(r[i+_len])), " ");
- }
- 
- if(_z == 20)return(NULL);
- 
- #display("\n");
- return(_usrhdl);
-}
-
-#-------------------------------------------------------#
-# Requests the list of groups to which the user belongs #
-# to						        #
-#-------------------------------------------------------#
-
-function SamrQueryUserGroups(soc, uid, tid, pipe, usrhdl)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x80, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x2C, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x2C, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26, 
-		  0x00, pipe_lo, pipe_hi, 0x3D, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x2C, 0x00,
-		  0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x14, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x27, 0x00) + usrhdl;
-		  
- send(socket:soc, data:req);
- r = recv(socket:soc, length:4096); 
- 
- 
- num_lo = ord(r[88]);
- num_hi = ord(r[89]);
- 
- num = num_hi * 256;
- num = num + num_lo;
- 
- #
- # Ok. Our user is in <num> groups. Let's decode their RID
- #
- 
- if(strlen(r) < 103)
- 	return(FALSE);
- base = 100;
- rids = "";
- for(i=0;i<num;i=i+1)
- {
-  g_rid = string(hex(ord(r[base+3])), "-", 
-  	       hex(ord(r[base+2])), "-",
-	       hex(ord(r[base+1])), "-",
-	       hex(ord(r[base])));
-	   
-  base = base + 8;
-  rids = rids + g_rid + string("\n");
- }	
-  return(rids);
-}
-#------------------------------------------------------#
-# Queries information about a given user               #
-#------------------------------------------------------#
-function SamrQueryUserInfo(soc, uid, tid, pipe, usrhdl)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- req = raw_string(0x00, 0x00,
- 		  0x00, 0x82, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x2E, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x2E, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, 0x3F, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x33, 0x00, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x2E, 0x00,
-		  0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x16, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x24, 0x00) + usrhdl +
-		  raw_string(0x15, 0x00);
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- 		  
- return(r);
-}
-
-
-#-------------------------------------------------------#
-# Requests the list of aliases to which the user belongs #
-# to						        #
-#-------------------------------------------------------#
-
-
-function SamrQueryUserAliases(soc, uid, tid, pipe, usrhdl, sid, rid)
-{
- tid_hi = tid / 256;
- tid_lo = tid % 256;
- uid_hi = uid / 256;
- uid_lo = uid % 256;
- 
- pipe_hi = pipe / 256;
- pipe_lo = pipe % 256;
- 
- subsid = "";
- 
- for(i=0;i<20;i=i+1)
- {
-  subsid = subsid + raw_string(ord(sid[8+i]));
-  #display(hex(ord(sid[8+i])), " ");
- }
- #display("\n");
- 
- 
- 
- 
- req = raw_string(0x00, 0x00, 
- 		  0x00, 0xB0, 0xFF, 0x53, 0x4D, 0x42, 0x25, 0x00,
-		  0x00, 0x00, 0x00, 0x18, 0x07, 0xC8, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, tid_lo, tid_hi, 0x00, 0x28, uid_lo, uid_hi,
-		  g_mlo, g_mhi, 0x10, 0x00, 0x00, 0x5C, 0x00, 0x00,
-		  0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54,
-		  0x00, 0x5C, 0x00, 0x54, 0x00, 0x02, 0x00, 0x26,
-		  0x00, pipe_lo, pipe_hi, 0x6D, 0x00, 0x00, 0x5C, 0x00,
-		  0x50, 0x00, 0x49, 0x00, 0x50, 0x00, 0x45, 0x00,
-		  0x5C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00,
-		  0x00, 0x03, 0x10, 0x00, 0x00, 0x00, 0x5C, 0x00,
-		  0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x44, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x10, 0x00) + usrhdl +
-       raw_string(0x01, 0x00, 0x00, 0x00, 0x88, 0x7C,
-       	 	  0x13, 0x00, 0x01, 0x00, 0x00, 0x00, 0x98, 0x7C,
-		  0x13, 0x00, 0x05, 0x00, 0x00, 0x00, 0x01, 0x05,
-		  0x00, 0x00) + subsid + rid;
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:4096);
- 
- if(strlen(r) < 100){
- 	#display("=====>", strlen(r), "<====\n");
- 	return(FALSE);
-	}
- 
- 
- num_lo = ord(r[92]);
- num_hi = ord(r[93]);
- 
- num = num_hi * 256;
- num = num + num_lo;
- #display("NUM EGAL : ", num, "\n");
- base = 96;
- rids = "";
- for(i=0;i<num;i=i+1)
- {
-  _rid = string(hex(ord(r[base+3])), "-",
-  		hex(ord(r[base+2])), "-",
-		hex(ord(r[base+1])), "-",
-		hex(ord(r[base])));
-		
-  rids = rids + _rid + string("\n");		
-  base = base + 4;		
- }	  
- return(rids);
-}		
-
-
-function _ExtractTime(buffer, base)
-{
-if (strlen(buffer) < base + 8) return(FALSE);
-
- return(string(      hex(ord(buffer[base+7])), "-",
- 		     hex(ord(buffer[base+6])), "-",
-		     hex(ord(buffer[base+5])), "-",
-		     hex(ord(buffer[base+4])), "-",
-		     hex(ord(buffer[base+3])), "-",
-		     hex(ord(buffer[base+2])), "-",
-		     hex(ord(buffer[base+1])), "-",
-		     hex(ord(buffer[base]))));
-}
-
-
-#------------------------------------------------------#
-# Decodes the informations received about a given usr  #
-# This function is not part of MSDN, hence the under-  #
-# score in front of it                                 #
-#------------------------------------------------------#
-
-function _SamrDecodeUserInfo(info, count, type)
-{
- lim = strlen(info);
- 
- 
-
- if(strlen(info) < 100)
- 	return(FALSE);
-	
-
- #
- # Various times
- #
- 
- logon = _ExtractTime(buffer:info, base:92);
- #display("Logon time : ", logon, "\n");
- 
- set_kb_item(name:string("SMB/", type, "/", count, "/Info/LogonTime"),
- 	     value:logon);
-	     
- 
- logoff = _ExtractTime(buffer:info, base:100);
- #display("Logoff time : ", logoff, "\n");
-  set_kb_item(name:string("SMB/", type, "/", count, "/Info/LogoffTime"),
- 	     value:logoff);
-
- if(strlen(info) < 116)
- 	return(FALSE);
- 
-
- kickoff = _ExtractTime(buffer:info, base:108);
- #display("Kickoff time : ", kickoff, "\n");
-  set_kb_item(name:string("SMB/", type, "/", count, "/Info/KickoffTime"),
- 	     value:kickoff);
-	     
- base = 116;
- pass_last_set = _ExtractTime(buffer:info, base:116);
-
- if(strlen(info) < 124)
- 	return(FALSE);
- 
-
- #display("Pass last set : ", pass_last_set, "\n");		     
- set_kb_item(name:string("SMB/", type, "/", count, "/Info/PassLastSet"),
- 	     value:pass_last_set); 
-	     
-	     
- pass_can_change = _ExtractTime(buffer:info, base:124);
- #display("Pass can change : ", pass_can_change,"\n");
-  set_kb_item(name:string("SMB/", type, "/", count, "/Info/PassCanChange"),
- 	     value:pass_can_change);
- 
- pass_must_change = _ExtractTime(buffer:info, base:132);
- 
- #display("Pass must change : ", pass_must_change, "\n");
-  set_kb_item(name:string("SMB/", type, "/", count, "/Info/PassMustChange"),
- 	     value:pass_must_change);
- 
- #
- # ACB
- #
- 
- if(strlen(info) < 260)
- {
-  return(FALSE);
- }
- 
- acb_lo = ord(info[260]);
- acb_hi = ord(info[261]);
- acb = acb_hi * 256;
- acb = acb + acb_lo;
- #display("ACB : ", hex(acb), "\n");
- 
-  set_kb_item(name:string("SMB/", type, "/", count, "/Info/ACB"),
- 	     value:acb);
-	     
-	     
- #if(acb & 0x01)display("  Account is disabled\n");
- #if(acb & 0x04)display("  Password not required\n");
- #if(acb & 0x10)display("  Normal account\n");
- #if(acb & 0x0200)display("  Password does not expire\n");
- #if(acb & 0x0400)display("  Account auto-locked\n");
- #if(acb & 0x0800)display("  Password can't be changed\n");
-  
- #if(acb & 0x1000)display("  Smart card is required for interactive log on\n");
- #if(acb & 0x2000)display("  Account is trusted for delegation\n");
- #if(acb & 0x4000)display("  Account is sensitive an can not be delegated\n");
- #if(acb & 0x8000)display("  Use DES encryption type for this account\n");
- 
-}
-
-
-
-#-------------------------------------------------------------------#
-
-
-
-#
-# Open file <file>
-#
-function OpenAndX(socket, uid, tid, file)
-{
- local_var req, tid_lo, tid_hi, uid_lo, uid_hi, len_lo, len_hi, rep;
- local_var fid_lo, fid_hi;
- 
- 
- len_lo = (66 + strlen(file)) % 256;
- len_hi = (66 + strlen(file)) / 256;
- 
- tid_lo = tid % 256;
- tid_hi = tid / 256;
- 
- uid_lo = uid % 256;
- uid_hi = uid / 256;
- 
- bcc_lo = strlen(file) % 256;
- bcc_hi = strlen(file) / 256;
- 
- 
- req = raw_string(0x00, 0x00, len_hi, len_lo,   0xFF, 0x53,
- 		  0x4D, 0x42, 0x2D, 0x00, 0x00, 0x00, 0x00, 0x08,
-		  0x01, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, tid_lo, tid_hi,
-		  0x00, 0x28, uid_lo, uid_hi, g_mlo, g_mhi, 0x0F, 0xFF,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x06,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, bcc_lo, bcc_hi) + file +
-		  raw_string(0x00);
-
-
-
- send(socket:soc, data:req);
- rep = smb_recv(socket:socket, length:4096);
- if(strlen(rep) < 65)return(NULL);
- else
-  {
-   fid_lo = ord(rep[41]);
-   fid_hi = ord(rep[42]);
-   
-   return(fid_lo + (fid_hi * 256));
-  }
-}
-
-
-#
-# Read <count> bytes at offset <off>
-#
-function ReadAndX(socket, uid, tid, fid, count, off)
-{
- local_var r, req, uid_lo, uid_hi, tid_lo, tid_hi, fid_lo, fid_hi, off_hi, off_lo, ret, i;
- 
- uid_lo = uid % 256; uid_hi = uid / 256;
- tid_lo = tid % 256; tid_hi = tid / 256;
- fid_lo = fid % 256; fid_hi = fid / 256;
- cnt_lo = count % 256; cnt_hi = count / 256;
- 
- off_lo_lo = off % 256;  off /= 256;
- off_lo_hi = off % 256;  off /= 256;
- off_hi_lo = off % 256;  off /= 256;
- off_hi_hi = off;
- 
- req = raw_string(0x00, 0x00, 0x00, 0x37, 0xFF, 0x53,
- 		  0x4D, 0x42, 0x2E, 0x00, 0x00, 0x00, 0x00, 0x08,
-		  0x01, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, tid_lo, tid_hi,
-		  0x00, 0x28, uid_lo, uid_hi, g_mlo, g_mhi, 0x0A, 0xFF,
-		  0x00, 0x00, 0x00, fid_lo, fid_hi, off_lo_lo, off_lo_hi, off_hi_lo, 
-		  off_hi_hi, cnt_lo, cnt_hi, cnt_lo, cnt_hi, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
- 
- send(socket:socket, data:req);
- r = smb_recv(socket:socket, length:65535);
- ret = "";
- if(strlen(r) < 36 + 28)return(NULL);
- return substr(r, 35+28, strlen(r) - 1);	   
-}
-
-
-# Returns the size of the file pointed by <fid>
-function smb_get_file_size(socket, uid, tid, fid)
-{
- local_var r, req, uid_lo, uid_hi, tid_lo, tid_hi, fid_lo, fid_hi, ret;
- 
- uid_lo = uid % 256; uid_hi = uid / 256;
- tid_lo = tid % 256; tid_hi = tid / 256;
- fid_lo = fid % 256; fid_hi = fid / 256;
- 
- 
- req = raw_string(0x00, 0x00, 0x00, 0x48, 0xFF, 0x53,
- 		  0x4D, 0x42, 0x32, 0x00, 0x00, 0x00, 0x00, 0x08,
-		  0x01, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, tid_lo, tid_hi,
-		  0x00, 0x28, uid_lo, uid_hi, g_mlo, g_mhi, 0x0F, 0x04,
-		  0x00, 0x00, 0x00, 0x02, 0x00, 0x04, 0x11, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x04, 0x00, 0x44, 0x00, 0x00, 0x00, 0x48,
-		  0x00, 0x01, 0x00, 0x07, 0x00, 0x07, 0x00, 0x00,
-		  0x44, 0x20, fid_lo, fid_hi, 0x07, 0x01);
-		  
- send(socket:socket, data:req);
- r = smb_recv(socket:soc, length:4096);
- if(strlen(r) < 112) return -1;
- 
- ret = ord(r[115]);			
- ret = ret * 256 + ord(r[114]);		
- ret = ret * 256 + ord(r[113]);
- ret = ret * 256 + ord(r[112]);		
- 
- return ret;
-}
-
-#
-# Gives the listing in the pattern <pattern> 
-# If pattern is set to NULL, then we return the
-# content of the root (\*)
-#
-function FindFirst2(socket, uid, tid, pattern)
-{
- local_var uid_lo, uid_hi, tid_lo, tid_hi, r, r2;
- local_var t, nxt, off, name, ret, bcc, bcc_lo, bcc_hi;
- local_var len, len_lo, len_hi;
- local_var unicode_pattern, i;
- local_var data_off, data_off_lo, data_off_hi, bcc2, bcc2_lo, bcc2_hi;
- 
- 
- if(isnull(pattern))pattern = "\*";
- 
- for(i=0;i<strlen(pattern);i++)
- {
-  unicode_pattern += pattern[i] + raw_string(0);
- }
- unicode_pattern += raw_string(0, 0);
- 
- 
- ret = NULL;
- 
-  
- bcc = 15 + strlen(unicode_pattern);
- bcc2 = bcc - 3;
- len    = 80 + strlen(unicode_pattern);
- 
- uid_lo = uid % 256; uid_hi = uid / 256;
- tid_lo = tid % 256; tid_hi = tid / 256;
- bcc_lo = bcc % 256; bcc_hi = bcc / 256;
- bcc2_lo = bcc2 % 256; bcc2_hi = bcc2 / 256;
- len_lo = len % 256; len_hi = len / 256;
- 
- data_off = 80 + strlen(unicode_pattern);
- data_off_lo = data_off % 256; data_off_hi = data_off / 256;
- 
- req = raw_string(0x00, 0x00, len_hi, len_lo,   0xFF, 0x53,
- 		  0x4D, 0x42, 0x32, 0x00, 0x00, 0x00, 0x00, 0x08,
- 		  0x01, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, tid_lo, tid_hi,
-		  0x00, 0x28, uid_lo, uid_hi, g_mlo, g_mhi, 0x0F, bcc2_lo,
-		  bcc2_hi, 0x00, 0x00, 0x0A, 0x00, 0x04, 0x11, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, bcc2_lo, bcc2_hi, 0x44, 0x00, 0x00, 0x00, data_off_lo,
-		  data_off_hi, 0x01, 0x00, 0x01, 0x00, bcc_lo, bcc_hi, 0x00,
-		  0x44, 0x20, 0x16, 0x00, 0x00, 0x02, 0x06, 0x00,
-		  0x04, 0x01, 0x00, 0x00, 0x00, 0x00) + unicode_pattern;
-		  
- send(socket:soc, data:req);
- r = smb_recv(socket:soc, length:65535);
- if(strlen(r) < 80)return(NULL);
- 
- off = 72;
- while(TRUE)
- {
- t = 1;
- nxt = 0;
- 
- if(off + i + 4 > strlen(r))break;
- 
- for(i=0;i<4;i++)
- {
- nxt += ord(r[off+i]) * t;
- t *= 256;
- }
- 
- 
- 
- t = 1;
- len = 0;
- 
- if( off+4+4+8+8+8+8+8+8+4+i+4 > strlen(r))break;
- 
- for(i=0;i<4;i++)
- {
- len += ord(r[off+4+4+8+8+8+8+8+8+4+i]) * t;
- t *= 256;
- }
-
-
- if(len > strlen(r))break;
- 
- name = NULL;
- 
- if(off+4+4+8+8+8+8+8+8+4+4+4+1+1+24+i+len >  strlen(r)) break;
- for(i=0;i<len;i+=2)
- {
- name += r[off+4+4+8+8+8+8+8+8+4+4+4+1+1+24+i];
- }
- 
- #display("name = ", name, "\n");
- if( !isnull(name))
- {
- if(isnull(ret))
-   	ret = make_list(name);
- else
- 	ret = make_list(ret, name);
- }
- 
- off = off + nxt;
- if(nxt == 0)break;
- if((off >= strlen(r)) || off < 0 )return ret;
- }
-
- return ret;
-}

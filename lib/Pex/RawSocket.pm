@@ -16,7 +16,6 @@
 # + Cygwin (1.5.x)
 # + Mac OS X (10.3.3)
 #
-#
 
 package Pex::RawSocket;
 use Socket;
