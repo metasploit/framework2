@@ -517,7 +517,14 @@ sub xCheckSystemCommand
 {
     my $cmd = shift;
     return(1) if -e $cmd;
-    foreach my $d (split(/:/, $ENV{'PATH'})) { return(1) if -x "$d/$cmd" }
+    foreach my $d (split(/:/, $ENV{'PATH'})) { 
+    
+        if ($^O eq 'cygwin') {
+            return(1) if -e "$d/$cmd";
+        } else {
+            return(1) if -x "$d/$cmd";
+        }
+    }
     return(0);
 }
 
