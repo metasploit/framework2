@@ -69,6 +69,9 @@ sub DumpPayloads {
   my $payloads = shift;
   my $col = Msf::ColPrint->new(2, 4);
   foreach my $key (sort(keys(%{$payloads}))) {
+    # no neccesary right now, but just to support the oo stuff in the future
+    $payloads->{$key}->_Load;
+
     $col->AddRow($key,
       $payloads->{$key}->Name);
   }
@@ -198,7 +201,7 @@ sub DumpExploitSummary {
 sub DumpPayloadSummary {
   my $self = shift;
   my $p = shift;
-  # XXX not sure if this is still needed, stupid dynamic oo stuff :\
+  # dynamic oo stuff, make sure inheritence is setup right
   $p->_Load;
   my $output;
 
@@ -419,7 +422,6 @@ sub Check {
 sub Exploit {
   my $self = shift;
   my $exploit = $self->GetTempEnv('_Exploit');
-#  $exploit = $self->ModuleName($exploit)->new;
 
   my $payload = $self->GetTempEnv('_Payload');
   $payload->_Load if($payload);
