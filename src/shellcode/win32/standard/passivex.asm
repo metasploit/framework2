@@ -132,12 +132,12 @@ set_values:
 	call  [ebp + 0x8]
 	jmp   set_values
 
-; This is NT specific, but it lets us execute explorer regardless
+; This is NT specific, but it lets us execute iexplore regardless
 ; of what drive it's installed on so long as it's on the same drive
 ; as the WINDOWS directory, which it should always be.
 fixup_drive_letter:
-	mov   al, byte [0x7ffe0030]
-	mov   byte [esi], al
+	mov   cl, byte [0x7ffe0030]
+	mov   byte [esi], cl
 
 initialize_structs:
 	push  byte 0x54
