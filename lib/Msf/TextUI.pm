@@ -33,6 +33,7 @@ sub new {
   return($self);
 }
 
+# ugly and ghetto, w00t
 sub WordWrap {
   # We stole this from somewhere
   my $self = shift;
@@ -40,9 +41,14 @@ sub WordWrap {
   my $indent = @_ ? shift : 4;
   my $size = @_ ? shift : 60;
   $indent = " " x $indent;
-  $text =~ s/(?:^|\G\n?)(?:(.{1,$size})(?:\s|\n|$)|(\S{$size})|\n)/$1$2\n/sg;
-  $text =~ s/\n/\n$indent/g;
-  return($text);
+  my $fullText;
+  foreach my $text (split("\n\n", $text)) {
+    $text =~ s/(?:^|\G\n?)(?:(.{1,$size})(?:\s|\n|$)|(\S{$size})|\n)/$1$2\n/sg;
+    $text =~ s/^/$indent/gm;
+    $fullText .= $text . "\n";
+  }
+  substr($fullText, -1, 1, '');
+  return($fullText);
 }
 
 sub DumpExploits {
@@ -147,7 +153,7 @@ sub DumpExploitSummary {
   }
 
   my $desc = $self->WordWrap($exploit->Description, 4, 60);
-  $output .= "Description:\n    $desc\n";
+  $output .= "Description:\n$desc\n";
   
   $output .= "References:\n";
   foreach (@{$exploit->Refs}) { $output .= "    " . $_ . "\n" }

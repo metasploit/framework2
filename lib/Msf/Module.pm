@@ -86,11 +86,19 @@ sub Refs        { my $self = shift; return($self->Info->{'Refs'}); }
 
 sub Description {
   my $self = shift;
-  my $desc = $self->Info->{'Description'};
-  $desc =~ s/^\s+//gm;
-  $desc =~ s/\s+$//gm;
-  $desc =~ s/\s+/ /gm;
-  return($desc);
+  return($self->Freeform($self->Info->{'Description'}));
+}
+
+# This is ugly, it sucks, just ignore it
+sub Freeform {
+  my $self = shift;
+  my $data = shift;
+  $data =~ s/^\s+//g;
+  $data =~ s/\s+$//g;
+  $data =~ s/^[ \t]+//gm;
+  $data =~ s/[ \t]+$//gm;
+  $data =~ s/(\n+)/length($1) == 1 ? " " : "\n" x length($1)/eg;
+  return($data);
 }
 
 sub Loadable {
