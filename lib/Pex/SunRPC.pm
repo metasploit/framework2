@@ -32,8 +32,10 @@ use constant MSG_ACCEPTED	=> 0;
 
 use constant SUCCESS		=> 0;
 
+
+# XXX: Support in coming frags
 sub Clnt_create {
-	my ($arg, $host, $port, $prog, $vers, $proto_req) = @_;
+	my ($arg, $host, $port, $prog, $vers, $proto_init, $proto_req) = @_;
 
 	my $req;
 	if($proto_req eq "udp")
@@ -49,14 +51,9 @@ sub Clnt_create {
 		return -1;
 	}
 
-	my $sock = Msf::Socket::Udp->new
-	(
-		'PeerAddr'   => $host,
-		'PeerPort'   => $port,
-	);
-	if($sock->IsError)
+	my $sock;
+	if(($sock = MakeSock($proto_init, $host, $port)) == -1)
 	{
-# XXX: A little warning would be nice.
 		return -1;
 	}
 
@@ -76,9 +73,10 @@ sub Clnt_create {
 		Pex::XDR::Encode_int($req).			# Requested Protocol
 		Pex::XDR::Encode_vopaque(undef);		# Supplemental Arguments.
 
-	$sock->Send($request);
-	my $reply = $sock->Recv(-1, 5);
-	$sock->Close();
+# XXX: Error checking?
+	SendData($sock, $proto_init, $request, $arg);
+	my $reply = RecvData($sock, $proto_init);
+	CloseSock($sock);
 
 	if(length($reply) < 20 ||
 		unpack("N", substr($reply, 8, 4)) != MSG_ACCEPTED ||
@@ -107,11 +105,70 @@ sub Clnt_create {
 	return 0;
 }
 
+sub Clnt_call {
+	my ($arg, $procedure, $data) = @_;
+
+	my $sock = $arg->{'sock'};
+	if($sock == -1)
+	{
+		if(($arg->{'sock'} = $sock = MakeSock($arg->{'protocol'}, $arg->{'rhost'}, $arg->{'rport'})) == -1)
+		{
+			return -1;
+		}
+	}
+
+	my $request =
+		Pex::XDR::Encode_int(rand(0xffffffff)).		# XID
+		Pex::XDR::Encode_int(CALL).			# CALL
+		Pex::XDR::Encode_int(2).			# RPC Version
+		Pex::XDR::Encode_int($arg->{'rpc_prog'}).	# Program 
+		Pex::XDR::Encode_int($arg->{'rpc_vers'}).	# Program Version 
+		Pex::XDR::Encode_int($procedure).		# Program Procedure 
+		Pex::XDR::Encode_int($arg->{'auth_type'}).	# Authentication Flavor
+		Pex::XDR::Encode_vopaque($arg->{'auth_data'}, 400).	# Authentication Body	
+		Pex::XDR::Encode_int(AUTH_NULL).		# Verification Flavor
+		Pex::XDR::Encode_vopaque(undef, 400).		# Verification Body	
+		$data;						# Procedure Arguments.
+
+# XXX: Error checking?
+	SendData($sock, $arg->{'protocol'}, $request, $arg);
+	my $reply = RecvData($sock, $arg->{'protocol'});
+
+	if(length($reply) < 20 ||
+		unpack("N", substr($reply, 8, 4)) != MSG_ACCEPTED ||
+		unpack("N", substr($reply, 16, 4)) != SUCCESS)
+	{
+		return -1;
+	}
+
+	$arg->{'data'} = "";
+	if(length($reply) >= 24)
+	{
+		$arg->{'data'} = substr($reply, 24);
+	}
+
+	return 0;
+}
+
+sub Clnt_destroy {
+	my ($arg) = @_;
+
+	if($arg->{'sock'} != -1)
+	{
+		CloseSock($arg->{'sock'});
+	}
+
+	foreach(keys %{$arg})
+	{
+		delete($arg->{$_});
+	}
+}
+
 sub Authnull_create {
 	my $arg = shift;
 
-	%$arg->{'auth_type'} = AUTH_NULL;
-	%$arg->{'auth_data'} = "";
+	$arg->{'auth_type'} = AUTH_NULL;
+	$arg->{'auth_data'} = "";
 
 	return 0;
 }
@@ -119,8 +176,8 @@ sub Authnull_create {
 sub Authunix_create {
 	my ($arg, $hostname, $uid, $gid, $gids) = @_;
 
-	%$arg->{'auth_type'} = AUTH_UNIX;
-	%$arg->{'auth_data'} =
+	$arg->{'auth_type'} = AUTH_UNIX;
+	$arg->{'auth_data'} =
 		Pex::XDR::Encode_int(time() + 20001).		# stamp
 		Pex::XDR::Encode_string($hostname, 255).	# hostname
 		Pex::XDR::Encode_int($uid).			# Remote UID
@@ -131,104 +188,96 @@ sub Authunix_create {
 	return 0;
 }
 
-sub Clnt_call {
-	my ($arg, $procedure, $data) = @_;
 
-	my $sock = %$arg->{'sock'};
 
-	if($sock == -1)
+sub MakeSock {
+	my ($proto_init, $h, $p, $args) = @_;
+
+	my %sock_args = (
+		'PeerAddr' => $h,
+		'PeerPort' => $p,
+	);
+
+	my $sock;
+	if($proto_init eq "tcp")
 	{
-		if(%$arg->{'protocol'} eq "tcp")
-		{
-			$sock = Msf::Socket::Tcp->new
-			(
-				'PeerAddr'   => %$arg->{'rhost'},
-				'PeerPort'   => %$arg->{'rport'},
-			);
-		}
-		elsif(%$arg->{'protocol'} eq "udp")
-		{
-			$sock = Msf::Socket::Udp->new
-			(
-				'PeerAddr'   => %$arg->{'rhost'},
-				'PeerPort'   => %$arg->{'rport'},
-			);
-		}
-		else
-		{
-# XXX: A little warning would be nice.
-			return -1;
-		}
-
-		if($sock->IsError)
-		{
-			return -1;
-		}
-
-		%$arg->{'sock'} = $sock;
+		$sock = Msf::Socket::Tcp->new
+		(
+			%sock_args
+		);
 	}
-
-	my $request =
-		Pex::XDR::Encode_int(rand(0xffffffff)).		# XID
-		Pex::XDR::Encode_int(CALL).			# CALL
-		Pex::XDR::Encode_int(2).			# RPC Version
-		Pex::XDR::Encode_int(%$arg->{'rpc_prog'}).	# Program 
-		Pex::XDR::Encode_int(%$arg->{'rpc_vers'}).	# Program Version 
-		Pex::XDR::Encode_int($procedure).		# Program Procedure 
-		Pex::XDR::Encode_int(%$arg->{'auth_type'}).	# Authentication Flavor
-		Pex::XDR::Encode_vopaque(%$arg->{'auth_data'}, 400).	# Authentication Body	
-		Pex::XDR::Encode_int(AUTH_NULL).		# Verification Flavor
-		Pex::XDR::Encode_vopaque(undef, 400).		# Verification Body	
-		$data;					# Procedure Arguments.
-
-	$sock->Send(Pex::XDR::Encode_int(0x80000000 | length($request)) . $request);
-	my $reply = $sock->Recv(-1, 5);
-
-	if(length($reply) < 24 ||
-		unpack("N", substr($reply, 12, 4)) != MSG_ACCEPTED ||
-		unpack("N", substr($reply, 20, 4)) != SUCCESS)
+	elsif($proto_init eq "udp")
 	{
+		$sock = Msf::Socket::Udp->new
+		(
+			%sock_args
+		);
+	}
+	else
+	{
+# XXX: A little warning would be nice.
 		return -1;
 	}
 
-	%$arg->{'data'} = "";
-	if(length($reply) >= 28)
-	{
-		%$arg->{'data'} = substr($reply, 28);
-	}
-
-	return 0;
-}
-
-sub Clnt_destroy {
-	my ($arg) = @_;
-
-	if(%$arg->{'sock'} != -1)
-	{
-		%$arg->{'sock'}->Close();
-	}
-
-	foreach(keys %{$arg})
-	{
-		delete(%$arg->{$_});
-	}
-}
-
-
-
-
-
-sub Portmap_request {
-	my ($host, $port, $vers, $proc, $data) = @_;
-
-	my $sock = Msf::Socket::Udp->new
-	(
-		'PeerAddr'   => $host,
-		'PeerPort'   => $port,
-	);
 	if($sock->IsError)
 	{
 # XXX: A little warning would be nice.
+		return -1;
+	}
+
+	return $sock;
+}
+
+sub SendData {
+	my ($sock, $proto, $data, $arg) = @_;
+
+	if($proto eq "udp")
+	{
+		$sock->Send($data);
+	} 
+	elsif($proto eq "tcp")
+	{
+# Assumes length($data) <= 0x7fffffff
+		$data =
+			Pex::XDR::Encode_int(0x80000000 | length($data)).
+			$data;
+		$sock->Send($data);
+	}
+	else
+	{
+# XXX: A little warning would be nice.
+		return -1;
+	}
+}
+
+sub RecvData {
+	my ($sock, $proto) = @_;
+
+	my $data = $sock->Recv(-1, 5);
+
+	if($proto eq "tcp" && length($data) >= 4)
+	{
+		$data = substr($data, 4);
+	}
+
+	return $data; 
+}
+
+sub CloseSock {
+	my ($sock) = @_;
+
+	$sock->Close();
+}
+
+
+
+# XXX: REDO THIS! Parse incoming data.
+sub Portmap_request {
+	my ($host, $port, $vers, $proc, $data) = @_;
+
+	my $sock;
+	if(($sock = MakeSock("udp", $host, $port)) == -1)
+	{
 		return -1;
 	}
 
@@ -245,39 +294,43 @@ sub Portmap_request {
 		Pex::XDR::Encode_vopaque(undef, 400).		# Verification Body	
 		$data;
 
-	$sock->Send($request);
-	my $reply = $sock->Recv(-1, 5);
-	$sock->Close();
+	my %empty;
+	SendData($sock, "udp", $request, \%empty);
+	my $reply = RecvData($sock, "udp");
+	CloseSock($sock);
 
 	return $reply;
 }
 
-my %services = (
-	'portmap'	=> 100000,
-	'rstatd'	=> 100001,
-	'rusersd'	=> 100002,
-	'walld'		=> 100008,
-	'rquotad'	=> 100011,
-	'sprayd'	=> 100012,
-						# 24, Linux: statd, Solaris: status
-	'keyserv'	=> 100029,		#
-	'cmsd'		=> 100068,		#
-	'ttdbserverd'	=> 100083,		#
-	'KCMS'		=> 100221,		#
-	'sadmind'	=> 100232,		#
-	'snmpXdmid'	=> 100249,		#
-);
 
-sub Program2name {
+
+
+
+# 395658
+# sgi_printer?!
+
+sub Program2Name {
 	my $request = shift;
 
-	foreach(keys %services)
+	open RPCN, "data/rpc_names" || die "open failed";
+
+	while(<RPCN>)
 	{
-		if($services{$_} == $request)
+		if(!$_ || $_ =~ /^#/)
 		{
-			return $_;
+			next;
+		}
+
+		if($_ =~ /^(.+?)(\s+)(\d+)(.*)$/)
+		{
+			if($request == $3)
+			{
+				return $1;
+			}
 		}
 	}
+
+	return "UNKNOWN-$request";
 }
 
 1;

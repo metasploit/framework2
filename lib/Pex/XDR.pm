@@ -56,7 +56,16 @@ sub Decode_bool {
 	return $int;
 }
 
-# XXX: Encode_lchar (and use it where needed)
+sub Encode_lchar {
+	my $char = shift;
+
+	if($char & 0x80)
+	{
+		$char |= 0xffffff00;
+	}
+
+	return pack("N", $char);
+}
 sub Decode_lchar {
 	my $str_ref = shift;
 
