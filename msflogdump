@@ -16,10 +16,12 @@
 use Getopt::Std;
 use strict;
 
+my $VERSION = '$Revision$';
 
 my %opts;
-getopts('h', \%opts);
+getopts('hv', \%opts);
 
+Version() if($opts{'v'});
 if ($opts{'h'} || ! scalar(@ARGV)) {
     Usage();
 }
@@ -59,6 +61,15 @@ sub HexToAscii {
 }
 
 sub Usage {
-    print STDERR "\nUsage: $0 <log1> ... <log99>\n";
+    print STDERR "\nUsage: $0 <log1> ... <log99>\n\n";
     exit(0);
+}
+
+sub Version {
+    print STDERR qq{
+   Framework Version:  Doesn't use Msf Framework
+  Msflogdump Version:  $VERSION
+
+};
+  exit(0);
 }
