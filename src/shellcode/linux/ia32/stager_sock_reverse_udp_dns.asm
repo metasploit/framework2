@@ -68,12 +68,11 @@ write:
 	inc  dh
 	push edx              ; q.qdcount = 1, q.ancount = 0
 	mov  dh, 0x4
+	xchg al, dh
 	push dx               ; q.flags = 0x4 (AA)
 	push si               ; q.id = non-deterministic
 	mov  ecx, esp
-	cdq
 	mov  dl, 0x19
-	mov  al, 0x4
 	int  0x80
 
 read:
