@@ -447,4 +447,13 @@ sub FormatOverwrite {
   return($string);
 }
 
+# Dword (32-bit) add
+# Add some perl numbers, dropping the overflow.
+sub DwordAdd {
+  my $num1 = shift;
+  my $num2 = shift;
+  print "Add: $num1 $num2\n";
+  return(($num1 + $num2) % 4294967296);
+}
+
 1;
