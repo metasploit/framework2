@@ -6,7 +6,6 @@ use Msf::Nop;
 use Msf::EncodedPayload;
 use File::Spec::Functions;
 
-
 my $envDebug = 0;
 
 sub new {
