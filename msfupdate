@@ -455,7 +455,7 @@ sub Hashit {
     my $data = shift;
     my $hash = {};
     foreach my $line (split(/\n/, $data)) {
-        my ($md5, $path) = split(/\s+/, $line);
+        my ($md5, $path) = $line =~ m/^([^\s]+)\s+(.*)/g;
         $hash->{$path} = $md5;
     }
     return $hash;
