@@ -168,18 +168,21 @@ sub Close {
 sub Send {
   my $self = shift;
   my $data = shift;
-  my $delay = @_ ? shift : .1;
+  my $delay = @_ ? shift : 0.25;
 
   return if($self->GetError);
 
-  my $failed = 5;
+  # Retry limit is based on the original data size
+  my $failed = 12 + int(length($data) / 1024);
+  
   while(length($data)) {
     return if($self->SocketError);
 
     my $sent = $self->_DoSend($data);
 
     last if($sent == length($data));
-
+    last if($sent == -1);
+	
     if(!$sent) {
       if(!--$failed) {
         $self->SetError("Send retry limit reached.");
@@ -196,15 +199,18 @@ sub Send {
 
 sub _DoSend {
   my $self = shift;
+  my $data = shift;
   return if(!$self->Socket->connected);
   
   my $bytes;
-  eval {
-    $bytes = $self->Socket->send(@_);
-  };
+  eval { $bytes = $self->Socket->send($data, @_) };
+  
+  if ($@) {
+    $self->SetError("Socket error: $@");
+    return -1;
+  }
 
-  return if(length($@));
-  return($bytes);
+  return $bytes;
 }
 
 
