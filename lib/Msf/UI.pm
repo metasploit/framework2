@@ -27,7 +27,7 @@ sub _ConfigFile {
 
 sub _Initalize {
   my $self = shift;
-  $self->{'Config'} = Msf::Config->new($self->{'ConfigDir'});
+  $self->{'Config'} = { }
 }
 
 sub Config {
