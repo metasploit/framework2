@@ -497,7 +497,7 @@ Please see docs/QUICKSTART.cygwin for more info.
 
 
 sub BrokenUTF8 {
-	if ( $] > 5.008 && $] < 5.008002 )
+	if ( $] >= 5.008 && $] < 5.008002 )
 	 {
 	 	my $badver;
 		
