@@ -85,20 +85,30 @@ sub GetProxies {
   return($self->{'Proxies'});
 }
 
-sub AddProxies {
+sub AddProxy {
   my $self = shift;
-  while(@_ >= 3) {
-    my $type = shift;
-    my $ip = shift;
-    my $port = shift;
-#    if($type eq 'Socks4' || $type eq 'Socks5') {
-#      if(!$SOCKS_SUPPORT) {
-#        $self->SetError('A Socks proxy is set, but Net::SOCKS has not been installed.');
-#        return;
-#      }
-#      push(@{$self->['Proxies']}, [ $type, $ip, $port ]);
-#    }
+  my ($type, $addr, $port) = @_;
+
+  if (! defined($type) || ! defined($addr) || ! defined($port))
+  {
+    $self->SetError('Invalid proxy value specified');
+    return;
   }
+
+  if ($type eq 'http')
+  {
+    push @{$self->{'Proxies'}}, [ $type, $addr, $port ];
+    return(1);
+  }
+  
+  if ($type eq 'socks4')
+  {
+    push @{$self->{'Proxies'}}, [ $type, $addr, $port ];
+    return(1);
+  }
+  
+  $self->SetError('Invalid proxy type specified');
+  return;
 }
 
 sub SetTimeout {
@@ -205,18 +215,20 @@ sub TcpConnectSocket {
     return;
   }
 
-  # Proxy stuff goes here, currently unsupported.
-
-  my %config = (
-    'PeerAddr'  => $host,
-    'PeerPort'  => $port,
-    'Proto'     => 'tcp',
-    'ReuseAddr' => 1,
-  );
-
-  $config{'LocalPort'} = $localPort if($localPort);
-
-  my $sock = IO::Socket::INET->new(%config);
+  my $sock;
+  if ($proxies) {
+    $sock = $self->ConnectProxies($host, $port);
+  } 
+  else {
+    my %config = (
+      'PeerAddr'  => $host,
+      'PeerPort'  => $port,
+      'Proto'     => 'tcp',
+      'ReuseAddr' => 1,
+    );
+    $config{'LocalPort'} = $localPort if($localPort);
+    $sock = IO::Socket::INET->new(%config);  
+  }
 
   if(!$sock || !$sock->connected) {
     $self->SetError('Connection failed: ' . $!);
@@ -454,4 +466,40 @@ sub SSLRead {
   }
 }
 
+sub ConnectProxies {
+    my $self = shift;
+    my ($host, $port) = @_;
+    my @proxies = @{$self->GetProxies};
+    my ($base, $sock);
+
+    $base = shift(@proxies);
+    push @proxies, ['final', $host, $port];
+    
+    $sock = IO::Socket::INET->new (
+        'PeerAddr'  => $base->[1],
+        'PeerPort'  => $base->[2],
+        'Proto'     => 'tcp',
+        'ReuseAddr' => 1, 
+    );
+    return undef if ! $sock;
+    
+    my $lastproxy = $base;
+    foreach my $proxy (@proxies) 
+    {
+    
+        if ($lastproxy->[0] eq 'http') {
+            $sock->send("CONNECT ".$proxy->[1].":".$proxy->[2]." HTTP/1.0\r\n\r\n");
+        }
+        
+        if ($lastproxy->[0] eq 'socks4') {
+            $sock->send("\x04\x01".pack('n',$proxy->[2]).gethostbyname($proxy->[1])."\x00");
+            $sock->recv(my $res, 8); # response always 8 bytes?
+        }
+        
+        return undef if ! $sock->connected;
+        last if $proxy->[0] eq 'final';
+        $lastproxy = $proxy;
+    }
+    return $sock;
+}
 1;
