@@ -52,6 +52,7 @@ my $table = [
 	[ \&InsArithmetic, [ 0, 28 ], ],			# subxcc
 	[ \&InsArithmetic, [ 0, 32 ], ],			# taddcc
 	[ \&InsArithmetic, [ 0, 33 ], ],			# tsubcc
+	[ \&InsArithmetic, [ 0, 36 ], ],			# mulscc
 	[ \&InsArithmetic, [ 2, 37 ], ],			# sll
 	[ \&InsArithmetic, [ 2, 38 ], ],			# srl
 	[ \&InsArithmetic, [ 2, 39 ], ],			# sra
@@ -73,8 +74,6 @@ my $table = [
 	[ \&InsBranch, [ 13 ] ],				# bcc[,a]
 	[ \&InsBranch, [ 14 ] ],				# bpos[,a]
 	[ \&InsBranch, [ 15 ] ],				# bvc[,a]
-# XXX: This was taken out for safety.
-#	[ \&InsArithmetic, [ 0, 36 ], ],			# mulscc
 # Removed for SPARCV7 support
 #	[ \&InsArithmetic, [ 0, 10 ], ],			# umul 
 #	[ \&InsArithmetic, [ 0, 11 ], ],			# smul 
