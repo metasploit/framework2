@@ -11,7 +11,7 @@ my $bmb = 'Pex::Poly::BlockMaster::Block';
 my $bm = 'Pex::Poly:BlockMaster';
 
 my $advanced = {
-  'EncodeEnd' => [1, 'Encode last 4 bytes of decoder'],
+  'DebugEnd' => [0, 'Don\'t encode the last 4 bytes.  The encoded payload won\'t be functional.'],
 };
 
 my $info = {
@@ -31,8 +31,8 @@ sub new {
 
 sub EncodePayload {
   my $self = shift;
-  return($self->_EncodeSelfEnd(@_)) if($self->GetLocal('EncodeEnd'));
-  return($self->_EncodeNormal(@_));
+  return($self->_EncodeNormal(@_)) if(!$self->GetLocal('DebugEnd'));
+  return($self->_EncodeSelfEnd(@_));
 }
 sub _BuildDelta {
   my $self = shift;

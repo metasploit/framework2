@@ -52,7 +52,7 @@ foreach my $key (keys(%{$encodersIndex})) {
 
 $ui->SetTempEnv('_Encoders', $encodersIndex);
 
-getopts("i:a:o:t:b:e:s:lh", \%opts);
+getopts("i:a:o:t:b:e:s:lhn:", \%opts);
 
 foreach my $opt (@ARGV) {
   $ui->SetTempEnv(split('=', $opt));
@@ -60,6 +60,11 @@ foreach my $opt (@ARGV) {
 
 if ($opts{'h'}) {
     Usage();
+}
+if($opts{'n'}) {
+  my $encoder = $opts{'n'};
+  Fatal('Invalid encoder specified') if(!exists($encoders->{$encoder}));
+  Info($encoders->{$encoder});
 }
 
 if ($opts{'i'} && ! -r $opts{'i'}) {
@@ -182,6 +187,11 @@ sub Fatal {
     exit(0);
 }
 
+sub Info {
+  my $encoder = shift;
+  print "\n" . $ui->DumpEncoderSummary($encoder);
+  exit(0);
+}
 
 sub Usage {
     print STDERR qq{
@@ -195,7 +205,7 @@ Options:
          -b <chars>     The characters to avoid: '\\x00\\xFF'
          -s <size>      Maximum size of the encoded data
          -e <encoder>   Try to use this encoder first
-         -n <encoder>   Dump encoder info
+         -n <encoder>   Dump Encoder Information
          -l             List all available encoders
          
 };

@@ -113,7 +113,7 @@ sub DumpAdvancedOptions {
         $output .= "\n\n";
       }
       $output .= "${indent}Name:     $opt\n${indent}Default:  " . $object->GetLocal($opt) . "\n";
-      $output .= "\n${indent}" . $self->WordWrap($options->{$opt}->[1], 2, 60);
+      $output .= "\n" . $self->WordWrap($options->{$opt}->[1], 4, 60);
 
     }
     $output .= "\n" if(@_);
@@ -197,7 +197,6 @@ sub DumpEncoderSummary {
   $output .= "       Name: " . $e->Name . "\n";
   $output .= "    Version: ".  $e->Version . "\n";
   $output .= "     OS/CPU: " . join(", ", @{$e->OS}) . "/" . join(", ", @{$e->Arch}) . "\n";
-  $output .= " Total Size: " . $e->Size . "\n";
   $output .= "\n";
 
   $output .= "Provided By:\n";
