@@ -1,6 +1,8 @@
 Pre-Release Tasks
 ==================
 
+ - Fix /usr/bin/env errors for Solaris / perl 5.6
+
  - Finish writing msfencode 
  
  - Finish writing and testing new handler system
