@@ -15,7 +15,6 @@
 ##
 
 package Msf::Nop;
-$VERSION = 2.0;
 use strict;
 use base 'Msf::Module';
 

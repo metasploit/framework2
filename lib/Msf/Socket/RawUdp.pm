@@ -15,7 +15,6 @@
 ##
 
 package Msf::Socket::RawUdp;
-$VERSION = 2.0;
 use strict;
 use base 'Msf::Socket::RawUdpBase', 'Pex::Socket::RawUdp', 'Msf::Module';
 

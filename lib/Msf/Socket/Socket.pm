@@ -15,7 +15,6 @@
 ##
 
 package Msf::Socket::Socket;
-$VERSION = 2.0;
 use strict;
 use base 'Msf::Socket::SocketBase', 'Pex::Socket::Socket', 'Msf::Module';
 

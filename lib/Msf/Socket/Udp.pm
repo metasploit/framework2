@@ -15,7 +15,6 @@
 ##
 
 package Msf::Socket::Udp;
-$VERSION = 2.0;
 use strict;
 use base 'Msf::Socket::UdpBase', 'Pex::Socket::Udp', 'Msf::Module';
 

@@ -15,7 +15,6 @@
 ##
 
 package Msf::Socket::SSLTcp;
-$VERSION = 2.0;
 use strict;
 use base 'Msf::Socket::SSLTcpBase', 'Pex::Socket::SSLTcp', 'Msf::Module';
 

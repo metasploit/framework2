@@ -15,7 +15,6 @@
 ##
 
 package Msf::Socket::SSLTcpBase;
-$VERSION = 2.0;
 use strict;
 use base 'Msf::Socket::TcpBase';
 

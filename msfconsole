@@ -499,7 +499,7 @@ sub mShow
         return;
     }
 
-    xMsg("show", "requires an option, either 'exploits', 'payloads', 'encoders', or 'nops'");
+    xMsg("show", "requires an option: 'exploits', 'payloads', 'encoders', or 'nops'");
 }
 
 
@@ -511,7 +511,7 @@ sub eShow
     if (lc($args[0]) eq 'targets')  { eTargets();  return }
     if (lc($args[0]) eq 'payloads') { ePayloads(); return }
 
-    xMsg("show", "specify 'options', 'advanced', 'targets', or 'payloads'");
+    xMsg("show", "specify 'targets', 'payloads', 'options', or 'advanced'");
 
 }
 
