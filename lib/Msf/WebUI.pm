@@ -6,8 +6,8 @@
 #       Author: spoonm <ninjatools [at] hush.com>
 #       Author: H D Moore <hdm [at] metasploit.com>
 #      Version: $Revision$
-#  Description: Instantiable class derived from UI with methods useful to
-#               text-based user interfaces.
+#  Description: Instantiable class derived from TextUI with methods useful to
+#               web-based user interfaces.
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework
