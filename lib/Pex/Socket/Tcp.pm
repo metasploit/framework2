@@ -233,7 +233,7 @@ sub _UnitTestGoogle {
     return;
   }
 
-  my $data = $sock->Recv(-1, 5);
+  $data = $sock->Recv(-1, 5);
   if(!length($data) || $sock->IsError) {
     print STDOUT "Error in Recv: " . $sock->GetError . "\n";
     return;
@@ -249,7 +249,7 @@ sub _UnitTestGoogle {
 
   print STDOUT "Trying a Recv timeout.\n";
 
-  my $data = $sock->Recv(-1, 2);
+  $data = $sock->Recv(-1, 2);
   if(!length($data) || $sock->IsError) {
     print STDOUT "Error in Recv: " . $sock->GetError . "\n";
   }
@@ -258,7 +258,7 @@ sub _UnitTestGoogle {
 
   print STDOUT "Trying a default Recv timeout.\n";
 
-  my $data = $sock->Recv(-1);
+  $data = $sock->Recv(-1);
   if(!length($data) || $sock->IsError) {
     print STDOUT "Error in Recv: " . $sock->GetError . "\n";
   }

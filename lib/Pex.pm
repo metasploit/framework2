@@ -16,8 +16,11 @@
 package Pex;
 
 use Pex::Utils;
-
+use Pex::Text;
 use Pex::MSSQL;
+use Pex::Socket::Udp;
+use Pex::Socket::Tcp;
+use Pex::Socket::RawUdp;
 
 use POSIX;
 use IO::Socket;
