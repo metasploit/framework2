@@ -193,7 +193,7 @@ sub DisplayPayloads {
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     foreach my $p (sort(keys(%{$payloads})))
     {
-        print CreateRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit value='$p'>",
+        print CreateRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit' value='$p'>",
                          $payloads->{$p}->Description . $query->end_form);
     }
     print "</table><br>";
