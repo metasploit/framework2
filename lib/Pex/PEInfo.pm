@@ -244,51 +244,51 @@ sub LoadImage {
     my %SECTIONS;
     
     
-    $IMAGE_HDR{'MachineID'}               = unpack('v', substr($data, $peo + 4));
-    $IMAGE_HDR{'NumberOfSections'}        = unpack('v', substr($data, $peo + 6));
-    $IMAGE_HDR{'TimeDateStamp'}           = unpack('V', substr($data, $peo + 8));
-    $IMAGE_HDR{'PointerToSymbolTable'}    = unpack('V', substr($data, $peo + 12));
-    $IMAGE_HDR{'NumberOfSymbols'}         = unpack('V', substr($data, $peo + 16));
-    $IMAGE_HDR{'SizeOfOptionalHeader'}    = unpack('v', substr($data, $peo + 20));
-    $IMAGE_HDR{'Characteristics'}         = unpack('v', substr($data, $peo + 22));
+    $IMAGE_HDR{'MachineID'}               = unpack('v', substr($data, $peo + 4, 2));
+    $IMAGE_HDR{'NumberOfSections'}        = unpack('v', substr($data, $peo + 6, 2));
+    $IMAGE_HDR{'TimeDateStamp'}           = unpack('V', substr($data, $peo + 8, 4));
+    $IMAGE_HDR{'PointerToSymbolTable'}    = unpack('V', substr($data, $peo + 12, 4));
+    $IMAGE_HDR{'NumberOfSymbols'}         = unpack('V', substr($data, $peo + 16, 4));
+    $IMAGE_HDR{'SizeOfOptionalHeader'}    = unpack('v', substr($data, $peo + 20, 2));
+    $IMAGE_HDR{'Characteristics'}         = unpack('v', substr($data, $peo + 22, 2));
 
     if ($IMAGE_HDR{'SizeOfOptionalHeader'} > 0) {
         my $opthdr = substr($data, $peo + 24, $IMAGE_HDR{'SizeOfOptionalHeader'});
 
-        $OPT_IMAGE_HDR{'Magic'}               = unpack('v', substr($opthdr, 0));
-        $OPT_IMAGE_HDR{'MajorLinker'}         = unpack('C', substr($opthdr, 2));
-        $OPT_IMAGE_HDR{'MinorLinker'}         = unpack('C', substr($opthdr, 3));
-        $OPT_IMAGE_HDR{'SizeOfCode'}          = unpack('V', substr($opthdr, 4));
-        $OPT_IMAGE_HDR{'SizeOfInitialized'}   = unpack('V', substr($opthdr, 8));
-        $OPT_IMAGE_HDR{'SizeOfUninitialized'} = unpack('V', substr($opthdr, 12));
+        $OPT_IMAGE_HDR{'Magic'}               = unpack('v', substr($opthdr, 0, 1));
+        $OPT_IMAGE_HDR{'MajorLinker'}         = unpack('C', substr($opthdr, 2, 1));
+        $OPT_IMAGE_HDR{'MinorLinker'}         = unpack('C', substr($opthdr, 3, 1));
+        $OPT_IMAGE_HDR{'SizeOfCode'}          = unpack('V', substr($opthdr, 4, 4));
+        $OPT_IMAGE_HDR{'SizeOfInitialized'}   = unpack('V', substr($opthdr, 8, 4));
+        $OPT_IMAGE_HDR{'SizeOfUninitialized'} = unpack('V', substr($opthdr, 12, 4));
 
-        $OPT_IMAGE_HDR{'EntryPoint'}          = unpack('V', substr($opthdr, 16));
-        $OPT_IMAGE_HDR{'BaseOfCode'}          = unpack('V', substr($opthdr, 20));
-        $OPT_IMAGE_HDR{'BaseOfData'}          = unpack('V', substr($opthdr, 24));
+        $OPT_IMAGE_HDR{'EntryPoint'}          = unpack('V', substr($opthdr, 16, 4));
+        $OPT_IMAGE_HDR{'BaseOfCode'}          = unpack('V', substr($opthdr, 20, 4));
+        $OPT_IMAGE_HDR{'BaseOfData'}          = unpack('V', substr($opthdr, 24, 4));
 
-        $OPT_IMAGE_HDR{'ImageBase'}           = unpack('V', substr($opthdr, 28));
-        $OPT_IMAGE_HDR{'SectionAlign'}        = unpack('V', substr($opthdr, 32));
-        $OPT_IMAGE_HDR{'FileAlign'}           = unpack('V', substr($opthdr, 36));
+        $OPT_IMAGE_HDR{'ImageBase'}           = unpack('V', substr($opthdr, 28, 4));
+        $OPT_IMAGE_HDR{'SectionAlign'}        = unpack('V', substr($opthdr, 32, 4));
+        $OPT_IMAGE_HDR{'FileAlign'}           = unpack('V', substr($opthdr, 36, 4));
 
-        $OPT_IMAGE_HDR{'MajorOS'}             = unpack('v', substr($opthdr, 38));
-        $OPT_IMAGE_HDR{'MinorOS'}             = unpack('v', substr($opthdr, 40));
-        $OPT_IMAGE_HDR{'MajorImage'}          = unpack('v', substr($opthdr, 42));
-        $OPT_IMAGE_HDR{'MinorImage'}          = unpack('v', substr($opthdr, 44));
-        $OPT_IMAGE_HDR{'MajorSub'}            = unpack('v', substr($opthdr, 46));
-        $OPT_IMAGE_HDR{'MinorSub'}            = unpack('v', substr($opthdr, 48));
+        $OPT_IMAGE_HDR{'MajorOS'}             = unpack('v', substr($opthdr, 38, 4));
+        $OPT_IMAGE_HDR{'MinorOS'}             = unpack('v', substr($opthdr, 40, 4));
+        $OPT_IMAGE_HDR{'MajorImage'}          = unpack('v', substr($opthdr, 42, 4));
+        $OPT_IMAGE_HDR{'MinorImage'}          = unpack('v', substr($opthdr, 44, 4));
+        $OPT_IMAGE_HDR{'MajorSub'}            = unpack('v', substr($opthdr, 46, 4));
+        $OPT_IMAGE_HDR{'MinorSub'}            = unpack('v', substr($opthdr, 48, 4));
 
-        $OPT_IMAGE_HDR{'Reserved'}            = unpack('V', substr($opthdr, 52));
-        $OPT_IMAGE_HDR{'SizeOfImage'}         = unpack('V', substr($opthdr, 56));
-        $OPT_IMAGE_HDR{'SizeOfHeaders'}       = unpack('V', substr($opthdr, 60));
-        $OPT_IMAGE_HDR{'Checksum'}            = unpack('V', substr($opthdr, 64));
-        $OPT_IMAGE_HDR{'Subsystem'}           = unpack('v', substr($opthdr, 68));
-        $OPT_IMAGE_HDR{'DllCharacteristics'}  = unpack('v', substr($opthdr, 70));
-        $OPT_IMAGE_HDR{'SizeOfStackReserve'}  = unpack('V', substr($opthdr, 72));
-        $OPT_IMAGE_HDR{'SizeOfStackCommit'}   = unpack('V', substr($opthdr, 76));
-        $OPT_IMAGE_HDR{'SizeOfHeapReserve'}   = unpack('V', substr($opthdr, 80));
-        $OPT_IMAGE_HDR{'SizeOfHeapCommit'}    = unpack('V', substr($opthdr, 84));
-        $OPT_IMAGE_HDR{'LoaderFlags'}         = unpack('V', substr($opthdr, 88));
-        $OPT_IMAGE_HDR{'NumberOfRvaAndSizes'} = unpack('V', substr($opthdr, 92));
+        $OPT_IMAGE_HDR{'Reserved'}            = unpack('V', substr($opthdr, 52, 4));
+        $OPT_IMAGE_HDR{'SizeOfImage'}         = unpack('V', substr($opthdr, 56, 4));
+        $OPT_IMAGE_HDR{'SizeOfHeaders'}       = unpack('V', substr($opthdr, 60, 4));
+        $OPT_IMAGE_HDR{'Checksum'}            = unpack('V', substr($opthdr, 64, 4));
+        $OPT_IMAGE_HDR{'Subsystem'}           = unpack('v', substr($opthdr, 68, 4));
+        $OPT_IMAGE_HDR{'DllCharacteristics'}  = unpack('v', substr($opthdr, 70, 4));
+        $OPT_IMAGE_HDR{'SizeOfStackReserve'}  = unpack('V', substr($opthdr, 72, 4));
+        $OPT_IMAGE_HDR{'SizeOfStackCommit'}   = unpack('V', substr($opthdr, 76, 4));
+        $OPT_IMAGE_HDR{'SizeOfHeapReserve'}   = unpack('V', substr($opthdr, 80, 4));
+        $OPT_IMAGE_HDR{'SizeOfHeapCommit'}    = unpack('V', substr($opthdr, 84, 4));
+        $OPT_IMAGE_HDR{'LoaderFlags'}         = unpack('V', substr($opthdr, 88, 4));
+        $OPT_IMAGE_HDR{'NumberOfRvaAndSizes'} = unpack('V', substr($opthdr, 92, 4));
 
         my @RVAMAP =
         (
@@ -317,15 +317,14 @@ sub LoadImage {
             if (! $RVAMAP[$x]) { $RVAMAP[$x] = "unknown_$x" }
             $RVA{ $RVAMAP[$x] } =
                         [
-                            unpack('V', substr($rva_data, ($x * 8))),
-                            unpack('V', substr($rva_data, ($x * 8) + 4)),
+                            unpack('VV', substr($rva_data, ($x * 8), 8)),
                         ];
         }
     }
     
     # parse the section headers
     my $sec_begn = $peo + 24 + $IMAGE_HDR{'SizeOfOptionalHeader'};
-    my $sec_data = substr($data, $sec_begn);
+    my $sec_data = substr($data, $sec_begn, $IMAGE_HDR{'NumberOfSections'} * 40);
     
     for (my $x = 0; $x < $IMAGE_HDR{'NumberOfSections'}; $x++)
     {
@@ -335,26 +334,29 @@ sub LoadImage {
 
         $SECTIONS{$sec_name} =
                     [
-                       unpack('V', substr($data, $sec_head +  8)),
-                       unpack('V', substr($data, $sec_head +  12)),
-                       unpack('V', substr($data, $sec_head +  16)),
-                       unpack('V', substr($data, $sec_head +  20)), 
+                       unpack('VVVV', substr($data, $sec_head + 8,  16)), 
                     ];
                     
         # delta to virtual from file offset inside this section
         $SECTIONS{$sec_name}->[4] = $SECTIONS{$sec_name}->[1] - $SECTIONS{$sec_name}->[3];
-    }   
-    
-    
+    }  
+
     $self->{'IMG_HDR'}      = \%IMAGE_HDR;
     $self->{'OPT_IMG_HDR'}  = \%OPT_IMAGE_HDR;
     $self->{'SECTIONS'}     = \%SECTIONS;
     $self->{'RVA'}          = \%RVA;
-    
+   
+
     $self->_LoadImport();
+    print "Import\n";<>;
     $self->_LoadExport();
+    print "Export\n";<>;
     $self->_LoadResources();
-    $self->_LoadVersionData();
+    print "Resource\n";<>;    
+    $self->_LoadVersionData();    
+    print "Version\n";<>;
+        
+    
     return($self);    
 }
 
@@ -441,8 +443,7 @@ sub _LoadExport {
     return if ! $export;
 
     # Obtain the IMAGE_EXPORT_DIRECTORY structure
-    my $edata  = substr($self->{'RAW'}, $self->_RV2O($export->[0]), $export->[1]);
-    my @fields = unpack('V10', $edata);
+    my @fields = unpack('V10', substr($data, $self->_RV2O($export->[0]), 40));
     
     # fields[0] = Characteristics
     # fields[1] = TimeDateStamp
@@ -521,6 +522,7 @@ sub _LoadExport {
     }
 
     $self->{'EXPORT'} = $etable;
+    undef $data;
 }
 
 sub _LoadResources {
@@ -530,19 +532,22 @@ sub _LoadResources {
     my $rtable = {};
     
     # Recursive happy fun time!  
-    $self->_ParseResourceDirectory($rtable, $rdata, 0, 0x80000000, "0");
+    $self->_ParseResourceDirectory($rtable, \$rdata, 0, 0x80000000, "0");
     $self->{'RESOURCE'} = $rtable;
+    undef $rdata;
 }
 
 sub _ParseResourceName {
     my $self = shift;
-    my ($rdata, $rname) = @_;    
+    my ($rdata, $rname) = @_; 
+    my $result;
+    
     if ($rname & 0x80000000) {
         $rname -= 0x80000000;
-        my $unistr = substr($rdata, $rname+2, 2 * unpack('v', substr($rdata, $rname, 2)));
-        my $ansstr = $self->_UNI2ANSI($unistr);
-        return $ansstr;
-    } else { return "$rname" }
+        my $unistr = substr(${$rdata}, $rname+2, 2 * unpack('v', substr(${$rdata}, $rname, 2)));
+        $result = $self->_UNI2ANSI($unistr);
+    } else { $result = "$rname" }
+    return $result;
 }
 
 sub _ParseResourceEntry { 
@@ -550,7 +555,7 @@ sub _ParseResourceEntry {
     my ($rdata, $rname, $rvalue) = @_;
     my $res = { };
   
-    my ($drva, $dsize, $dcode) = unpack('V3', substr($rdata, $rvalue, 12));
+    my ($drva, $dsize, $dcode) = unpack('V3', substr(${$rdata}, $rvalue, 12));
     
     $res->{'Name'} = $self->_ParseResourceName($rdata, $rname);
     $res->{'Code'} = $dcode;
@@ -586,7 +591,7 @@ sub _ParseResourceDirectory {
     $rvalue -= 0x80000000;
     
     # Read the directory header
-    my @rfields = unpack('VVv4', substr($rdata, $rvalue, 16));
+    my @rfields = unpack('VVv4', substr(${$rdata}, $rvalue, 16));
     
     $rtable->{'Dirs'}->{$cindex}->{'Name'} = $rname;
     $rtable->{'Dirs'}->{$cindex}->{'Characteristics'} = $rfields[0];
@@ -597,7 +602,7 @@ sub _ParseResourceDirectory {
     $self->_DebugLog("$rname\tDIR\t$cindex (".$rtable->{'Dirs'}->{$cindex}->{'DirType'} .")");
     
     for my $rindex (0 .. ($rfields[4] + $rfields[5] - 1)) {
-        my ($rname, $rvalue) = unpack('VV', substr($rdata, $rvalue + 16 + ($rindex * 8), 8));
+        my ($rname, $rvalue) = unpack('VV', substr(${$rdata}, $rvalue + 16 + ($rindex * 8), 8));
         my $path = $cindex."/".$rindex;
 
         if ($rvalue & 0x80000000) {
@@ -663,6 +668,7 @@ sub _LoadVersionData {
     
     if ($vinf_wkey ne 'VS_VERSION_INFO') {
         $self->_DebugLog("version string not found: $vinf_wkey");
+        undef $vblock;
         return;
     }
 
@@ -698,6 +704,7 @@ sub _LoadVersionData {
     
     if (! $sinf_wlen || $sinf_wlen > length($vblock)) {
         $self->_DebugLog("invalid sinf_wlen value: $sinf_wlen vs ".length($vblock));
+        undef $vblock;
         return;
     }
     
@@ -718,6 +725,7 @@ sub _LoadVersionData {
     if ($sinf_wkey ne 'StringFileInfo') {
         $self->_DebugLog("StringFileInfo not found first in VERSION_INFO ($sinf_wkey");
         $self->_DebugLog(unpack("H*", substr($vblock, $vinf_xpad , 64)));
+        undef $vblock;
         return;
     }
     
@@ -738,6 +746,7 @@ sub _LoadVersionData {
     }
     
     $self->{'VERSION'} = $sfi;
+    undef $vblock;
 }
 
 sub _ParseStringTableArray {
@@ -801,6 +810,7 @@ sub _ParseStringTableArray {
             $sinf_xptr++;
         }
     }
+    undef $vblock;
     return $res;
 }
 
