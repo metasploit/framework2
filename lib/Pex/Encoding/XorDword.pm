@@ -18,11 +18,11 @@ use strict;
 use Pex::Encoder;
 use Pex::Text;
 
-sub new {
-  my $class = shift;
-  my $self = bless({ }, $class);
-  return($self);
-}
+#sub new {
+#  my $class = shift;
+#  my $self = bless({ }, $class);
+#  return($self);
+#}
 
 #
 # These routines take a buffer and xor encodes it with the given key
@@ -52,7 +52,9 @@ sub Encode {
 sub KeyScan {
   my $self = shift;
 
-  my @bytes = @{$self->_KeyScanBytes(@_)};
+  my $ref = $self->_KeyScanBytes(@_);
+  return if(!defined($ref));
+  my @bytes = @{$ref};
   return if(@bytes != 4);
   return(unpack('V', pack('C4', @bytes)));
 }

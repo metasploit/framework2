@@ -48,7 +48,7 @@ sub Encode {
     $chunk = $clean ^ $xor;
 
     # Owww, my head hurts
-    $xor = unpack($pack, pack('V', DWordAdd(
+    $xor = unpack($pack, pack('V', Pex::Utils::DwordAdd(
       unpack($pack, pack('V', $xor)),
       unpack($pack, pack('V', $clean))
     )));
@@ -63,7 +63,10 @@ sub Encode {
 sub KeyScan {
   my $class = shift;
 
-  my @bytes = @{$class->_KeyScanBytes(@_)};
+  my $ref = $class->_KeyScanBytes(@_);
+  return if(!defined($ref));
+  my @bytes = @{$ref};
+
   return if(@bytes != 4);
   return(unpack('V', pack('C4', @bytes)));
 }
@@ -81,7 +84,7 @@ sub _KeyScanBytes {
   $badKeys = $class->_FindBadKeys($data, $badChars);
 
   my($keys, $r) = $class->_FindKey($badKeys, $badChars);
-  return if(undef($keys) || @{$keys} != 4);
+  return if(!defined($keys) || @{$keys} != 4);
 
   while(1) {
     my $pos = $class->_Check(
@@ -103,7 +106,7 @@ sub _KeyScanBytes {
   }
 
 #  print "2 SUCCESS! " . join('-', @{$keys}) . "\n";
-  return(@{$keys});
+  return($keys);
 }
 
 sub _PackType {
