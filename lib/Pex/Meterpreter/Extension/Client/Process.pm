@@ -300,7 +300,7 @@ out:
 				"  -f <file>  The file name to execute\n" .
 				"  -a <args>  The arguments to pass to the executable\n" .
 				"  -H         Create the process hidden\n" .
-				"  -c         Channlize the input and output\n");
+				"  -c         Channelize the input and output\n");
 	}
 
 	return 1;
