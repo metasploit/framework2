@@ -65,7 +65,7 @@ sub LoadExploits {
     $self->_BaseDir . '/exploits',
     $self->_DotMsfDir . '/exploits',
   ];
-  return($self->LoadModules($dir, 'Msf::Exploit::'));
+  return($self->LoadModules($dir));
 }
 sub LoadEncoders {
   my $self = shift;
@@ -73,7 +73,7 @@ sub LoadEncoders {
     $self->_BaseDir . '/encoders',
     $self->_DotMsfDir . '/encoders',
   ];
-  return($self->LoadModules($dir, 'Msf::Encoder::'));
+  return($self->LoadModules($dir));
 }
 sub LoadNops {
   my $self = shift;
@@ -81,7 +81,7 @@ sub LoadNops {
     $self->_BaseDir . '/nops',
     $self->_DotMsfDir . '/nops',
   ];
-  return($self->LoadModules($dir, 'Msf::Nop::'));
+  return($self->LoadModules($dir));
 }
 sub LoadPayloads {
   my $self = shift;
@@ -89,24 +89,21 @@ sub LoadPayloads {
     $self->_BaseDir . '/payloads',
     $self->_DotMsfDir . '/payloads',
   ];
-  return($self->LoadModules($dir, 'Msf::Payload::'));
+  return($self->LoadModules($dir));
 }
 
 sub LoadModules {
   my $self = shift;
   my $dir = shift;
-  my $prefix = shift;
+  
   my $modules = { };
-
   my @dirs;
 
-  if(ref($dir) eq 'ARRAY') {
-    @dirs = @{$dir};
-  }
-  else {
-    @dirs = ($dir);
-  }
+  local *DIR;
+  local *MOD;
 
+  @dirs = (ref($dir) eq 'ARRAY') ? @{$dir} : ($dir);
+  
   foreach my $dir (@dirs) {
 
     next if(!-d $dir);
@@ -114,15 +111,37 @@ sub LoadModules {
 
     while (defined(my $entry = readdir(DIR))) {
       my $path = "$dir/$entry";
+      my $name;
+            
       next if(!-f $path);
       next if(!-r $path);
       next if($entry !~ /.pm$/);
 
-      $entry =~ s/\.pm$//g;
-      $entry = $prefix . $entry;
+
+      next if ! open(MOD, '<'. $path);
+      while ( <MOD> ) { 
+        ($name) = m/^package\s+([^;]+);/;
+        last if $name; 
+      }
+      close (MOD);
+      
+      # sanity check the file name
+      if (! $name) {
+        $self->PrintLine("[*] Could not determine the package name for $path");
+        next;
+      }
+      
+      # make sure the package name matches the file path
+      my ($test_name) = $name =~ m/.*::(.*)$/;
+      my ($test_path) = $path =~ m/.*\/([^\.]+)\.pm/;
+      
+      if ($test_name ne $test_path) {
+        $self->PrintLine("[*] The module $name does not match the path $path");
+        next;
+      }
 
       # remove the module from global namespace
-      delete($::{$entry."::"});
+      delete($::{$name."::"});
 
       # load the module via do since we dont import
       $self->PrintDebugLine(3, "Doing $path");
@@ -130,19 +149,19 @@ sub LoadModules {
 
       if($@) {
         $self->PrintLine("[*] Error loading $path: $@");
-        delete($::{$entry."::"});
+        delete($::{$name."::"});
         next;
       }
 
-      my $module = $entry->new();
+      my $module = $name->new();
 
       if(!$module->Loadable || $module->PrintError) {
-        $self->PrintDebugLine(1, "[*] Loadable failed for $entry");
-        delete($::{$entry."::"});
+        $self->PrintDebugLine(1, "[*] Loadable failed for $name");
+        delete($::{$name."::"});
         next;
       }
 
-      $modules->{$entry} = $module;
+      $modules->{$name} = $module;
     }
     closedir(DIR);
   }
