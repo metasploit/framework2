@@ -28,14 +28,23 @@ sub new {
 	return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
-# XXX: Operate: bis, zap, zapnot, ornot, *div*, (*/v?)
+# XXX: Operate: CMOVxx, cmp[u]l[te], (*/v?)
+# XXX: InsBranch: [F]Bxx
+# XXX: InsMemory (for lda and the like) 
+# XXX: InsFPU??
 my $table = [
 	[ \&InsOperate, [ 0, [ 0x10, 0x00 ] ], ],		# addl
 	[ \&InsOperate, [ 0, [ 0x10, 0x09 ] ], ],		# subl
 	[ \&InsOperate, [ 0, [ 0x10, 0x20 ] ], ],		# addq
 	[ \&InsOperate, [ 0, [ 0x10, 0x29 ] ], ],		# subq
 	[ \&InsOperate, [ 0, [ 0x11, 0x00 ] ], ],		# and
+	[ \&InsOperate, [ 0, [ 0x11, 0x08 ] ], ],		# bic (andnot)
+	[ \&InsOperate, [ 0, [ 0x11, 0x20 ] ], ],		# bis (or)
+	[ \&InsOperate, [ 0, [ 0x11, 0x28 ] ], ],		# ornot
 	[ \&InsOperate, [ 0, [ 0x11, 0x40 ] ], ],		# xor
+	[ \&InsOperate, [ 0, [ 0x11, 0x48 ] ], ],		# eqv (xornot)
+	[ \&InsOperate, [ 0, [ 0x12, 0x30 ] ], ],		# zap 
+	[ \&InsOperate, [ 0, [ 0x12, 0x31 ] ], ],		# zapnot
 	[ \&InsOperate, [ 0, [ 0x12, 0x34 ] ], ],		# srl
 	[ \&InsOperate, [ 0, [ 0x12, 0x39 ] ], ],		# sll
 	[ \&InsOperate, [ 0, [ 0x12, 0x3c ] ], ],		# sra
