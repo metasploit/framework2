@@ -18,6 +18,14 @@ use strict;
 use IO::Handle;
 use IO::Select;
 use base 'Msf::PayloadComponent::TextConsole';
+use FindBin qw{$RealBin};
+
+sub LoadConsole {
+	my $self = shift;
+	
+	print STDERR "LOADCONSOLE:!!!\n";
+	$self->SUPER::LoadConsole(@_);s
+}
 
 sub _HandleConsole {
   my $self = shift;

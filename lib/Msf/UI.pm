@@ -366,7 +366,7 @@ sub MakeNopSled {
       $self->PrintDebugLine(2, "$nopName failed, doesn't support all architectures");
       $self->PrintDebugLine(4, "payloadArch: " . join(',', @{$payloadArch}));
       $self->PrintDebugLine(4, "nopArch: " . join(',', @{$nopArch}));
-      return(-2);
+      next;
     }
 
     # Check to make sure it supports all the os's of the payload
@@ -374,7 +374,7 @@ sub MakeNopSled {
       $self->PrintDebugLine(2, "$nopName failed, doesn't support all operating systems");
       $self->PrintDebugLine(4, "payloadOS: " . join(',', @{$payloadOS}));
       $self->PrintDebugLine(4, "nopOS: " . join(',', @{$nopOS}));
-      return(-3);
+      next;
     }
 
     my $nops = $nop->Nops($nopSize, $badChars);
@@ -383,18 +383,18 @@ sub MakeNopSled {
       $self->PrintDebugLine(1, "$nopName failed with an error");
       $self->PrintDebugLine(4, $nop->GetError);
       $nop->ClearError;
-      return(-5);
+      next;
     }
 
     if(length($nops) != $nopSize) {
       $self->PrintDebugLine(2, "$nopName failed, error generating nops");
       $self->PrintDebugLine(5, 'length: ' . length($nops) . 'wanted: ' . $nopSize);
-      return(-6);
+      next;
     }
 
     if(Pex::Text::BadCharCheck($badChars, $nops)) {
       $self->PrintDebugLine(2, "$nopName failed, bad chars in nops");
-      return(-7);
+      next;
     }
 
     return(1, $nops);
