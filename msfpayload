@@ -84,7 +84,7 @@ Usage() if $action !~ /^C|^P|^R/;
 my $s = $p->Build($opt);
 if (! $s)
 {
-    print "Error: " . $p->Error() . "\n";Tota
+    print "Error: " . $p->Error() . "\n";
     exit(0);
 }
 

@@ -7,12 +7,4 @@
  
  - Rewrite BSD bind payload (SIGSYS error after listen call) [LSD one is also broken]
 
-
  - Determine WTF Advanced options are supposed to do and how they should be set
- 
- - msfpayload is not able to display enternal payloads
- 
- - Info <payload> does not show the size
- 
- - External payloads do not have a valid Size result
- 
