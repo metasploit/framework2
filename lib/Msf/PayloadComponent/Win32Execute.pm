@@ -49,7 +49,7 @@ sub CommandString {
 
 sub Size {
   my $self = shift;
-  return($self->SUPER::Size + length($self->CommandString) + 1);
+  return($self->SUPER::Size);
 }
 
 
