@@ -45,9 +45,55 @@ my $table = [
   [ \&Insarithmetic, [ 1, 12 ], ],			# subx
   [ \&Insarithmetic, [ 0, 14 ], ],			# udiv
   [ \&Insarithmetic, [ 0, 15 ], ],			# sdiv
+  [ \&Insarithmetic, [ 1, 16 ], ],			# addcc
+  [ \&Insarithmetic, [ 1, 17 ], ],			# andcc
+  [ \&Insarithmetic, [ 1, 18 ], ],			# orcc
+  [ \&Insarithmetic, [ 1, 19 ], ],			# xorcc
+  [ \&Insarithmetic, [ 1, 20 ], ],			# subcc
+  [ \&Insarithmetic, [ 1, 21 ], ],			# andncc
+  [ \&Insarithmetic, [ 1, 22 ], ],			# orncc
+  [ \&Insarithmetic, [ 1, 23 ], ],			# xnorcc
+  [ \&Insarithmetic, [ 1, 24 ], ],			# addxcc
+  [ \&Insarithmetic, [ 1, 26 ], ],			# umulcc
+  [ \&Insarithmetic, [ 1, 27 ], ],			# smulcc
+  [ \&Insarithmetic, [ 1, 28 ], ],			# subxcc
+  [ \&Insarithmetic, [ 0, 30 ], ],			# udivcc
+  [ \&Insarithmetic, [ 0, 31 ], ],			# sdivcc
   [ \&Insarithmetic, [ 2, 37 ], ],			# sll
   [ \&Insarithmetic, [ 2, 38 ], ],			# srl
   [ \&Insarithmetic, [ 2, 39 ], ],			# sra
+  [ \&Insbranch, [ 0, 0 ] ],				# bn
+  [ \&Insbranch, [ 0, 1 ] ],				# bn,a
+  [ \&Insbranch, [ 1, 0 ] ],				# be
+  [ \&Insbranch, [ 1, 1 ] ],				# be,a
+  [ \&Insbranch, [ 2, 0 ] ],				# ble
+  [ \&Insbranch, [ 2, 1 ] ],				# ble,a
+  [ \&Insbranch, [ 3, 0 ] ],				# bl
+  [ \&Insbranch, [ 3, 1 ] ],				# bl,a
+  [ \&Insbranch, [ 4, 0 ] ],				# bleu
+  [ \&Insbranch, [ 4, 1 ] ],				# bleu,a
+  [ \&Insbranch, [ 5, 0 ] ],				# bcs
+  [ \&Insbranch, [ 5, 1 ] ],				# bcs,a
+  [ \&Insbranch, [ 6, 0 ] ],				# bneg
+  [ \&Insbranch, [ 6, 1 ] ],				# bneg,a
+  [ \&Insbranch, [ 7, 0 ] ],				# bvs
+  [ \&Insbranch, [ 7, 1 ] ],				# bvs,a
+  [ \&Insbranch, [ 8, 0 ] ],				# ba
+  [ \&Insbranch, [ 8, 1 ] ],				# ba,a
+  [ \&Insbranch, [ 9, 0 ] ],				# bne
+  [ \&Insbranch, [ 9, 1 ] ],				# bne,a
+  [ \&Insbranch, [ 10, 0 ] ],				# bg
+  [ \&Insbranch, [ 10, 1 ] ],				# bg,a
+  [ \&Insbranch, [ 11, 0 ] ],				# bge
+  [ \&Insbranch, [ 11, 1 ] ],				# bge,a
+  [ \&Insbranch, [ 12, 0 ] ],				# bgu
+  [ \&Insbranch, [ 12, 1 ] ],				# bgu,a
+  [ \&Insbranch, [ 13, 0 ] ],				# bcc
+  [ \&Insbranch, [ 13, 1 ] ],				# bcc,a
+  [ \&Insbranch, [ 14, 0 ] ],				# bpos
+  [ \&Insbranch, [ 14, 1 ] ],				# bpos,a
+  [ \&Insbranch, [ 15, 0 ] ],				# bvc
+  [ \&Insbranch, [ 15, 1 ] ],				# bvc,a
 ];
 
 # Returns valid destination register number between 0 and 31 excluding %sp
@@ -82,6 +128,18 @@ sub Insarithmetic {
   }
 }
 
+sub Insbranch {
+  my $ref = shift;
+  my $len = shift;
+
+  $len = ($len / 4) - 1;
+
+  return if(! $len);
+  $len = 0x3fffff if($len >= 0x400000);
+
+  return pack("N", (($ref->[1] << 29) | ($ref->[0] << 25) | (2 << 22) | $len)); 
+}
+
 sub Nops {
   my $self = shift;
   my $length = shift;
@@ -100,7 +158,7 @@ sub Nops {
   {
     $random = int(rand(scalar(@{$table})));
 
-    $tempnop = $table->[$random]->[0]($table->[$random]->[1]);
+    $tempnop = $table->[$random]->[0]($table->[$random]->[1], $length - length($nop));
 
     if(!Pex::Utils::ArrayContains([split('', $tempnop)], [split('', $badChars)]))
     {
