@@ -16,6 +16,7 @@ my $reg1  = 1;
 my $reg2  = 2;
 # Is the smash register location reversed? (only for reg2's?)
 my $regrev = 4;
+my $regb = 8;
 
 my $eax = 0;
 my $ecx = 1;
@@ -41,7 +42,7 @@ my $reg = 8;
 # someday this will all be leeter, but it's not so bad for now :)
 
 # This is a blacklist entry, it means you CANNOT do it if you have this flag
-my $osize = $regrev << 1; # \x66
+my $osize = $regb << 1; # \x66
 my $asize = $osize << 1; # \x67
 
 # segment overrides also seem unsafe...
@@ -56,19 +57,19 @@ my $prefix = $asize << 1;
 
 my $table = [
   # comment naming convention, reg2 is the low 3 bits and reg1 is higher
-  [ "\x00\xc0",           2, $reg2, [ $reg ] ], # add BYTE reg2, reg1
+  [ "\x00\xc0",           2, $regb | $reg2, [ $reg ] ], # add BYTE reg2, reg1
   [ "\x01\xc0",           2, $reg2, [ $reg ] ], # /* addl %reg1,%reg2 */
-  [ "\x02\xc0",           2, $regrev | $reg2, [ $reg ] ], # add BYTE reg1, reg2
+  [ "\x02\xc0",           2, $regb | $regrev | $reg2, [ $reg ] ], # add BYTE reg1, reg2
   [ "\x03\xc0",           2, $regrev | $reg2, [ $reg ] ], # add reg1, reg2
-  [ "\x04",               2, $none, [ $eax ] ], # /* addb $imm8,%al */
+  [ "\x04",               2, $regb | $none, [ $eax ] ], # /* addb $imm8,%al */
   [ "\x05",               5, $none, [ $eax ] ], # /* addl $imm32,%eax */
 
   [ "\x06",               1, $none, [ $esp ] ], # /* push %es */
   # \x07 -> pop es
 
-  [ "\x08\xc0",           2, $reg2, [ $reg ] ], # /* orb %reg1,%reg2 */
+  [ "\x08\xc0",           2, $regb | $reg2, [ $reg ] ], # /* orb %reg1,%reg2 */
   [ "\x09\xc0",           2, $reg2, [ $reg ] ], # /* orl %reg1,%reg2 */
-  [ "\x0a\xc0",           2, $regrev | $reg2, [ $reg ] ], # or BYTE reg1, reg2
+  [ "\x0a\xc0",           2, $regb | $regrev | $reg2, [ $reg ] ], # or BYTE reg1, reg2
   [ "\x0b\xc0",           2, $regrev | $reg2, [ $reg ] ], # or reg1, reg2
 
   [ "\x0c",               2, $none, [ $eax ] ], # /* orb $imm8,%al */
@@ -77,9 +78,9 @@ my $table = [
   [ "\x0e",               1, $none, [ $esp ] ], # /* push %cs */
   # \x0f -> pop cs / invalid
 
-  [ "\x10\xc0",           2, $reg2, [ $reg ] ], # adc BYTE reg2, reg1
+  [ "\x10\xc0",           2, $regb | $reg2, [ $reg ] ], # adc BYTE reg2, reg1
   [ "\x11\xc0",           2, $reg2, [ $reg ] ], # adc reg2, reg1
-  [ "\x12\xc0",           2, $regrev | $reg2, [ $reg ] ], # adc BYTE reg1, reg2
+  [ "\x12\xc0",           2, $regb | $regrev | $reg2, [ $reg ] ], # adc BYTE reg1, reg2
   [ "\x13\xc0",           2, $regrev | $reg2, [ $reg ] ], # adc reg1, reg2
   [ "\x14",               2, $none, [ $eax ] ], # /* adc $imm8,%al */
   [ "\x15",               5, $none, [ $eax ] ], # /* adc $imm32,%eax */
@@ -87,9 +88,9 @@ my $table = [
   [ "\x16",               1, $none, [ $esp ] ], # /* push %ss */
   # \x17 -> pop ss
 
-  [ "\x18\xc0",           2, $reg2, [ $reg ] ], # sbb BYTE reg2, reg1
+  [ "\x18\xc0",           2, $regb | $reg2, [ $reg ] ], # sbb BYTE reg2, reg1
   [ "\x19\xc0",           2, $reg2, [ $reg ] ], # sbb reg2, reg1
-  [ "\x1a\xc0",           2, $regrev | $reg2, [ $reg ] ], # sbb BYTE reg1, reg2
+  [ "\x1a\xc0",           2, $regb | $regrev | $reg2, [ $reg ] ], # sbb BYTE reg1, reg2
   [ "\x1b\xc0",           2, $regrev | $reg2, [ $reg ] ], # sbb reg1, reg2
   [ "\x1c",               2, $none, [ $eax ] ], # /* sbbb $imm8,%al */
   [ "\x1d",               5, $none, [ $eax ] ], # /* sbbl $imm32,%eax */
@@ -97,9 +98,9 @@ my $table = [
   [ "\x1e",               1, $none, [ $esp ] ], # /* push %ds */
   # \x1f -> pop ds
 
-  [ "\x20\xc0",           2, $reg2, [ $reg ] ], # /* andb %reg1,%reg2 */
+  [ "\x20\xc0",           2, $regb | $reg2, [ $reg ] ], # /* andb %reg1,%reg2 */
   [ "\x21\xc0",           2, $reg2, [ $reg ] ], # /* andl %reg1,%reg2 */
-  [ "\x22\xc0",           2, $regrev | $reg2, [ $reg ] ], # and BYTE reg1, reg2
+  [ "\x22\xc0",           2, $regb | $regrev | $reg2, [ $reg ] ], # and BYTE reg1, reg2
   [ "\x23\xc0",           2, $regrev | $reg2, [ $reg ] ], # and reg1, reg2
   [ "\x24",               2, $none, [ $eax ] ], # and al, imm8
   [ "\x25",               5, $none, [ $eax ] ], # and eax, imm32
@@ -107,12 +108,12 @@ my $table = [
   # \x26 es segment override prefix
   [ "\x27",               1, $none, [ $eax ] ], # daa
 
-  [ "\x28\xc0",           2, $reg2, [ $reg ] ], # /* subb %reg1,%reg2 */
+  [ "\x28\xc0",           2, $regb | $reg2, [ $reg ] ], # /* subb %reg1,%reg2 */
   [ "\x29\xc0",           2, $reg2, [ $reg ] ], # /* subl %reg1,%reg2 */
 
-  [ "\x30\xc0",           2, $reg2, [ $reg ] ], # /* xorb %reg1,%reg2 */
+  [ "\x30\xc0",           2, $regb | $reg2, [ $reg ] ], # /* xorb %reg1,%reg2 */
   [ "\x31\xc0",           2, $reg2, [ $reg ] ], # /* xorl %reg1,%reg2 */
-  [ "\x32\xc0",           2, $regrev | $reg2, [ $reg ] ], # xor BYTE reg1, reg2
+  [ "\x32\xc0",           2, $regb | $regrev | $reg2, [ $reg ] ], # xor BYTE reg1, reg2
   [ "\x33\xc0",           2, $regrev | $reg2, [ $reg ] ], # xor reg1, reg2
   [ "\x34",               2, $none, [ $eax ] ], # xor al, imm8
   [ "\x35",               5, $none, [ $eax ] ], # xor eax, imm32
@@ -175,13 +176,13 @@ my $table = [
   [ "\x7f",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jg
 
   # \x80 BYTE reg1, imm8
-  [ "\x80\xc0",           3, $reg1, [ $reg ] ], # /* addb $imm8,%reg1 */
-  [ "\x80\xc8",           3, $reg1, [ $reg ] ], # /* orb $imm8,%reg1 */
-  [ "\x80\xd0",           3, $reg1, [ $reg ] ], # adc BYTE reg1, imm8
-  [ "\x80\xd8",           3, $reg1, [ $reg ] ], # /* sbbb $imm8,%reg1 */
-  [ "\x80\xe0",           3, $reg1, [ $reg ] ], # /* andb $imm8,%reg1 */
-  [ "\x80\xe8",           3, $reg1, [ $reg ] ], # /* subb $imm8,%reg1 */
-  [ "\x80\xf0",           3, $reg1, [ $reg ] ], # /* xorb $imm8,%reg1 */
+  [ "\x80\xc0",           3, $regb | $reg1, [ $reg ] ], # /* addb $imm8,%reg1 */
+  [ "\x80\xc8",           3, $regb | $reg1, [ $reg ] ], # /* orb $imm8,%reg1 */
+  [ "\x80\xd0",           3, $regb | $reg1, [ $reg ] ], # adc BYTE reg1, imm8
+  [ "\x80\xd8",           3, $regb | $reg1, [ $reg ] ], # /* sbbb $imm8,%reg1 */
+  [ "\x80\xe0",           3, $regb | $reg1, [ $reg ] ], # /* andb $imm8,%reg1 */
+  [ "\x80\xe8",           3, $regb | $reg1, [ $reg ] ], # /* subb $imm8,%reg1 */
+  [ "\x80\xf0",           3, $regb | $reg1, [ $reg ] ], # /* xorb $imm8,%reg1 */
   [ "\x80\xf8",           3, $reg1, [ ] ], # /* cmpb $imm8,%reg1 */
 
   # \x81 reg1, imm32
@@ -210,17 +211,17 @@ my $table = [
   [ "\x85\xc0",           2, $reg2, [ ] ], # /* testl %reg1,%reg2 */
 
 
-  [ "\x88\xc0",           2, $reg2, [ $reg ] ], # /* movb %reg1,%reg2 */
+  [ "\x88\xc0",           2, $regb | $reg2, [ $reg ] ], # /* movb %reg1,%reg2 */
   [ "\x89\xc0",           2, $reg2, [ $reg ] ], # /* movl %reg1,%reg2 */
   [ "\xa8",               2, $none, [ ] ], # /* testb $imm8,%al */
   [ "\xa9",               5, $none, [ ] ], # /* testl $imm32,%eax */
-  [ "\xb0",               2, $reg1, [ $reg ] ], # /* movb $imm8,%reg1 */
+  [ "\xb0",               2, $regb | $reg1, [ $reg ] ], # /* movb $imm8,%reg1 */
   [ "\xb8",               5, $reg1, [ $reg ] ], # /* movl $imm32,%reg1 */
   [ "\xd4",               2, $none, [ $eax ] ], # /* aam $imm8 */
   [ "\xd5",               2, $none, [ $eax ] ], # /* aad $imm8 */
   [ "\xf5",               1, $none, [ ] ], # /* cmc */
   [ "\xf6\xc0",           3, $reg1, [ ] ], # /* testb $imm8,%reg1 */
-  [ "\xf6\xd0",           2, $reg1, [ $reg ] ], # /* notb %reg1 */
+  [ "\xf6\xd0",           2, $regb | $reg1, [ $reg ] ], # /* notb %reg1 */
   [ "\xf6\xe0",           2, $reg1, [ $eax ] ], # /* mulb %reg1 */
   [ "\xf7\xc0",           6, $reg1, [ ] ], # /* testl $imm32,%reg1 */
   [ "\xf7\xd0",           2, $reg1, [ $reg ] ], # /* notl %reg1 */
@@ -229,8 +230,8 @@ my $table = [
   [ "\xf9",               1, $none, [ ] ], # /* stc */
   [ "\xfc",               1, $none, [ ] ], # /* cld */
   [ "\xfd",               1, $none, [ ] ], # /* std */
-  [ "\xfe\xc0",           2, $reg1, [ $reg ] ], # /* incb %reg1 */
-  [ "\xfe\xc8",           2, $reg1, [ $reg ] ], # /* decb %reg1 */
+  [ "\xfe\xc0",           2, $regb | $reg1, [ $reg ] ], # /* incb %reg1 */
+  [ "\xfe\xc8",           2, $regb | $reg1, [ $reg ] ], # /* decb %reg1 */
 
 # added by spoon...
   # xchg eax, eax == 0x90 == nop... fancy
@@ -367,7 +368,11 @@ sub _CheckInsReg2 {
   ));
 
   # check to make sure that a generation is possible w/ current constraints
-  return(0) if(!$self->_CheckReg2Possible(substr($code, -1, 1), ($flags & $regrev) ? 1 : 0));
+  return(0) if(!$self->_CheckReg2Possible(
+    substr($code, -1, 1),
+    ($flags & $regrev) ? 1 : 0,
+    ($flags & $regb) ? 1 : 0,
+  ));
   return(1);
 }
 
@@ -395,10 +400,13 @@ sub _CheckReg2Possible {
   my $self = shift;
   my $byte = shift;
   my $reverse = @_ ? shift : 0;
+  my $regbyte = @_ ? shift : 0;
+
+  my $mod = $regbyte ? 4 : 8;
 
   for(my $i = 0; $i < 8; $i++) {
-    next if($reverse && $self->_BadRegCheck($i));
-    return(1) if($self->_CheckReg1Possible($byte + chr($i << 3), $reverse));
+    next if($reverse && $self->_BadRegCheck($i % $mod));
+    return(1) if($self->_CheckReg1Possible($byte + chr($i << 3), $reverse, $regbyte));
   }
   return(0);
 }
@@ -409,11 +417,13 @@ sub _CheckReg1Possible {
   my $self = shift;
   my $byte = shift;
   my $reverse = @_ ? shift : 0;
+  my $regbyte = @_ ? shift : 0;
 
+  my $mod = $regbyte ? 4 : 8;
   my $badChars = $self->_BadChars;
 
   for(my $i = 0; $i < 8; $i++) {
-    next if(!$reverse && $self->_BadRegCheck($i));
+    next if(!$reverse && $self->_BadRegCheck($i % $mod));
     return(1) if(!Pex::Text::BadCharCheck($badChars, $byte + chr($i)));
   }
   return(0);
@@ -576,23 +586,27 @@ sub _SetRegs {
 
   if(($flags & 0x03) == $reg2) {
     my $reverse = ($flags & $regrev) ? 1 : 0;
+    my $bytereg = ($flags & $regb) ? 1 : 0;
+    my $mod = $bytereg ? 4 : 8;
     my ($r1, $r2, $r) = (0, 0, 0);
     do {
       $r2 = int(rand(8));
       $r1 = int(rand(8));
       $r = $r2 << 3 + $r1;
-    } while((!$reverse && $self->_BadRegCheck($r1))
-        || ($reverse && $self->_BadRegCheck($r2))
+    } while((!$reverse && $self->_BadRegCheck($r1 % $mod))
+        || ($reverse && $self->_BadRegCheck($r2 % $mod))
         || Pex::Text::BadCharCheck($byte | chr($r)));
 
     return($byte | chr($r));
   }
 
   elsif(($flags & 0x03) == $reg1) {
+    my $bytereg = ($flags & $regb) ? 1 : 0;
+    my $mod = $bytereg ? 4 : 8;
     my $r = 0;
     do {
       $r = int(rand(8));
-    } while($self->_BadRegCheck($r)
+    } while($self->_BadRegCheck($r % $mod)
         || Pex::Text::BadCharCheck($byte | chr($r)));
 
     return($byte | chr($r));
@@ -612,13 +626,17 @@ sub _ValidReg {
 
   if(($flags & 0x03) == $reg2) {
     my $reverse = ($flags & $regrev) ? 1 : 0;
+    my $bytereg = ($flags & $regb) ? 1 : 0;
+    my $mod = $bytereg ? 4 : 8;
     return(0) if(($byte & 0xc0) ne $ins);
-    return(0) if(!$reverse && $self->_SmashCheckReg($index, $reg & 0x07));
-    return(0) if($reverse && $self->_SmashCheckReg($index, ($reg & 0x38) >> 3));
+    return(0) if(!$reverse && $self->_SmashCheckReg($index, ($reg & 0x07) % $mod));
+    return(0) if($reverse && $self->_SmashCheckReg($index, (($reg & 0x38) >> 3) % $mod));
   }
   elsif(($flags & 0x03) == $reg1) {
+    my $bytereg = ($flags & $regb) ? 1 : 0;
+    my $mod = $bytereg ? 4 : 8;
     return(0) if(($byte & 0xf8) ne $ins);
-    return(0) if($self->_SmashCheckReg($index, $reg & 0x07));  
+    return(0) if($self->_SmashCheckReg($index, ($reg & 0x07) % $mod));  
   }
   else {
     return(0) if($byte ne $ins);
