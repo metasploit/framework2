@@ -104,6 +104,15 @@ sub Validate {
         return;
       }
     }
+    elsif(uc($type) eq 'HEX') {
+#fixme better hex check?
+      if($value !~ /^[0-9a-f]+$/i && $value !~ /^0x[0-9a-f]+$/i) {
+        $self->SetError("Invalid hex $value for $key");
+        return;
+      }
+      # replace hex with int value
+      $self->SetVar($key, hex($value));
+    }
   }
   return(1);
 }
