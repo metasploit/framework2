@@ -107,10 +107,7 @@ sub Usage
 {
     print STDERR "\n   Usage: $0 <payload> [var=val] <S|C|P|R>\n\n";
     print STDERR "Payloads: \n";
-    foreach my $p (sort(keys(%{$payloads})))
-    {
-        print STDERR "  $p" . (" " x (25 - length($p))) . $payloads->{$p}->Description . "\n";
-    }
+    print STDERR $ui->DumpPayloads(2, $payloads);
     print STDERR "\n";
     exit(0);
 }
