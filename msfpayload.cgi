@@ -22,9 +22,23 @@ use lib "$RealBin/lib";
 use Msf::TextUI;
 use POSIX;
 use Pex;
-use CGI qw/:standard/;
 
-# open (STDERR, ">/dev/null");
+my $CGI_SUPPORT;
+
+BEGIN
+{
+    if (eval "require CGI")
+    {
+        CGI->import();
+        $CGI_SUPPORT++;
+    }    
+}
+
+if (! $CGI_SUPPORT)
+{
+    print STDERR "Error: the CGI module must be installed to use this application\n";
+    exit(0);
+}
 
 my $query = new CGI; 
 print $query->header();
