@@ -449,7 +449,7 @@ sub PackLength {
   $data->{'negSmall'} = 1 if($data->{'negPadLength'} >= -128);
   $data->{'small'}    = 1 if($data->{'padLength'} <= 127);
   $data->{'lengthByte'} = substr($data->{'length'}, 0, 1);
-  $data->{'negLengthByte'} = substr($data->{'negLength'}, 0, 1);
+  $data->{'negLengthByte'} = substr($data->{'negLength'}, 3, 1);
 
   return($data);
 }
