@@ -376,6 +376,17 @@ sub MergeHash {
   return(\%hash);
 }
 
+sub MergeArray {
+  my $self = shift;
+  my @arrays = @_;
+
+  my @array;
+  foreach (@arrays) {
+    push(@array, @{$_});
+  }
+  return(\@array);
+}
+
 sub SelfName {
   my $self = shift;
   return($self->ModuleName($self));
