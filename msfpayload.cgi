@@ -38,8 +38,9 @@ foreach my $key (keys(%{$payloadsIndex})) {
     $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
 }
 
+my @params = defined($query->param) ? $query->param : ( );
 
-foreach my $name (@{$query->param}) { $opt->{uc($name)} = $query->param($name) }
+foreach my $name (@params) { $opt->{uc($name)} = $query->param($name) }
 
 my $action = uc($opt->{'ACTION'});
 
