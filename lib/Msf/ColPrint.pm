@@ -36,9 +36,15 @@ sub _maxLen {
 }
 sub _totalMaxLen {
   my $self = shift;
-  $self->{__PACKAGE__.'totalMaxLen'} = shift if(@_);
-  return($self->{__PACKAGE__.'totalMaxLen'});
+  my $length = 0;
+  foreach (@{$self->_maxLen}) {
+    $length += $_ + $self->_pad;
+  }
+  $length -= $self->_pad if($length);
+  return($length);
 }
+
+  
 sub _initIndent {
   my $self = shift;
   $self->{__PACKAGE__.'initIndent'} = shift if(@_);
@@ -62,10 +68,7 @@ sub AddRow {
   for(my $i = 0; $i < @_; $i++) {
     my $length = length($_[$i]);
     $maxLen->[$i] = $length if($length > $maxLen->[$i]);
-    $total += $length + $self->_pad;
   }
-  $total -= $self->_pad if($total);
-  $self->_totalMaxLen($total) if($total > $self->_totalMaxLen);
 }
 sub AddHr {
   my $self = shift;
@@ -103,7 +106,11 @@ sub GetOutput {
         $output .= "-" x $self->_maxLen->[$i] . " " x $self->_pad;
         next;
       }
-      $output .= $cell . " " x ($self->_maxLen->[$i] - length($cell) + $self->_pad);
+      $output .= $cell;
+      # Don't add pad if its the last column.
+      if($i < @{$_} - 1) {
+        $output .= " " x ($self->_maxLen->[$i] - length($cell) + $self->_pad);
+      }
     }
     $output .= "\n";
   }
