@@ -415,11 +415,9 @@ sub SMBNegotiateClear {
     
     my @dialects =
     (
-        "PC NETWORK PROGRAM 1.0",
-        "MICROSOFT NETWORKS 1.03",
+        "METASPLOIT",
         "LANMAN1.0",
         "LM1.2X002",
-        "Samba"
     );
     
     my $offer;
@@ -469,12 +467,8 @@ sub SMBNegotiateClear {
 
     # XXX - use leftover vs request because SetSize doesn't work right here...
     my $neg_res = $STNegRes->copy;
-<<<<<<< SMB.pm
     $neg_res->Fill($smb_res->{'LeftOver'});
-   
-=======
-    $neg_res->Fill($smb_res->LeftOver);
->>>>>>> 1.8
+
     
     print "length: ". length($smb_res->{'LeftOver'})."\n";
     print "Word Count: " .$neg_res->Get('word_count')."\n";
