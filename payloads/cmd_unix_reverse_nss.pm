@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::cmd_unix_reverse_nospaceslash;
+package Msf::Payload::cmd_unix_reverse_nss;
 use strict;
 use base 'Msf::PayloadComponent::CommandPayload';
 sub load {
@@ -16,9 +16,9 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'cmd_unix_reverse_nospaceslash',
+  'Name'         => 'cmd_unix_reverse_nss;',
   'Version'      => '$Revision$',
-  'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
+  'Description'  => 'Use telnet|sh|telnet to simulate reverse shell with no spaces or slashes',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
   'Arch'         => [  ],
   'Priv'         => 0,
