@@ -71,10 +71,10 @@ my %pops =
     );
 
 
-getopts("sjcf:r:p:l:I:", \%opts);
-if (! $opts{f} || (! $opts{j} && ! $opts{c}) && ! $opts{s}) { usage() }
+getopts("f:j:c:sx:l:I:", \%opts);
+if (! defined($opts{'f'}) || (! defined($opts{'j'}) && ! defined($opts{'c'}) && ! defined($opts{'x'}) && ! $opts{'s'})) { usage() }
 
-my $filename = $opts{f};
+my $filename = $opts{'f'};
 my $pe = Pex::PEInfo->new($filename);
 
 if (! $pe)
@@ -84,10 +84,10 @@ if (! $pe)
 }
 
 my $data = $pe->Raw;
-if ($opts{I}) { $pe->ImageBase($opts{I}) }
+if ($opts{'I'}) { $pe->ImageBase($opts{'I'}) }
 
 # Scan for pop/pop/ret addresses
-if (exists($opts{s})) 
+if (exists($opts{'s'})) 
 {
     foreach my $rA (keys(%pops))
     {
@@ -98,7 +98,7 @@ if (exists($opts{s}))
             my $idx = index($data,  $opc, $lst);
             while ($idx > 0)
             {
-                printf("$rA $rB ret\t0x%.8x\n", $pe->OffsetToVirtual($idx));
+                printf("0x%.8x   $rA $rB ret\n", $pe->OffsetToVirtual($idx));
                 $lst = $idx + 1;
                 $idx = index($data, $opc, $lst);
             }
@@ -108,18 +108,18 @@ if (exists($opts{s}))
 }
 
 # Scan for jmp/call/push,ret addresses
-if (exists($opts{j})) 
+if (exists($opts{'j'})) 
 {
     foreach my $opc (keys(%jmps))
     {
-        next if ($opts{r} && lc($opts{r}) ne $jmps{$opc}->[0]);
+        next if ($opts{'j'} && lc($opts{'j'}) ne $jmps{$opc}->[0]);
 
         my $lst = 0;
         my $idx = index($data,  $opc, $lst);
         while ($idx > 0)
         {
             my ($reg, $typ) = @{$jmps{$opc}};
-            printf("$reg\t$typ\t0x%.8x\n", $pe->OffsetToVirtual($idx));
+            printf("0x%.8x   $typ $reg\n", $pe->OffsetToVirtual($idx));
             $lst = $idx + 1;
             $idx = index($data, $opc, $lst);
         }
@@ -128,16 +128,14 @@ if (exists($opts{j}))
 }
 
 
-if (exists($opts{c}))
+if (exists($opts{'c'}))
 {
-    if (! $opts{p}) { print STDERR "$0: no pattern specified\n"; exit(0); }
-    
-    my $bytesarg =  $opts{p};
-    my $byteslen = $opts{l} || length($bytesarg) / 2;
+    my $bytesarg =  $opts{'c'};
+    my $byteslen = (length($bytesarg) / 2) + $opts{'l'};
 
     if (length($bytesarg) % 2 != 0)
     {
-        print "$0: bytes should be a string of hex digits\n";
+        print "$0: bytes should be a string of hex digits (ie 'FFE4')\n";
         exit(0);
     }
 
@@ -152,29 +150,40 @@ if (exists($opts{c}))
     my $idx = index($data,  $bytesarg, $lst);
     while ($idx > 0)
     {
-        my $hexval;
-        foreach my $b (split(//, substr($data, $idx, $byteslen)))
-        {
-            $hexval .= sprintf("0x%.2x ", ord($b));
-        }
-
-        printf("0x%.8x\t%s\n", $pe->OffsetToVirtual($idx), $hexval);
+        my $found = substr($data, $idx, $byteslen);
+        printf("0x%.8x   %s\n", $pe->OffsetToVirtual($idx), hexOutput($found));
         $lst = $idx + 1;
         $idx = index($data, $bytesarg, $lst);
     }
     exit(0);
 }
 
+# Regex
+if(exists($opts{'x'})) {
+  my $regex = $opts{'x'};
+  while($data =~ m/($regex)/g) {
+    my $found = $1;
+    my $loc = pos($data) - length($found);
+    printf("0x%.8x   %s\n", $pe->OffsetToVirtual($loc), hexOutput($found));
+  }
+  exit(0);
+}
+
+sub hexOutput {
+  my $data = shift;
+  return(unpack('H*', $data));
+}
+
+
 sub usage 
 {
-    print STDERR "  Usage: $0 -f filename.exe <-j|-c|-s> <options>\n";
-    print STDERR "  Modes:\n";
-    print STDERR "         -j           Search for jump equivalent instructions\n";
-    print STDERR "         -c           Search for custom byte pattern\n";
+    print STDERR "  Usage: $0 -f filename.exe <mode> <options>\n";
+    print STDERR "Modes:\n";
+    print STDERR "         -j  <reg>    Search for jump equivalent instructions\n";
+    print STDERR "         -c  <data>   Search for custom byte pattern (ie 'FFE4')\n";
     print STDERR "         -s           Search for pop+pop+ret combinations\n";
+    print STDERR "         -x  <regex>  Search for regex match\n";
     print STDERR "Options:\n";
-    print STDERR "         -r           Specify register for jump search mode\n";
-    print STDERR "         -p  <data>   Pattern to search for in custom mode (FFD4)\n";
     print STDERR "         -l  <count>  Number of bytes to show after pattern\n";
     print STDERR "         -I  address  Use this ImageBase address instead of one from file\n";
     print STDERR "\n";
