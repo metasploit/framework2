@@ -366,7 +366,7 @@ sub Send {
 sub Recv {
   my $self = shift;
   my $length = shift;
-  my $timeout = @_ ? shift : $self->GetTimeout;
+  my $timeout = @_ ? shift : $self->GetRecvTimeout;
 
   return if($self->GetError);
   return if($self->SocketError(1));

@@ -168,7 +168,7 @@ sub DecodeResponse {
 }
 
 
-sub TestInterfaceDump {
+sub DumpInterfaces {
     my ($host, $port) = @_;
     my ($res, $rpc);
 
@@ -201,19 +201,20 @@ sub TestInterfaceDump {
     $data = substr($data, 56);
     
     my %ints = ();
-    while (length($data) >= 20)
-    {
-        $ints{unpack('H*',substr($data, 0, 16))}=unpack('v',substr($data, 16)).".".unpack('v',substr($data, 18));
+    while (length($data) >= 20) {
+    
+        my $if = sprintf("%.8x-%.4x-%.4x-%.4x-%s",
+            unpack('V', substr($data, 0, 4)),
+            unpack('v', substr($data, 4, 2)),
+            unpack('v', substr($data, 6, 2)),
+            unpack('n', substr($data, 8, 2)),
+            unpack('H*',substr($data,10, 6))
+        );
+            
+        $ints{$if}=unpack('v',substr($data, 16)).".".unpack('v',substr($data, 18));
         $data = substr($data, 20);
     }
-  
-    foreach (keys(%ints))
-    {
-        print "$_ -> ".$ints{$_}."\n";
-    }
-    
-    
-    print STDERR Pex::Utils::BufferPerl($rpc->{'StubData'})."\n"; 
+    return %ints;
 }
 
 

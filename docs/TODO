@@ -16,8 +16,6 @@ Pre-Release Tasks
 
  - msfencode needs to actually work
 
- - Determine the issue with the PREFORK code, it DOES work on some exploits
- 
  - Convert the QUICKSTART.* docs into a decent user guide
  - Write a new introduction and place into ./README
  - Finish building out the basic development guides
