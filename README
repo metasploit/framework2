@@ -1,4 +1,4 @@
-                                             [ Metasploit Framework v2.0 BETA ]
+                                             [ Metasploit Framework v2.0 BETA5 ]
 Hey!
 
 You have a beta copy of the Metasploit Exploit Framework.
@@ -22,27 +22,24 @@ include, please let us know. Right now we are working on closing the gap
 in the wuftpd, proftpd, MS RPC, and MS Messenger bugs. 
 
 
-Some notes about the framework.
+Some notes about this release:
 
-- The framework should work fine on any little endian system with a recent
-  version of perl installed. If you want to use the framework on Windows, it
-  must be run from inside Cygwin (www.cygwin.com). ActiveState perl is NOT 
-  supported for a number of really good reasons, please email us if you are
-  curious about what they are. Complete instructions for installing Cygwin
-  can be found in the docs directory.
+- Windows users: We no longer support ActiveState perl, please use the bundled 
+  Cygwin environment if you want to run the Framework on Windows. If you want
+  to use your own Cygwin base, please read docs/QUICKSTART.cygwin.
 
-- Read docs/QUICKSTART.tabcompletion, this will make using msfconsole so much
-  nicer.  Its all about the tab tab tab.
+- Read docs/QUICKSTART.tabcompletion. The msfconsole interface will work without
+  Term-ReadLine-Gnu, but it isn't nearly is fun. Its all about the tab-tab-tab.
 
 - Read docs/QUICKSTART.ssl to enable SSL support in any exploits that support it. 
-  The Cygwin instructions for installing Net::SSLeay are actually invalid, 
-  compiling Net::SSLeay actually involves rebuilding perl and openssl first :(
 
 - The Pex nop generator is currently set to return a slide of 0x90.  It supports
-  random nop sleds, and seems to work most of the time.  We have had some cases
-  where the sled caused trouble during exploitation (and its really annoying
-  when developing/debugging stuff).  If you want to give random sleds a shot,
-  you can "setg Msf::Nop::Pex::Random 1" in msfconsole.
+  random nop sleds, and seems to work most of the time. Random nop sleds may 
+  cause certain exploits to fail, these exploits often depend on one or more 
+  registers being set to a specific state at the time of the exception. We will
+  enable random nop sleds as soon as the exploit modules are modified to state
+  exactly which registers must be preserved. If you want to give random sleds a
+  shot, you can "setg Msf::Nop::Pex::Random 1" in msfconsole.
 
 - Right now things are a bit slow.  We are reloading all the modules for any
   commands that may be affected by module changes.  If this slowness is really
@@ -63,26 +60,27 @@ Some notes about the framework.
 - The following components are disabled in this release.
     + win32 prefork capability
     
-- The following is a list of known bugs:
-    + BSD bind and findsock payloads are buggy
+- Please check docs/TODO for a list of known issues
 
 - The current exploit list:
-    + PoPToP Negative Read Overflow
-    + Apache Win32 Chunked Encoding
-    + Exchange 2000 MS03-46 Heap Overflow
-    + Frontpage fp30reg.dll Chunked Encoding
-    + IA WebMail 3.x Buffer Overflow
-    + IIS 5.0 nsiislog.dll POST Overflow
-    + IIS 5.0 Printer Buffer Overflow
-    + IIS 5.0 WebDAV ntdll.dll Overflow
-    + Microsoft RPC DCOM MSO3-026 NT 2K/XP
-    + Microsoft RPC DCOM MSO3-026 NT 4.0
-    + MSSQL 2000 Resolution Overflow
-    + RealServer Describe Buffer Overflow
-    + Samba trans2open Overflow
-    + Sambar 6 Search Results Buffer Overflow
-    + Solaris sadmind Remote Execution
-    + War-FTPD 1.65 PASS Overflow
+   + PoPToP Negative Read Overflow
+   + Apache Win32 Chunked Encoding
+   + Exchange 2000 MS03-46 Heap Overflow
+   + Frontpage fp30reg.dll Chunked Encoding
+   + IA WebMail 3.x Buffer Overflow
+   + IIS 5.0 nsiislog.dll POST Overflow
+   + IIS 5.0 Printer Buffer Overflow
+   + IIS 5.0 WebDAV ntdll.dll Overflow
+   + IMail LDAP Service Buffer Overflow
+   + Microsoft RPC DCOM MSO3-026 NT 2K/XP
+   + Microsoft RPC DCOM MSO3-026 NT 4.0
+   + MSSQL 2000 Resolution Overflow
+   + RealServer Describe Buffer Overflow
+   + Samba trans2open Overflow
+   + Sambar 6 Search Results Buffer Overflow
+   + Solaris sadmind Remote Execution
+   + War-FTPD 1.65 PASS Overflow
+
 
 - The current payload list:
     + bsdx86bind
@@ -103,4 +101,8 @@ Some notes about the framework.
     + solx86reverse
     + winadduser
     + winbind
+    + winbind_stg
+    + winbind_stg_upexec
     + winreverse
+    + winreverse_stg
+    + winreverse_stg_upexec
