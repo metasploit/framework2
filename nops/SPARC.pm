@@ -53,7 +53,6 @@ my $table = [
   [ \&Insarithmetic, [ 1, 28 ], ],			# subxcc
   [ \&Insarithmetic, [ 1, 32 ], ],			# taddcc
   [ \&Insarithmetic, [ 1, 33 ], ],			# tsubcc
-  [ \&Insarithmetic, [ 1, 36 ], ],			# mulscc
   [ \&Insarithmetic, [ 2, 37 ], ],			# sll
   [ \&Insarithmetic, [ 2, 38 ], ],			# srl
   [ \&Insarithmetic, [ 2, 39 ], ],			# sra
@@ -75,6 +74,8 @@ my $table = [
   [ \&Insbranch, [ 13 ] ],				# bcc[,a]
   [ \&Insbranch, [ 14 ] ],				# bpos[,a]
   [ \&Insbranch, [ 15 ] ],				# bvc[,a]
+# XXX: This was taken out for safety.
+#  [ \&Insarithmetic, [ 1, 36 ], ],			# mulscc
 # Removed for SPARCV7 support
 #  [ \&Insarithmetic, [ 1, 10 ], ],			# umul 
 #  [ \&Insarithmetic, [ 1, 11 ], ],			# smul 
@@ -86,10 +87,11 @@ my $table = [
 #  [ \&Insarithmetic, [ 0, 31 ], ],			# sdivcc
 ];
 
-# Returns valid destination register number between 0 and 31 excluding %sp
+# Returns valid destination register number between 0 and 31 excluding %sp and %fp
 sub get_dst_reg {
-  my $reg = int(rand(31));
+  my $reg = int(rand(30));
   $reg += ($reg >= 14);
+  $reg += ($reg >= 30);
 
   return $reg;
 }
