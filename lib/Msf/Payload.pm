@@ -81,9 +81,18 @@ sub SubstituteVariables # (self, hash, payload)
 			my ($offset, $pack) = @{ $hash->{'Offsets'}->{$opt} };
 			my $type = $opts->{$opt}->[1];
 			my $value;
-				
+
 			$self->PrintDebugLine(3, "Payload: searching for opt=$opt type=$type");
 	
+			# Allow derived classes the chance to replace advanced variables such
+			# as EXITFUNC for win32
+			next if (defined($self->ReplaceVariable(
+					hash    => $hash,
+					payload => \$payload,
+					option  => $opt, 
+					offset  => $offset,
+					packing => $pack)));
+				
 			# If there is a corresponding environment variable for the option...
 			if ((defined($value = $self->GetVar($opt))) or
 			    (defined($value = $self->GetLocal($opt))))
@@ -114,6 +123,14 @@ sub SubstituteVariables # (self, hash, payload)
 	}
 
 	return $payload;
+}
+
+#
+# Stub for replacing variables that can be overriden by derived classes
+#
+sub ReplaceVariable
+{
+	return undef;
 }
 
 1;
