@@ -127,7 +127,7 @@ sub Usage
     print STDERR "Payloads: \n";
     foreach my $p (sort(keys(%{$payloads})))
     {
-        print STDERR "\t$p" . (" " x (20 - length($p))) . $payloads->{$p}->Description . "\n";
+        print STDERR "  $p" . (" " x (25 - length($p))) . $payloads->{$p}->Description . "\n";
     }
     exit(0);
 }
