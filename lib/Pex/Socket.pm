@@ -502,9 +502,12 @@ sub ConnectProxies {
         return;
     }
     
+    my $proxyloop = 0;
     my $lastproxy = $base;
     foreach my $proxy (@proxies)  
     {
+        $proxyloop++;
+        
         if ($lastproxy->[0] eq 'http') {
             my $res = $sock->send("CONNECT ".$proxy->[1].":".$proxy->[2]." HTTP/1.0\r\n\r\n");
         }
@@ -519,8 +522,8 @@ sub ConnectProxies {
             }
         }
         
-        # half a second between each proxy
-        select(undef, undef, undef, 0.5);
+        # wait 0.25 second for each proxy already in chain
+        select(undef, undef, undef, 0.25 * $proxyloop);
         
         if (! $sock->connected) {
             $self->SetError("Proxy type $lastproxy->[0] at $lastproxy->[1] closed connection");
