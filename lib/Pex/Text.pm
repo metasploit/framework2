@@ -172,4 +172,16 @@ sub BadCharIndexes {
   return(@indexes);
 }
 
+# This is ugly, it sucks, just ignore it
+sub Freeform {
+  my $data = shift;
+  $data =~ s/^\s+//g;
+  $data =~ s/\s+$//g;
+  $data =~ s/^[ \t]+//gm;
+  $data =~ s/[ \t]+$//gm;
+  $data =~ s/(\n+)/length($1) == 1 ? " " : "\n" x length($1)/eg;
+  return($data);
+}
+
+
 1;
