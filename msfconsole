@@ -174,19 +174,19 @@ sub Load {
 sub gLogging {
     my ($cmd, $tog, $dir) = @_;
     
-    if ($tog && $tog =~ /^(T|Y|1|On)/i)
+    if (defined($tog) && $tog =~ /^(T|Y|1|On)/i)
     {
         $ui->SetGlobalEnv('Logging', 'Enabled');
     }
     
-    if ($tog && $tog =~ /^(F|N|0|Off)/i)
+    if (defined($tog) && $tog =~ /^(F|N|0|Off)/i)
     {
         $ui->SetGlobalEnv('Logging', 'Disabled');
     }   
     
     $dir = xCreateLogDir($dir);
 
-    if ($ui->GetEnv('Logging'))
+    if ($ui->GetEnv('Logging') eq 'Enabled')
     {
         if ( -d $ui->GetEnv('LogDir'))
         {
