@@ -252,6 +252,13 @@ sub eUnset
         $ui->UnsetTempEnv;
     }
     $ui->UnsetTempEnv($key);
+    
+    my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
+    if ($ui->GetTempEnv('PAYLOAD')) {
+        $prompt .= '('.$ui->GetTempEnv('PAYLOAD').')';
+    }
+    $prompt .= ' > ';
+    $console->_prompt($prompt);
 }
 
 
