@@ -524,8 +524,10 @@ sub eCheck
     $exploit->Validate;
     return if($exploit->PrintError);
 
-    $exploit->Check;
+    my $res = $exploit->Check;
     return if($exploit->PrintError);
+
+    print "Check: $res\n"
 }
 
 sub eExploit 

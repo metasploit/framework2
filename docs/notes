@@ -1,16 +1,1 @@
-new call SUPER to handle set-defaults
-pack is platform unportable with l, etc !
-select(STDOUT); $|++; shouldn't stuff like this be done for us!@#
-if we loose connection and can't do findsock, how does an exploits specify this
-do a size check in encoder.
-right now the encoder pads, what if you don't want it to, specify a nop length to pad, so you can get smaller requests with different payloads.
-bad chars, what about bad char combos?
-debugging mode!
-Prepend/Append should be functions so they know the arch
-Would be nice to be able to adjust stepsize based on nopsled size. INFO!
-
-CHeck for name colissions on loading
-
-
-Note on the encoder:
 What if the subtract dword has a badchar in it, could we detect this and pad by 4 a couple of times and try to rid it?

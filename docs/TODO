@@ -18,13 +18,13 @@ Pre-Release Tasks
 
  - Get a logo in ascii art form for msfcli and msfconsole. Embed logo into msfweb.
 
- - Configure mailing list, public CVS, bugzilla, etc. Currently waiting on Savannah approval
+ - Configure mailing list, public CVS, bugzilla, etc. Currently waiting on Savannah approval, they have been queue up for almost a month...
 
 
 Post-Release Tasks
 ===================
 
- - Get the Encoder/Nop routines fixed so they will follow a specified precedence, and then fall through all the
+ X Get the Encoder/Nop routines fixed so they will follow a specified precedence, and then fall through all the
    other ones on failure.
 
  - Finish rewriting the configuration and logging system in msfconsole
@@ -38,10 +38,12 @@ Post-Release Tasks
    Load should "load" a copy, you should be able to make changes and ditch it without affecting the saved copy.  
    Maybe this should be changed, and LoadTempEnv should create a copy like SaveTempEnv does.
 
- - We should push everything to a sub usage, for example exploit Size, in some code we do like 
+ X We should push everything to a sub usage, for example exploit Size, in some code we do like 
    $exploit->{'Info'}->{'Payload'}->{'Size'} or $exploit->Info->{'Payload'}->Size, etc etc, we should just do 
    $exploit->Size, this allows overloading by the exploit to calculate Size on the fly (maybe affected by some 
    env parameters?, etc.)
+   
+   ^^^ - Is this complete?
 
 
 Far Future
