@@ -56,7 +56,7 @@ sub ParentHandler {
         $self->PrintLine('[*] Got connection from ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport);
       }
       else {
-        $self->PrintLine('[*] Got connection from ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport);
+        $self->PrintLine('[*] Got connection IN: ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport . ' OUT: ' . $self->SocketOut->peerhost . ':' . $self->SocketOut->peerport);
       }
       $self->KillChild;
       $self->HandleConnection;

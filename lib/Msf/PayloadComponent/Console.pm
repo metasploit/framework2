@@ -8,7 +8,8 @@ use IO::Select;
 
 sub HandleConsole {
   my $self = shift;
-  my $sock = $self->Socket;
+  my $sockIn = $self->SocketIn;
+  my $sockOut = $self->SocketOut;
   my $loop = 1;
 
   print "\n";
@@ -27,8 +28,10 @@ sub HandleConsole {
   $SIG{'INT'} = $sigHandler;
 
   my $stdin = IO::Handle->new_from_fd(0, '<');
-  $sock->blocking(1);
-  $sock->autoflush(1);
+  $sockIn->blocking(1);
+  $sockIn->autoflush(1);
+  $sockOut->blocking(1);
+  $sockOut->autoflush(1);
   $stdin->blocking(1);
   $stdin->autoflush(1);
 
@@ -40,11 +43,11 @@ LOOPER:
     foreach my $ready (@ready) {
       if($ready == $stdin) {
         my $data = $self->SendFilter($stdin->getline);
-        $sock->send($data);
+        $sockOut->send($data);
       }
       elsif($ready == $sock) {
         my $data;
-        $sock->recv($data, 4096);
+        $sockIn->recv($data, 4096);
         last LOOPER if(!length($data));
         print $self->RecvFilter($data);
       }
