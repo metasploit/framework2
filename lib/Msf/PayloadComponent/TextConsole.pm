@@ -50,15 +50,10 @@ sub HandleConsole {
   my $consoleIn  = $self->ConsoleIn;
   my $consoleOut = $self->ConsoleOut;
   
-  $sockIn->blocking(1);
-  $sockIn->autoflush(1);
-  $sockOut->blocking(1);
-  $sockOut->autoflush(1);
-  
-  $consoleIn->blocking(1);
-  $consoleIn->autoflush(1);
-  $consoleOut->blocking(1);
-  $consoleOut->autoflush(1);
+  foreach ($sockIn, $sockOut, $consoleIn, $consoleOut) {
+    $_->blocking(1);
+    $_->autoflush(1);
+  }
 
   my $selector = IO::Select->new($consoleIn, $sockIn);
 
