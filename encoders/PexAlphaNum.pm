@@ -13,7 +13,6 @@ use base 'Msf::Encoder';
 use Pex::Encoder;
 
 my $advanced = {
-  'PexDebug' => [0, 'Sets the Pex Debugging level (zero is no output)'],
 };
 
 my $info = {
