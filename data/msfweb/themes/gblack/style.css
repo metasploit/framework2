@@ -9,7 +9,7 @@ body
     font-family:    Verdana, Tahoma, Arial, Helvetica, sans-serif;
     color:          #00ff01;
     font-size:      10pt;
-    margin:         0;
+	margin:			0.1cm 0.5cm 0.1cm 0.5cm;	
 }
 
 A {
