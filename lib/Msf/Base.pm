@@ -47,7 +47,7 @@ sub GetEnv {
   my @envs = ($self->GetTempEnv, $self->GetGlobalEnv);
   print join(' ', caller()) if($envDebug >= 3);
   foreach my $env (@envs) {
-    if(defined($key)) {
+    if(exists($env->{$key})) {
       print "Get $key => " . $env->{$key} . "\n" if($envDebug);
       return($env->{$key});
     }
