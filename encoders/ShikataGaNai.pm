@@ -119,7 +119,7 @@ sub _BuildBM {
     "\x03\x43[>1 chr(:end: - :fpu: - 4)<]".     # add eax, [ebx+0x18]
     "\x83\xc3\x04",                         # add ebx, 4
 
-    "\x31\x43[>1 chr(:end: - :fpu - 4:)<]".     # xor [ebx+0x1b], eax
+    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]".     # xor [ebx+0x1b], eax
     "\x83\xc3\x04".                         # add ebx, 4
     "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
 
