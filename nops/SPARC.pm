@@ -62,38 +62,22 @@ my $table = [
   [ \&Insarithmetic, [ 2, 37 ], ],			# sll
   [ \&Insarithmetic, [ 2, 38 ], ],			# srl
   [ \&Insarithmetic, [ 2, 39 ], ],			# sra
-  [ \&Insbranch, [ 0, 0 ] ],				# bn
-  [ \&Insbranch, [ 0, 1 ] ],				# bn,a
-  [ \&Insbranch, [ 1, 0 ] ],				# be
-  [ \&Insbranch, [ 1, 1 ] ],				# be,a
-  [ \&Insbranch, [ 2, 0 ] ],				# ble
-  [ \&Insbranch, [ 2, 1 ] ],				# ble,a
-  [ \&Insbranch, [ 3, 0 ] ],				# bl
-  [ \&Insbranch, [ 3, 1 ] ],				# bl,a
-  [ \&Insbranch, [ 4, 0 ] ],				# bleu
-  [ \&Insbranch, [ 4, 1 ] ],				# bleu,a
-  [ \&Insbranch, [ 5, 0 ] ],				# bcs
-  [ \&Insbranch, [ 5, 1 ] ],				# bcs,a
-  [ \&Insbranch, [ 6, 0 ] ],				# bneg
-  [ \&Insbranch, [ 6, 1 ] ],				# bneg,a
-  [ \&Insbranch, [ 7, 0 ] ],				# bvs
-  [ \&Insbranch, [ 7, 1 ] ],				# bvs,a
-  [ \&Insbranch, [ 8, 0 ] ],				# ba
-  [ \&Insbranch, [ 8, 1 ] ],				# ba,a
-  [ \&Insbranch, [ 9, 0 ] ],				# bne
-  [ \&Insbranch, [ 9, 1 ] ],				# bne,a
-  [ \&Insbranch, [ 10, 0 ] ],				# bg
-  [ \&Insbranch, [ 10, 1 ] ],				# bg,a
-  [ \&Insbranch, [ 11, 0 ] ],				# bge
-  [ \&Insbranch, [ 11, 1 ] ],				# bge,a
-  [ \&Insbranch, [ 12, 0 ] ],				# bgu
-  [ \&Insbranch, [ 12, 1 ] ],				# bgu,a
-  [ \&Insbranch, [ 13, 0 ] ],				# bcc
-  [ \&Insbranch, [ 13, 1 ] ],				# bcc,a
-  [ \&Insbranch, [ 14, 0 ] ],				# bpos
-  [ \&Insbranch, [ 14, 1 ] ],				# bpos,a
-  [ \&Insbranch, [ 15, 0 ] ],				# bvc
-  [ \&Insbranch, [ 15, 1 ] ],				# bvc,a
+  [ \&Insbranch, [ 0 ] ],				# bn[,a]
+  [ \&Insbranch, [ 1 ] ],				# be[,a]
+  [ \&Insbranch, [ 2 ] ],				# ble[,a]
+  [ \&Insbranch, [ 3 ] ],				# bl[,a]
+  [ \&Insbranch, [ 4 ] ],				# bleu[,a]
+  [ \&Insbranch, [ 5 ] ],				# bcs[,a]
+  [ \&Insbranch, [ 6 ] ],				# bneg[,a]
+  [ \&Insbranch, [ 7 ] ],				# bvs[,a]
+  [ \&Insbranch, [ 8 ] ],				# ba[,a]
+  [ \&Insbranch, [ 9 ] ],				# bne[,a]
+  [ \&Insbranch, [ 10 ] ],				# bg[,a]
+  [ \&Insbranch, [ 11 ] ],				# bge[,a]
+  [ \&Insbranch, [ 12 ] ],				# bgu[,a]
+  [ \&Insbranch, [ 13 ] ],				# bcc[,a]
+  [ \&Insbranch, [ 14 ] ],				# bpos[,a]
+  [ \&Insbranch, [ 15 ] ],				# bvc[,a]
 ];
 
 # Returns valid destination register number between 0 and 31 excluding %sp
@@ -137,7 +121,7 @@ sub Insbranch {
   return if(! $len);
   $len = 0x3fffff if($len >= 0x400000);
 
-  return pack("N", (($ref->[1] << 29) | ($ref->[0] << 25) | (2 << 22) | $len)); 
+  return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | $len)); 
 }
 
 sub Nops {
