@@ -350,7 +350,7 @@ use strict;
 my \$info =
 {
 	'Name'        => '" . $meta->{'shortname'} . "',
-	'Version'     => '\$Revision$',
+	'Version'     => '',
 	'Description' => '" . $meta->{'description'} . "',
 	'Authors'     => [ $authors ],
 	'Priv'        => 0,
