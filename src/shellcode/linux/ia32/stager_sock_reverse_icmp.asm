@@ -55,7 +55,7 @@ sendto:
 	push edi
 	push ebx
 	mov  ecx, esp
-	push 0xb
+	push byte 0xb
 	pop  ebx
 	mov  al, 0x66
 	int  0x80
