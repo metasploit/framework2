@@ -9,55 +9,41 @@ body
     font-family:    Verdana, Tahoma, Arial, Helvetica, sans-serif;
     color:          black;
     font-size:      10pt;
-    margin:         0;
 }
 
-A:link { 
-	font-size: 10pt;
-	text-decoration: none; 
-	color: navy; 
-	font-weight: bold;
+A { 
+	font-size: 			10pt;
+	text-decoration: 	none; 
+	color: 				navy; 
+	font-weight: 		bold;
 }
 
-A:active { 
-	font-size: 10pt;
-	text-decoration: none; 
-	color: navy; 
-	font-weight: bold;
-}
-
-A:visited { 
-	font-size: 10pt;
-	text-decoration: none; 
-	color: navy; 
-	font-weight: bold;
-}
 
 A:hover { 
-	font-size: 10pt;
-	text-decoration: none; 
-	color: navy; 
-	font-weight: bold;
+	text-decoration: underline;
 }
 
 .tabDark {
 	background:		#dddddd;
-	font-size:		10pt;
-	font-weight:	bold;
+}
+A.tabDark {
+
 }
 
 .tabLight {
-	background:		#ffffff;
-	font-size:		10pt;
-	font-weight:	bold;
+	background:		#eeeeee;
+}
+A.tabLight {
+
 }
 
 .tabActive {
-	background:		#feff9c;
-	color:			black;
-	font-size:		10pt;
-	font-weight:	bold;
+
 }
+A.tabActive {
+	text-decoration: underline;
+}
+
 
 .sectionTitle {
 	color:			black;
@@ -131,14 +117,60 @@ A.nav {
 	font-weight: 	bold;
 }
 
-.textBoldGrey {
+.textBoldDark {
 	font-size:		10pt;
 	color:			grey;
 	font-weight: 	bold;
 }
 
-.textBoldWhite {
+.textBoldBright {
+	background:		black;
 	font-size:		10pt;
 	color:			white;
 	font-weight: 	bold;
 }
+
+
+.textNormalColorA {
+	background:		#eeeeee;
+	font-size:		10pt;
+	font-weight:	normal;
+}
+
+.textBoldColorA {
+	background:		#eeeeee;
+	font-size:		10pt;
+	font-weight:	bold;
+}
+
+
+.textNormalColorB {
+	background:		#dddddd;
+	font-size:		10pt;
+	font-weight:	normal;
+}
+
+.textBoldColorB {
+	background:		#dddddd;
+	font-size:		10pt;
+	font-weight:	bold;
+}
+
+.tblOuter {
+	background:		black;
+}
+
+.tblInner {
+	background:		white;
+}
+
+input {
+	font-weight:	bold;
+	color:			black;
+}
+
+select {
+	color:			black;
+	font-weight:	bold;
+}
+

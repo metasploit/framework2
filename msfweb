@@ -23,6 +23,7 @@
 #	4. Admin
 #	5. Logs
 #   6. ShikataGaNai != random via msfweb payload encoder? !?!?!!
+#	7. Command line option parsing (tehem, logs, etc);
 
 
 require 5.6.0;
@@ -83,6 +84,10 @@ print "[*] Starting Metasploit v$VERSION Web Interface on $host:$port...\n";
 # Set the cache directory
 $ui->SetTempEnv('_CacheDir', "$RealBin/data/msfweb");
 
+# Set the theme directory
+$ui->SetTempEnv('_ThemeDir', "$RealBin/data/msfweb/gblack");
+
+
 # Create the inital list of modules
 LoadAllModules();
 
@@ -129,9 +134,11 @@ exit(0);
 sub ProcessResRequest {
 	my ($req, $cli, $ipc) = @_;
 
+	my $theme = $ui->GetTempEnv('_ThemeDir') || "$RealBin/data/msfweb/default";
+
 	my %files =
 	(
-		'LOGO'	=> ['image/jpg', 'msfweb_logo.jpg'],
+		'LOGO'	=> ['image/jpg', 'logo.jpg'],
 		'STYLE'	=> ['text/css',  'style.css'],
 	);
 	
@@ -139,7 +146,7 @@ sub ProcessResRequest {
 		my ($type, $path) = @{ $files{ $req->{'params'}->{'ID'} } };
 		my $data;
 		
-		if ( open (X, "<$RealBin/data/msfweb/$path") ) {
+		if ( open (X, "<$theme/$path") ) {
 			while (<X>) { $data .= $_ }
 			close (X);
 		}
@@ -245,8 +252,8 @@ sub ProcessWebRequest {
 			$mname = 'Invalid Module';
 		}						
 
-        $res .= "<table width=100% bgcolor='black'>\n";
-		$res .= "<tr><td class='textBoldWhite'>Module: $mname</td></tr>\n";
+        $res .= "<table width='100%'>\n";
+		$res .= "<tr><td class='textBoldBright'>Module: $mname</td></tr>\n";
 		$res .= "</table><br/>\n";
     }
 
@@ -307,16 +314,15 @@ sub HTML_Header {
         <title>Metasploit Framework Web Console v$VERSION</title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
     </head>
-    <body bgcolor='white' text='black'>
+    <body>
 <a name='Top'></a>
 
 <br/>
 <div align='center'><img src='/RESOURCE?ID=LOGO'></div>
 <br/>
 
-<table align='center' cellpadding=0 border=0 cellspacing=0 width='98%' bgcolor='#000000'>
-<tr><td>
-<table align='center' cellpadding=8 border=0 cellspacing=1 width='100%'>
+<table align='center' cellpadding=1 border=0 cellspacing=0 width='98%' class='tblOuter'>
+<table align='center' cellpadding=8 border=0 cellspacing=1 width='100%' class='tblInner'>
 <tr>
 ];
 
@@ -327,13 +333,13 @@ sub HTML_Header {
 	foreach my $section (@sections) {
 		$lastTab = ($lastTab eq 'tabLight') ? 'tabDark' : 'tabLight';
 		$currTab = ($section eq $req->{'base'}) ? 'tabActive' : $lastTab;		
-		$header .= qq[ <td class='$currTab' width='$width' align='center'> <a href='/$section'>$section</a> </td> ];
+		$header .= qq[ <td class='$lastTab' width='$width' align='center'> <a href='/$section' class='$currTab'>$section</a> </td> ];
 	}
 	$header .= qq[
         </tr>
 
         <tr>
-                <td colspan=5 bgcolor='#ffffff'>
+                <td colspan=5>
                 <br/>
 	];
 	
@@ -349,7 +355,7 @@ sub HTML_Footer {
 </table></td></tr></table>
 <br/>
 <div align='center' class='copy'>
-	copyright &copy 2003-2005 metasploit.com<br/>
+	copyright &copy 2003-2005 metasploit.com<br/><br/>
 </div>
 </body>
 </html>
@@ -453,6 +459,10 @@ sub SessionLoad {
 	my $sid		= $state->{'SID'} + 0;
 	my $res		= qq
 [<html>
+    <head>
+        <title>Metasploit Framework Web Console v$VERSION</title>
+		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+    </head>
 <frameset rows="*, 45" border=0 frameborder=0 framespacing=0>
   <frame src="/SESSIONS?MODE=UPDATE&SID=$sid" name="update">
   <frame src="/SESSIONS?MODE=COMMAND&SID=$sid" name="command">
@@ -471,7 +481,11 @@ sub SessionCommand {
 	my $cmd		= $state->{'CMD'};	
 	my $res		= qq
 [<html>
-<body bgcolor='white' text='black'>
+    <head>
+        <title>Metasploit Framework Web Console v$VERSION</title>
+		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+    </head>
+<body>
 
 <form action='/SESSIONS' name='cmdform'>
 <input type='hidden' name='MODE' value='COMMAND'>
@@ -512,14 +526,13 @@ sub SessionUpdate {
 	my $sid		= $state->{'SID'} + 0;
 	my $cmd		= $state->{'CMD'};
 
-	# <meta http-equiv='refresh' content='10;URL=/SESSIONS?MODE=UPDATE&SID=$sid#END'>
 	my $res		= qq
 [<html>
     <head>
         <title>Metasploit Framework Web Console v$VERSION</title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
     </head>
-    <body bgcolor='white' text='black'>
+    <body>
 	<pre>
 ];
 
@@ -715,9 +728,9 @@ sub ModuleList
 
 	$mList .= qq[
 <a name='Modules'><br/></a>        
-<table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' bgcolor='black'>        
+<table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' class='tblOuter'>        
 	<tr><td>
-    <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' bgcolor='white'>
+    <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' class='tblInner'>
     <tr>
 		<td class='nav' align='left'> Modules </td>
     	<td class='listBody' align='right'><a href='#Top'>Top</a></td>
@@ -847,7 +860,7 @@ sub PayloadOptions
 
         my $dflt = $popts->{$popt}->[3];
         my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
-        my $colc = $popts->{$popt}->[0] ? "textBold" : "textBoldGrey";
+        my $colc = $popts->{$popt}->[0] ? "textBold" : "textBoldDark";
 		
         $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
         
@@ -1036,7 +1049,7 @@ sub ExploitTarget
 			}
 			$colc = ListColor($colc);
 			
-            $res .= "<tr><td>&nbsp;</td><td align='left' class='textBold' bgcolor='$colc'>$tidx - <a href='".$u."OPT_TARGET=$tidx'> $k $default </a></td></tr>\n";
+            $res .= "<tr><td>&nbsp;</td><td align='left' class='textBold$colc'>$tidx - <a href='".$u."OPT_TARGET=$tidx'> $k $default </a></td></tr>\n";
 			$tidx++;
         }
         $res .= "</table>\n";
@@ -1064,7 +1077,7 @@ sub ExploitPayload
 
     if (defined($x->Payload) ) {
 		$res .= "<p class='textBold'>Select Payload:<br\></p>\n";
-        $res .= "<table align='center' cellpadding=0 border=0 cellspacing=0 width='95%'>\n";
+        $res .= "<table align='center' cellpadding=2 border=0 cellspacing=0 width='95%'>\n";
 		$res .= "<tr><td class='textBold' align='center'>Payload</td>";
 		$res .= "    <td class='textBold' align='center'>Description</td></tr>\n";
 		$res .= "<tr><td colspan=2><br\></td></tr>\n";
@@ -1075,8 +1088,8 @@ sub ExploitPayload
             my $u = StateToURL('OPTIONS', $state);
             my $pname = $payloads->{$k}->Name();
 			$colc = ListColor($colc);
-            $res .= "<tr><td class='textNormal' bgcolor='$colc'><a href='".$u."PAYLOAD=" . $k . "'>$k</a></td>";
-            $res .= "<td class='textNormal' bgcolor='$colc'>" .$pname . "</td></tr>\n";
+            $res .= "<tr><td class='textNormal$colc'><a href='".$u."PAYLOAD=" . $k . "'>$k</a></td>";
+            $res .= "<td class='textBold$colc'>" .$pname . "</td></tr>\n";
         }
         $res .= "</table>\n";
     } else {
@@ -1124,7 +1137,7 @@ sub ExploitOptions
     foreach my $mopt (sort(keys(%{$mopts}))) {
         my $dflt = $mopts->{$mopt}->[3];
         my $reqd = $mopts->{$mopt}->[0] ? "Required" : "Optional";
-		my $colc = $mopts->{$mopt}->[0] ? "textBold" : "textBoldGrey";
+		my $colc = $mopts->{$mopt}->[0] ? "textBold" : "textBoldDark";
 		
 		if (exists($x->AutoOpts->{$mopt})) {
 			$dflt = $x->AutoOpts->{$mopt};
@@ -1141,7 +1154,7 @@ sub ExploitOptions
 
         my $dflt = $popts->{$popt}->[3];
         my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
-        my $colc = $popts->{$popt}->[0] ? "textBold" : "textBoldGrey";
+        my $colc = $popts->{$popt}->[0] ? "textBold" : "textBoldDark";
 		
         $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
  
@@ -1296,7 +1309,7 @@ qq[
 		"<br\><hr size=1 width='80%'>".
 		"<div align='center' class='navHead'> Exploit Output </div>\n".
 		"<hr size=1 width='80%'><br\>".	
-		"<div align='left' class='moduleOutput' bgcolor='#dddddd'>\n".
+		"<div align='left' class='moduleOutput'>\n".
 		"<blockquote><blockquote>\n\n";
 	$bout->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
@@ -1624,8 +1637,8 @@ sub IPCHashToData {
 }
 
 sub ListColor {
-	my $color = shift;
-	return ($color eq '#ffffff') ? '#eeeeee' : '#ffffff';
+	my $style = shift;
+	return ($style eq 'ColorA') ? 'ColorB' : 'ColorA';
 }
 
 sub LoadAllModules {
