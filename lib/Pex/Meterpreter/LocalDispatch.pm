@@ -213,7 +213,7 @@ sub write
 	if ($argc == 1)
 	{
 		$client->writeConsoleOutput(text => 
-				"Usage: interact channel_id\n");
+				"Usage: write channel_id\n");
 		goto out;
 	}
 
@@ -275,7 +275,7 @@ sub close
 	if ($argc == 1)
 	{
 		$client->writeConsoleOutput(text => 
-				"Usage: interact channel_id\n");
+				"Usage: close channel_id\n");
 		goto out;
 	}
 
@@ -297,6 +297,7 @@ sub close
 	$$channel->close(
 			client => $client);
 
+out:
 	return 1;
 }
 
