@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'solsparc_find',
+  'Name'         => 'Solaris Staged SrcPort Findsock Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Spawn a shell on the established connection',
   'Authors'      => [ 'optyx <optyx [at] uberhax0r.net>', ],

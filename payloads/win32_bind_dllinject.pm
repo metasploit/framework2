@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'winbind_dllinject',
+  'Name'         => 'Windows Bind DLL Inject',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and inject DLL into process memory',
   'Authors'      => [

@@ -18,7 +18,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'Skape/Jarkko/Hdm VNC DLL inject',
+  'Name'         => 'Windows Reverse VNC Server DLL Inject',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back and inject a VNC server into the remote process',
   'Authors'      => [

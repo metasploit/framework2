@@ -18,7 +18,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'winbind_vncinject',
+  'Name'         => 'Windows Bind VNC Server DLL Inject',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and inject a VNC server into the remote process',
   'Authors'      => [

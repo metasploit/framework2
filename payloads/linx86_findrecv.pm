@@ -8,7 +8,7 @@ my $advanced = {
 
 my $info =
 {
-  'Name'         => 'recv tag findsock',
+  'Name'         => 'Linux Recv Tag Findsock Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Spawn a shell on the established connection, proxy/nat safe',
   'Authors'      => [ 'spoonm', ],

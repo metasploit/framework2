@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'win reverse Skape/Jarkko DLL inject',
+  'Name'         => 'Windows Reverse DLL Inject',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [

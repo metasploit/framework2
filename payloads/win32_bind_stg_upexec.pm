@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'winbind_stg_upexec',
+  'Name'         => 'Windows Staged Bind Upload/Execute',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection then upload and exec file',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

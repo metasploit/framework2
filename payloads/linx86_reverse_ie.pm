@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'linx86reverse_ie',
+  'Name'         => 'Linux InlineEgg Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],

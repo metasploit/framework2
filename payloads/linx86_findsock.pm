@@ -17,7 +17,7 @@ my $advanced = {
 
 my $info =
 {
-  'Name'         => 'linx86findsock',
+  'Name'         => 'Linux SrcPort Findsock Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Spawn a shell on the established connection',
   'Authors'      => [ 'LSD [Unknown License]', ],

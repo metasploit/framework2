@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::BindConnection';
 
 my $info =
 {
-  'Name'         => 'solx86bind',
+  'Name'         => 'Solaris Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'bighawk [Unknown License]', ],

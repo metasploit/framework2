@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::NoConnection';
 
 my $info =
 {
-  'Name'         => 'Empty',
+  'Name'         => 'Empty Testing Payload',
   'Version'      => '$Revision$',
   'Description'  => 'Empty payload (for testing)',
   'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],

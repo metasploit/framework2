@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'winexec net user /ADD',
+  'Name'         => 'Windows Execute net user /ADD',
   'Version'      => '$Revision$',
   'Description'  => 'Create a new user and add to local Administrators group',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

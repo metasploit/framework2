@@ -14,7 +14,7 @@ use base 'Msf::PayloadComponent::FindConnection';
 
 my $info =
 {
-	'Name'         => 'x86 BSDI srcport findsock',
+	'Name'         => 'BSDI SrcPort Findsock Shell',
 	'Version'      => '$Revision$',
 	'Description'  => 'Spawn a shell on the established connection',
 	'Authors'      => [ 'skape <mmiller [at] hick.org>', 

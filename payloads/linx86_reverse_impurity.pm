@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::ReverseConnection';
 
 my $info =
 {
-  'Name'         => 'linx86reverse_imp',
+  'Name'         => 'Linux Reverse Impurity Upload/Execute',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and download impurity module',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

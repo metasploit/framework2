@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'solsparc_reverse',
+  'Name'         => 'Solaris Staged Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'optyx <optyx [at] uberhax0r.net>', ],

@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'Windows reverse InlineEgg stager',
+  'Name'         => 'Windows Reverse InlineEgg Stager',
   'Version'  => '$Revision$',
   'Description'  => 'Listen for connection, send address of GP/LL across, read/exec InlineEgg',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

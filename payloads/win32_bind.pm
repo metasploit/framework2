@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'winbind',
+  'Name'         => 'Windows Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

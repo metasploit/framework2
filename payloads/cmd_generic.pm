@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'Execute arbitrary command',
+  'Name'         => 'Arbitrary Command',
   'Version'      => '$Revision$',
   'Description'  => 'Run a specific command on the remote system',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

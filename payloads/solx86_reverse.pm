@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::ReverseConnection';
 
 my $info =
 {
-  'Name'         => 'solx86reverse',
+  'Name'         => 'Solaris Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'bighawk [Unknown License]', ],

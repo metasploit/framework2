@@ -14,7 +14,7 @@ use base 'Msf::PayloadComponent::ReverseConnection';
 
 my $info =
 {
-	'Name'         => 'x86 BSDI reverse',
+	'Name'         => 'BSDI Reverse Shell',
 	'Version'      => '$Revision$',
 	'Description'  => 'Connect back to attacker and spawn a shell',
 	'Authors'      => [ 'skape <mmiller [at] hick.org>', 

@@ -13,8 +13,8 @@ use base 'Msf::PayloadComponent::FindConnection';
 
 my $info =
 {
-  'Name'         => 'solx86findsock',
-  'Version'  => '$Revision$',
+  'Name'         => 'Solaris SrcPort Findsock Shell',
+  'Version'      => '$Revision$',
   'Description'  => 'Spawn a shell on the established connection',
   'Authors'      => [ 'LSD [Unknown License]', ],
   'Arch'         => [ 'x86' ],

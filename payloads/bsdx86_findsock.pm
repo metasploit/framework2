@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::FindConnection';
 
 my $info =
 {
-  'Name'         => 'LSD\'s x86 BSD srcport findsock',
+  'Name'         => 'BSD Srcport Findsock Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Spawn a shell on the established connection',
   'Authors'      => [ 'LSD [Unknown License]', ],

@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'solsparc_bind',
+  'Name'         => 'Solaris Staged Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'optyx <optyx [at] uberhax0r.net>', ],

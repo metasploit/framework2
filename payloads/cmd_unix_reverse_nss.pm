@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'Spaceless telnet unix piping reverse command',
+  'Name'         => 'Unix Spaceless Telnet Piping Reverse Shell Command',
   'Version'      => '$Revision$',
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell with no spaces or slashes',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

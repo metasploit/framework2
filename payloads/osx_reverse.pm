@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::ReverseConnection';
 
 my $info =
 {
-  'Name'         => 'osx_reverse',
+  'Name'         => 'OSX Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
