@@ -14,6 +14,7 @@ use Pex::Text;
 my $none  = 0;
 my $reg1  = 1;
 my $reg2  = 2;
+my $reg2r = 4;
 
 my $eax = 0;
 my $ecx = 1;
@@ -39,7 +40,7 @@ my $reg = 8;
 # someday this will all be leeter, but it's not so bad for now :)
 
 # This is a blacklist entry, it means you CANNOT do it if you have this flag
-my $osize = $reg2 << 1; # \x66
+my $osize = $reg2r << 1; # \x66
 my $asize = $osize << 1; # \x67
 
 # segment overrides also seem unsafe...
@@ -264,6 +265,7 @@ sub _CheckInsReg2 {
 
   my $code = $table->[$index]->[0];
   my $codeLen = length($code);
+  my $flags = $table->[$index]->[2];
 
 
   # Make sure the static portion of the instruction doesn't have bad bytes
@@ -273,7 +275,7 @@ sub _CheckInsReg2 {
   ));
 
   # check to make sure that a generation is possible w/ current constraints
-  return(0) if(!$self->_CheckReg2Possible(substr($code, -1, 1)));
+  return(0) if(!$self->_CheckReg2Possible(substr($code, -1, 1), ($flags & $reg2r) ? 1 : 0));
   return(1);
 }
 
@@ -300,10 +302,11 @@ sub _CheckInsReg1 {
 sub _CheckReg2Possible {
   my $self = shift;
   my $byte = shift;
+  my $reverse = @_ ? shift : 0;
 
   for(my $i = 0; $i < 8; $i++) {
-    next if($self->_BadRegCheck($i));
-    return(1) if($self->_CheckReg1Possible($byte + chr($i << 3)));
+    next if($reverse && $self->_BadRegCheck($i));
+    return(1) if($self->_CheckReg1Possible($byte + chr($i << 3), $reverse));
   }
   return(0);
 }
@@ -313,11 +316,12 @@ sub _CheckReg2Possible {
 sub _CheckReg1Possible {
   my $self = shift;
   my $byte = shift;
+  my $reverse = @_ ? shift : 0;
 
   my $badChars = $self->_BadChars;
 
   for(my $i = 0; $i < 8; $i++) {
-    next if($self->_BadRegCheck($i));
+    next if(!$reverse && $self->_BadRegCheck($i));
     return(1) if(!Pex::Text::BadCharCheck($badChars, $byte + chr($i)));
   }
   return(0);
