@@ -32,7 +32,7 @@ sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };
   my $self = bless($hash, $class);
-  $self->SetDefault($defaults);
+  $self->SetDefaults($defaults);
   $self->{'Exploit'} = shift;
   $self->{'Payload'} = shift;
   $self->{'Nop'} = shift;
