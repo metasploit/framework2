@@ -26,7 +26,7 @@ use lib "$Bin/lib";
 use Msf::TextUI;
 use Msf::ColPrint;
 use Pex;
-use Pex::Utils;
+use Pex::Text;
 my %opts = ();
 
 Msf::UI::ActiveStateSucks();
@@ -139,7 +139,7 @@ foreach $encoderName (@encoderList) {
       next;
     }
 
-    if(Pex::Utils::BadCharCheck($badChars, $encodedShell)) {
+    if(Pex::Text::BadCharCheck($badChars, $encodedShell)) {
       print STDERR "[*] $encoderName failed, bad chars in encoded payload\n";
       next;
     }
