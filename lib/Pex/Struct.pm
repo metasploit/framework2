@@ -4,7 +4,7 @@ use strict;
 # -spoon
 
 my $types = {
-  'l_u_8'  => [ 'C', \&CharPack, \&CharUnpack, 1, ],
+  'u_8'    => [ 'C', \&DefaultPack, \&DefaultUnpack, 1, ],
   'l_u_16' => [ 'v', \&DefaultPack, \&DefaultUnpack, 2, ],
   'l_u_32' => [ 'V', \&DefaultPack, \&DefaultUnpack, 4, ],
   'b_u_16' => [ 'n', \&DefaultPack, \&DefaultUnpack, 2, ],
@@ -188,21 +188,6 @@ sub DefaultUnpack {
   my $size = shift;
   my $data = shift;
   return(unpack($type, $data));
-}
-
-sub CharPack {
-  my $self = shift;
-  my $type = shift;
-  my $size = shift;
-  my $data = shift;
-  return(pack($type, chr($data)));
-}
-sub CharUnpack {
-  my $self = shift;
-  my $type = shift;
-  my $size = shift;
-  my $data = shift;
-  return(unpack($type, chr($data)));
 }
 
 sub NoPack {
