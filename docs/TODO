@@ -1,6 +1,8 @@
 Pre-Release Tasks
 ==================
 
+ - Change the add bl calls to add ebx in Encoder... lots of these
+
  - Multiple return values of Check, not just 0/1, we need 0 for plain not vuln, 1 for looks vuln, 2 for confirmed, -1 for cant exploit, -2 for cant tell
 
  - Make the OS explicit. Remove win32, make it win2000, winxp, etc, etc for exploits and payloads
@@ -24,6 +26,7 @@ Pre-Release Tasks
  - Remove any exploits which are just plain broken
  
  - The Pex library needs documentation and API guides for standalone use 
+ 
  
 Post-Release Tasks
 ===================
