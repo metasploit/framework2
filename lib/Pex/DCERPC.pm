@@ -49,7 +49,7 @@ sub Bind {
         1,      # num ctx items
         0,      # context id
         1,      # num trans items
-        $uuid,  # inteface uuid
+        $uuid,  # interface uuid
         $imaj,  # interface major version
         $imin,  # interface minor version
         $tsyn,  # transfer syntax
