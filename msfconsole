@@ -41,6 +41,9 @@ $SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
 
 my $exploitsIndex;
 my $payloadsIndex;
+my $encodersIndex;
+my $nopsIndex;
+
 my $encoders;
 my $nops;
 my $exploits;
@@ -175,26 +178,35 @@ sub Load {
 
     $exploitsIndex = $ui->LoadExploits;
     $payloadsIndex = $ui->LoadPayloads;
-    $encoders      = $ui->LoadEncoders;
-    $nops          = $ui->LoadNops;
-    
+    $encodersIndex = $ui->LoadEncoders;
+    $nopsIndex     = $ui->LoadNops;
     $exploits = { };
     $payloads = { };
+    $encoders = { };
+    $nops     = { };
     
-    # Generate exploits index
-    # Payloads are now indexed by the shortened package name instead of package name
-    # exploitsIndex also relates this package name to the full package name
-    my $i = 0;
-    foreach my $key (sort(keys(%{$exploitsIndex})))
-    {
+    foreach my $key (sort(keys(%{$exploitsIndex}))) {
         my $name = $key;
-        $name =~ s/.*:://g; # Remove package prefix
+        $name =~ s/.*:://g;
         $exploits->{$name} = $exploitsIndex->{$key};
         $exploitsIndex->{$name} = $key;
     }
     
-    # Generate payloads index
-    # Payloads are now indexed by Name instead of package name
+    foreach my $key (sort(keys(%{$encodersIndex}))) {
+        my $name = $key;
+        $name =~ s/.*:://g;
+        $encoders->{$name} = $encodersIndex->{$key};
+        $encodersIndex->{$name} = $key;
+    } 
+       
+    foreach my $key (sort(keys(%{$nopsIndex}))) {
+        my $name = $key;
+        $name =~ s/.*:://g;
+        $nops->{$name} = $nopsIndex->{$key};
+        $nopsIndex->{$name} = $key;
+    }    
+    
+    # XXX - Migrate this back to package name once Name is fixed in payloads 
     foreach my $key (keys(%{$payloadsIndex})) {
         $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
     }
@@ -429,11 +441,11 @@ sub gInfo {
 
   # Kinda a hack, we rebuild the keys for exploits and payloads, but
   # not for nops or encoders...
-  elsif($encoders->{'Msf::Encoder::' . $module} && ($type ? $type eq 'encoder' : 1)) {
-    print "\n" . $ui->DumpEncoderSummary($encoders->{'Msf::Encoder::' . $module});
+  elsif($encoders->{$module} && ($type ? $type eq 'encoder' : 1)) {
+    print "\n" . $ui->DumpEncoderSummary($encoders->{$module});
   }
-  elsif($nops->{'Msf::Nop::' . $module} && ($type ? $type eq 'nop' : 1)) {
-    print "\n" . $ui->DumpNopSummary($nops->{'Msf::Nop::' . $module});
+  elsif($nops->{$module} && ($type ? $type eq 'nop' : 1)) {
+    print "\n" . $ui->DumpNopSummary($nops->{$module});
   }
   
   else {
@@ -733,11 +745,21 @@ sub xTabCompletion
     if (lc($cmd) eq "info")
     {
         # display variables if no args are specified
-        if (! $args[0] || (! $args[1] && ($args[0] && $text))) { $state->{'TabVals'} = ["exploit", "payload"] }
+        if (! $args[0] || (! $args[1] && ($args[0] && $text))) { 
+            
+            my %allmods;
+            for (keys(%{$exploits}), keys(%{$payloads}), keys(%{$encoders}), keys(%{$nops})) {
+                $allmods{$_}++;
+            }
+            
+            $state->{'TabVals'} = ['exploit', 'payload', 'encoder', 'nop', sort(keys(%allmods))] 
+        }
         if (! $args[1] || (! $args[2] && ($args[1] && $text)))
         {
             if ($args[0] eq "exploit") { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
             if ($args[0] eq "payload") { $state->{'TabVals'} = [sort(keys(%{$payloads}))] }
+            if ($args[0] eq "encoder") { $state->{'TabVals'} = [sort(keys(%{$encoders}))] }
+            if ($args[0] eq "nop"    ) { $state->{'TabVals'} = [sort(keys(%{$nops}))] }            
         }
     }
         
