@@ -21,14 +21,19 @@ my $info =
 sub new {
   load();
   my $class = shift;
-  my $self = $class->SUPER::new({'Info' => $info}, @_);
+  my $hash = @_ ? shift : { };
+  $hash = $class->MergeHash($hash, {'Info' => $info});
+  my $self = $class->SUPER::new($hash, @_);
+
   $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86reverse_ie.py';
-  $self->{'Info'}->{'Size'} = $self->_GenSize;
+  $self->_Info->{'Size'} = $self->_GenSize;
   return($self);
 }
 
 sub _GenSize {
   my $self = shift;
-  my $bin = $self->Generate({LHOST => '127.0.0.1', 'LPORT' => '4444',});
-  return length($bin);
+  my $bin = $self->Generate({'LHOST' => '127.0.0.1', 'LPORT' => '4444',});
+  return(length($bin));
 }
+
+1;
