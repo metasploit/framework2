@@ -336,8 +336,9 @@ sub Exploit {
   my @targets = $exploit->TargetsList;
   my $target = $self->GetEnv('TARGET');
 
-  if(defined($target) && !defined($targets[$target])) {
+  if(defined($target) && defined($targets[$target])) {
     $self->PrintLine('[*] Invalid target specified.');
+    return;
   }
   
   # Important: Default the target to 0, maybe this should somehow
