@@ -61,6 +61,11 @@ my $modules	    = { };
 my $burl;
 my %args;
 
+
+# Cache control date
+my $cache_start = HTTPDate();
+my %cache_hosts = ();
+
 # Configuration defaults...
 my %config	= 
 (
@@ -223,6 +228,7 @@ Options:
 
 sub ProcessResRequest {
 	my ($req, $cli, $ipc) = @_;
+	my ($is_icon, $is_theme);
 
 	# Process requests for shared icons
 	if (exists($req->{'params'}->{'ICON'})) {
@@ -253,7 +259,7 @@ sub ProcessResRequest {
 		
 		my ($type, $path) = @{ $icons{$os} || $icons{'unknown'} };
 		my $data;
-
+		
 		if ( open (X, "<$icondir/$path") ) {
 			while (<X>) { $data .= $_ }
 			close (X);
@@ -729,10 +735,12 @@ sub SessionUpdate {
 	my $cmd		= $state->{'CMD'};
 
 	my $res		= qq
-[<html>
+[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
     <head>
-        <title>Metasploit Framework Web Console v$VERSION</title>
+        <title>Metasploit Framework Web Shell v$VERSION</title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+		 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
     </head>
     <body>
 	<pre>
@@ -1780,19 +1788,18 @@ sub HTTPRequest {
 		}
 		
 		if (length($raw) > 65535) {
-			$self->Log(1, "ERROR: oversized request from ".$cli->PeerAddr. " (".length($raw).")");
+			$self->Log(0, "ERROR: oversized request from ".$cli->PeerAddr. " (".length($raw).")");
 			return { };
 		}
 		
 		if (scalar(@lines) > 100) {
-			$self->Log(1, "ERROR: too many HTTP headers from ".$cli->PeerAddr. " (".scalar(@lines).")");
+			$self->Log(0, "ERROR: too many HTTP headers from ".$cli->PeerAddr. " (".scalar(@lines).")");
 			return { };
 		}
 
 		push @lines, $raw;
 	}
-	
-	
+
 	my $rmeth	= shift(@lines);
 		
 	# Parse the request method and URI
@@ -1873,6 +1880,37 @@ sub HTTPRequest {
 		$res->{'params'}->{'MODE'} = 'MAIN';
 	}
 	
+	
+	# Cache resource requests...
+	if ( $res->{'base'} eq 'RESOURCE') {
+		
+		my $url = exists($params{'ID'}) ? $params{'ID'} : $params{'ICON'};
+		
+		# If they requested more than 100 different resources, cache block them
+		# Checks above limit any given request to 65K anyways...
+		
+		if (scalar( keys %{ $cache_hosts{$cli->PeerAddr} }) > 100) {
+			delete($cache_hosts{$cli->PeerAddr});
+			$cache_hosts{$cli->PeerAddr}->{'_blocked_'}++;
+		}
+		
+		# Clear the cache and return undef for cache attackers
+		return if $cache_hosts{$cli->PeerAddr}->{'_blocked_'};
+		
+		if (	$url &&
+				$res->{'headers'}->{'if-modified-since'} &&
+				$cache_hosts{ $cli->PeerAddr }->{$url}	) {
+
+			$cli->Send(HTTPResponse(304, 'Probably cached...', 'text/html'));
+			# print "Cache hit on $url = ".$cache_hosts{ $cli->PeerAddr }->{$url}."\n";
+			return;
+		}
+		else {
+			$cache_hosts{ $cli->PeerAddr }->{$url} = time();
+			# print "Cache miss on $url...\n";
+		}
+	}
+	
 	return $res;
 }
 
@@ -1885,6 +1923,8 @@ sub HTTPResponse {
 	$data = "HTTP/1.1 $code\r\n".
 			"Connection: close\r\n".
 			"Date: ". HTTPDate() ."\r\n".
+			"Cache-Control: private\r\n".
+			"Last-Modified: $cache_start\r\n".
 	        "Content-Length: ".length($body)."\r\n".
 			"Content-Type: $type\r\n".
 			"\r\n". $body;
@@ -1893,7 +1933,8 @@ sub HTTPResponse {
 }
 
 sub HTTPDate {
-	return strftime("%a, %e %b %Y %H:%M:%S GMT", gmtime());
+	my $stime = shift() || [ gmtime() ];
+	return strftime("%a, %e %b %Y %H:%M:%S GMT", @{ $stime });
 }
 
 sub CharsToBytes {
