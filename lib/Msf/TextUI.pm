@@ -198,7 +198,8 @@ sub DumpExploitSummary {
 sub DumpPayloadSummary {
   my $self = shift;
   my $p = shift;
-  $p = $p->SelfName->new;
+  # XXX not sure if this is still needed, stupid dynamic oo stuff :\
+  $p->_Load;
   my $output;
 
   $output .= "       Name: " . $p->Name . "\n";
@@ -418,10 +419,10 @@ sub Check {
 sub Exploit {
   my $self = shift;
   my $exploit = $self->GetTempEnv('_Exploit');
-  $exploit = $self->ModuleName($exploit)->new;
+#  $exploit = $self->ModuleName($exploit)->new;
 
   my $payload = $self->GetTempEnv('_Payload');
-  $payload = $self->ModuleName($payload)->new if($payload);
+  $payload->_Load if($payload);
 
   my $payloadName = $self->GetTempEnv('_PayloadName');
 

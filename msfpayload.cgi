@@ -90,7 +90,7 @@ if (! $p)
     exit(0);
 }
 
-$p = $p->SelfName->new;
+$p->_Load;
 
 $ui->SetTempEnv('_Exploit', $exploits->{'Tester'});
 $ui->SetTempEnv('_PayloadName', $sel);

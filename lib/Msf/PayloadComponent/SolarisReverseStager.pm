@@ -1,8 +1,9 @@
 package Msf::PayloadComponent::SolarisReverseStager;
 use strict;
 use base 'Msf::PayloadComponent::SolarisPayload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::ReverseConnection');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -43,7 +44,7 @@ my $info =
 };
 
 sub new {
-    load();
+    _Load();
     my $class = shift;
     my $hash = @_ ? shift : { };
     $hash = $class->MergeHashRec($hash, {'Info' => $info});

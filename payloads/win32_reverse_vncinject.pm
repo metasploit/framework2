@@ -12,8 +12,9 @@ use strict;
 use base 'Msf::PayloadComponent::Win32InjectVncStage';
 use FindBin qw{$RealBin};
 
-sub load {
+sub _Load {
   Msf::PayloadComponent::Win32InjectVncStage->import('Msf::PayloadComponent::Win32ReverseStager');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -25,7 +26,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});

@@ -10,8 +10,9 @@
 package Msf::Payload::bsdx86_reverse_ie;
 use strict;
 use base 'Msf::PayloadComponent::InlineEggPayload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::InlineEggPayload->import('Msf::PayloadComponent::ReverseConnection');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -27,7 +28,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});

@@ -10,8 +10,9 @@
 package Msf::Payload::cmd_unix_reverse_cross;
 use strict;
 use base 'Msf::PayloadComponent::CommandPayload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::CommandPayload->import('Msf::PayloadComponent::DoubleReverseConnection');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -26,7 +27,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});

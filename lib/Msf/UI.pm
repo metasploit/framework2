@@ -160,6 +160,7 @@ sub MatchPayloads {
 CHECK:
   foreach my $payloadName (keys(%$payloads)) {
     my $payload = $payloads->{$payloadName};
+    $payload->_Load;
 
     # If a exploit's arch or os is empty, it means they support allows
     # Same with a payload

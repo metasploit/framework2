@@ -16,8 +16,9 @@ use FindBin qw{$RealBin};
 # structures like the shell stages do.  This means that all it expects is
 # socket in edi, and that is the same as the ordinal stager spec.  So, no 
 # adapter needed or anything, just stage and go!
-sub load {
+sub _Load {
   Msf::PayloadComponent::Win32InjectVncStage->import('Msf::PayloadComponent::Win32ReverseOrdinalStager');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -29,7 +30,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});

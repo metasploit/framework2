@@ -2,8 +2,9 @@ package Msf::PayloadComponent::SolarisBindStager;
 use strict;
 use Pex::SPARC;
 use base 'Msf::PayloadComponent::SolarisPayload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::BindConnection');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -17,7 +18,7 @@ my $info =
 };
 
 sub new {
-    load();
+    _Load();
     my $class = shift;
     my $hash = @_ ? shift : { };
     $hash = $class->MergeHashRec($hash, {'Info' => $info});

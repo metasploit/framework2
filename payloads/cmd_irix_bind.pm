@@ -10,8 +10,9 @@
 package Msf::Payload::cmd_irix_bind;
 use strict;
 use base 'Msf::PayloadComponent::CommandPayload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::CommandPayload->import('Msf::PayloadComponent::BindConnection');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -27,7 +28,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});

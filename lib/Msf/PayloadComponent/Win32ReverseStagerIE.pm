@@ -1,8 +1,9 @@
 package Msf::PayloadComponent::Win32ReverseStagerIE;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::Win32Payload->import('Msf::PayloadComponent::ReverseConnection');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -42,7 +43,7 @@ my $info =
 };
 
 sub new {
-    load();
+    _Load();
     my $class = shift;
     my $hash = @_ ? shift : { };
     $hash = $class->MergeHashRec($hash, {'Info' => $info});

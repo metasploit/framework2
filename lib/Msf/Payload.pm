@@ -36,6 +36,9 @@ sub new {
   return($self);
 }
 
+sub _Load {
+}
+
 sub Type        { my $self = shift; return $self->_Info->{'Type'}; }
 sub Size        { my $self = shift; return $self->_Info->{'Size'}; }
 sub Multistage  { my $self = shift; return $self->_Info->{'Multistage'}; }

@@ -10,8 +10,9 @@
 package Msf::Payload::win32_reverse_ord;
 use strict;
 use base 'Msf::PayloadComponent::Win32PipedShellStage';
-sub load {
+sub _Load {
   Msf::PayloadComponent::Win32ShellPipedStage->import('Msf::PayloadComponent::Win32ReverseOrdinalStager');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -23,7 +24,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});

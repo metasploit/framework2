@@ -10,8 +10,9 @@
 package Msf::Payload::solsparc_reverse;
 use strict;
 use base 'Msf::PayloadComponent::SolarisShellStage';
-sub load {
+sub _Load {
   Msf::PayloadComponent::SolarisShellStage->import('Msf::PayloadComponent::SolarisReverseStager');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -23,7 +24,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});

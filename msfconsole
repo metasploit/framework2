@@ -83,20 +83,23 @@ my %globalCmds =
     '?'         => [\&gHelp,                 "Show the main console help"],
     'quit'      => [\&gExit,                 "Exit the console"],
     'exit'      => [\&gExit,                 "Exit the console"],
-    'show'      => [sub{Load(); gShow(@_);}, "Display exploits, payloads, or nops"],
-    'use'       => [sub{Load(); gUse(@_);},  "Select an exploit by name"],
-    'info'      => [sub{Load(); gInfo(@_);}, "Display detailed exploit or payload information"],
+#    'show'      => [sub{Load(); gShow(@_);}, "Display exploits, payloads, or nops"],
+#    'use'       => [sub{Load(); gUse(@_);},  "Select an exploit by name"],
+#    'info'      => [sub{Load(); gInfo(@_);}, "Display detailed exploit or payload information"],
+    'show'      => [sub{gShow(@_);}, "Display exploits, payloads, or nops"],
+    'use'       => [sub{gUse(@_);},  "Select an exploit by name"],
+    'info'      => [sub{gInfo(@_);}, "Display detailed exploit or payload information"],
     'cd'        => [\&gChdir,                "Change working directory"],
     'save'      => [\&gSave,                 "Save configuration to disk"],
     'setg'      => [\&gSet,                  "Set a global environment variable"],
     'unsetg'    => [\&gUnset,                "Remove a global environment variable"],
+    'reload'    => [sub{Load();},            "Reload exploits and payloads"],
 );
 
 
 # main mode commands
 my %mainCmds =
 (
-    'reload'    => [sub{Load();},              "Reload exploits and payloads"],
     'show'      => [sub{Load(); mShow(@_);},   "Show available exploits and payloads"],
 );
 
@@ -106,9 +109,12 @@ my %exploitCmds =
     'set'       => [\&eSet,                         "Set a temporary environment variable"],
     'unset'     => [\&eUnset,                       "Remove a temporary environment variable"],
     'back'      => [\&eBack,                        "Drop back to the main menu"],
-    'show'      => [sub{Load(); eShow(@_);},        "Show options, advanced, payloads, or targets"],
-    'check'     => [sub{Load(); eCheck(@_);},       "Perform vulnerability check"],
-    'exploit'   => [sub{Load(); eExploit(@_);},     "Launch the actual exploit"],
+#    'show'      => [sub{Load(); eShow(@_);},        "Show options, advanced, payloads, or targets"],
+    'show'      => [sub{ eShow(@_);},        "Show options, advanced, payloads, or targets"],
+#    'check'     => [sub{Load(); eCheck(@_);},       "Perform vulnerability check"],
+    'check'     => [sub{eCheck(@_);},       "Perform vulnerability check"],
+    'exploit'   => [sub {eExploit(@_);},     "Launch the actual exploit"],
+    'rexploit'  => [sub{Load(); eExploit(@_);},     "Reload and exploit, for us tester types"],
 );
 
 

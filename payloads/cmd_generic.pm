@@ -10,8 +10,9 @@
 package Msf::Payload::cmd_generic;
 use strict;
 use base 'Msf::PayloadComponent::CommandPayload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::CommandPayload->import('Msf::PayloadComponent::NoConnection');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -30,7 +31,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});

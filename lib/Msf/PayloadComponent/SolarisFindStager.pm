@@ -2,8 +2,9 @@ package Msf::PayloadComponent::SolarisFindStager;
 use strict;
 use Pex::SPARC;
 use base 'Msf::PayloadComponent::SolarisPayload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::FindConnection');
+  __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
@@ -50,7 +51,7 @@ sub SolarisPayload {
 };
 
 sub new {
-    load();
+    _Load();
     my $class = shift;
     my $hash = @_ ? shift : { };
     $hash = $class->MergeHashRec($hash, {'Info' => $info});

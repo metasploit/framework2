@@ -62,7 +62,7 @@ foreach my $opt (@ARGV) {
   $ui->SetTempEnv(split('=', $opt));
 }
 
-$p = $p->SelfName->new;
+$p->_Load;
 $ui->SetTempEnv('_PayloadName', $sel);
 $ui->SetTempEnv('_Payload', $p);
 
