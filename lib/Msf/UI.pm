@@ -355,7 +355,7 @@ sub MakeNopSled {
     my $nop = $self->MakeNop($nopName);
     if(!$nop) {
       $self->PrintDebugLine(1, "Failed to make nop generator $nop");
-      return(-1);
+      next;
     }
 
     my $nopArch = $nop->Arch;
@@ -401,7 +401,7 @@ sub MakeNopSled {
   }
 
   $self->SetError("No nop generators succeeded");
-  return(-8);
+  return(-1);
 }
 
 
