@@ -192,9 +192,9 @@ sub Clnt_call {
 	}
 
 	%$arg->{'data'} = "";
-	if(length($reply) >= 24)
+	if(length($reply) >= 28)
 	{
-		%$arg->{'data'} = substr($reply, 24);
+		%$arg->{'data'} = substr($reply, 28);
 	}
 
 	return 0;
