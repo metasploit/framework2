@@ -11,7 +11,7 @@ my $bmb = 'Pex::Poly::BlockMaster::Block';
 my $bm = 'Pex::Poly:BlockMaster';
 
 my $advanced = {
-  'EndEncode' => [0, 'Encode last 4 bytes of decoder'],
+  'EncodeEnd' => [0, 'Encode last 4 bytes of decoder'],
 };
 
 my $info = {
