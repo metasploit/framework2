@@ -171,6 +171,7 @@ my $STNegResNT = Pex::Struct->new
     'bcc_len'       => 'l_u_16',
     'enc_key'       => 'string',
     'domain'        => 'string',
+    'server'        => 'string',
     
 ]);
 $STNegResNT->SetSizeField( 'enc_key' => 'key_len' );
@@ -635,6 +636,12 @@ sub DefaultDomain {
     return $self->{'DefaultDomain'};
 }
 
+sub DefaultNBName {
+    my $self = shift;
+    $self->{'DefaultNBName'} = shift if @_;
+    return $self->{'DefaultNBName'};
+}
+
 sub AuthUser {
     my $self = shift;
     $self->{'AuthUser'} = shift if @_;
@@ -910,8 +917,13 @@ sub SMBNegotiate {
 
     my $extra_len = $neg_res->Get('bcc_len') - $neg_res->Get('key_len');
     if ($extra_len) {
-        $neg_res->Set('domain' => substr($smb_res->Get('request'), ($extra_len * -1)));
-        $self->DefaultDomain($neg_res->Get('domain'));
+        my $extrainfo = substr($smb_res->Get('request'), ($extra_len * -1));
+        
+        my ($name_dom, $name_host) = split(/\x00\x00/, $extrainfo);
+        $name_dom  =~ s/\x00//g;
+        $name_host =~ s/\x00//g;
+        $self->DefaultDomain($name_dom);
+        $self->DefaultNBName($name_host);
     }
     
     $self->ChallengeKey($neg_res->Get('enc_key'));
