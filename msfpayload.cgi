@@ -153,6 +153,8 @@ if ($action eq "BUILD")
         $s = $e;
     }
 
+    $optstr .= "Size=" . length($s);
+
     my ($sC, $sP) = (Pex::Utils::BufferC($s), Pex::Utils::BufferPerl($s));
     print "<pre>\n";
     
