@@ -360,6 +360,10 @@ sub gUse
     $state->{'Exploit'}->{'Payloads'} = xValidPayloads($exploit);
 
     $ui->LoadTempEnv($args[0]);
+
+    if(defined($exploit->UseMessage)) {
+      print $exploit->UseMessage . "\n";
+    }
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
     if ($ui->GetTempEnv('PAYLOAD'))

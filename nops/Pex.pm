@@ -37,7 +37,7 @@ sub Nops {
 
   my $exploit = $self->GetVar('_Exploit');
   my $random  = $self->GetLocal('RandomNops');
-  my $badRegs = $exploit->NopBadRegs;
+  my $badRegs = $exploit->NopSaveRegs;
   my $badChars = $exploit->PayloadBadChars;
 
   return(Pex::Utils::Nops($length,
