@@ -88,6 +88,9 @@ sub _BuildBM {
   my $zero = $bmb->new('clearEcx',
     "\x31\xc9", # xor ecx, ecx
     "\x29\xc9", # sub ecx, ecx
+    # xvr rockin the hizzy
+    "\x33\xc9", # xor ecx, ecx
+    "\x2b\xc9", # sub ecx, ecx
   );
 
   my $mov = $bmb->new('movXorlen');
