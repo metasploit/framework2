@@ -48,7 +48,13 @@ sub new {
   $self->SetTimeout(10) if(!exists($hash->{'Timeout'}));
   $self->SetTimeoutLoop(.5) if(!exists($hash->{'TimeoutLoop'}));
 
+  $self->Init;
   return($self);
+}
+
+sub Init {
+  my $self = shift;
+  return;
 }
 
 sub SetOptions {
