@@ -1,52 +1,30 @@
-Problems
-========
- - There is now Msf::Socket which will do great things, but MSSQL, etc, is using Pex::Socket, and we want those classes to be able to stand alone.... Pass in the socket to MSSQL instead of creating it there?
-   ^^^ - Pex needs to be standalone, either I add MSf::Socket functionality to Pex, or it stays as it is, I think passing a socket handler will make it a PITA to use
-
 Pre-Release Tasks
 ==================
 
- - Fix AutoOpts, how to handle?  Possible when we are going to use a exploit, for example to check or
-   exploit, call a function like Init, and this could process AutoOpts, and SetTempEnv for all of its 
-   key/val pairs...
-
- - Write a quickstart users guide, enough to get them up and running in a few paragraphs. (I'll do this).
+ - Write a quickstart users guide, enough to get them up and running in a few paragraphs. (I'll do this [spn]).
 
  - Get some basic developer docs?, although the bulk of this can wait a week or two.
 
- - Fixed the PoPToP exploit to use hardcoded strings, and remove all my random pptp protocol stuff.
-
  - Get a logo in ascii art form for msfcli and msfconsole. Embed logo into msfweb.
 
- - Configure mailing list, public CVS, bugzilla, etc. Currently waiting on Savannah approval, they have been queue up for almost a month...
+ - Configure mailing list, public CVS, bugzilla, etc. Currently waiting on Savannah approval...
 
  - Reimplement the logging routines in msfconsole, determine how/if macros should be defined
  
  - Add documentation describing how the shared config file relates to msfcli and msfconsole
 
-Post-Release Tasks
-===================
-
- X Get the Encoder/Nop routines fixed so they will follow a specified precedence, and then fall through all the
-   other ones on failure.
-
  - Finish rewriting the configuration and logging system in msfconsole
 
  - Rewrite msfweb to work with new architecture
- 
+
+Post-Release Tasks
+===================
  - Rewrite BSD bind payload (SIGSYS error after listen call) [LSD one is also broken]
 
  - Right now LoadTempEnv, will set the TempEnv to the actual stored hash, so you are modifing the stored hash also,
    this is nice because you don't have to SaveTempEnv before you do a save, but it isn't really intended behavior.
    Load should "load" a copy, you should be able to make changes and ditch it without affecting the saved copy.  
    Maybe this should be changed, and LoadTempEnv should create a copy like SaveTempEnv does.
-
- X We should push everything to a sub usage, for example exploit Size, in some code we do like 
-   $exploit->{'Info'}->{'Payload'}->{'Size'} or $exploit->Info->{'Payload'}->Size, etc etc, we should just do 
-   $exploit->Size, this allows overloading by the exploit to calculate Size on the fly (maybe affected by some 
-   env parameters?, etc.)
-   
-   ^^^ - Is this complete?
 
 
 Far Future
