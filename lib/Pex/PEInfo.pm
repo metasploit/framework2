@@ -17,96 +17,99 @@
 package Pex::PEInfo;
 use strict;
 
-my $RAW;
-my $LastErrorVal;
-my %IMAGE_HDR;
-my %OPT_IMAGE_HDR;
-my %RVA;
-my %SECTIONS;
-
-
-
 sub new {
     my ($class, $args) = @_;
     my $self = bless {}, $class;
-    return($self->LoadImage($args));
+    return $self->_Init($args);
+}
+
+
+sub _Init {
+    my $self = shift;
+    my $args = shift;
+    
+    $self->{'RAW'}         = "";
+    $self->{'LastError'}   = "";
+    $self->{'IMG_HDR'}     = { };
+    $self->{'OPT_IMG_HDR'} = { };
+    $self->{'RVA'}         = { };
+    $self->{'SECTIONS'}    = { };
+    
+    $self->LoadImage($args);
+    return $self;
 }
 
 sub LastError {
     my $self = shift;
-    if (@_) { $LastErrorVal = shift }
-    return ($LastErrorVal);
+    if (@_) { $self->{'LastError'} = shift() }
+    return $self->{'LastError'};
 }
 
 sub Raw {
     my $self = shift;
-    return $RAW;
+    return $self->{'RAW'};
 }
 
 sub ImageHeader {
     my $self = shift;
     my $name = shift;
-    if (exists($IMAGE_HDR{$name}))
-    {
-        return($IMAGE_HDR{$name});
+    if (exists($self->{'IMG_HDR'}->{$name})) {
+        return $self->{'IMG_HDR'}->{$name};
     }
-    return undef;
+    return;
 }
 
 sub ImageHeaders {
     my $self = shift;
-    return keys(%IMAGE_HDR);
+    return keys( %{ $self->{'IMG_HDR'} } );
 }
 
 sub OptImageHeader {
     my $self = shift;
     my $name = shift;
-    if (exists($OPT_IMAGE_HDR{$name}))
-    {
-        return($OPT_IMAGE_HDR{$name});
+    if (exists($self->{'OPT_IMG_HDR'}->{$name})) {
+        return $self->{'OPT_IMG_HDR'}->{$name};
     }
-    return undef;
+    return;
 }
 
 sub OptImageHeaders {
     my $self = shift;
-    return keys(%OPT_IMAGE_HDR);
+    return keys( %{ $self->{'OPT_IMG_HDR'} } );
 }
 
 sub Rva {
     my $self = shift;
     my $name = shift;
-    if (exists($RVA{$name}))
-    {
-        return($RVA{$name});
+    if (exists($self->{'RVA'}->{$name})) {
+        return $self->{'RVA'}->{$name};
     }
-    return undef;
+    return;
 }
 
 sub Rvas {
     my $self = shift;
-    return keys(%RVA);
+    return keys( %{ $self->{'RVA'} } );
 }
 
 sub Section {
     my $self = shift;
     my $name = shift;
-    if (exists($SECTIONS{$name}))
-    {
-        return($SECTIONS{$name});
+    if (exists($self->{'SECTIONS'}->{$name})) {
+        return $self->{'SECTIONS'}->{$name};
     }
-    return undef;
+    return;
 }
 
 sub Sections {
     my $self = shift;
-    return keys(%SECTIONS);
+    return keys( %{ $self->{'SECTIONS'} } );
 }
 
 sub ImageBase {
     my $self = shift;
-    $OPT_IMAGE_HDR{'ImageBase'} = hex(shift()) if @_;
-    return $OPT_IMAGE_HDR{'ImageBase'};
+    $self->{'OPT_IMG_HDR'}->{'ImageBase'} = hex(shift()) if @_;
+    return $self->{'OPT_IMG_HDR'}->{'ImageBase'};
 }
 
 sub LoadImage {
@@ -114,23 +117,27 @@ sub LoadImage {
     my $data;   
     local *X;
     
-    if (! open(X, "<$fn"))
-    {
+    if (! open(X, "<$fn")) {
         $self->LastError("Could not open file: $!");
-        return(undef);
+        return;
     }
     
     while(<X>) { $data .= $_ }
     close(X);
     
-    $RAW = $data;
+    $self->{'RAW'} = $data;
     
     my $peo = $self->FindPEOffset(\$data);
-    if (! $peo)
-    {
+    if (! $peo) {
         $self->LastError('Could not find PE header');
         return(undef);
     }
+    
+    my %IMAGE_HDR;
+    my %OPT_IMAGE_HDR;
+    my %RVA;
+    my %SECTIONS;
+    
     
     $IMAGE_HDR{'MachineID'}               = unpack('v', substr($data, $peo + 4));
     $IMAGE_HDR{'NumberOfSections'}        = unpack('v', substr($data, $peo + 6));
@@ -234,60 +241,67 @@ sub LoadImage {
         $SECTIONS{$sec_name}->[4] = $SECTIONS{$sec_name}->[1] - $SECTIONS{$sec_name}->[3];
     }   
     
-    #foreach (keys(%IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $IMAGE_HDR{$_}); }
-    #foreach (keys(%OPT_IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $OPT_IMAGE_HDR{$_}); }
-    #foreach (keys(%RVA)) { printf("%s\t0x%.8x [0x%.8x]\n", $_ , $RVA{$_}->[0], $RVA{$_}->[1] ); }
-    #foreach (keys(%SECTIONS)) 
-    #{ 
-    #    printf("%s\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\n",
-    #           $_ , $SECTIONS{$_}->[0], $SECTIONS{$_}->[1], $SECTIONS{$_}->[2], $SECTIONS{$_}->[3], $SECTIONS{$_}->[4]);
-    #}
+    foreach (keys(%IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $IMAGE_HDR{$_}); }
+    foreach (keys(%OPT_IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $OPT_IMAGE_HDR{$_}); }
+    foreach (keys(%RVA)) { printf("%s\t0x%.8x [0x%.8x]\n", $_ , $RVA{$_}->[0], $RVA{$_}->[1] ); }
+    foreach (keys(%SECTIONS)) 
+    { 
+        printf("%s\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\n",
+               $_ , $SECTIONS{$_}->[0], $SECTIONS{$_}->[1], $SECTIONS{$_}->[2], $SECTIONS{$_}->[3], $SECTIONS{$_}->[4]);
+    }
     
+    $self->{'IMG_HDR'}      = \%IMAGE_HDR;
+    $self->{'OPT_IMG_HDR'}  = \%OPT_IMAGE_HDR;
+    $self->{'SECTIONS'}     = \%SECTIONS;
+    $self->{'RVA'}          = \%RVA;
+
     return($self);    
 }
 
 sub OffsetToVirtual {
     my ($self, $offset) = @_;
 
-    # if this image has no optional header and defined image base,
-    # just return zero since we can't calculate the virtual
-    if (! $OPT_IMAGE_HDR{'ImageBase'})
-    {
+    # Return zero if no ImageBase has been assigned yet
+    if (! $self->{'OPT_IMG_HDR'}->{'ImageBase'}) {
         return(0);
     }
 
-    foreach (keys(%SECTIONS)) 
-    {
-        if ($offset >= $SECTIONS{$_}->[3] && $offset < ($SECTIONS{$_}->[3] + $SECTIONS{$_}->[2]))
-        {
-            return($OPT_IMAGE_HDR{'ImageBase'} + $offset + $SECTIONS{$_}->[4]);
+    foreach (keys(%{ $self->{'SECTIONS'} }))  {
+        my @section = @{ $self->{'SECTIONS'}->{$_} };
+        if ( $offset >= $section[3] && $offset < ($section[2] + $section[3]) ) {
+            return($self->{'OPT_IMG_HDR'}->{'ImageBase'} + $offset + $section[4]);
         }
     }   
         
-    # not in any given section, return the offset + ImageBase    
-    return($OPT_IMAGE_HDR{'ImageBase'} + $offset);
+    # Not in any given section, return the offset + ImageBase    
+    return($self->{'OPT_IMG_HDR'}->{'ImageBase'} + $offset);
 }
 
 sub VirtualToOffset {
     my ($self, $virtual) = @_;
     if (! $virtual) { return(0) }
     
-    $virtual -= $OPT_IMAGE_HDR{'ImageBase'};
+    # Return zero if no ImageBase has been assigned yet
+    if (! $self->{'OPT_IMG_HDR'}->{'ImageBase'}) {
+        return(0);
+    }
     
-    foreach (keys(%SECTIONS)) 
-    {
-       if ($virtual >= $SECTIONS{$_}->[1] && $virtual <= ($SECTIONS{$_}->[0] + $SECTIONS{$_}->[1]))
-       {
-            return $virtual - $SECTIONS{$_}->[4];
-       }
-    }   
+    $virtual -= $self->{'OPT_IMG_HDR'}->{'ImageBase'};
+    
+    foreach (keys(%{ $self->{'SECTIONS'} })) {
+        my @section = @{ $self->{'SECTIONS'}->{$_} };
+        if ($virtual >= $section[1] && $virtual <= ($section[0] + $section[1])) {
+            return $virtual - $section[4];
+        }
+    }
+   
     return;
 }
 
 sub FindPEOffset {
     my ($self, $data_ref) = @_;
     my $peo = unpack('V', substr(${$data_ref}, 0x3c, 4));
-    if (substr(${$data_ref}, 0, 2) ne 'MZ'  || substr(${$data_ref}, $peo, 2) ne 'PE') { return undef } 
+    if (substr(${$data_ref}, 0, 2) ne 'MZ'  || substr(${$data_ref}, $peo, 2) ne 'PE') { return } 
     return($peo);
 }
 
