@@ -23,7 +23,7 @@ sub Raw {
   $self->_PexCall('Raw', @_) if(@_);
   my $raw = $self->GetLocal('ForceRawUdp');
   return($raw) if($raw);
-  return($self->_PexCall('Raw');
+  return($self->_PexCall('Raw'));
 }
   
 1;
