@@ -48,7 +48,6 @@ sub Loadable {
 
 sub InitSolaris {
     my $self = shift;
-#    $self->{'SolarisPayload'} = $self->{'Info'}->{'SolarisPayload'};
     $self->{'Info'}->{'UserOpts'}->{'FIXSTACK'} = [1, 'BOOL', 'Call mprotect to make the stack executable', 1];
 }
 
@@ -107,6 +106,7 @@ sub FixStack {
         "\x92\x22\x40\x08".     # sub          %o1, %o0, %o1
         "\x82\x10\x20\x74".     # mov          116, %g1
         "\x91\xd0\x20\x08";     # ta           0x8
+		
 	return $code;
 }
 

@@ -25,14 +25,11 @@ sub HandleConnection {
   $sock->blocking(1);
 
   my $payload = $self->BuildSolaris($self->SolarisStagePayload);
-
   $self->PrintLine('[*] Sending Stage (' . length($payload) . ' bytes)');
   $sock->send($payload);
+  
   $self->PrintDebugLine(3, '[*] Stage Sent.');
-
   $sock->blocking($blocking);
-
-
 }
 
 1;

