@@ -12,7 +12,18 @@ my $defaults = {
 sub PopulateConfig {
   my $self = shift;
   my $configFile = shift;
-  $self->SetEnv(%{$self->MergeHash($self->ReadConfig($configFile), $defaults)});
+  my ($globalEnv, $tempEnvs) = $self->ReadConfig($configFile);
+  $self->SetGlobalEnv(%{$self->MergeHash($globalEnv, $defaults)});
+
+  $self->SaveTempEnv('_Save');
+  $self->UnsetTempEnv;
+  foreach my $tempEnv (keys %{$tempEnvs}) {
+    $self->SetTempEnv(%{$tempEnvs->{$tempEnv}});
+    $self->SaveTempEnv($tempEnv);
+    $self->UnsetTempEnv;
+  }
+  $self->LoadTempEnv('_Save');
+  $self->DeleteTempEnv('_Save');
 }
 sub SaveConfig {
   my $self = shift;
@@ -23,19 +34,26 @@ sub SaveConfig {
 sub ReadConfig {
   my $self = shift;
   my $configFile = shift;
-  my $config = { };
-  open(INFILE, "<$configFile") or return($config);
+  my $globalEnv = { };
+  my $tempEnvs = { };
+  my $env = $globalEnv;
+  open(INFILE, "<$configFile") or return($globalEnv, $tempEnvs);
   while(<INFILE>) {
     s/\r//g;
     chomp;
     next if(/^\w*#/);
     if(/^(.*?)=(.*)/) {
-      $config->{$1} = $2;
+      $env->{$1} = $2;
+    }
+    elsif(/^(.*?):/) {
+      $tempEnvs->{$1} = { };
+      $env = $tempEnvs->{$1};
     }
   }
   close(INFILE);
-  return($config);
+  return($globalEnv, $tempEnvs);
 }
+#fixme needs to be updated for temp envs
 sub WriteConfig {
   my $self = shift;
   my $configFile = shift;
