@@ -283,7 +283,14 @@ sub eUnset
 }
 
 
-sub gExit { exit(0) }
+sub gExit
+{
+    POSIX::_exit(0) if($ui->GetEnv('AlternateExit') == 1);
+    if($ui->GetEnv('AlternateExit') == 2) {
+      exec('true');
+    }
+    exit(0);
+}
 
 sub gUnknown
 {
