@@ -163,20 +163,28 @@ A.nav {
 	background:		black;
 }
 
+select {
+	background:		#cccccc;
+	color:			black;
+	font-weight:	bold;
+	padding: 		2px 2px 2px 2px;	
+}
+
 input {
-	background:		white;
 	font-weight:	bold;
 	color:			black;
-	border-color:	#111111;
-}
-
-select {
-	background:		white;
+	background:		#cccccc;
 	color:			black;
-	font-weight:	bold;	
-	border-color:	#111111;
+	padding: 		2px 10px 2px 10px;
+	border: 		1px solid grey;
 }
 
+input.button {
+	border-left: 		1px solid grey;
+	border-top: 		1px solid grey;
+	border-bottom: 		2px solid grey;
+	border-right: 		2px solid grey;		
+}
 
 .iconset 
 {
@@ -207,4 +215,29 @@ select {
 {
 	padding: 10px 0px 0px 0px;
 	margin: 0;
+}
+
+.CommandBar {
+
+}
+
+#CommandBarList {
+	padding: 		0 1px 1px;
+	margin-left: 	0;
+}
+
+
+#CommandBarList li {
+	list-style: 	none;
+	margin: 		0;
+	padding:		1em 1em 1em 1em;
+	display: 		inline;
+}
+
+#CommandBarList li a {
+	padding: 		0px 0px 0px 0px
+}
+
+#CommandBarList li a:hover {
+	border-bottom: 	1px solid #00ff01;
 }

@@ -333,14 +333,14 @@ sub ProcessIPCRequest {
 		$self->SessionRemove($args[0]);
 	}
 	
-	if ($cmd eq 'CMD') {
+	if ($cmd eq 'CMD' || $cmd eq 'DATA') {
 		my $out = $self->SessionIPC($args[0]);
 		if ($out) {
-			$out->printflush("CMD ".$args[1]."\n");
-			$ipc->printflush("CMD OK\n");
+			$out->printflush("$cmd ".$args[1]."\n");
+			$ipc->printflush("$cmd OK\n");
 		}
 		else {
-			$ipc->printflush("CMD ERROR\n");
+			$ipc->printflush("$cmd ERROR\n");
 		}
 
 	}
@@ -680,7 +680,7 @@ sub SessionLoad {
         <title>Metasploit Framework Web Console v$VERSION</title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
     </head>
-<frameset rows="*, 60" border=0 frameborder=0 framespacing=0>
+<frameset rows="*, 65" border=0 frameborder=0 framespacing=0>
   <frame src="/SESSIONS?MODE=UPDATE&SID=$sid" name="update">
   <frame src="/SESSIONS?MODE=COMMAND&SID=$sid" name="command">
   <noframes><body>This feature requires frames...</body></noframes>
@@ -693,9 +693,22 @@ sub SessionLoad {
 # Quick command bar to send commands to the shell
 sub SessionCommand { 
 	my $state	= shift;
+	my $data	= $state->{'IDATA'};	
 	my $ipc		= $state->{'parent'};	
 	my $sid		= $state->{'SID'} + 0;
-	my $cmd		= $state->{'CMD'};	
+	my $cmd		= $state->{'CMD'};
+	my $cmdurl	= "/SESSIONS?MODE=COMMAND&amp;SID=$sid&amp;CMD=";
+	my $cmdbar	=
+	"<div class='textBold' class='CommandBar'>\n".
+	"<ul id='CommandBarList'>\n".
+	"<li>Session Commands:".
+	"<li><a href='".$cmdurl."DIE'>Session::Kill</a>".
+	"<li><a href='".$cmdurl."INT'>Session::Break</a>".
+	"<li><a href='http://metasploit.com/' target='_blank'>Metasploit::Website</a>".
+	"<li><a href='http://s1.amazon.com/exec/varzea/pay/T2FKAC37FCOAYS/104-6179093-5143961' target='_blank'>Metasploit::Donate</a>".		
+	"</ul>\n".
+	"</div>";
+		
 	my $res		= qq
 [<html>
     <head>
@@ -707,25 +720,35 @@ sub SessionCommand {
 <form action='/SESSIONS' name='cmdform'>
 <input type='hidden' name='MODE' value='COMMAND'>
 <input type='hidden' name='SID' value='$sid'>
-<input type='text' name='CMD' size=80>
-<input type='submit' name='submit' onsumbit='javascript:document.form.CMD="";' value='Send Command'>
-<input type='submit' name='clear' value='Clear'>
+
+<input type='text'   name='IDATA' size=80 maxsize=4000>
+<input type='submit' name='RUN'  value='Run' class='button'>
 </form>
+$cmdbar
 <script language='javascript'>
 <!--
 	window.focus();
-	document.cmdform.CMD.focus();
+	document.cmdform.IDATA.value="";	
+	document.cmdform.IDATA.focus();
 //-->
 </script>
 </body>
 </html>
 ];
-	my $cmd_data;
 	
-	# process the actual command
+	# Process any special command sequences
 	if ($cmd) {
-		$cmd .= "\n";
 		$ipc->printflush("CMD $sid ".unpack("H*", $cmd)."\n");
+		my $raw = $ipc->getline;
+		
+		if ($raw =~ /ERROR/) {
+			$ipc->printflush("SHUTDOWN $sid\n");
+		}	
+	}
+	# Process incoming data (shell commands)...
+	elsif ($data) {
+		$data .= "\n";
+		$ipc->printflush("DATA $sid ".unpack("H*", $data)."\n");
 		my $raw = $ipc->getline;
 		
 		if ($raw =~ /ERROR/) {
@@ -936,7 +959,7 @@ sub ModuleList
 		$mList .= "</select>\n";
 	}
 	
-	$mList .= "<input type='submit' value=' Filter Modules '></div></form><br\>\n";
+	$mList .= "<input type='submit' value=' Filter Modules ' class='button'></div></form><br\>\n";
 
 	if ($mfilt eq 'ALL') {
 		$moduleMerge->{'ALL'} = [ keys %{ $mALL } ];
@@ -1140,7 +1163,7 @@ sub PayloadOptions
 	}
 	
 	$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
-    $res .= "<tr><td colspan=6><input type='submit' name='ACTION' value='Generate Payload'></td></tr>\n";
+    $res .= "<tr><td colspan=6><input type='submit' name='ACTION' value='Generate Payload' class='button'></td></tr>\n";
     $res .= "</form>\n";
     $res .= "</table>\n";  
     return $res;
@@ -1443,8 +1466,8 @@ sub ExploitOptions
 	$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
 			
     $res .= "<tr>";
-	$res .= "<td colspan=3 align='right'> <input type='submit' name='ExploitAction' value='-Check-'> </td>";
-    $res .= "<td colspan=2 align='left'> <input type='submit' name='ExploitAction' value='-Exploit-'> </td>";
+	$res .= "<td colspan=3 align='right'> <input type='submit' name='ExploitAction' value='-Check-' class='button'> </td>";
+    $res .= "<td colspan=2 align='left'> <input type='submit' name='ExploitAction' value='-Exploit-' class='button'> </td>";
 	$res .= "</tr>\n";
 	
 
@@ -1454,6 +1477,7 @@ sub ExploitOptions
 
 
 	if ( scalar(keys %{ $mopts} ) || scalar(keys %{ $popts} ) ) {
+		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
 		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
 		$res .= "<tr><td colspan=5 class='textBold' align='left'>Advanced Module Options</td></tr>\n";
 	}
@@ -1556,7 +1580,7 @@ sub ExploitExec
             }
         }
 
-        $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit'>\n";
+        $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit' class='button'>\n";
         $res .= "</form>\n";
         $res .= "<hr><br><br>\n";
         $res .= "<br><div class='textBold'>Check Results:</div>";
@@ -1686,7 +1710,6 @@ qq[
 		}
 		
 		if ($ok ne 'SHELL') {
-			# print STDERR "Unknown starting command: $ok\n";
 			$eout->close;
 			$pout->close;
 			exit(0);
@@ -1749,8 +1772,8 @@ qq[
 					}
 					
 					# Command request from a client
-					if ($data =~ m/CMD\s+(.*)/) {
-						my $bytes = pack("H*", $1);
+					if ($data =~ m/DATA\s+(.*)/) {
+						my $bytes = pack('H*', $1);
 						$eout->printflush($bytes);
 						
 						# write command to cache file
@@ -1761,7 +1784,29 @@ qq[
 						next;
 					}
 					
-					# print STDERR "Unknown server request: $data\n";
+					# Command request from a client
+					if ($data =~ m/CMD\s+(.*)/) {
+						my $cmd = pack('H*', $1);
+						my $log = "<div class='textBold'>&gt;&gt;";
+						
+						# Interrupt
+						if ($cmd eq 'INT') {
+							$log .= "Session interrupt request...";
+							kill($$, 'INT');
+						}
+						
+						# Shutdown
+						if ($cmd eq 'DIE') {
+							$log .= "Session kill request...";
+							$keepRunning = 0;
+						}
+							
+						$log .= "</div>\n";
+						
+						$cache->printflush($out);
+						$cache->sync;
+						next;
+					}
 				}
 			}
 		}
