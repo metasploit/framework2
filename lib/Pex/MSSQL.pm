@@ -26,10 +26,10 @@ sub Ping
     my $r;
     my %x;
     
-    $s->udp($host, $port);
-    $s->send("\x02");
-    $r = $s->recv(10);
-    $s->close();
+    $s->Udp($host, $port);
+    $s->Send("\x02");
+    $r = $s->Recv(-1, 10);
+    $s->Close();
     
     if (! $r)  { return }
     
@@ -49,7 +49,7 @@ sub Login
     my $s = Pex::Socket->new();
     my $r;
     
-    $s->tcp($host, $port);
+    $s->Tcp($host, $port);
  
     my $p_hdr = 
     "\x02\x00\x02\x00\x00\x00\x02\x00\x00\x00".
@@ -118,11 +118,11 @@ sub Login
     
     my $login = $p_hdr . $user . $ulen . $pass . $plen . $p_pk2 . $plen . $pass . $p_pk3; 
     
-    $s->send($login);
-    $s->send($p_lng);
+    $s->Send($login);
+    $s->Send($p_lng);
     
-    my $r = $s->recv(10);
-    $s->close();
+    my $r = $s->Recv(-1, 10);
+    $s->Close();
     
     if ($r && length($r) > 10 && substr($r, 8, 1) eq chr(0xe3)) { return(1) }
     return(0);

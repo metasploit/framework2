@@ -317,6 +317,8 @@ sub Recv {
   my $length = shift;
   my $timeout = @_ ? shift : 0;
 
+  $length = 99999999 if($length == -1);
+
   return if($self->GetError);
   return if($self->SocketError(1));
 
