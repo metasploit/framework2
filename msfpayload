@@ -27,13 +27,27 @@ use Pex;
 
 
 my $ui = Msf::TextUI->new($Bin);
+$ui->SetTempEnv('_MsfPayload', 1);
 
-my $payloadsIndex = $ui->LoadPayloads;
+my $exploits = { };
 my $payloads = { };
+my $exploitsIndex = $ui->LoadExploits;
+my $payloadsIndex = $ui->LoadPayloads;
+my $encoders = $ui->LoadEncoders;
+my $nops     = $ui->LoadNops;
 
 foreach my $key (keys(%{$payloadsIndex})) {
     $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
 }
+
+foreach my $key (keys(%{$exploitsIndex})) {
+    $exploits->{$exploitsIndex->{$key}->Name} = $exploitsIndex->{$key};
+}
+
+$ui->SetTempEnv('_Exploits', $exploitsIndex);
+$ui->SetTempEnv('_Payloads', $payloadsIndex);
+$ui->SetTempEnv('_Encoders', $encoders);
+$ui->SetTempEnv('_Nops', $nops);
 
 my $sel = shift();
 my $p = $payloads->{$sel};
@@ -52,6 +66,10 @@ while ( my ($k, $v) = split(/\=/, shift()) )
         $ui->SetTempEnv($k, $v);
     }   
 }
+
+$ui->SetTempEnv('_Exploit', $exploits->{'Tester'});
+$ui->SetTempEnv('_PayloadName', $sel);
+$ui->SetTempEnv('_Payload', $p);
 
 my $action = uc($opt->{'ARG0'});
 
