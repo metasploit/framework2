@@ -48,7 +48,7 @@ getopts("vha:", \%args);
 if ($args{h}) { Usage() }
 if ($args{v}) { $verbose++ }
 
-my ($host, $port, $pass) = (Pex::InternetIP(), 55555, "meta");
+my ($host, $port) = ("127.0.0.1", 55555);
 if ($args{a})
 {
     ($host, $port) = split(/:/, $args{a});
@@ -370,7 +370,7 @@ sub ExploitOptions
         my $dflt = $popts->{$popt}->[3];
         my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
         
-        $dflt = $state->{'client'}->sockhost if $popt eq "LHOST";
+        $dflt = Pex::InternetIP() if $popt eq "LHOST";
         
         $res .= "<tr><td><b>$popt</b></td>".
                 "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
