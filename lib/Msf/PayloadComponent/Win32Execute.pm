@@ -2,11 +2,6 @@ package Msf::PayloadComponent::Win32Execute;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
 
-sub import {
-  my $class = shift;
-  $class->SUPER::import(@_);
-}
-
 my $info =
 {
     'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],

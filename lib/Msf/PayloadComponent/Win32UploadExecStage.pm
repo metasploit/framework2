@@ -2,11 +2,6 @@ package Msf::PayloadComponent::Win32UploadExecStage;
 use strict;
 use base 'Msf::PayloadComponent::Win32StagePayload';
 
-sub import {
-  my $class = shift;
-  $class->SUPER::import(@_);
-}
-
 my $info = {
   'UserOpts' =>
     {
