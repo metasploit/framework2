@@ -19,4 +19,9 @@ $VERSION = 2.0;
 use strict;
 use base 'Msf::Socket::RawUdpBase', 'Pex::Socket::RawUdp', 'Msf::Module';
 
+sub _PexParent {
+  my $self = shift;
+  return('Pex::Socket::RawUdp');
+}
+
 1;
