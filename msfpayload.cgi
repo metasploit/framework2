@@ -59,6 +59,7 @@ if (! $action)
     my $p = $payloads->{$sel};
     
     DisplayHeader("Payload Information");
+    $query->start_form;
     
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     PrintRow("Name",            $sel);
@@ -70,16 +71,19 @@ if (! $action)
     PrintRow("Handler Type",    $p->Type);
     PrintRow("Total Size",      $p->Size);
 
-
     if (scalar(keys(%{$p->UserOpts})))
     {
-        my $subtable =
-        "<table cellspacing=0 cellpadding=4 border=0>\n".
-        "<tr align='center'><td>Name</td><td>Required</td><td>Description</td><td>Default</td></tr>\n";
-        
-        foreach my $o (keys(%{$p->UserOpts}))
+        my $subtable = "<table cellspacing=0 cellpadding=4 border=0>\n".
+        foreach my $popt (sort(keys(%{$p->UserOpts})))
         {
-            $subtable .= CreateRow($o, ($p->UserOpts->{$o}->[0] ? "Y" : "N"), $p->UserOpts->{$o}->[1], $p->UserOpts->{$o}->[2]);
+
+            my $dflt = $popts->{$popt}->[3];
+            my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
+
+            $subtable .= "<tr><td><b>$popt</b></td>".
+                         "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
+                         "<td><input type='text' name='$popt' value='$dflt'></td>".
+                         "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
         }
         $subtable .= "</table>\n";
         PrintRow("Payload Options", $subtable);
