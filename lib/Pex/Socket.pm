@@ -234,7 +234,7 @@ sub Tcp {
 
   if($self->UseSSL) {
     # Create SSL Context
-    $self->{'SSLCtx'} = Net::SSLeay::CTX_new;
+    $self->{'SSLCtx'} = Net::SSLeay::CTX_new();
     # Configure session for maximum interoperability
     Net::SSLeay::CTX_set_options($self->{'SSLCtx'}, &Net::SSLeay::OP_ALL);
     # Create the SSL file descriptor
@@ -245,7 +245,7 @@ sub Tcp {
     my $sslConn = Net::SSLeay::connect($self->{'SSLFd'});
 
     if($sslConn <= 0) {
-      $self->SetError('Error setting up ssl: ' . Net::SSLeay::print_errs);
+      $self->SetError('Error setting up ssl: ' . Net::SSLeay::print_errs());
       $self->close;
       return;
     }
