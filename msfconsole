@@ -46,10 +46,11 @@ my $payloadsIndex;
 my $encodersIndex;
 my $nopsIndex;
 
+my $exploits;
+my $eclasses;
+my $payloads;
 my $encoders;
 my $nops;
-my $exploits;
-my $payloads;
 
 my %opts;
 getopts('hvqs:', \%opts);
@@ -59,11 +60,7 @@ Version() if($opts{'v'});
 
 my $state = {'Mode' => 'Main'};
 
-# For many reasons (modules setup stuff on new), internal variables
-# keeping state between exploit attempts, etc, we want new instances
-# of everything, so we will call load before anything that uses a
-# module, and we will let the Load functions do the module instantiation
-# this is also good if they add/remove a module the directories 
+# load the modules
 Load();
 
 my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
@@ -72,45 +69,41 @@ $console->tabCompletion(\&xTabCompletion);
 # virtual command table
 my %virtualCmds = ();
 
-# I know the sub thing is ugly, but I did it to make clear what functions
-# are calling Load(), because this could bring up some very hard to find bugs
-# and cause some really bizarre issues depending on all sorts of factors
-# **** Make sure to call Load if the function uses any module (exploit, payload, etc) *****
-
 # global command tables
 my %globalCmds =
 (
-    'version'   => [\&gVersion,              "Show console version"],
-    'help'      => [\&gHelp,                 "Show the main console help"],
-    '?'         => [\&gHelp,                 "Show the main console help"],
-    'quit'      => [\&gExit,                 "Exit the console"],
-    'exit'      => [\&gExit,                 "Exit the console"],
-    'use'       => [sub{gUse(@_);},  "Select an exploit by name"],
-    'info'      => [sub{gInfo(@_);}, "Display detailed exploit or payload information"],
-    'cd'        => [\&gChdir,                "Change working directory"],
-    'save'      => [\&gSave,                 "Save configuration to disk"],
-    'setg'      => [\&gSet,                  "Set a global environment variable"],
-    'unsetg'    => [\&gUnset,                "Remove a global environment variable"],
-    'reload'    => [sub{Load();},            "Reload exploits and payloads"],
+    'version'   => [\&gVersion,       "Show console version"],
+    'help'      => [\&gHelp,          "Show the main console help"],
+    '?'         => [\&gHelp,          "Show the main console help"],
+    'quit'      => [\&gExit,          "Exit the console"],
+    'exit'      => [\&gExit,          "Exit the console"],
+    'use'       => [\&gUse,           "Select an exploit by name"],
+    'info'      => [\&gInfo,          "Display detailed exploit or payload information"],
+    'cd'        => [\&gChdir,         "Change working directory"],
+    'save'      => [\&gSave,          "Save configuration to disk"],
+    'setg'      => [\&gSet,           "Set a global environment variable"],
+    'unsetg'    => [\&gUnset,         "Remove a global environment variable"],
+    'reload'    => [\&Load,           "Reload exploits and payloads"],
 );
 
 
 # main mode commands
 my %mainCmds =
 (
-    'show'      => [sub{Load(); mShow(@_);},   "Show available exploits and payloads"],
+    'show'      => [\&mShow,   "Show available exploits and payloads"],
 );
 
 # exploit mode commands
 my %exploitCmds = 
 (
-    'set'       => [\&eSet,                         "Set a temporary environment variable"],
-    'unset'     => [\&eUnset,                       "Remove a temporary environment variable"],
-    'back'      => [\&eBack,                        "Drop back to the main menu"],
-    'show'      => [sub{ eShow(@_);},        "Show options, advanced, payloads, or targets"],
-    'check'     => [sub{eCheck(@_);},       "Perform vulnerability check"],
-    'exploit'   => [sub {eExploit(@_);},     "Launch the actual exploit"],
-    'rexploit'  => [sub{Load(); eExploit(@_);},     "Reload and exploit, for us tester types"],
+    'set'       => [\&eSet,           "Set a temporary environment variable"],
+    'unset'     => [\&eUnset,         "Remove a temporary environment variable"],
+    'back'      => [\&eBack,          "Drop back to the main menu"],
+    'show'      => [\&eShow,          "Show options, advanced, payloads, or targets"],
+    'check'     => [\&eCheck,         "Perform vulnerability check"],
+    'rcheck'    => [\&eReloadCheck,   "Perform vulnerability check"],	
+    'exploit'   => [\&eExploit,       "Launch the actual exploit"],
+    'rexploit'  => [\&eReloadExploit, "Reload and exploit, for us tester types"],
 );
 
 
@@ -182,12 +175,14 @@ sub Load {
     $encodersIndex = $ui->LoadEncoders;
     $nopsIndex     = $ui->LoadNops;
     $exploits = { };
+    $eclasses = { };
     $payloads = { };
     $encoders = { };
     $nops     = { };
     
     foreach my $key (sort(keys(%{$exploitsIndex}))) {
         $exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
+        $eclasses->{$exploitsIndex->{$key}->ModuleClass}++;
     }
     
     foreach my $key (sort(keys(%{$encodersIndex}))) {
@@ -449,7 +444,7 @@ sub mShow
         print "\nMetasploit Framework Loaded Exploits\n";
         print   "====================================\n\n";
         
-        print $ui->DumpExploits(2, $exploits) . "\n";
+        print $ui->DumpExploits(2, $exploits, $args[1]) . "\n";
         return;
     }
     
@@ -534,6 +529,7 @@ sub eTargets  {
 }
 
 sub eCheck {
+  return if($state->{'Mode'} ne 'Exploit');
   xUpdateAddrCache();
   SaveTemp();
   FillTemp();
@@ -541,8 +537,12 @@ sub eCheck {
   RestoreTemp();
 }
 
+sub eReloadCheck {
+  Load();
+  return eCheck(@_);
+}
+
 sub eExploit {
-  # if reload failed, and bumped us out to main...
   return if($state->{'Mode'} ne 'Exploit');
   xUpdateAddrCache();
   SaveTemp();
@@ -551,6 +551,10 @@ sub eExploit {
   RestoreTemp();
 }
 
+sub eReloadExploit {
+  Load();
+  return eExploit(@_);
+}
 
 sub xMsg
 {
@@ -767,8 +771,21 @@ sub xTabCompletion
     
     if (lc($cmd) eq "show")
     {
-        if ($state->{'Mode'} eq 'Main') { $state->{'TabVals'} = ['exploits', 'payloads', 'encoders', 'nops'] }
-        if ($state->{'Mode'} eq 'Exploit') { $state->{'TabVals'} = ['advanced', 'options', 'targets', 'payloads'] }
+        if ($state->{'Mode'} eq 'Main') {
+            
+            # Handle ModuleClass tab completion stuff
+            if ($args[0] eq 'exploits') {
+                $state->{'TabVals'} = [sort(keys(%{$eclasses}))];
+            }
+            # Default to the standard show options
+            else {
+                $state->{'TabVals'} = ['exploits', 'payloads', 'encoders', 'nops'];
+            }
+        }
+		
+        if ($state->{'Mode'} eq 'Exploit') {
+            $state->{'TabVals'} = ['advanced', 'options', 'targets', 'payloads'] 
+        }
     }
     
     if (lc($cmd) eq "info")

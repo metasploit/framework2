@@ -44,11 +44,13 @@ my $encodersIndex;
 my $nopsIndex;
 my $exploits	= { };
 my $payloads	= { };
+my $moduleTypes	= { };
 my $moduleKeys	= { };
 my $moduleArch	= { };
 my $moduleOS	= { };
 my $moduleList	= { };
 my $modules	    = { };
+
 my $burl;
 my %args;
 
@@ -909,9 +911,11 @@ sub ModuleList
 	my @links;
 	
 	my $moduleMerge = {};
+
+	my $mTypes		= $moduleTypes->{$mtype};
 	my $mKeys		= $moduleKeys->{$mtype};
-	my $mOS			= $moduleOS->{$mtype};
 	my $mArch		= $moduleArch->{$mtype};
+	my $mOS			= $moduleOS->{$mtype};	
 	my $mALL		= {};
 
 
@@ -919,10 +923,25 @@ sub ModuleList
 	$mList .= "<div align='center' class='navHead'>\n";
 	$mList .= "<select name='FILTER' onChange='javascript:form.submit()'>\n";
 	$mList .= "<option value='ALL'>&nbsp;\n";
-	
+
+	# List of mTypes
+	if ($mtype eq 'exploits' && scalar(keys %{ $mTypes } )) {
+		$mList .= "<option value='ALL'>--- Exploit Class ---\n";
+		foreach my $kname  (sort( keys %{ $mTypes }) ) {
+			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';
+			$mList .= "<option value='$kname' $sel> class :: $kname\n";
+			$moduleMerge->{$kname} = $mTypes->{$kname};
+			if ($mfilt eq 'ALL') {
+				foreach my $mname (@{ $mTypes->{$kname} }) {
+					$mALL->{$mname}++;
+				}
+			}
+		}
+	}
 	
 	# List of mKeys
 	if (scalar(keys %{ $mKeys } )) {
+		$mList .= "<option value='ALL'>&nbsp;\n";
 		$mList .= "<option value='ALL'>--- Application ---\n";
 		foreach my $kname  (sort( keys %{ $mKeys }) ) {
 			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';
@@ -1024,9 +1043,14 @@ sub ModuleInfo {
     
 	my ($rev)   = $module->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
     $res .= "<table align='center' cellpadding=6 border=0 cellspacing=0 width='95%'>\n";
-    $res .= "<tr><td align='right' width=80 class='textBold'>Name:</td>";
-	$res .= "<td class='textNormal'>" . $module->SelfEndName() . " v$rev</td></tr>\n";
-
+    
+	my $class;
+	if ($module->can('ModuleClass') && $module->ModuleClass) {
+		$class = ' ('. $module->ModuleClass .')';
+	}
+		
+	$res .= "<tr><td align='right' width=80 class='textBold'>Name:</td>";
+	$res .= "<td class='textNormal'>" . $module->SelfEndName() . " v$rev $class</td></tr>\n";
 
     my @authors = @{$module->Authors()};
     my $author = shift(@authors);
@@ -1887,7 +1911,7 @@ sub HTTPRequest {
 	while ($raw ne "\r\n")
 	{
 		$raw = $cli->RecvLine($timeout);
-				
+		
 		if (! $raw) {
 			return { 'invalid' => 1 };
 		}
@@ -2099,16 +2123,20 @@ sub LoadAllModules {
 	$encodersIndex	= $ui->LoadEncoders;
 	$nopsIndex		= $ui->LoadNops;
 
+	$moduleTypes	= {};
 	$moduleKeys		= {};
 	$moduleOS		= {};
 	$moduleArch		= {};
 	$modules		= {};
+
 	
 	foreach my $key (keys(%{$exploitsIndex})) {
 		my $exploit = $exploitsIndex->{$key};
 		
 		$exploits->{$exploit->SelfEndName} = $exploit;
 		$modules->{'exploits'}->{$exploit->SelfEndName} = $exploit;
+		
+		push @{ $moduleTypes->{'exploits'}->{$exploit->ModuleClass} }, $exploit->SelfEndName;
 		
 		foreach my $kname ( @{ $exploit->Keys } ) {
 			push @{ $moduleKeys->{'exploits'}->{$kname} }, $exploit->SelfEndName;

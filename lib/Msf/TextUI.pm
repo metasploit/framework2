@@ -53,14 +53,29 @@ sub WordWrap {
 }
 
 sub DumpExploits {
-  my $self = shift;
-  my $indent = shift;
+  my $self     = shift;
+  my $indent   = shift;
   my $exploits = shift;
+  my $class    = shift;
+  
   my $count = 0;
   my $col = Msf::ColPrint->new($indent, 2);
-  foreach my $key (sort(keys(%{$exploits}))) {
-    $col->AddRow($key, $exploits->{$key}->Name);
+  
+  foreach my $mod_file (sort keys %{$exploits}) {
+    my $mod_class = $exploits->{$mod_file}->ModuleClass;
+    my $mod_name  = $exploits->{$mod_file}->Name;
+	
+	# Only display modules belonging to this class
+    if ($class) {
+      next if $class ne $mod_class;
+      $col->AddRow($mod_file, $mod_name);
+    }
+    # Otherwise display all exploits and a column with the class identifier
+    else {
+      $col->AddRow($mod_file, $mod_name);	  
+    }
   }
+  
   return($col->GetOutput);
 }
 
@@ -155,10 +170,12 @@ sub DumpExploitSummary {
   my $exploit = shift;
   my $output;
   $output .=   '      Name: ' . $exploit->Name . "\n";
+  $output .=   '     Class: ' . $exploit->ModuleClass . "\n";
   $output .=   '   Version: ' . $exploit->Version . "\n";
   $output .=   ' Target OS: ' . join(", ", @{$exploit->OS}) . "\n";
   $output .=   '  Keywords: ' . join(", ", @{$exploit->Keys}) ."\n"; 
   $output .=   'Privileged: ' . ($exploit->Priv ? "Yes" : "No") . "\n";
+
   $output .=   "\n";
   
   $output .=   "Provided By:\n";
