@@ -1,17 +1,14 @@
 Pre-Release Tasks
 ==================
 
+ - Make the OS explicit. Remove win32, make it win2000, winxp, etc, etc for exploits and payloads
 
  - Fix msfconsole so that ^C during Exploit with unhandled payload does not kill interface
 
  - The winadduser payload needs to be rewritten using new api
 
- - The EXITFUNC routine is unable to set SEH correctly, maybe remove?
-
  - Determine the issue with the PREFORK code, it DOES work on some exploits
  
- - Add at least one more windows payload (download url or something)
-
  - Convert the QUICKSTART.* docs into a decent user guide
 
  - Finish building out the basic development guides
