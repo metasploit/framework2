@@ -177,13 +177,7 @@ sub SetLocal {
 
 sub Advanced {
   my $self = shift;
-  my $default = { };
-
-  my $selfName = $self->SelfName . '::';
-  foreach my $key (keys(%{$self->{'Defaults'}})) {
-    $default->{$selfName . $key} = $self->{'Defaults'}->{$key};
-  }
-  return($default);
+  return($self->{'Defaults'});
 }
 
 
