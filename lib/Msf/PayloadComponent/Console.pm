@@ -39,9 +39,12 @@ sub HandleConsole {
 # Pipe connected to the console input
 sub PipeLocalIn {
 	my $self = shift;
+	
+	if (@_) {
+		$self->{'PipeLocalIn'} = shift();
+		delete($self->{'PipeLocalSrc'});
+	}
 
-	$self->{'PipeLocalIn'} = shift() if @_;
-		
 	if (! exists($self->{'PipeLocalIn'})) {
 		$self->{'PipeLocalIn'} = IO::Handle->new_from_fd(0, '<');
 		$self->PipeLocalName('stdio');
@@ -54,8 +57,11 @@ sub PipeLocalIn {
 # Pipe connected to the console output
 sub PipeLocalOut {
 	my $self = shift;
-
-	$self->{'PipeLocalOut'} = shift() if @_;
+	
+	if (@_) {
+		$self->{'PipeLocalOut'} = shift();
+		delete($self->{'PipeLocalSrc'});
+	}
 		
 	if (! exists($self->{'PipeLocalOut'})) {
 		$self->{'PipeLocalOut'} = IO::Handle->new_from_fd(1, '>');	
@@ -106,7 +112,10 @@ sub PipeLocalSrc {
 sub PipeRemoteIn {
 	my $self = shift;
 
-	$self->{'PipeRemoteIn'} = shift() if @_;
+	if (@_) {
+		$self->{'PipeRemoteIn'} = shift();
+		delete($self->{'PipeRemoteSrc'});
+	}
 		
 	if (! exists($self->{'PipeRemoteIn'})) {
 		$self->{'PipeRemoteIn'} = IO::Handle->new_from_fd(0, '<');	
@@ -127,7 +136,10 @@ sub PipeRemoteIn {
 sub PipeRemoteOut {
 	my $self = shift;
 
-	$self->{'PipeRemoteOut'} = shift() if @_;
+	if (@_) {
+		$self->{'PipeRemoteOut'} = shift();
+		delete($self->{'PipeRemoteSrc'});
+	}
 		
 	if (! exists($self->{'PipeRemoteOut'})) {
 		$self->{'PipeRemoteOut'} = IO::Handle->new_from_fd(1, '>');	
@@ -177,6 +189,7 @@ sub PipeRemoteSrc {
 		
 		$self->{'PipeRemoteSrc'} = $info;
 	}
+		
 	return $self->{'PipeRemoteSrc'};
 }
 
