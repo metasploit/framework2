@@ -170,15 +170,15 @@ sub gVersion { print "msfconsole version $VERSION\n" }
 sub gSet {
     my $cmd = shift;
     if(@_ == 1) {
-        print "$_[0]: " . $ui->GetEnv($_[0]) . "\n";
+        print "$_[0]: " . $ui->GetGlobalEnv($_[0]) . "\n";
     }
     elsif(@_ == 2) {
         print "$_[0] -> $_[1]\n";
-        $ui->SetEnv($_[0], $_[1]);
+        $ui->SetGlobalEnv($_[0], $_[1]);
     }
     else {
-        foreach (sort(keys(%{$ui->GetEnv}))) {
-            print "$_: " . $ui->GetEnv($_) . "\n";
+        foreach (sort(keys(%{$ui->GetGlobalEnv}))) {
+            print "$_: " . $ui->GetGlobalEnv($_) . "\n";
         }
     }
 }
@@ -197,9 +197,9 @@ sub gUnset
             return if($answer eq 'no');
             last if($answer eq 'yes');
         }
-        $ui->UnsetEnv;
+        $ui->UnsetGlobalEnv;
     }
-    $ui->UnsetEnv($key);
+    $ui->UnsetGlobalEnv($key);
 }
 
 sub eSet {
@@ -493,7 +493,7 @@ sub eOptions
     my $exploit = $state->{'Exploit'}->{'Exploit'};
     my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
 
-    my $payload = $ui->GetTempEnv('PAYLOAD');
+    my $payload = $ui->GetEnv('PAYLOAD');
 
     if ($exploit->Payload && ! $payload)
     {
@@ -548,15 +548,16 @@ sub eCheck
 }
 
 sub eExploit 
-{ 
+{
+    $ui->SaveTempEnv('_Save');
     my $exploit = $state->{'Exploit'}->{'Exploit'};
     my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
 
-    my $payload = $ui->GetTempEnv('PAYLOAD');
+    my $payload = $ui->GetEnv('PAYLOAD');
 
     if ($exploit->Payload && ! $payload)
     {
-        xMsg("exploit", "a payload must be specified first: 'set payload <payloadname>'");
+        xMsg("exploit", "a payload must be specified first: 'set PAYLOAD <payloadname>'");
         return;
     }
     
@@ -579,7 +580,7 @@ sub eExploit
     }
 
     my @targets = $exploit->Targets;
-    my $target = $ui->GetTempEnv('TARGET');
+    my $target = $ui->GetEnv('TARGET');
     if (defined($target) && ! defined($targets[$target]))
     {
       xMsg('exploit', 'Invalid target specified.');
@@ -631,7 +632,7 @@ sub eExploit
             if ($phand)
             {
                 xMsg("exploit", "starting handler $phand");
-                my $res = $handler->$phand($payload, $ui->GetTempEnv, $child);
+                my $res = $handler->$phand($payload, $ui->GetEnv, $child);
                 kill('TERM', $child);
 
                 if (! $res)
@@ -654,15 +655,8 @@ sub eExploit
     }
     print "\n";
     
-    # Clean up the temp environment, this really only matters when
-    # a client-side handler was used once and the same exploit was
-    # run again with a different payload that doesnt use client-side
-    # handlers, thus polluting the temp env and causing problems.
-    
-    foreach my $key ('HCALLBACK', 'HANDLER', 'HCFUNC', 'HPSOCK', 'HCSOCK') 
-    { 
-        $ui->UnsetTempEnv($key);
-    }  
+    $ui->LoadTempEnv('_Save');
+    $ui->DeleteTempEnv('_Save');
 }
 
 
@@ -771,14 +765,14 @@ sub xAddAddressCache
 
 sub xCreateSetList
 {
-    if ($state->{"Mode"} eq "Main") { return keys(%{$ui->GetEnv}) } 
+    if ($state->{"Mode"} eq "Main") { return keys(%{$ui->GetGlobalEnv}) } 
     
     if ($state->{"Mode"} eq "Exploit") 
     {
         my %options = ();
         
         my $x = $state->{'Exploit'}->{'Exploit'};
-        my $p = $ui->GetTempEnv('PAYLOAD');
+        my $p = $ui->GetEnv('PAYLOAD');
         
         foreach (keys(%{$x->UserOpts})) { $options{$_}++ }
         if ($x->Payload && $p && exists($payloads->{$p}))
@@ -805,7 +799,7 @@ sub xCreateSetValueList
         my $n = $state->{'SetName'};
         my $x = $state->{'Exploit'}->{'Exploit'};
         my $v = $state->{'Exploit'}->{'Payloads'};
-        my $p = $ui->GetTempEnv('PAYLOAD');
+        my $p = $ui->GetEnv('PAYLOAD');
 
         if ($x->Payload && $p && exists($payloads->{$p})) { $p = $payloads->{$p} }
         
