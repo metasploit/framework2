@@ -495,7 +495,7 @@ sub ConnectProxies {
             $sock->send("\x04\x01".pack('n',$proxy->[2]).gethostbyname($proxy->[1])."\x00");
             $sock->recv(my $res, 8);
             if ($res && ord(substr($res,1,1)) != 90) {
-                $self->SetError("Socks server at $lastproxy->[1] denied our request");
+                $self->SetError("Socks4 server at $lastproxy->[1] denied our request");
                 $sock->close;
                 return;
             }
