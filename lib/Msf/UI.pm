@@ -141,7 +141,6 @@ sub LoadPayloads_old
     return($res);
 }
 
-
 sub MatchPayloads {
   my $self = shift;
   my $exploit = shift;
@@ -150,25 +149,33 @@ sub MatchPayloads {
   my $match = { };
 
 CHECK:
-  foreach my $payloadName (keys(%$payloads)) {
+  foreach my $payloadName (keys(%$payloads)) 
+  {
+    my $valid = 0;
     my $payload = $payloads->{$payloadName};
 
-    # Make sure that all the supported architectures and os's
-    # of the exploit are also supported by the payload
-
-    # If a payload whats to support all architectures or
-    # all os's, they just have an empty array
-    # (This is the same for exploits)
-
-    foreach my $os (@{$exploit->OS}) {
-      last if(!@{$payload->OS});
-      next CHECK if(!scalar(grep { $_ eq $os } @{$payload->OS}));
-    }
-    foreach my $arch (@{$exploit->Arch}) {
-      last if(!@{$payload->Arch});
-      next CHECK if(!scalar(grep { $_ eq $arch } @{$payload->Arch}));
+    # Match the OS arrays of both the exploits and payloads
+    if (scalar(@{$exploit->OS}))
+    {
+        foreach my $os (@{$payload->OS})
+        {
+            $valid++ if scalar(grep { $_ eq $os } @{$exploit->OS});
+        }
+        next if ! $valid;
+        $valid--;
     }
     
+    # Match the Arch arrays of both the exploits and payloads
+    if (scalar(@{$exploit->Arch}))
+    {
+        foreach my $arch (@{$payload->Arch})
+        {
+            $valid++ if scalar(grep { $_ eq $arch } @{$exploit->Arch});
+        }
+        next if ! $valid;
+        $valid--;
+    }    
+
     # If the exploit has a any keys set, we need to make sure that the
     # matched payload also has the same keys. This allows us to create
     # specific payloads for wierd exploit scenarios (for instance, where
@@ -182,8 +189,6 @@ CHECK:
 
     #fixme Eventually we should also factor in the Encoder Size, even though we will catch it in Encode
     next if (defined($exploit->Payload->{'Size'}) && $exploit->Payload->{'Size'} < $payload->Size);
-    
-   
 
     $match->{$payloadName} = $payloads->{$payloadName};
   }
