@@ -7,7 +7,7 @@ Please, give us feedback, questions, comments, thoughts, ideas.
 
 Send mail to framework@metasploit.com, that will come to both of us.
 
-Our indiviual email address:
+Our individual email address:
   H D Moore <hdm [at] metasploit.com>
   spoonm <ninjatools [at] hush.com>
 
@@ -35,7 +35,7 @@ Some notes about the framework.
   annoying let us know, it something we have to make a decent amount of changes
   to fix, but if its important enough it can happen.
 
-- If you are interested to see more of whats going on behind the scenes, you
+- If you are interested to see more of what's going on behind the scenes, you
   can set DebugLevel.  By default it is at 0, and we have log messages for
   up to 5.
 
