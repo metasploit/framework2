@@ -237,11 +237,11 @@ sub LoadImage {
     #foreach (keys(%IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $IMAGE_HDR{$_}); }
     #foreach (keys(%OPT_IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $OPT_IMAGE_HDR{$_}); }
     #foreach (keys(%RVA)) { printf("%s\t0x%.8x [0x%.8x]\n", $_ , $RVA{$_}->[0], $RVA{$_}->[1] ); }
-    foreach (keys(%SECTIONS)) 
-    { 
-        printf("%s\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\n",
-               $_ , $SECTIONS{$_}->[0], $SECTIONS{$_}->[1], $SECTIONS{$_}->[2], $SECTIONS{$_}->[3], $SECTIONS{$_}->[4]);
-    }
+    #foreach (keys(%SECTIONS)) 
+    #{ 
+    #    printf("%s\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\n",
+    #           $_ , $SECTIONS{$_}->[0], $SECTIONS{$_}->[1], $SECTIONS{$_}->[2], $SECTIONS{$_}->[3], $SECTIONS{$_}->[4]);
+    #}
     
     return($self);    
 }
