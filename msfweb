@@ -1576,7 +1576,6 @@ sub ExploitExec
         $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit' class='button'>\n";
         $res .= "</form>\n";
         $res .= "<hr><br><br>\n";
-        $res .= "<br><div class='textBold'>Check Results:</div>";
 
 		if ($ui->GetTempEnv('_Defanged')) {
 				$res .= "<br><div class='textBold'>This server has been started in 'Defanged' mode. ";
@@ -1584,7 +1583,8 @@ sub ExploitExec
 				return $res;
 		} 
 		else {
-			$res .= "<div class='textNormal'>" . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br>\n";
+			$res .= "<br><div class='textBold'>Check Results: ".
+			$res .= (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br>\n";
         	$res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
 		}
 		
