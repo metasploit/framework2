@@ -314,8 +314,12 @@ sub Check {
 
 sub Exploit {
   my $self = shift;
-  my $exploit = $self->ModuleName($self->GetTempEnv('_Exploit'))->new;
-  my $payload = $self->ModuleName($self->GetTempEnv('_Payload'))->new;
+  my $exploit = $self->GetTempEnv('_Exploit');
+  $exploit = $self->ModuleName($exploit)->new;
+
+  my $payload = $self->GetTempEnv('_Payload');
+  $payload = $self->ModuleName($payload)->new if($payload);
+
   my $payloadName = $self->GetTempEnv('_PayloadName');
 
   if($exploit->Payload && !defined($payloadName)) {

@@ -40,9 +40,30 @@ sub number {
   return($number);
 }
 
+sub numberPack8 {
+  my $number = shift;
+  $number = number($number);
+  return(numberPackLSB($number));
+}
+sub numberPack16 {
+  my $number = shift;
+  $number = number($number);
+  return(numberPackLSW($number));
+}
+sub numberPack32 {
+  my $number = shift;
+  $number = number($number);
+  return(numberPack($number));
+}
+
 sub numberPackLSB {
   my $number = shift;
   return(substr(numberPack($number), 0, 1));
+}
+
+sub numberPackLSW {
+  my $number = shift;
+  return(substr(numberPack($number), 0, 2));
 }
 
 sub numberPack {
@@ -50,4 +71,11 @@ sub numberPack {
   return(pack('V', $number));
 }
 
+sub numberUnpack {
+  my $packed = shift;
+#  print "Length: " . length($packed) . "\n";
+  $packed .= "\x00" x (4 - length($packed));
+#  print "Length: " . length($packed) . "\n";
+  return(unpack('V', $packed));
+}
 1;
