@@ -32,6 +32,7 @@ my $ui = Msf::TextUI->new("/home/httpd/code/framework");
 
 my $payloadsIndex = $ui->LoadPayloads;
 my $payloads = { };
+my $opt = { };
 
 foreach my $key (keys(%{$payloadsIndex})) {
     $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
