@@ -134,6 +134,9 @@ sub Exploit {
     return if($self->PrintError || !$encodedPayload);
     $self->SetTempEnv('EncodedPayload', $encodedPayload);
   }
+  
+  # WebConsole uses GetVar('BROWSER') to get socket to client
+  $self->SetTempEnv('Console', 'Msf::PayloadComponent::WebConsole');
 
 #fixme
   if(!defined($payload)) {

@@ -137,6 +137,14 @@ sub StartLog {
   $headers .= "\n";
   $headers .= 'SocketIn: ' . $self->SocketIn->sockhost . ':' . $self->SocketIn->sockport . ' ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport . "\n";
   $headers .= 'SocketOut: ' . $self->SocketOut->sockhost . ':' . $self->SocketOut->sockport . ' ' . $self->SocketOut->peerhost . ':' . $self->SocketOut->peerport . "\n";
+  
+  if ($self->ConsoleIn->can('sockhost')) {
+     $headers .= 'ConsoleIn: ' . $self->ConsoleIn->sockhost . ':' . $self->ConsoleIn->sockport . ' ' . $self->ConsoleIn->peerhost . ':' . $self->ConsoleIn->peerport . "\n";
+  }
+  if ($self->ConsoleOut->can('sockhost')) {
+     $headers .= 'ConsoleOut: ' . $self->ConsoleOut->sockhost . ':' . $self->ConsoleOut->sockport . ' ' . $self->ConsoleOut->peerhost . ':' . $self->ConsoleOut->peerport . "\n";
+  }  
+  
   $headers .= "\n";
   if(!$self->WriteLog($headers)) {
     $self->PrintLine('[*] Disabling logging.');
