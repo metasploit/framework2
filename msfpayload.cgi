@@ -54,7 +54,7 @@ if (! exists($opt->{'PAYLOAD'}) || ! exists($payloads->{$opt->{'PAYLOAD'}}))
 
 if (! $action)
 {
-    my $sel = $payload;
+    my $sel = $opt->{'PAYLOAD'};
     my $p = $payloads->{$sel};
     
     DisplayHeader("Payload Information");
