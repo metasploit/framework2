@@ -29,6 +29,7 @@ my $defaults = {
   'AlternateExit' => 2,
 # These are defaulting in Pex::Socket too, but these defaults will override
 # the Pex defaults if thats what you want.
+# OUT OF DATE NOW
 #  'Msf::Socket::SocketTimeout' => 10,
 #  'Msf::Socket::SocketTimeoutLoop' => .5,
 };
