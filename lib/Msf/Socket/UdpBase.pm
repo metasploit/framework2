@@ -18,4 +18,12 @@ package Msf::Socket::UdpBase;
 use strict;
 use base 'Msf::Socket::SocketBase';
 
+sub Raw {
+  my $self = shift;
+  $self->_PexCall('Raw', @_) if(@_);
+  my $raw = $self->GetLocal('ForceRawUdp');
+  return($raw) if($raw);
+  return($self->_PexCall('Raw');
+}
+  
 1;

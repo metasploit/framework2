@@ -21,6 +21,7 @@ sub new {
 
   my $hash = { @_ };
   $self->SetOptions($hash);
+  return($self->_newRaw(@_)) if($self->Raw);
   $self->Init;
 
   $self->_MakeSocket;
@@ -28,12 +29,24 @@ sub new {
   return($self)
 }
 
+sub _newRaw {
+  my $self = shift;
+  return(Pex::Socket::RawUdp->new(@_));
+}
+
 sub SetOptions {
   my $self = shift;
   my $hash = shift;
 
-  $self->Broadcast($hash->{'Broadcast'}) if(exists($hash->{'Broadcast'}));
   $self->SUPER::SetOptions($hash);
+  $self->Broadcast($hash->{'Broadcast'}) if(exists($hash->{'Broadcast'}));
+  $self->Raw($hash->{'Raw'}) if(exists($hash->{'Raw'}));
+}
+
+sub Raw {
+  my $self = shift;
+  $self->{'Raw'} = shift if(@_);
+  return($self->{'Raw'});
 }
 
 sub Broadcast {

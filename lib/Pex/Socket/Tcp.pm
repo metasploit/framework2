@@ -23,19 +23,35 @@ sub new {
   my $self = bless({ }, $class);
 
   my $hash = { @_ };
-  return($self->_newSSL(@_)) if($hash->{'SSL'});
   $self->SetOptions($hash);
+  return($self->_newSSL(@_)) if($self->SSL);
   $self->Init;
 
   $self->_MakeSocket;
+# We always return an object, even on errors
 #  return if(!$self->_MakeSocket);
   return($self)
+}
+
+sub SetOptions {
+  my $self = shift;
+  my $hash = shift;
+  $self->SUPER::SetOptions($hash);
+
+  $self->SSL($hash->{'SSL'}) if(exists($hash->{'SSL'}));
 }
 
 sub _newSSL {
   my $self = shift;
   return(Pex::Socket::SSLTcp->new(@_));
 }
+
+sub SSL {
+  my $self = shift;
+  $self->{'SSL'} = shift if(@_);
+  return($self->{'SSL'});
+}
+
 
 
 sub Proxies {
