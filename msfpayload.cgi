@@ -88,7 +88,6 @@ if (! $p)
     exit(0);
 }
 
-$p = $ui->ModuleName($p)->new;
 $p = $p->SelfName->new;
 
 $ui->SetTempEnv('_Exploit', $exploits->{'Tester'});
