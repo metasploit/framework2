@@ -1,6 +1,6 @@
 ASM=nasm
 STAGERS=stager_sock_bind stager_sock_find stager_sock_reverse
-STAGES=
+STAGES=stage_tcp_shell
 SINGLE=single_exec single_reverse_libinject single_findsock
 OBJS=${STAGERS} ${STAGES} ${SINGLE}
 
