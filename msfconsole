@@ -594,7 +594,7 @@ sub eExploit
         $exploit->SetEncodedPayload($ui->Encode($exploit, $payload));
         return if($ui->PrintError);
     }
-    
+
     $ui->SetTempEnv('HCALLBACK', \&xCallback);
 
     my $handler = Msf::HandlerConsole->new();
@@ -608,14 +608,18 @@ sub eExploit
         # create the link between the child and parent processes
         if ($handler->can($phand) && $handler->can($chand))
         {
+            print STDERR "Handler (" . $payload->Type .") can $phand and $chand!\n";
             my ($csock, $psock);
             $ui->SetTempEnv('HANDLER', $handler);
             $ui->SetTempEnv('HCFUNC',  $chand);
             
             xMsg("exploit", "creating link between child and parent process");
             
-            socketpair($ui->GetTempEnv('HCSOCK'), $ui->GetTempEnv('HPSOCK'), AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
+            socketpair($csock, $psock, AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
             || die "msfconsole: exploit: socketpair: $!";
+            
+            $ui->SetTempEnv('HCSOCK', $csock);
+            $ui->SetTempEnv('HPSOCK', $psock);
         }      
     }
     
@@ -650,6 +654,16 @@ sub eExploit
         exit(0);
     }
     print "\n";
+    
+    # Clean up the temp environment, this really only matters when
+    # a client-side handler was used once and the same exploit was
+    # run again with a different payload that doesnt use client-side
+    # handlers, thus polluting the temp env and causing problems.
+    
+    foreach my $key ('HCALLBACK', 'HANDLER', 'HCFUNC', 'HPSOCK', 'HCSOCK') 
+    { 
+        $ui->UnsetTempEnv($key);
+    }  
 }
 
 

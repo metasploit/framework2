@@ -318,10 +318,10 @@ sub findsock_shell
 
     while (! $stopserver)
     {
-        # print STDERR "[*] Top of findsock_shell ($stopserver)\n";
         my @X = $sel->can_read(0.5);
         if (scalar(@X))
         {
+            print STDERR "[*] Got data from handler child\n";
             $stopserver++;
 
             # read the notification from the client
@@ -364,6 +364,8 @@ sub findsock_shell_exp
 {
     my ($self, $opt, $e) = @_;
     
+    print STDERR "[*] Debug: opt = $opt (" . join(" ", keys(%{$opt})) . "\n";
+    
     # this is our socket to the parent
     my $s = $opt->{'HPSOCK'};
     Pex::Unblock($s);
@@ -375,6 +377,9 @@ sub findsock_shell_exp
     $e->send("id;\n");
     
     my $r = $e->recv(1);
+    
+    print STDERR "[*] r = '$r' ($!)\n";
+    
     if ($r =~ /uid|internal or external/)
     {
         print $s "Shell on " . $x->peerhost . ":" . $x->peerport . "\n";
@@ -467,25 +472,6 @@ sub reverse_shell_xor
     # return back to the calling module
     print STDERR "[*] Exiting Shell Listener...\n";
     return(1);
-}
-
-sub unhandled {
-    my ($self, $pay, $opt, $exploit) = @_;
-    my $stopserver = 0;
-    my %OSIG;
-    $OSIG{"TERM"} = $SIG{"TERM"};
-    $OSIG{"INT"}  = $SIG{"INT"};
-
-    $SIG{"TERM"} = sub { $stopserver++ };
-    $SIG{"INT"}  = sub { $stopserver++ };
-    while(!$stopserver) {
-      sleep(1);
-    }
-    obj->print("Ok, done.\n");
-    kill(9, $exploit);
-    if (kill(0, $exploit)) { kill("TERM", $exploit) }
-    $SIG{"TERM"} = $OSIG{"TERM"};
-    $SIG{"INT"}  = $OSIG{"INT"};
 }
 
 1;
