@@ -30,7 +30,6 @@ sub _GenerateSled {
 	}
 
 	while($l--) {
-		print STDERR ".\n";
 		$p = $s->f($m, $pc, $p, $c);
 		return if($p == -1);
 		$b = chr($p) . $b;
