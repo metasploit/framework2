@@ -50,7 +50,7 @@ my $exploits;
 my $payloads;
 
 my %opts;
-getopts('hvs:', \%opts);
+getopts('hvqs:', \%opts);
 
 Usage() if($opts{'h'});
 Version() if($opts{'v'});
@@ -115,14 +115,16 @@ my %exploitCmds =
 $state->{'LocalAddress'} = Pex::Utils::SourceIP();
 xAddAddressCache($state->{'LocalAddress'});
 
-Msf::TextUI::PrintAsciiLogo();
+if (! defined($opts{'q'})) {
+    Msf::TextUI::PrintAsciiLogo();
 
-# print initialization message
-printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n", 
-       $FRAMEVERSION, 
-       scalar(keys(%{$exploits})),
-       scalar(keys(%{$payloads}))
-);
+    # print initialization message
+    printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n", 
+           $FRAMEVERSION, 
+           scalar(keys(%{$exploits})),
+           scalar(keys(%{$payloads}))
+    );
+}
 
 ProcessCmd('use', shift(@ARGV)) if(@ARGV);
 ProcessScript($opts{'s'}) if(exists($opts{'s'}));
@@ -869,6 +871,7 @@ Options:
          -h             You're looking at me baby
          -v             List version information
          -s   <file>    Process file of console commands
+         -q             No splash screen on startup
 
 };
     exit(0);
