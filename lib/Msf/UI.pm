@@ -207,13 +207,13 @@ sub Encode {
     my $encoderArch = $encoder->Arch;
     my $encoderOS = $encoder->OS;
 
-    if(!ListCheck($payloadArch, $encoderArch)) {
+    if(!$self->ListCheck($payloadArch, $encoderArch)) {
       $self->PrintDebugLine(2, "$encoderName failed, doesn't support all architectures");
       $self->PrintDebugLine(4, "payloadArch: " . join(',', @{$payloadArch}));
       $self->PrintDebugLine(4, "encoderArch: " . join(',', @{$encoderArch}));
       next;
     }
-    if(!ListCheck($payloadOS, $encoderOS)) {
+    if(!$self->ListCheck($payloadOS, $encoderOS)) {
       $self->PrintDebugLine(2, "$encoderName failed, doesn't support all operating systems");
       $self->PrintDebugLine(4, "payloadOS: " . join(',', @{$payloadOS}));
       $self->PrintDebugLine(4, "encoderOS: " . join(',', @{$encoderOS}));
@@ -276,13 +276,13 @@ sub Encode {
     my $nopArch = $nop->Arch;
     my $nopOS = $nop->OS;
 
-    if(!ListCheck($payloadArch, $nopArch)) {
+    if(!$self->ListCheck($payloadArch, $nopArch)) {
       $self->PrintDebugLine(2, "$nopName failed, doesn't support all architectures");
       $self->PrintDebugLine(4, "payloadArch: " . join(',', @{$payloadArch}));
       $self->PrintDebugLine(4, "nopArch: " . join(',', @{$nopArch}));
       next;
     }
-    if(!ListCheck($payloadOS, $nopOS)) {
+    if(!$self->ListCheck($payloadOS, $nopOS)) {
       $self->PrintDebugLine(2, "$nopName failed, doesn't support all operating systems");
       $self->PrintDebugLine(4, "payloadOS: " . join(',', @{$payloadOS}));
       $self->PrintDebugLine(4, "nopOS: " . join(',', @{$nopOS}));
