@@ -53,8 +53,8 @@ if (! exists($opt->{'PAYLOAD'}) || ! exists($payloads->{$opt->{'PAYLOAD'}}))
 
 if (! $action)
 {
-    my $sel = $p;
-    $p = $payloads->{$sel};
+    my $sel = $payload;
+    my $p = $payloads->{$sel};
     
     DisplayHeader("Payload Information");
     print "\n";
@@ -96,7 +96,7 @@ sub DisplayPayloads {
     {
         print "<input type='radio' name='PAYLOAD' value='$p'>".$plugins->{$p}->Name."<br>\n";
     }
-    print '<input type='submit' value='Select Payload'><br>\n";
+    print "<input type='submit' value='Select Payload'><br>\n";
     print $query->end_form;
 }
 
