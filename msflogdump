@@ -1,7 +1,15 @@
 #!/usr/bin/perl
+
+use Getopt::Std;
 use strict;
 
-die "[log file...]\n" if(!@ARGV);
+my %opts;
+getopts('h', \%opts);
+
+if ($opts{'h'} || ! scalar(@ARGV)) {
+    Usage();
+}
+
 
 # heh, shokdial is good for something
 my $NORMAL = "\033[0m";
@@ -33,4 +41,9 @@ sub HexToAscii {
   my $hex = shift;
   $hex =~ s/([0-9a-f]{2})/chr(hex($1))/egi;
   return($hex);
+}
+
+sub Usage {
+    print STDERR "\nUsage: $0 <log1> ... <log99>\n";
+    exit(0);
 }
