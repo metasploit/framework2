@@ -77,7 +77,7 @@ sub _EncodeSelfEnd {
 
   my $pos = Pex::Text::BadCharIndex($badChars, $shellcode);
   if($pos != -1) {
-    print Pex::Text::BufferC($shellcode);
+    $self->PrintDebugLine(3, Pex::Text::BufferC($shellcode));
     $self->PrintDebugLine(3, 'Bad char at pos ' . $pos);
     $self->PrintDebugLine(3, sprintf('Bad byte %i', ord(substr($shellcode, $pos, 1))));
     return;
@@ -108,7 +108,7 @@ sub _EncodeNormal {
 
   my $pos = Pex::Text::BadCharIndex($badChars, $shellcode);
   if($pos != -1) {
-    print Pex::Text::BufferC($shellcode);
+    $self->PrintDebugLine(3, Pex::Text::BufferC($shellcode));
     $self->PrintDebugLine(3, 'Bad char at pos ' . $pos);
     $self->PrintDebugLine(3, sprintf('Bad byte %i', ord(substr($shellcode, $pos, 1))));
     return;
