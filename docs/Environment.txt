@@ -86,3 +86,9 @@ _PayloadName     - Name of currently selected payload
 _BrowserSocket   - Used by msfweb to track the socket back to the browser
 _Console         - Used to redefine the Console class between UI's
 _PrintLineBuffer - Used internally in msfweb
+_CacheDir        - Used internally in msfweb
+_IconDir         - Used internally in msfweb
+_Theme           - Used internally in msfweb
+_Defanged        - Used internally in msfweb
+_GhettoIPC       - Used internally in msfweb
+_SessionOD       - Used internally in msfweb

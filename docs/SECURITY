@@ -1,6 +1,6 @@
 This file contains a list of all known security issues affecting the Framework.
 If you run into something which is not listed here, please contact us at 
-msfdev@metasploit.com.
+msfdev [at] metasploit.com.
 
 
 [security tips]
@@ -41,10 +41,6 @@ msfdev@metasploit.com.
 	
 [msfweb]
 
-	- The msfweb interface does not adequately filter the data recieved from
-	network services during the exploit or check commands. This can result in a
-	cross-site scripting attack on the msfweb user. 
-	
 	- The msfweb interface does not adequately filter certain arguments,
 	allowing a hostile web site operator to perform a cross-site scripting
 	attack on the msfweb user.

@@ -8,13 +8,15 @@ hdm@pagefault framework $ ./msfweb
 
 3) Select your exploit from the available list
 
-4) Select the appropriate payload for your target
+4) Select the appropriate target value
 
-5) Specify all required options and choose the correct target
+5) Select the appropriate payload 
 
-6) Click the "Vulnerability Test" button to check for the vulnerability
+6) Specify all required options and choose the correct target
 
-7) Click the "Launch Exploit" button to actually exploit the target
+7) Click the "-Check-" button to check for the vulnerability
 
-8) Wait until the exploit completes, click the link to the proxied shell
+8) Click the "-Exploit-" button to actually exploit the target
+
+9) Wait until the exploit completes, then click the link to the session
 
