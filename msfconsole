@@ -124,10 +124,9 @@ printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n",
 ProcessCmd('use', shift(@ARGV)) if(@ARGV);
 ProcessScript($opts{'s'}) if(exists($opts{'s'}));
 
-SetupCmds();
-
 while (1)
 {
+    SetupCmds();
     last if(!ProcessCmd($console->readCommand()));
 }
 print "\n";
