@@ -101,9 +101,9 @@ if (! $action)
     print "<input type='hidden' name='ACTION'  value='BUILD'>\n";
     
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
-    PrintRow("Name",            $sel);
+    PrintRow("Name",            Encode($sel));
     PrintRow("Version",         $p->Version);
-    PrintRow("Authors",         join(" ", @{$p->Authors}));
+    PrintRow("Authors",         Encode(join(" ", @{$p->Authors})));
     PrintRow("Architecture",    join(" ", @{$p->Arch}));
     PrintRow("Privileged",      ($p->Priv ? "Yes" : "No"));
     PrintRow("Multistage",      ($p->Multistage ? "Yes" : "No"));
@@ -282,4 +282,11 @@ sub CreatePayloadRow {
     foreach (@_) { $res .= "<td>$_</td>" }
     $res .= "</tr>\n";
     return($res);
+}
+
+sub Encode {
+    my $data = shift;
+    $data =~ s/</&lt;/g;
+    $data =~ s/>/&gt;/g;
+    return $data;
 }
