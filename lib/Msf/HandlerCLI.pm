@@ -321,6 +321,7 @@ sub findsock_shell
         my @X = $sel->can_read(0.5);
         if (scalar(@X))
         {
+            print STDERR "[*] Got data from handler child\n";
             $stopserver++;
 
             # read the notification from the client
@@ -363,6 +364,8 @@ sub findsock_shell_exp
 {
     my ($self, $opt, $e) = @_;
     
+    print STDERR "[*] Debug: opt = $opt (" . join(" ", keys(%{$opt})) . "\n";
+    
     # this is our socket to the parent
     my $s = $opt->{'HPSOCK'};
     Pex::Unblock($s);
@@ -374,6 +377,9 @@ sub findsock_shell_exp
     $e->send("id;\n");
     
     my $r = $e->recv(1);
+    
+    print STDERR "[*] r = '$r' ($!)\n";
+    
     if ($r =~ /uid|internal or external/)
     {
         print $s "Shell on " . $x->peerhost . ":" . $x->peerport . "\n";
@@ -388,7 +394,6 @@ sub findsock_shell_exp
         exit(0);
     }
 }
-
 
 sub reverse_shell_xor
 {
@@ -468,7 +473,5 @@ sub reverse_shell_xor
     print STDERR "[*] Exiting Shell Listener...\n";
     return(1);
 }
-
-sub unhandled { return(1); }
 
 1;
