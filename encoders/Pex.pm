@@ -10,7 +10,11 @@ my $advanced = {
 my $info = {
   'Name'  => 'Pex Jmp/Call Double Word Xor Encoder',
   'Version'  => '1.0',
-  'Authors' => [ 'H D Moore <hdm [at] metasploit.com> spoonm <ninjatools [at] hush.com> [Artistic License]', ],
+  'Authors' =>
+    [
+      'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+      'spoonm <ninjatools [at] hush.com> [Artistic License]',
+    ],
   'Arch'  => [ 'x86' ],
   'OS'    => [ ],
   'Desc'  =>  'Pex Double Word Xor Encoder',
