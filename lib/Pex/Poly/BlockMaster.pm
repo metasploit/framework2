@@ -73,6 +73,16 @@ sub _ClearState {
   }
 }
 
+sub _Connections {
+  my $self = shift;
+  my @conns;
+  foreach my $b (@{$self->_Blocks}) {
+    push(@conns, $b->_Connections);
+  }
+  return(@conns);
+}
+
+
 sub Build {
   my $self = shift;
   $self->_ClearState;

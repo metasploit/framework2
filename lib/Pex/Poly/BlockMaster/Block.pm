@@ -56,6 +56,26 @@ sub AddBlock {
   push(@{$self->_Blocks}, @_);
 }
 
+sub NumBlocks {
+  my $self = shift;
+  return(scalar(@{$self->_Blocks}));
+}
+
+sub Signature {
+  my $self = shift;
+  return($self->NumBlocks . ' - ' . $self);
+}
+
+sub _Connections {
+  my $self = shift;
+  my @conns;
+  foreach my $dep (@{$self->_Depers}) {
+    push(@conns, $self->Signature, $dep->Signature);
+    push(@conns, $dep->_Connections);
+  }
+  return(@conns);
+}
+
 sub AddDepend {
   my $self = shift;
   foreach my $dep (@_) {
