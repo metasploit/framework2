@@ -286,7 +286,7 @@ sub Encode {
   my $success = 0;
 
   foreach my $nopName (@nops) {
-    $self->PrintDebugLine(1, "Tring $nopName");
+    $self->PrintDebugLine(1, "Trying $nopName");
     my $nop = $self->MakeNop($nopName);
     if(!$nop) {
       $self->PrintDebugLine(1, "Failed to make nop generator $nop");

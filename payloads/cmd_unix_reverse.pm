@@ -27,7 +27,7 @@ sub new {
 
 # We create a fifo and force the first telnet process to read from it,
 # this prevents it from exiting if there is no stdin in the remote
-# environement. By piping the output of the second command into the
+# environment. By piping the output of the second command into the
 # fifo, we can cause the whole sequence to exit cleanly
 
 sub CommandString {
