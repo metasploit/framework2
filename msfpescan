@@ -65,24 +65,68 @@ my %pops =
     );
 
 
-getopts("f:j:c:sx:a:l:I:nh", \%opts);
-if ($opts{'h'} || ! defined($opts{'f'}) || (! defined($opts{'j'}) && ! defined($opts{'c'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { usage() }
+getopts("f:d:j:sx:a:B:A:I:nh", \%opts);
+if ($opts{'h'} || (! defined($opts{'f'}) && ! defined($opts{'d'})) || (! defined($opts{'j'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { usage(); exit(0); }
 
-my $filename = $opts{'f'};
-my $pe = Pex::PEInfo->new($filename);
+my $func;
+my $args = { };
 
-if (! $pe)
-{
-    print STDERR "$0: could not load PE image from file.\n";
-    exit(0);
+if(exists($opts{'s'})) {
+  $func = \&popPopRet;
+}
+elsif(exists($opts{'j'})) {
+  $func = \&jmpReg;
+  $args->{'reg'} = $opts{'j'};
+}
+elsif(exists($opts{'x'})) {
+  $func = \&regex;
+  $args->{'regex'} = $opts{'x'};
+}
+elsif(exists($opts{'a'})) {
+  $func = \&adress;
+  $args->{'address'} = hex($opts{'a'});
 }
 
-my $data = $pe->Raw;
-if ($opts{'I'}) { $pe->ImageBase($opts{'I'}) }
+$args->{'before'} = $opts{'B'} if(exists($opts{'B'}));
+$args->{'after'} = $opts{'A'} if(exists($opts{'A'}));
+
+if($opts{'f'}) {
+
+  my $filename = $opts{'f'};
+  my $pe = Pex::PEInfo->new($filename);
+  
+  if (! $pe)
+  {
+      print STDERR "$0: could not load PE image from file.\n";
+      exit(0);
+  }
+
+  if ($opts{'I'}) { $pe->ImageBase($opts{'I'}) }
+
+  &{$func}($pe, $args);
+}
+else {
+  my $dir = $opts{'d'};
+  opendir(INDIR, $dir);
+  my @files = readdir(INDIR);
+  closedir(INDIR);
+  foreach my $file (@files) {
+    if($file =~ /^(.{8})\.rng/) {
+      #print "Good file: $dir $file\n";
+      my $pe = SkapeFoo->new($dir . $file, hex($1));
+      &{$func}($pe, $args);
+    }
+  }
+}
+
+
 
 # Scan for pop/pop/ret addresses
-if (exists($opts{'s'})) 
+sub popPopRet
 {
+    my $pe = shift;
+    my $data = $pe->Raw;
+    my $args = shift;
     foreach my $rA (keys(%pops))
     {
         foreach my $rB (keys(%pops))
@@ -98,18 +142,21 @@ if (exists($opts{'s'}))
             }
         }
     }
-    exit(0);
 }
 
 # Scan for jmp/call/push,ret addresses
-if (exists($opts{'j'})) 
+sub jmpReg
 {
+    my $pe = shift;
+    my $data = $pe->Raw;
+    my $args = shift;
+    my $reg = $args->{'reg'};
     foreach my $opc (keys(%jmps))
     {
-        next if ($opts{'j'} && lc($opts{'j'}) ne $jmps{$opc}->[0]);
+        next if ($reg && lc($reg) ne $jmps{$opc}->[0]);
 
         my $lst = 0;
-        my $idx = index($data,  $opc, $lst);
+        my $idx = index($data, $opc, $lst);
         while ($idx > 0)
         {
             my ($reg, $typ) = @{$jmps{$opc}};
@@ -118,58 +165,35 @@ if (exists($opts{'j'}))
             $idx = index($data, $opc, $lst);
         }
     }
-    exit(0);
-}
-
-
-if (exists($opts{'c'}))
-{
-    my $bytesarg =  $opts{'c'};
-    my $byteslen = (length($bytesarg) / 2) + $opts{'l'};
-
-    if (length($bytesarg) % 2 != 0)
-    {
-        print "$0: bytes should be a string of hex digits (ie 'FFE4')\n";
-        exit(0);
-    }
-
-    $bytesarg =~ s/([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-    if (length($bytesarg) > $byteslen)
-    {
-        print "$0: length calculation is wrong: $bytesarg\n";
-        exit(0);
-    }
-
-    my $lst = 0;
-    my $idx = index($data,  $bytesarg, $lst);
-    while ($idx > 0)
-    {
-        my $found = substr($data, $idx, $byteslen);
-        printf("0x%.8x   %s\n", $pe->OffsetToVirtual($idx), hexOutput($found));
-        $lst = $idx + 1;
-        $idx = index($data, $bytesarg, $lst);
-    }
-    exit(0);
 }
 
 # Regex
-if(exists($opts{'x'})) {
-  my $regex = $opts{'x'};
-  $regex .= '.' x $opts{'l'};
+sub regex {
+  my $pe = shift;
+  my $data = $pe->Raw;
+  my $args = shift;
+  my $regex = $args->{'regex'};
+  $regex .= '.' x $args->{'after'} if($args->{'after'});
+  $regex = ('.' x $args->{'before'}) . $regex if($args->{'before'});
+
   while($data =~ m/($regex)/g) {
     my $found = $1;
-    my $loc = pos($data) - length($found);
-    printf("0x%.8x   %s\n", $pe->OffsetToVirtual($loc), hexOutput($found));
+    my $index = pos($data) - length($found);
+    printf("0x%.8x   %s\n", $pe->OffsetToVirtual($index), hexOutput($found));
   }
-  exit(0);
 }
 
-elsif(exists($opts{'a'})) {
-  my $address = hex($opts{'a'});
-  my $length = exists($opts{'l'}) ? $opts{'l'} : 1;
-  my $loc = $pe->VirtualToOffset($address);
-  my $found = substr($data, $loc, $length);
-  printf("0x%.8x   %s\n", $pe->OffsetToVirtual($loc), hexOutput($found));
+sub address {
+  my $pe = shift;
+  my $data = $pe->Raw;
+  my $args = shift;
+
+  my $address = $args->{'address'} - $args->{'before'};
+  my $length = $args->{'before'} + $args->{'after'};
+  $length = 1 if(!$length);
+  my $index = $pe->VirtualToOffset($address);
+  my $found = substr($data, $index, $length);
+  printf("0x%.8x   %s\n", $address, hexOutput($found));
 }
 
 
@@ -189,18 +213,73 @@ sub hexOutput {
 
 sub usage 
 {
-    print STDERR "  Usage: $0 -f filename.exe <mode> <options>\n";
-    print STDERR "Modes:\n";
-    print STDERR "         -j  <reg>    Search for jump equivalent instructions\n";
-    print STDERR "         -c  <data>   Search for custom byte pattern (ie 'FFE4')\n";
-    print STDERR "         -s           Search for pop+pop+ret combinations\n";
-    print STDERR "         -x  <regex>  Search for regex match\n";
-    print STDERR "         -a <address> Find code at VMA adress\n";
-    print STDERR "Options:\n";
-    print STDERR "         -l  <count>  Number of bytes to show after match\n";
-    print STDERR "         -I  address  Use this ImageBase address instead of one from file\n";
-    print STDERR "         -n           Print ndisasm output of data\n";
-    print STDERR "\n";
-    exit(0);
+    print STDERR
+qq{  Usage: $0 <input> <mode> <options>
+Inputs:
+         -f  <file>   Read in PE file
+         -d  <dir>    Skape foo
+Modes:
+         -j  <reg>    Search for jump equivalent instructions
+         -s           Search for pop+pop+ret combinations
+         -x  <regex>  Search for regex match
+         -a <address> Find code at VMA adress
+Options:
+         -A  <count>  Number of bytes to show after match
+         -B  <count>  Number of bytes to show before match
+         -I  address  Use this ImageBase address instead of one from file
+         -n           Print ndisasm output of data
+
+};
 
 }
+
+package SkapeFoo;
+use strict;
+
+sub new {
+  my $class = shift;
+  my $self = bless({ }, $class);
+  $self->Filename(shift);
+  $self->Base(shift);
+  $self->ReadInRaw;
+  return($self);
+}
+sub Filename {
+  my $self = shift;
+  $self->{'Filename'} = shift if(@_);
+  return($self->{'Filename'});
+}
+sub Base {
+  my $self = shift;
+  $self->{'Base'} = shift if(@_);
+  return($self->{'Base'});
+}
+sub Raw {
+  my $self = shift;
+  $self->{'Raw'} = shift if(@_);
+  return($self->{'Raw'});
+}
+
+sub ReadInRaw {
+  my $self = shift;
+  open(INFILE, '<' . $self->Filename) or return(0);
+  local $/;
+  my $data = <INFILE>;
+  close(INFILE);
+  $self->Raw($data);
+  return(1);
+}
+
+sub VirtualToOffset {
+  my $self = shift;
+  my $virtual = shift;
+  return($virtual - $self->Base);
+}
+
+sub OffsetToVirtual {
+  my $self = shift;
+  my $offset = shift;
+  return($offset + $self->Base);
+}
+
+1;
