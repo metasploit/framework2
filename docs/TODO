@@ -10,3 +10,10 @@
  - Determine WTF Advanced options are supposed to do and how they should be set
 
  - Fix AutoOpts, how to handle?  Possible when we are going to use a exploit, for example to check or exploit, call a function like Init, and this could process AutoOpts, and SetTempEnv for all of its key/val pairs...
+
+
+
+msfconsole
+===========
+
+ - Validate Nops and Encoder classes on load & set
