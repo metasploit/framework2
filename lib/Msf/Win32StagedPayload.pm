@@ -65,6 +65,7 @@ sub Build {
         $self->PrintDebugLine(3, "Win32StagedPayload: opt=$opt");
 
         next if ! exists($stage->{'Offsets'}->{$opt});
+        next if $opt eq 'EXITFUNC';
 
         my ($offset, $opack) = @{ $stage->{'Offsets'}->{$opt} };
         my $type = $opts->{$opt}->[1];    
@@ -78,6 +79,15 @@ sub Build {
          $self->PrintDebugLine(3, "Win32StagedPayload: NOT SET opt=$opt type=$type offset=$offset");
         }
     }
+    
+    if (exists($stage->{'Offsets'}->{'EXITFUNC'}))
+    {
+        my ($offset, $opack) = $stage->{'Offsets'}->{'EXITFUNC'};
+        my $func = $self->GetVar('EXITFUNC') || 'process';
+        my $hash = $exit_types->{$func} || $exit_types->{'process'};
+        substr($generated, $offset, 4, pack('V', $hash));
+    }
+
          
     return $generated;
 }
