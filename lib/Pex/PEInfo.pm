@@ -36,8 +36,8 @@ sub _Init {
     $self->{'SECTIONS'}    = { };
     $self->{'IMPORT'}      = { };
     $self->{'EXPORT'}      = { };
+    $self->{'RESOURCE'}    = { };
     
-    $self->Debug(1);
     
     $self->LoadImage($args);
     return $self;
@@ -272,7 +272,8 @@ sub LoadImage {
     
     $self->_LoadImport();
     $self->_LoadExport();
-
+    $self->_LoadResources();
+    $self->_LoadVersionData();
     return($self);    
 }
 
@@ -333,8 +334,8 @@ sub _LoadImport {
                 $entry_hint_ord  = unpack('v', substr($data, $entry_start_ref, 2));
             }
 
-            my $entry_iat_add   = $self->_O2V($rft_start_ref + (4 * $eidx));
-            my $entry_iat_ref   = unpack('V', substr($data, $rft_start_ref + (4 * $eidx), 4));            
+            my $entry_iat_add  = $self->_O2V($rft_start_ref + (4 * $eidx));
+            my $entry_iat_ref  = unpack('V', substr($data, $rft_start_ref + (4 * $eidx), 4));            
             
             if ($self->Debug) {
                 printf("[ %s ]\t%.3d 0x%.8x 0x%.8x %.4d [0x%.8x|0x%.8x] %s\n",
@@ -457,9 +458,115 @@ sub _LoadExport {
            
         }
     }
-    
 
     $self->{'EXPORT'} = $etable;
+}
+
+sub _LoadResources {
+    my $self = shift;
+    my $resource = $self->Rva('resource');
+    my $rdata  = substr($self->{'RAW'}, $self->_RV2O($resource->[0]), $resource->[1]);
+    my $rtable = {};
+    
+    # Recursive happy fun time!  
+    $self->_ParseResourceDirectory($rtable, $rdata, 0, 0x80000000, "0");
+    $self->{'RESOURCE'} = $rtable;
+}
+
+sub _ParseResourceName {
+    my $self = shift;
+    my ($rdata, $rname) = @_;    
+    if ($rname & 0x80000000) {
+        $rname -= 0x80000000;
+        my $unistr = substr($rdata, $rname+2, 2 * unpack('v', substr($rdata, $rname, 2)));
+        my $ansstr = $self->_UNI2ANSI($unistr);
+        return $ansstr;
+    } else { return "$rname" }
+}
+
+sub _ParseResourceEntry { 
+    my $self = shift;
+    my ($rdata, $rname, $rvalue) = @_;
+    my $res = { };
+  
+    my ($drva, $dsize, $dcode) = unpack('V3', substr($rdata, $rvalue, 12));
+    my $entry = substr($self->{'RAW'}, $self->_RV2O($drva), $dsize);
+    
+    $res->{'Name'} = $self->_ParseResourceName($rdata, $rname);
+    $res->{'Data'} = $entry;
+    $res->{'Code'} = $dcode;
+    return $res;
+}
+
+sub _ParseResourceDirectory {
+    my $self = shift;
+    my ($rtable, $rdata, $rname, $rvalue, $cindex) = @_;
+    
+    # Sanity check to prevent infinite loops ]:|
+    return if length($cindex) > 65535;
+
+    # Convert the name to a string value
+    $rname = $self->_ParseResourceName($rdata, $rname);
+    
+    # Ghettofabulous depth counter
+    my $depth = $cindex =~ tr/\//\//;
+
+    if ($depth == 1) {
+        $cindex = "/".$self->_ResID2Name($rname);
+    }
+    
+    # Remove the high bit from the offset value
+    $rvalue -= 0x80000000;
+    
+    # Read the directory header
+    my @rfields = unpack('VVv4', substr($rdata, $rvalue, 16));
+    
+    $rtable->{'Dirs'}->{$cindex}->{'Name'} = $rname;
+    $rtable->{'Dirs'}->{$cindex}->{'Characteristics'} = $rfields[0];
+    $rtable->{'Dirs'}->{$cindex}->{'TimeDate'} = $rfields[1];
+    $rtable->{'Dirs'}->{$cindex}->{'Version'} = $rfields[2].$rfields[3];
+    $rtable->{'Dirs'}->{$cindex}->{'Entries'} = $rfields[4]+$rfields[5];
+
+    if ($self->Debug) {
+        print "$rname\tDIR\t$cindex (".$rtable->{'Dirs'}->{$cindex}->{'DirType'} .")\n";
+    }
+    
+    for my $rindex (0 .. ($rfields[4] + $rfields[5] - 1)) {
+        my ($rname, $rvalue) = unpack('VV', substr($rdata, $rvalue + 16 + ($rindex * 8), 8));
+        my $path = $cindex."/".$rindex;
+
+        if ($rvalue & 0x80000000) {
+            # Recursively parse the subdirectory
+            $self->_ParseResourceDirectory($rtable, $rdata, $rname, $rvalue, $path);
+        }
+        else {
+            # Place resource entry into the hash
+            $rtable->{'Entries'}->{$path} = $self->_ParseResourceEntry($rdata, $rname, $rvalue);
+            
+            # Map into the types table as well
+            my ($base) = $cindex =~ m/^\/([^\/]+)/;
+            $rtable->{'Types'}->{$base}->{$path} = $rtable->{'Entries'}->{$path};
+            
+            if ($self->Debug) {
+                print $rtable->{'Entries'}->{$path}->{'Name'}."\tENT\t$path\t($base)\n";
+            }
+        }
+    }
+}
+
+sub _LoadVersionData {
+    my $self = shift;
+    my $resource = $self->Rva('resource');
+
+    my $rdata = substr($self->{'RAW'}, $self->_RV2O($resource->[0]), $resource->[1]);
+    my $vdata = $self->{'RESOURCE'}->{'Types'}->{'VERSION'};
+    return if ! $vdata;
+    
+    # XXX - Only read first section right now
+    my $vblock = $vdata->{'/VERSION/0/0'}->{'Data'};
+
+    
+    
 }
 
 sub FindPEOffset {
@@ -523,4 +630,128 @@ sub _O2RV {
     return $self->OffsetToRVA(@_);
 }
 
+sub _UNI2ANSI {
+    my $self = shift;
+    my $data = shift;
+    $data =~ s/\x00//g;
+    return $data;
+}
+
+sub _ResID2Name {
+    my $self = shift;
+    my $tid  = shift;
+    
+    my %tmap =
+    (
+        '1'      => 'CURSOR',
+        '2'      => 'BITMAP',
+        '3'      => 'ICON',
+        '4'      => 'MENU',
+        '5'      => 'DIALOG',
+        '6'      => 'STRING',
+        '7'      => 'FONTDIR',
+        '8'      => 'FONT',
+        '9',     => 'ACCELERATORS',
+        '10'     => 'RCDATA',
+        '11'     => 'MESSAGETABLE',
+        '12'     => 'GROUP_CURSOR',
+        '14'     => 'GROUP_ICON',
+        '16'     => 'VERSION',
+        '32767'  => 'ERROR',
+        '8192'   => 'NEWRESOURCE',
+        '8194'   => 'NEWBITMAP',
+        '8196'   => 'NEWMENU',
+        '8197'   => 'NEWDIALOG',
+        
+    );
+    
+    return ($tid) if $tid !~ /^\d/;
+    return $tmap{$tid} || $tid;
+}
+
 1;
+
+__END__
+4.12 Version Resources. 
+ 
+Version resources specify information that can be used by setup 
+programs to discover which of several versions of a program or 
+dynamic link library to install into the system.  There is also a set 
+of api's to query the version resources.  There are three major types 
+of information stored in version resources:  the main information in 
+a VS_FIXEDFILEINFO structure, Language information data in a variable 
+file information structure (VarFileInfo), and user defined string 
+information in StringFileInfo structures.  For Windows 32, the 
+strings within the version information resource is stored in Unicode, 
+providing localization of the resoruces.  Each block of information 
+is dword aligned. 
+ 
+The structure of a version resource is depicted by the 
+VS_VERSION_INFO structure. 
+ 
+VS_VERSION_INFO { 
+    WORD wLength;             /* Length of the version resource */ 
+    WORD wValueLength;        /* Length of the value field for this block */ 
+    WORD wType;               /* type of information:  1==string, 0==binary */ 
+    WCHAR szKey[];            /* Unicode string KEY field */ 
+    [WORD Padding1;]          /* possible word of padding */ 
+    VS_FIXEDFILEINFO Value;   /* Fixed File Info Structure */ 
+    BYTE Children[];      /* position of VarFileInfo or StringFileInfo data */ 
+}; 
+ 
+The Fixed File Info structure contains basic information about the 
+version, including version numbers for the product and file, and type 
+of the file. 
+ 
+typedef struct tagVS_FIXEDFILEINFO { 
+    DWORD dwSignature;        /* signature - always 0xfeef04bd */ 
+    DWORD dwStrucVersion;     /* structure version - currently 0 */ 
+    DWORD dwFileVersionMS;    /* Most Significant file version dword */ 
+    DWORD dwFileVersionLS;    /* Least Significant file version dword */ 
+    DWORD dwProductVersionMS; /* Most Significant product version */ 
+    DWORD dwProductVersionLS; /* Least Significant product version */ 
+    DWORD dwFileFlagMask;     /* file flag mask */ 
+    DWORD dwFileFlags;        /*  debug/retail/prerelease/... */ 
+    DWORD dwFileOS;           /* OS type.  Will always be Windows32 value */ 
+    DWORD dwFileType;         /* Type of file (dll/exe/drv/... )*/ 
+    DWORD dwFileSubtype;      /* file subtype */ 
+    DWORD dwFileDateMS;       /* Most Significant part of date */ 
+    DWORD dwFileDateLS;       /* Least Significant part of date */ 
+} VS_FIXEDFILEINFO; 
+ 
+The user defined string information is contained within the 
+StringFileInfo structure, which is a set of two strings:  the key and 
+the information itself. 
+ 
+StringFileInfo { 
+    WCHAR       szKey[];      /* Unicode "StringFileInfo" */ 
+    [WORD        padding;]    /* possible padding */ 
+    StringTable Children[]; 
+}; 
+ 
+StringTable { 
+    WCHAR      szKey[];   /* Unicode string denoting the language - 8 bytes */ 
+    String Children[];    /* array of children String structures */ 
+} 
+ 
+String { 
+    WCHAR   szKey[];          /* arbitrary Unicode encoded KEY string */ 
+                         /* note that there is a list of pre-defined keys */ 
+    [WORD   padding;]         /* possible padding */ 
+    WCHAR Value[];            /* Unicode-encoded value for KEY */ 
+} String; 
+ 
+The variable file info (VarFileInfo) block contains a list of 
+languages supported by this version of the application/dll. 
+ 
+VarFileInfo { 
+    WCHAR szKey[];            /* Unicode "VarFileInfo" */ 
+    [WORD padding;];          /* possible padding */ 
+    Var        Children[];    /* children array */ 
+}; 
+ 
+Var { 
+    WCHAR szKey[];       /* Unicode "Translation" (or other user key) */ 
+    [WORD padding;]      /* possible padding */ 
+    WORD  Value[];       /* one or more values, normally language id's */ 
+}; 
