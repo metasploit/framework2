@@ -1,8 +1,6 @@
 ;;
 ; 
 ;        Name: single_bind_tcp_shell
-;   Platforms: Linux
-;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -14,6 +12,18 @@
 ;
 ;        Single portbind TCP shell.
 ;
+; Meta-Information:
+;
+; meta-shortname=Linux Bind TCP Shell
+; meta-description=Listen on a port and spawn a shell
+; meta-authors=skape <mmiller [at] hick.org>
+; meta-os=linux
+; meta-arch=ia32
+; meta-category=single
+; meta-connection-type=bind
+; meta-name=bind_tcp_shell
+; meta-basemod=Msf::PayloadComponent::BindConnection
+; meta-offset-lport=0x14
 ;;
 BITS   32
 

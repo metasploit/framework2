@@ -1,8 +1,6 @@
 ;;
 ; 
 ;        Name: single_reverse_tcp_shell
-;   Platforms: Linux
-;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -14,6 +12,19 @@
 ;
 ;        Single reverse TCP shell.
 ;
+; Meta-Information:
+;
+; meta-shortname=Linux Reverse TCP Shell
+; meta-description=Connect back to the attacker and spawn a shell
+; meta-authors=skape <mmiller [at] hick.org>
+; meta-os=linux
+; meta-arch=ia32
+; meta-category=single
+; meta-connection-type=reverse
+; meta-name=reverse_tcp_shell
+; meta-basemod=Msf::PayloadComponent::ReverseConnection
+; meta-offset-lhost=0x1a
+; meta-offset-lport=0x20
 ;;
 BITS   32
 GLOBAL _start

@@ -2,8 +2,6 @@
 ; 
 ;        Name: stager_sock_reverse
 ;   Qualities: Can Have Nulls
-;   Platforms: Linux
-;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -17,6 +15,19 @@
 ;
 ;        File descriptor in edi.
 ;
+; Meta-Information:
+;
+; meta-shortname=Linux Reverse TCP Stager
+; meta-description=Connect back to the framework and run a second stage
+; meta-authors=skape <mmiller [at] hick.org>
+; meta-os=linux
+; meta-arch=ia32
+; meta-category=stager
+; meta-connection-type=reverse
+; meta-name=reverse_tcp
+; meta-basemod=Msf::PayloadComponent::ReverseConnection
+; meta-offset-lhost=0x11
+; meta-offset-lport=0x17
 ;;
 BITS   32
 GLOBAL _start

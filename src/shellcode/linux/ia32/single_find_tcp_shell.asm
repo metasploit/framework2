@@ -1,8 +1,6 @@
 ;;
 ; 
 ;        Name: single_find_tcp_shell
-;   Platforms: Linux
-;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -14,6 +12,18 @@
 ;
 ;        Single findsock TCP shell.
 ;
+; Meta-Information:
+;
+; meta-shortname=Linux FindTag Shell
+; meta-description=Spawn a shell on an established connection
+; meta-authors=skape <mmiller [at] hick.org>
+; meta-os=linux
+; meta-arch=ia32
+; meta-category=single
+; meta-connection-type=findtag
+; meta-name=find_shell
+; meta-basemod=Msf::PayloadComponent::FindConnection
+; meta-offset-findtag=0x1a
 ;;
 BITS   32
 

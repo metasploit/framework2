@@ -2,8 +2,6 @@
 ; 
 ;        Name: stager_sock_bind
 ;   Qualities: Can Have Nulls
-;   Platforms: Linux
-;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -17,6 +15,18 @@
 ;
 ;        File descriptor in edi.
 ;
+; Meta-Information:
+;
+; meta-shortname=Linux Bind TCP Stager
+; meta-description=Listen on a port for a connection and run a second stage
+; meta-authors=skape <mmiller [at] hick.org>
+; meta-os=linux
+; meta-arch=ia32
+; meta-category=stager
+; meta-connection-type=bind
+; meta-name=bind_tcp
+; meta-basemod=Msf::PayloadComponent::BindConnection
+; meta-offset-lport=0x14
 ;;
 BITS   32
 GLOBAL _start

@@ -16,6 +16,18 @@
 ;
 ;        File descriptor in edi
 ;
+; Meta-Information:
+;
+; meta-shortname=Linux FindTag Stager
+; meta-description=Run a second stage from an established connection
+; meta-authors=skape <mmiller [at] hick.org>
+; meta-os=linux
+; meta-arch=ia32
+; meta-category=stager
+; meta-connection-type=findtag
+; meta-name=find
+; meta-basemod=Msf::PayloadComponent::FindConnection
+; meta-offset-findtag=0x1a
 ;;
 BITS   32
 GLOBAL _start

@@ -1,7 +1,6 @@
 ;;
 ;
 ;        Name: single_adduser
-;   Platforms: Linux
 ;     Authors: vlad902 <vlad902 [at] gmail.com>
 ;     Authors: spoonm <ninjatools [at] hush.com>
 ;     Authors: skape <mmiller [at] hick.org>
@@ -16,6 +15,17 @@
 ;
 ;        Add a line to /etc/passwd.
 ;
+; Meta-Information:
+;
+; meta-importable=no
+; meta-shortname=Add a line to /etc/passwd.
+; meta-description=Spawn a shell on an established connection
+; meta-authors=vlad902 <vlad902 [at] gmail.com>, spoonm <ninjatools [at] hush.com>, skape <mmiller [at] hick.org>
+; meta-os=linux
+; meta-arch=ia32
+; meta-category=single
+; meta-name=adduser
+; meta-basemod=Msf::PayloadComponent::NoConnection
 ;;
 
 
