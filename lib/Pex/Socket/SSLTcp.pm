@@ -52,16 +52,24 @@ sub SSLFd {
   $self->{'SSLFd'} = shift if(@_);
   return($self->{'SSLFd'});
 }
+
 sub SSLCtx {
   my $self = shift;
   $self->{'SSLCtx'} = shift if(@_);
   return($self->{'SSLCtx'});
 }
 
+
 sub Close {
   my $self = shift;
-  Net::SSLeay::free($self->SSLFd);
-  Net::SSLeay::CTX_free($self->SSLCtx);
+
+  # Can segfault if you double free this :<
+  if (! exists($self->{'SSL_Already_Freed'})) {
+    Net::SSLeay::free($self->SSLFd);
+    Net::SSLeay::CTX_free($self->SSLCtx);
+    $self->{'SSL_Already_Freed'}++;
+  } 
+
   $self->SUPER::Close;
 }
 
@@ -70,27 +78,40 @@ sub _MakeSocket {
   return if(!$self->SUPER::_MakeSocket);
 
   my $sock = $self->Socket;
-
-  $sock->blocking(1);
+  
+  delete($self->{'SSL_Already_Freed'});
 
   # Create SSL Context
   $self->SSLCtx(Net::SSLeay::CTX_new());
+  
   # Configure session for maximum interoperability
   Net::SSLeay::CTX_set_options($self->SSLCtx, &Net::SSLeay::OP_ALL);
+  
   # Create the SSL file descriptor
   $self->SSLFd(Net::SSLeay::new($self->SSLCtx));
+  
   # Bind the SSL descriptor to the socket
   Net::SSLeay::set_fd($self->SSLFd, $sock->fileno);        
-  # Negotiate connection
-  my $sslConn = Net::SSLeay::connect($self->SSLFd);
-
-  if($sslConn <= 0) {
+  
+  # Set IO to be non-blocking 
+  $sock->blocking(0);
+  
+  # Negotiate the SSL connection (ideas taken from IO::Socket::SSL)
+  while (Net::SSLeay::connect($self->SSLFd) < 1) {
+    my $sslError = Net::SSLeay::get_error($self->SSLFd, -1);
+    my $sslRE    = Net::SSLeay::ERROR_WANT_READ();
+    my $sslWE    = Net::SSLeay::ERROR_WANT_WRITE();
+    
+	if ($sslError == $sslRE || $sslError == $sslWE) {
+	    require IO::Select;
+	    my $sel = new IO::Select($sock);
+	    next if (($sslError == $sslWE) ? 
+            $sel->can_write($self->Timeout): $sel->can_read($self->Timeout));
+	}
     $self->SetError('Error setting up ssl: ' . Net::SSLeay::print_errs());
     $sock->close;
     return;
   }
-
-  $sock->blocking(0);
 
   return($sock);
 }
