@@ -1,16 +1,7 @@
 Pre-Release Tasks
 ==================
 
-
  - Flush out Pex::x86
-
- - Add raw mode support to Pex::Socket (spoof)
-    * How do we handle Spoof option on non-UDP socket
-    * How is recv() handled, we dont want to break exploits
-    * Raw mode sets DF flag right now, cant send > MTU
- 
- - Exchange exploit sucks, remove it or fix it
-
 
  - Convert the QUICKSTART.* docs into a decent user guide
  - Write a new introduction and place into ./README
@@ -18,14 +9,17 @@ Pre-Release Tasks
  - Make sure docs refer to shared config between all ui's
  - The Pex library needs documentation and API guides for standalone use 
 
- - Include other tools in the cygwin envirnment (like what?)
-
- - Find a host for bugzilla 
- - Send ey4s hookers and booze
- 
  
 Post-Release Tasks
 ===================
+ 
+ - Exchange exploit sucks, remove it or fix it
+
+ - Add raw mode support to Pex::Socket (spoof)
+    * How do we handle Spoof option on non-UDP socket
+    * How is recv() handled, we dont want to break exploits
+    * Raw mode sets DF flag right now, cant send > MTU
+
  - DCOM exploit needs vulnerability check mode
 
  - The msfweb interface does not work correctly on Mac OS X
