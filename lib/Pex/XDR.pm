@@ -56,7 +56,17 @@ sub Decode_bool {
 	return $int;
 }
 
-# XXX: HyperInt + UHyperInt
+# XXX: Encode_lchar (and use it where needed)
+sub Decode_lchar {
+	my $str_ref = shift;
+
+	my $char = unpack("N", $$str_ref);
+	$$str_ref = substr($$str_ref, 4);
+
+	return chr(unpack("N", $char) & 0xff);
+}
+
+# XXX: HyperInt
 
 # XXX: Decode_fopaque
 
@@ -105,8 +115,6 @@ sub Decode_string { Decode_vopaque(@_); }
 
 # XXX: FArray
 
-# XXX: Decode_varray
-
 # Variable-length array
 sub Encode_varray {
 	my $data = shift;
@@ -127,6 +135,24 @@ sub Encode_varray {
 	}
 
 	return $str;
+}
+
+sub Decode_varray {
+	my $str_ref = shift;
+	my $ref = shift;
+
+	my $num = unpack("N", $$str_ref); 
+	$$str_ref = substr($$str_ref, 4);
+
+	my @return_val;
+	while($num)
+	{
+		push(@return_val, &$ref($str_ref));
+
+		$num--;
+	}
+
+	return @return_val;
 }
 
 sub __alignup {
