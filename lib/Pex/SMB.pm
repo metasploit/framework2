@@ -433,24 +433,220 @@ $STTConnectXRes->Set
 
 my $STTrans = Pex::Struct->new
 ([
-    'word_count'    => 'u_8',
-    'x_cmd'         => 'u_8',
-    'reserved1'     => 'u_8',
-    'x_off'         => 'l_u_16',
-    'flags'         => 'l_u_16', 
-    'pass_len'      => 'l_u_16',
-    'bcc_len'       => 'l_u_16',
-    'request'       => 'string',
+    'word_count'        => 'u_8',
+    'param_count_tot'   => 'l_u_16',
+    'data_count_tot'    => 'l_u_16',
+    'param_count_max'   => 'l_u_16',
+    'data_count_max'    => 'l_u_16',
+    'setup_count_max'   => 'u_8',
+    'reserved1'         => 'u_8',,
+    'flags'             => 'l_u_16',
+    'timeout'           => 'l_u_32',
+    'reserved2'         => 'l_u_16',
+    'param_count'       => 'l_u_16',
+    'param_offset'      => 'l_u_16',
+    'data_count'        => 'l_u_16',
+    'data_offset'       => 'l_u_16',
+    'setup_count'       => 'u_8',
+    'reserved3'         => 'u_8',
+    'setup_data'        => 'string',
+    'bcc_len'           => 'l_u_16',
+    'request'           => 'string'  
 ]);
 $STTrans->SetSizeField( 'request' => 'bcc_len' );
 $STTrans->Set
 (
+    'word_count'        => 0,
+    'param_count_tot'   => 0,
+    'data_count_tot'    => 0,
+    'param_count_max'   => 0,
+    'data_count_max'    => 0,
+    'setup_count_max'   => 0,
+    'reserved1'         => 0,
+    'flags'             => 0,
+    'timeout'           => 0,
+    'reserved2'         => 0,
+    'param_count'       => 0,
+    'param_offset'      => 0,
+    'data_count'        => 0,
+    'data_offset'       => 0,
+    'setup_count'       => 0,
+    'reserved3'         => 0,
+    'bcc_len'           => 0,
+    'request'           => 0,
+);
+
+
+my $STCreateX = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',
+    'reserved2'     => 'u_8',
+    'filename_len'  => 'l_u_16',
+    'create_flags'  => 'l_u_32',
+    'root_fid'      => 'l_u_32',
+    'access_mask'   => 'l_u_32',
+    'alloc_low'     => 'l_u_32',
+    'alloc_high'    => 'l_u_32',
+    'attribs'       => 'l_u_32',
+    'share_access'  => 'l_u_32', 
+    'disposition'   => 'l_u_32',
+    'create_opts'   => 'l_u_32',
+    'impersonation' => 'l_u_32',
+    'sec_flags'     => 'u_8',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STCreateX->SetSizeField( 'request' => 'bcc_len' );
+$STCreateX->Set
+(
     'word_count'    => 0,
     'x_cmd'         => 0,
     'reserved1'     => 0,
-    'x_off'         => 0,  
-    'flags'         => 0,
-    'pass_len'      => 0,
+    'x_off'         => 0,
+    'reserved2'     => 0,
+    'filename_len'  => 0,
+    'create_flags'  => 0,
+    'root_fid'      => 0,
+    'access_mask'   => 0,
+    'create_flags'  => 0,
+    'alloc_low'     => 0,
+    'alloc_high'    => 0,
+    'attribs'       => 0,
+    'share_access'  => 0,
+    'disposition'   => 0,
+    'create_opts'   => 0,
+    'impersonation' => 0,
+    'sec_flags'     => 0,
+    'bcc_len'       => 0,
+);
+
+
+
+my $STCreateXRes = Pex::Struct->new
+([
+    'word_count'        => 'u_8',
+    'x_cmd'             => 'u_8',
+    'reserved1'         => 'u_8',
+    'x_off'             => 'l_u_16',
+    'oplock'            => 'u_8',
+    'fid'               => 'l_u_16',
+    'action'            => 'l_u_32',
+    'create_time_low'   => 'l_u_32',
+    'create_time_high'  => 'l_u_32',
+    'access_time_low'   => 'l_u_32',
+    'access_time_high'  => 'l_u_32',
+    'write_time_low'    => 'l_u_32',
+    'write_time_high'   => 'l_u_32',
+    'change_time_low'   => 'l_u_32',
+    'change_time_high'  => 'l_u_32',   
+    'attribs'           => 'l_u_32',
+    'alloc_low'         => 'l_u_32',
+    'alloc_high'        => 'l_u_32',
+    'eof_low'           => 'l_u_32',
+    'eof_high'          => 'l_u_32',    
+    'file_type'         => 'l_u_16',
+    'ipc_state'         => 'l_u_16',
+    'is_dir'            => 'u_8',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STCreateXRes->SetSizeField( 'request' => 'bcc_len' );
+$STCreateXRes->Set
+(
+    'word_count'        => 0,
+    'x_cmd'             => 0,
+    'reserved1'         => 0,
+    'x_off'             => 0,
+    'oplock'            => 0,
+    'fid'               => 0,
+    'action'            => 0,
+    'create_time_low'   => 0,
+    'create_time_high'  => 0,
+    'access_time_low'   => 0,
+    'access_time_high'  => 0,
+    'write_time_low'    => 0,
+    'write_time_high'   => 0,
+    'change_time_low'   => 0,
+    'change_time_high'  => 0,
+    'attribs'           => 0,
+    'alloc_low'         => 0,
+    'alloc_high'        => 0,
+    'eof_low'           => 0,
+    'eof_high'          => 0,
+    'file_type'         => 0,
+    'ipc_state'         => 0,
+    'is_dir'            => 0,
+    'bcc_len'           => 0,
+    'request'           => 0,
+);
+
+
+my $STWriteX = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',
+    'fid'           => 'l_u_16',   
+    'offset'        => 'l_u_32',
+    'reserved2'     => 'l_u_32',
+    'write_mode'    => 'l_u_16',
+    'remaining'     => 'l_u_16',
+    'data_len_high' => 'l_u_16',
+    'data_len_low'  => 'l_u_16',
+    'data_offset'   => 'l_u_16',
+    'data_offset_high' => 'l_u_32',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STWriteX->SetSizeField( 'request' => 'bcc_len' );
+$STWriteX->Set
+(
+    'word_count'    => 0,
+    'x_cmd'         => 0,
+    'reserved1'     => 0,
+    'x_off'         => 0,
+    'fid'           => 0,
+    'offset'        => 0,
+    'reserved2'     => 0xffffffff,
+    'write_mode'    => 0,
+    'remaining'     => 0,
+    'data_len_high' => 0,
+    'data_len_low'  => 0,
+    'data_offset'   => 0,
+    'data_offset_high' => 0,
+    'bcc_len'       => 0,
+);
+
+my $STWriteXRes = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'x_cmd'         => 'u_8',
+    'reserved1'     => 'u_8',
+    'x_off'         => 'l_u_16',
+    'fid'           => 'l_u_16',   
+    'count_low'     => 'l_u_16',
+    'remaining'     => 'l_u_16',
+    'count_high'    => 'l_u_16',
+    'reserved2'     => 'l_u_16',
+    'bcc_len'       => 'l_u_16',
+    'request'       => 'string',
+]);
+$STWriteXRes->SetSizeField( 'request' => 'bcc_len' );
+$STWriteXRes->Set
+(
+    'word_count'    => 0,
+    'x_cmd'         => 0,
+    'reserved1'     => 0,
+    'x_off'         => 0,
+    'fid'           => 0,
+    'count_low'     => 0,
+    'remaining'     => 0,
+    'count_high'    => 0,
+    'reserved2'     => 0,
     'bcc_len'       => 0,
 );
 
@@ -478,6 +674,11 @@ sub Error {
     my $self = shift;
     $self->{'LastError'} = shift if @_;    
     return $self->{'LastError'};
+}
+
+sub ClearError {
+    my $self = shift;
+    delete($self->{'LastError'});
 }
 
 sub Encrypted {
@@ -562,6 +763,19 @@ sub TreeID {
     }
 }
 
+sub LastTreeID {
+    my $self = shift;
+    $self->{'LastTreeID'} = shift if @_;
+    return $self->{'LastTreeID'};
+}
+
+sub LastFileID {
+    my $self = shift;
+    $self->{'LastFileID'} = shift if @_;
+    return $self->{'LastFileID'};
+}
+
+
 sub CryptLM {
     my $self = shift;
     my $pass = shift;
@@ -618,9 +832,6 @@ sub NBRedir {
     return ("CA" x 15)."AA";
 }
 
-
-
-
 sub SMBRecv {
     my $self = shift();
     my $sock = $self->Socket;
@@ -668,7 +879,7 @@ sub SMBSessionRequest {
     
     my $smb_res = $STSession->copy;
     $smb_res->Fill($res);
-
+    
     # Handle negative session request responses
     if ($smb_res->Get('type') == 0x83) {
         $self->Error('Session denied with code '.ord($smb_res->Get('request')));
@@ -786,6 +997,8 @@ sub SMBNegotiate {
 
 sub SMBSessionSetup {
     my $self = shift;
+    
+    return if $self->Error;
    
     if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {
         return $self->SMBSessionSetupClear(@_);
@@ -863,11 +1076,11 @@ sub SMBSessionSetupClear {
         $self->Error('Session setup returned command '.$smb_res->Get('command'));
         return;
     }
-    
+
     my $log_res = $STSetupXRes->copy;
     $log_res->Fill($smb_res->Get('request'));
 
-    if ($log_res->Get('action') == 1) {
+    if ($log_res->Get('action') == 1 || $user eq '') {
         $self->AuthUser("NULL");
     } else {
         $self->AuthUser($user);
@@ -875,8 +1088,7 @@ sub SMBSessionSetupClear {
 
     $self->AuthUserID($smb_res->Get('user_id'));
     
-    return $log_res;    
-    
+    return $log_res; 
 }
 
 sub SMBSessionSetupNTLM {
@@ -890,8 +1102,11 @@ sub SMBSessionSetupNTLM {
     
     # Only supports NTLMv1 right now
     
-    my $data = $self->CryptLM($pass, $self->ChallengeKey).
-               $self->CryptNT($pass, $self->ChallengeKey).
+    my $lmh = length($pass) ? $self->CryptLM($pass, $self->ChallengeKey) : '';
+    my $nth = length($pass) ? $self->CryptNT($pass, $self->ChallengeKey) : '';
+    my $pwl = length($lmh);
+    
+    my $data = $lmh. $nth.
                $user . "\x00".
                $wdom . "\x00".
                $self->NativeOS."\x00".
@@ -904,8 +1119,8 @@ sub SMBSessionSetupNTLM {
         'x_cmd'      => 255,
         'max_buff'   => 17408,
         'max_mpx'    => 62880,
-        'pass_len_lm'  => 24,
-        'pass_len_nt'  => 24,
+        'pass_len_lm'  => $pwl,
+        'pass_len_nt'  => $pwl,
         'bcc_len'    => length($data),
         'request'    => $data,
         'sess_key'   => $self->SessionID,        
@@ -951,7 +1166,7 @@ sub SMBSessionSetupNTLM {
     my $log_res = $STSetupXRes->copy;
     $log_res->Fill($smb_res->Get('request'));
 
-    if ($log_res->Get('action') == 1) {
+    if ($log_res->Get('action') == 1 || $user eq '') {
         $self->AuthUser("NULL");
     } else {
         $self->AuthUser($user);
@@ -986,7 +1201,6 @@ sub SMBTConnect {
     );
 
     $log->Set('pass_len' => length($pass) + 1);
-    print "Pass Len: ".$log->Get('pass_len')."\n";
     
     my $ses = $STSession->copy;
     my $smb = $STSMB->copy;
@@ -1030,43 +1244,57 @@ sub SMBTConnect {
     $log_res->Fill($smb_res->Get('request'));
     
     $self->TreeID($share, $smb_res->Get('tree_id'));
-  
+    $self->LastTreeID($smb_res->Get('tree_id'));  
     return $log_res;       
 }
-
 
 sub SMBTrans {
     my $self = shift;
-    my $share = @_ ? shift : "\\\\127.0.0.1\\IPC\$";
-    my $pass  = @_ ? shift : '';
+    my $targ = @_ ? shift : '';
+    my $parm = @_ ? shift : '';
+    my $data = @_ ? shift : '';
+    my $setup_count = @_ ? shift : 0;
+    my $setup_data  = @_ ? shift : '';
     my $sock = $self->Socket;
     
     return if $self->Error;
-    
 
-    my $data = $pass  ."\x00".
-               $share ."\x00".
-               "?????"."\x00";
-    
-    my $log = $STTConnectX->copy;
+    my $contents = $targ . "\x00". $parm . $data;
+
+    my $data_count  = length($data);
+    my $param_count = length($parm);
+
+    my $offset_base = $STSMB->Length + $STTrans->Length + length($targ) + length($setup_data);
+    my $param_offset = $offset_base;
+    my $data_offset = $param_offset + length($parm);
+
+    my $log = $STTrans->copy;
     $log->Set
     (
-        'word_count' => 4,
-        'x_cmd'      => 255,
-        'bcc_len'    => length($data),
-        'request'    => $data,
+        'word_count'      => 14 + $setup_count,
+        'param_count_tot' => $param_count,
+        'data_count_tot'  => $data_count,
+        'param_count_max' => $param_count,
+        'data_count_max'  => 65535,
+        'param_count'     => $param_count,
+        'param_offset'    => $param_offset,        
+        'data_count'      => $data_count,
+        'data_offset'     => $data_offset,
+        'setup_count'     => $setup_count,
+        'setup_data'      => $setup_data,
+        'bcc_len'         => length($contents),
+        'request'         => $contents,
     );
-
-    $log->Set('pass_len' => length($pass) + 1);
-    print "Pass Len: ".$log->Get('pass_len')."\n";
     
     my $ses = $STSession->copy;
     my $smb = $STSMB->copy;
+    
     $smb->Set
     (
-        'command'       => SMB_COM_TREE_CONNECT_ANDX,
+        'command'       => SMB_COM_TRANSACTION,
         'flags1'        => 0x18,
         'flags2'        => 0x2001,
+        'tree_id'       => $self->LastTreeID,
         'multiplex_id'  => $self->MultiplexID,
         'user_id'       => $self->AuthUserID,
         'request'       => $log->Fetch,
@@ -1077,7 +1305,7 @@ sub SMBTrans {
     my $res = $self->SMBRecv();
     
     if (! $res) {
-        $self->Error('Tree connect failed due to null response');
+        $self->Error('Transaction failed due to null response');
         return;
     }
     
@@ -1089,23 +1317,204 @@ sub SMBTrans {
     $smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
     if ($smb_res->Get('error_class') != 0) {
-        $self->Error('Tree connect returned NT status '.$smb_res->Get('error_class'));
+        $self->Error('Transaction returned NT status '.$smb_res->Get('error_class'));
         return;
     }
 
-    if ($smb_res->Get('command') != SMB_COM_TREE_CONNECT_ANDX) {
-        $self->Error('Tree connect returned command '.$smb_res->Get('command'));
+    if ($smb_res->Get('command') != SMB_COM_TRANSACTION) {
+        $self->Error('Transaction returned command '.$smb_res->Get('command'));
         return;
     }
     
-    my $log_res = $STTConnectXRes->copy;
-    $log_res->Fill($smb_res->Get('request'));
     
-    $self->TreeID($share, $smb_res->Get('tree_id'));
-  
+}
+
+
+# XXX - Written to use with lsarpc pipe
+sub SMBCreate {
+    my $self = shift;
+    my $file = shift;
+    my $sock = $self->Socket;
+    
+    return if $self->Error;
+
+    my $log = $STCreateX->copy;
+    $log->Set
+    (
+        'word_count'    => 24,
+        'x_cmd'         => 255,
+        'x_off'         => 0,
+        'filename_len'  => length($file),
+        'create_flags'  => 0x16,
+        'access_mask'   => 0x2019f,
+        'share_access'  => 3,
+        'create_opts'   => 0x40,
+        'impersonation' => 2,
+        'disposition'   => 1,
+        'sec_flags'     => 3,
+        'bcc_len'       => length($file)+1,
+        'request'       => $file."\x00",
+    );
+    
+    my $ses = $STSession->copy;
+    my $smb = $STSMB->copy;
+    $smb->Set
+    (
+        'command'       => 0xA2,
+        'flags1'        => 0x18,
+        'flags2'        => 0x2001,
+        'tree_id'       => $self->LastTreeID,
+        'multiplex_id'  => $self->MultiplexID,
+        'user_id'       => $self->AuthUserID,
+        'request'       => $log->Fetch,
+    );
+    
+    $ses->Set('type' => 0, 'flags' => 0, 'request' => $smb->Fetch);
+    $sock->Send($ses->Fetch);
+    my $res = $self->SMBRecv();
+    
+    if (! $res) {
+        $self->Error('Create failed due to null response');
+        return;
+    }
+    
+    my $ses_res = $STSession->copy;
+    $ses_res->Fill($res);
+
+    my $smb_res = $STSMB->copy;
+    $smb_res->Fill($ses_res->Get('request'));
+    $smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+
+    if ($smb_res->Get('error_class') != 0) {
+        $self->Error('Create returned NT status '.$smb_res->Get('error_class'));
+        return;
+    }
+
+    if ($smb_res->Get('command') != 0xA2) {
+        $self->Error('Create returned command '.$smb_res->Get('command'));
+        return;
+    }
+    
+    my $log_res = $STCreateXRes->copy;
+    $log_res->Fill($smb_res->Get('request'));  
+    $self->LastFileID($log_res->Get('fid'));
+
     return $log_res;       
 }
 
+
+sub SMBLanMan_NetServerEnum2 {
+    my $self = shift;
+    my $type = @_ ? shift : 0xffffffff;
+    my $wdom = @_ ? shift : 'WORKGROUP';
+    my $res;
+    
+    my $targ = '\PIPE\LANMAN';
+
+    my $parm = pack('v', 104).
+            "WrLehDz"."\x00".
+            "B16BBDz"."\x00".
+            pack('v', 1).
+            pack('v', 0xffff).
+            pack('V', $type).
+            "$wdom\x00";
+
+    my $res = $self->SMBTrans($targ, $parm, '');
+    return $res;
+}
+
+sub SMBTransNP {
+    my $self = shift;
+    my $fid  = @_ ? shift : $self->LastFileID;
+    my $data = @_ ? shift : '';
+    my $res;
+
+    my $setup_count = 2;
+    my $setup_data  = pack('vv', 0x26, $fid);
+    my $targ = "\\PIPE\\";
+
+    my $res = $self->SMBTrans($targ, '', $data, $setup_count, $setup_data);
+    return $res;
+
+}
+
+
+
+# This has only been tested in conjunction with \lsarpc
+sub SMBWrite {
+    my $self = shift;
+    my $fid  = @_ ? shift : $self->LastFileID;
+    my $off  = @_ ? shift : 0;
+    my $data = shift;
+    my $sock = $self->Socket;
+    
+    return if $self->Error;
+
+    my $data_len = length($data);
+    my $data_offset = $STSMB->Length + $STWriteX->Length;
+
+    my $log = $STWriteX->copy;
+    $log->Set
+    (
+        'word_count'    => 14,
+        'x_cmd'         => 255,
+        'reserved1'     => 0,
+        'x_off'         => 0,
+        'fid'           => $fid,
+        'offset'        => $off,
+        'reserved2'     => 0xffffffff,
+        'write_mode'    => 8,
+        'remaining'     => $data_len,
+        'data_len_high' => 0,
+        'data_len_low'  => $data_len,
+        'data_offset'   => $data_offset,
+        'bcc_len'       => $data_len,
+        'request'       => $data,
+    );
+    
+    my $ses = $STSession->copy;
+    my $smb = $STSMB->copy;
+    $smb->Set
+    (
+        'command'       => 0x2F,
+        'flags1'        => 0x18,
+        'flags2'        => 0x2001,
+        'tree_id'       => $self->LastTreeID,
+        'multiplex_id'  => $self->MultiplexID,
+        'user_id'       => $self->AuthUserID,
+        'request'       => $log->Fetch,
+    );
+    
+    $ses->Set('type' => 0, 'flags' => 0, 'request' => $smb->Fetch);
+    $sock->Send($ses->Fetch);
+    my $res = $self->SMBRecv();
+    
+    if (! $res) {
+        $self->Error('Create failed due to null response');
+        return;
+    }
+    
+    my $ses_res = $STSession->copy;
+    $ses_res->Fill($res);
+
+    my $smb_res = $STSMB->copy;
+    $smb_res->Fill($ses_res->Get('request'));
+    $smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+
+    if ($smb_res->Get('error_class') != 0) {
+        $self->Error('Write returned NT status '.$smb_res->Get('error_class'));
+        return;
+    }
+
+    if ($smb_res->Get('command') != 0x2F) {
+        $self->Error('Write returned command '.$smb_res->Get('command'));
+        return;
+    }
+
+    my $log_res = $STWriteXRes->copy;
+    $log_res->Fill($smb_res->Get('request'));  
+    return $log_res;          
+}
 
 
 ############################################

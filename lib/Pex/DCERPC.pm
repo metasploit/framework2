@@ -25,10 +25,11 @@ my %UUIDS =
     'MGMT'      => 'afa8bd80-7d8a-11c9-bef4-08002b102989',  # v2.0
     'REMACT'    => '4d9f4ab8-7d1c-11cf-861e-0020af6e7c57',  # v0.0
     'SYSACT'    => '000001a0-0000-0000-c000-000000000046',  # v0.0
+    'LSA_DS'    => '3919286a-b10c-11d0-9ba8-00c04fd92ef5',  # v0.0
 );
 
 sub UUID { return UUID_to_Bin($UUIDS{shift()}) }
-sub DCEXFERSYNTAX { return UUID_to_Bin('8a885d04-1ceb-11c9-9fe8-08002b104860') } # v2
+sub DCEXFERSYNTAX { return UUID_to_Bin('8a885d04-1ceb-11c9-9fe8-08002b104860') } # v2.0
 
 sub UUID_to_Bin {
     my $uuid = shift || return;
@@ -52,8 +53,10 @@ sub Bin_to_UUID {
 }
 
 sub Bind {
-    return if scalar(@_) != 4;
-    my ($uuid, $iver, $tsyn, $sver) = @_;
+    my $uuid = @_ ? shift : return;
+    my $iver = @_ ? shift : return;
+    my $tsyn = @_ ? shift : DCEXFERSYNTAX();
+    my $sver = @_ ? shift : '2.0';
 
     my ($imaj, $imin) = split(/\./, $iver);
     $imin = defined($imin) ? $imin : 0;
@@ -81,37 +84,75 @@ sub Bind {
         );
 }
 
-sub Request {
-    my $opnum = shift || 0;
-    my $data  = shift || '';
-    my $dlen  = length($data);
-    my $flen  = $dlen + 24;
 
+sub Request {
+    my $opnum = @_ ? shift : 0;
+    my $data  = @_ ? shift : '';
+    my $dlen  = length($data);
+    my $size = @_ ? shift : $dlen;
+    my @res;
+
+
+    my @frags;
+    while (length($data)) {
+        my $chunk = substr($data, 0, ($size-24));
+        $data = substr($data, ($size-24));
+        push @frags, $chunk;
+    }
+    
+    # Flags: 1=First 2=Last 3=Both
+    
+    if (scalar(@frags) == 0) {
+        return (RequestBuild(3, 0, $opnum));
+    }
+       
+    if (scalar(@frags) == 1) {
+        return (RequestBuild(3, $dlen, $opnum, $frags[0]));
+    }
+
+    my $first = shift(@frags);
+    push @res, RequestBuild(1, $dlen, $opnum, $first);
+
+    while (scalar(@frags) != 1) {
+        my $next = shift(@frags);
+        push @res, RequestBuild(0, $dlen, $opnum, $next);
+    }
+    
+    my $last = shift(@frags);
+    push @res, RequestBuild(2, $dlen, $opnum, $last);
+    return(@res);
+}
+
+sub RequestBuild {
+    my $flags = @_ ? shift : 3;
+    my $dlen  = @_ ? shift : 0;
+    my $opnum = @_ ? shift : 0;
+    my $data  = @_ ? shift : '';
+    
+    my $flen = length($data);
+    
     return pack('CCCCNvvVVvv', 
         5,      # major version 5
         0,      # minor version 0
         0,      # request type
-        3,      # flags
+        $flags, # flags
         0x10000000,     # data representation
         $flen,  # frag length
         0,      # auth length
         0,      # call id
-        $dlen,  # alloc hint
+        $dlen+24,  # alloc hint
         0,      # context id
         $opnum, # opnum
         ). $data;
 }
 
+
 sub MGMT_INQ_IF_IDS {
     my ($host, $port) = @_;
     my ($res, $rpc, %ints);
 
-    my $s = Msf::Socket::Tcp->new
-    (
-        'PeerAddr'  => $host, 
-        'PeerPort'  => $port, 
-    );
-    return if $s->IsError;
+    my $s = Pex::Socket->new();
+    return if ! $s->Tcp($host, $port);
 
     $s->Send(Bind(UUID('MGMT'), '1.0', DCEXFERSYNTAX(), '2'));
     $res = $s->Recv(60, 10);
@@ -122,7 +163,11 @@ sub MGMT_INQ_IF_IDS {
         return;
     }
 
-    $s->Send(Request(0));
+    my @pkts = Request(0);
+    foreach my $t (@pkts) {
+        my $ret = $s->Send($t);
+    }
+
     $res = $s->Recv(-1, 10);
     $rpc = DecodeResponse($res);
     
