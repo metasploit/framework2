@@ -32,6 +32,7 @@ my $encoders = {
       'Dispatcher'  => \&DWordXorDispatcher,
       'JmpCall'     => ['Variable length 26/29 byte Jmp/Call encoder', \&XorDecoderDwordCall],
       'Fnstenv Sub' => ['Variable length 26/29 byte Fnstenv encoder', \&XorDecoderDwordFnstenvSub],
+      'Fnstenv Mov' => ['Variable Length 23/25 byte Fnstenv encoder', \&XorDecoderDwordFnstenvMov],
     },
 #    'Byte Xor' => {
 #      'Fnstenv Sub' => ['25 byte Fnstenv encoder', \&XorDecoderByte],
@@ -426,8 +427,45 @@ sub XorDecoderDwordFnstenvSub {
       "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
       "\x5b".                             # pop ebx
       "\x31\xc9".                         # xor ecx,ecx
-      "\x81\xe9". $l->{'negLength'} .     # sub ecx, BYTE -xorlen
+      "\x81\xe9". $l->{'negLength'} .     # sub ecx, -xorlen
       "\x81\x73\x1b". $xorkey .           # xor_xor: xor DWORD [ebx + 27], xorkey
+      "\x83\xeb\xfc".                     # sub ebx,-4
+      "\xe2\xf4"                          # loop xor_xor
+  }
+  return $decoder;
+}
+
+# 23 for payloads <= 1020 bytes and 25 for <= 262140 bytes (yeah, that should never happen)
+sub XorDecoderDwordFnstenvMov {
+  my $xor = shift;
+  my $len = shift;
+  my $xorkey = pack('L', $xor);
+  my $l = PackLength($len);
+
+
+  # spoon's smaller variable-length fnstenv encoder
+  my $decoder;
+  if($l->{'padLength'} <= 255) {
+    # 23 bytes
+    $decoder =
+      "\xd9\xee".                         # fldz
+      "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
+      "\x5b".                             # pop ebx
+      "\x31\xc9".                         # xor ecx,ecx
+      "\xb1". $l->{'lengthByte'} .        # mov cl, BYTE xorlen
+      "\x81\x73\x17". $xorkey .           # xor_xor: xor DWORD [ebx + 24], xorkey
+      "\x83\xeb\xfc".                     # sub ebx,-4
+      "\xe2\xf4"                          # loop xor_xor
+  }
+  elsif($l->{'padLength'} <= 65535) {
+    # 25 bytes
+    $decoder =
+      "\xd9\xee".                         # fldz
+      "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
+      "\x5b".                             # pop ebx
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x66\xb9". $l->{'lengthWord'} .    # mov cx, WORD xorlen
+      "\x81\x73\x19". $xorkey .           # xor_xor: xor DWORD [ebx + 24], xorkey
       "\x83\xeb\xfc".                     # sub ebx,-4
       "\xe2\xf4"                          # loop xor_xor
   }
@@ -450,6 +488,8 @@ sub PackLength {
   $data->{'small'}    = 1 if($data->{'padLength'} <= 127);
   $data->{'lengthByte'} = substr($data->{'length'}, 0, 1);
   $data->{'negLengthByte'} = substr($data->{'negLength'}, 0, 1);
+  $data->{'lengthWord'} = substr($data->{'length'}, 0, 2);
+  $data->{'negLengthWord'} = substr($data->{'negLength'}, 0, 2);
 
   return($data);
 }
