@@ -622,6 +622,7 @@ sub SessionList {
 	
 	if (! scalar(keys(%slist))) {
 		$res .= "<p class='textBold'>There are no active sessions.<br\><br\></p>\n";
+		$res .= HTML_Footer();
 		return $res;
 	}
 
@@ -657,6 +658,7 @@ sub SessionList {
 	}
 	
     $res .= "</table>\n";
+	$res .= HTML_Footer();
 	return $res;
 }
 

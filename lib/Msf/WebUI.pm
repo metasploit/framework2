@@ -54,6 +54,9 @@ sub Print {
 	# strip out bad web joojoo
 	$data = XSS_Filter($data);	
 	
+	# convert new lines to line breaks
+	$data =~ s/\n/\<br\\\>/g;
+	
 	# append a line break if required
 	$data .= "<br/>\n" if $line;
 
