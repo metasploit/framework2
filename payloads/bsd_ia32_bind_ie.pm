@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::bsdx86_bind_ie;
+package Msf::Payload::bsd_ia32_bind_ie;
 use strict;
 use base 'Msf::PayloadComponent::InlineEggPayload';
 sub _Load {
@@ -17,7 +17,7 @@ sub _Load {
 
 my $info =
 {
-  'Name'         => 'BSD InlineEgg Bind Shell',
+  'Name'         => 'BSD IA32 InlineEgg Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
