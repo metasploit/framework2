@@ -98,33 +98,31 @@ sub CheckHandler {
   return($self->NinjaCheckHandler) if($self->NinjaWanted);
 
   my @ready = $self->ListenerSelector->can_read(.5);
+  
   if(@ready) {
     my $sock;
-	 
+    my $psrc;
+	
     if($self->Protocol() eq 'tcp')
     {
       $sock = $ready[0]->accept();
     }
     else
     {
-      my $paddr;
-      my $buf;
-		my $ip;
-		my $port;
-
+      my ($paddr, $buf, $ip, $port);
       $sock  = $ready[0];
+      
       $paddr = recv($sock, $buf, 1024, MSG_PEEK);
-
-      if (defined($paddr))
-      {
-        ($port, $ip) = sockaddr_in($paddr);
-
-        $self->PipeRemoteSrc($sock->sockhost.":".$sock->sockport." <-> ". inet_ntoa($ip) .":". $port);
-      }
+      return if ! defined($paddr);
+	  
+      my ($port, $host_bin) = sockaddr_in($paddr);
+      $psrc = $sock->sockhost .":". $sock->sockport ." <-> ". inet_ntoa($host_bin) .":". $port;
     }
-
+    
     $self->PipeRemoteIn($sock);
     $self->PipeRemoteOut($sock);
+    $self->PipeRemoteSrc($psrc) if $psrc;
+
     return(1);
   }
 
