@@ -281,11 +281,11 @@ sub DisplayPayloads {
             print "<tr><td>\n";
             print "<u><font color='green'>[$arch/$proc]</font></u><blockquote>\n";
             print "<table>\n";
-            print "<tr><th>Name</th><th>Size</th><th>Description</th></tr>\n";
+            print "<tr><th size=30>Name</th><th size=8>Size</th><th>Description</th></tr>\n";
             foreach my $pay (sort(keys(%{$ost->{$arch}->{$proc}}))) {
-                print "<tr><td><a href='".$ENV{'SCRIPT_NAME'}."?PAYLOAD=$pay'>$pay</a></td>";
-                print "<td>".$payloads->{$pay}->Size."</td>";
-                print "<td>".$payloads->{$pay}->Description."</td>";
+                print "<tr><td size=30 align='center'><a href='".$ENV{'SCRIPT_NAME'}."?PAYLOAD=$pay'>$pay</a></td>";
+                print "<td size=10 align='center'>".$payloads->{$pay}->Size."</td>";
+                print "<td align='left'>".$payloads->{$pay}->Description."</td>";
                 print "</tr>\n";
             }
             print "</table>\n";
