@@ -99,6 +99,7 @@ sub readCommand {
       }
       next;
     }
+    next if(!defined($command));
     return($command, @args);
   }
 }
