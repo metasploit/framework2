@@ -3,6 +3,7 @@
 ;        Name: stager_sock_reverse
 ;        Size: 52 bytes
 ;   Qualities: Can Have Nulls
+;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 

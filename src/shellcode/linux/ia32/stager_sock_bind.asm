@@ -4,6 +4,7 @@
 ;        Size: 63 bytes
 ;        Type: Stager
 ;   Qualities: Can Have Nulls
+;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 

@@ -3,6 +3,7 @@
 ;        Name: provider_udp_shell
 ;        Type: Provider
 ;   Qualities: None
+;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 

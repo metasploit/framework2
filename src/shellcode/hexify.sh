@@ -2,8 +2,8 @@
 #
 # You love the ghettoness!
 #
-# Shellcode that wants to be hexified should have a __BEGIN symbol 
-# before the first instruction of the payload and an __END symbol after
+# Shellcode that wants to be hexified should have a __BEGIN__ symbol 
+# before the first instruction of the payload and an __END__ symbol after
 # the last instruction of the payload.  This is what hexify.sh will
 # key off of when converting.
 #
