@@ -197,7 +197,10 @@ sub Send {
 sub _DoSend {
   my $self = shift;
   return if(!$self->Socket->connected);
-  return($self->Socket->send(@_));
+  my $bytes;
+  eval('$bytes = $self->Socket->send(@_)');
+  return if(defined($@));
+  return($bytes);
 }
 
 
