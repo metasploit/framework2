@@ -5,8 +5,6 @@ Pre-Release Tasks
 
  - Get some basic developer docs?, although the bulk of this can wait a week or two.
 
- - Get a logo in ascii art form for msfcli and msfconsole. Embed logo into msfweb.
-
  - Configure mailing list, public CVS, bugzilla, etc. Currently waiting on Savannah approval...
 
  - Reimplement the logging routines in msfconsole, determine how/if macros should be defined
