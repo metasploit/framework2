@@ -169,32 +169,33 @@ sub Send {
   my $self = shift;
   my $data = shift;
   my $delay = @_ ? shift : 0.25;
-
+  my $total = length($data);
+  
   return if($self->GetError);
 
   # Retry limit is based on the original data size
   my $failed = 12 + int(length($data) / 1024);
   
   while(length($data)) {
-    return if($self->SocketError);
-
+    last if $self->SocketError;    
+    
     my $sent = $self->_DoSend($data);
-
-    last if($sent == length($data));
-    last if($sent == -1);
-	
+    last if $sent < 0;
+		
     if(!$sent) {
       if(!--$failed) {
         $self->SetError("Send retry limit reached.");
-        return(0);
+        last;
       }
       select(undef, undef, undef, $delay); # sleep
     }
     else {
       $data = substr($data, $sent);
+      last if($sent == length($data));	  
     }
   }
-  return(1);
+  
+  return ($total - length($data));
 }
 
 sub _DoSend {
@@ -225,7 +226,6 @@ sub Recv {
   my $data;
   if($length == -1) {
     $data = $self->RemoveBuffer . $self->_RecvGobble($timeout);
-#    print "Gobble returned\n";
   }
   else {
     my $buffer = $self->RemoveBuffer($length);
@@ -243,8 +243,6 @@ sub _RecvGobble {
   my $self = shift;
   my $timeout = shift;
 
-#  print "Gobble called - $timeout\n";
-
   my $selector = IO::Select->new($self->Socket);
   my $data;
 
@@ -255,13 +253,10 @@ sub _RecvGobble {
     return($data);
   }
 
-#  print "Gobble got data. $ready\n";
-
   my $timeoutLoop = $self->RecvLoopTimeout;
   while(1) {
     my ($ready) = $selector->can_read($timeoutLoop);
     last if(!$ready);
-#    print "Gobble got fun loop.\n";
 
     my $tempData = $self->_DoRecv(4096, 1);
 
