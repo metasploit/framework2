@@ -585,22 +585,23 @@ sub ProcessHttpTunnelClient
 sub ProcessLocalTcpClient
 {
 	my $self = shift;
+	my $outc = $self->GetTunnelOutHttpClient();
 	my $data = undef;
 
 	return undef if (not defined(recv($self->GetServerSideSock(), $data, 32768, 0)));
 
 	# If we already have an HTTP client that is waiting for outbound tunnel data,
 	# pass it right along to them
-	if ($self->GetTunnelOutHttpClient())
+	if ($outc)
 	{
 		$self->PrintDebugLine(3, "PX: Sending " . length($data) . " bytes of data to remote half.");
 
-		$self->TransmitLocalDataToHttpClient(
-			client => $self->GetTunnelOutHttpClient(),
-			data   => $data);
-
 		$self->SetTunnelOutHttpClient(
 			client => undef);
+
+		$self->TransmitLocalDataToHttpClient(
+			client => $outc,
+			data   => $data);
 	}
 	# Otherwise, we queue it for future transmission
 	else
