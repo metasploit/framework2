@@ -58,7 +58,7 @@ my @params = defined($query->param) ? $query->param : ( );
 foreach my $name (@params) 
 {
     $ui->SetTempEnv($name, $query->param($name));
-    $opt->{uc($name)} = $query->param($name);
+    $opt->{$name} = $query->param($name);
 }
 
 my $action = uc($opt->{'ACTION'});
@@ -149,6 +149,20 @@ if ($action eq "BUILD")
         }
     }
 
+    my $badchars_bin;
+    my $badchars_str;
+    if (defined($opt->{'BadChars'}) && defined($opt->{'ENCODE'}))
+    {
+        foreach my $hc (split(/\s+/, $opt->{'BadChars'}))
+        {
+            if ($hc =~ m/^0x(.|..)/) 
+            {
+                $badchars_bin .= chr(hex($hc));
+                $badchars_str .= sprintf("\\x%.2x", hex($hc));
+            }
+        }
+        $ui->SetTempEnv('BadChars', $badchars_bin);
+    }
 
     my $s = $ui->Encode;
     if (! $s)
@@ -163,18 +177,7 @@ if ($action eq "BUILD")
     
     if (defined($opt->{'BadChars'}) && defined($opt->{'ENCODE'}))
     {
-        $ctitle = "Encoded Shellcode [";
-        my $badchars;
-        foreach my $hc (split(/\s+/, $opt->{'BadChars'}))
-        {
-            if ($hc =~ m/^0x(.|..)/) 
-            {
-                $badchars .= chr(hex($hc));
-                $ctitle .= sprintf("\\x%.2x", hex($hc));
-            }
-        }
-        $ctitle .= "]";
-        
+        $ctitle = "Encoded Shellcode [". $badchars_str ."]";
         $r = $s->EncodedPayload;
     }
 

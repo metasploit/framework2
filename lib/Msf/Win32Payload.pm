@@ -78,14 +78,10 @@ sub Size {
 sub Build {
     my $self = shift;
     
-    print "PreFork: " . $self->GetVar('PREFORK') . "\n";
-    
     my $payload     = $self->{'Win32Payload'}->{'Payload'};
     my $forkstub    = ($self->GetVar('PREFORK')) ? length($prefork_code) : 0;
     my $exit_offset = ($self->GetVar('PREFORK')) ? $prefork_exit : $self->{'Win32Payload'}->{'Offsets'}->{'EXITFUNC'}->[0];
     my $generated   = ($self->GetVar('PREFORK')) ? $prefork_code . $payload : $payload;
-
-    print 'ForkStub: ' . $forkstub . "\n";
 
     my $opts = $self->{'Info'}->{'UserOpts'};
     foreach my $opt (keys(%{ $opts }))
