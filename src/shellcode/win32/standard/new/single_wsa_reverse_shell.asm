@@ -5,7 +5,7 @@ BITS 32
 %include "stage_wsa_shell.asm"
 
 ; hash up kernel32 foo
-KERNEL32_INIT 0
+KERNEL32_INIT
 
 ; setup the address table
 %define _WSA_INIT_TBLEN 3

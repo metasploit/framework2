@@ -154,8 +154,8 @@ LWSAStartup:                    ; WSAStartup (0x190, DATA)
 ; returns:
 ;   edi = socket
 ; preserves ebp, esp, ebx, esi
-; preserves the stack if %1 == 1
-%macro WSA_CALL_SOCKET 2
+; preserves the stack
+%macro WSA_CALL_SOCKET 1
     
   LWSASocketA:                         ; WSASocketA (2,type,0,0,0,0) 
       push eax
@@ -175,9 +175,6 @@ LWSAStartup:                    ; WSAStartup (0x190, DATA)
   %endif
       call FN_WSASOCK
       xchg eax, edi                    ; load socket into edi
-  %if %1 == 1                          ; preserve the stack
-      sub esp, BYTE (8 * 4)
-  %endif
 %endmacro
 
 ; expects:
@@ -199,8 +196,9 @@ LConnect:            ; connect(edi, sockaddr, 16)
     push ecx
     push dword edi
     call dword FN_CONNECT
-%if %1 == 1 ; preserve stack
-    sub esp, BYTE (5 * 4)
+%if %1 == 1 ; preserve stack, remove host and port
+    pop ecx
+    pop ecx
 %endif
     
     ; reconnect on failure

@@ -16,9 +16,9 @@ _start:
 ;   ebx = kernel32.dll base
 ;   esi = LGetProcAddress
 ;   edi = LoadLibraryA
-; preserves the stack if %1 == 1
+; preserves the stack
 ; preserves no registers
-%macro KERNEL32_INIT 1
+%macro KERNEL32_INIT 0
 
   DIRECTION_CLD ; make sure cld
   call LKernel32Base
@@ -95,11 +95,6 @@ LKernel32Base:
     xchg eax, edi           ; move LoadLibraryA to edi
 
     ; preserve the stack if the includer wants
-
-%if %1 == 1
-    pop eax
-    pop eax
-%endif
     
     ; ebx = kernel32.dll base
     ; esi = LGetProcAddress
