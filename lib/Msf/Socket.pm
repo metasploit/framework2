@@ -33,17 +33,31 @@ sub Init {
   }
 }
 
-sub GetTimeout {
+sub UseSSL {
   my $self = shift;
-  my $timeout = $self->GetLocal('SocketTimeout');
-  $timeout = $self->SUPER::GetTimeout() if(!defined($timeout));
+  my $ssl = $self->GetLocal('ForceSSL');
+  $ssl = $self->SUPER::UseSSL if(!defined($ssl));
+  return($ssl);
+}
+
+sub GetConnectTimeout {
+  my $self = shift;
+  my $timeout = $self->GetLocal('ConnectTimeout');
+  $timeout = $self->SUPER::GetConnectTimeout if(!defined($timeout));
   return($timeout);
 }
 
-sub GetTimeoutLoop {
+sub GetRecvTimeout {
   my $self = shift;
-  my $timeout = $self->GetLocal('SocketTimeoutLoop');
-  $timeout = $self->SUPER::GetTimeoutLoop() if(!defined($timeout));
+  my $timeout = $self->GetLocal('RecvTimeout');
+  $timeout = $self->SUPER::GetRecvTimeout if(!defined($timeout));
+  return($timeout);
+}
+
+sub GetRecvTimeoutLoop {
+  my $self = shift;
+  my $timeout = $self->GetLocal('RecvTimeoutLoop');
+  $timeout = $self->SUPER::GetRecvTimeoutLoop if(!defined($timeout));
   return($timeout);
 }
 

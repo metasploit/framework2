@@ -3,6 +3,7 @@
 
 ##
 #         Name: Socket.pm
+#       Author: spoonm <ninjatools [at] hush.com>
 #       Author: H D Moore <hdm [at] metasploit.com>
 #      Version: $Revision$
 #      License:
@@ -45,8 +46,9 @@ sub new {
 
   my $hash = shift;
   $self->SetOptions($hash);
-  $self->SetTimeout(10) if(!exists($hash->{'Timeout'}));
-  $self->SetTimeoutLoop(.5) if(!exists($hash->{'TimeoutLoop'}));
+  $self->SetConnectTimeout(30) if(!exists($hash->{'ConnectTimeout'}));
+  $self->SetRecvTimeout(10) if(!exists($hash->{'RecvTimeout'}));
+  $self->SetRecvTimeoutLoop(.5) if(!exists($hash->{'RecvTimeoutLoop'}));
 
   $self->Init;
   return($self);
@@ -112,25 +114,34 @@ sub AddProxy {
   return;
 }
 
-sub SetTimeout {
+sub SetConnectTimeout {
   my $self = shift;
   my $timeout = shift;
-  $self->{'Timeout'} = $timeout;
+  $self->{'ConnectTimeout'} = $timeout;
+}
+sub GetConnectTimeout {
+  my $self = shift;
+  return($self->{'ConnectTimeout'});
 }
 
-sub GetTimeout {
-  my $self = shift;
-  return($self->{'Timeout'});
-}
-sub SetTimeoutLoop {
+sub SetRecvTimeout {
   my $self = shift;
   my $timeout = shift;
-  $self->{'TimeoutLoop'} = $timeout;
+  $self->{'RecvTimeout'} = $timeout;
+}
+sub GetRecvTimeout {
+  my $self = shift;
+  return($self->{'RecvTimeout'});
 }
 
-sub GetTimeoutLoop {
+sub SetRecvTimeoutLoop {
   my $self = shift;
-  return($self->{'TimeoutLoop'});
+  my $timeout = shift;
+  $self->{'RecvTimeoutLoop'} = $timeout;
+}
+sub GetRecvTimeoutLoop {
+  my $self = shift;
+  return($self->{'RecvTimeoutLoop'});
 }
 
 sub SetError {
@@ -217,9 +228,9 @@ sub TcpConnectSocket {
   }
 
   my $sock;
-  if ($proxies) {
+  if($proxies) {
     $sock = $self->ConnectProxies($host, $port);
-    return if ! $sock;
+    return if(!$sock);
   } 
   else {
     my %config = (
@@ -227,6 +238,7 @@ sub TcpConnectSocket {
       'PeerPort'  => $port,
       'Proto'     => 'tcp',
       'ReuseAddr' => 1,
+      'Timeout'   => $self->GetConnectTimeout,
     );
     $config{'LocalPort'} = $localPort if($localPort);
     $sock = IO::Socket::INET->new(%config);  
@@ -237,7 +249,7 @@ sub TcpConnectSocket {
     }
   }
 
-  return($sock)
+  return($sock);
 }
 
 sub Tcp {
@@ -481,7 +493,8 @@ sub ConnectProxies {
         'PeerAddr'  => $base->[1],
         'PeerPort'  => $base->[2],
         'Proto'     => 'tcp',
-        'ReuseAddr' => 1, 
+        'ReuseAddr' => 1,
+        'Timeout'   => $self->GetConnectTimeout,
     );
     if (! $sock || ! $sock->connected)
     {
