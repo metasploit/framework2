@@ -448,7 +448,13 @@ sub SMBNegotiateClear {
     $ses_res->Fill($res);
 
     my $smb_res = $STSMB->copy;
+    
+    print "length: ".$smb->Length."\n";
+    print "length: ".$ses_res->Get('requestLen')."\n";
+    $smb_res->SetSize('request' => $ses_res->Get('requestLen') - $smb->Length);
     $smb_res->Fill($ses_res->Get('request'));
+    print "length: ".$smb->Length."\n";
+    print "leftover: ".length($smb->{'LeftOver'})."\n";
     
     if ($smb_res->Get('error_class') != 0) {
         $self->SetError('Negotiate returned NT status '.$smb_res->Get('error_class'));
@@ -463,7 +469,7 @@ sub SMBNegotiateClear {
     my $neg_res = $STNegRes->copy;
     $neg_res->Fill($smb_res->Get('request'));
     
-    # XXX - This shit doesnt work because there is no size field for request...
+    
     print Pex::Utils::BufferPerl($smb_res->Get('request'))."\n";
 
     print Pex::Utils::BufferPerl($neg_res->Get('enc_key'))."\n";
@@ -473,11 +479,128 @@ sub SMBNegotiateClear {
 }
 
 
-
-
 1;
 
 __END__
+
+
+package Pex::SMB::Protocol::NBS;
+use Pex::Struct;
+use strict;
+
+# NetBIOS Session Structure
+my $STNBSession = Pex::Struct->new
+([
+    'type'          => 'u_8',
+    'flags'         => 'u_8',
+    'requestLen'    => 'b_u_16',
+    'request'       => 'string'
+]);
+$STNBSession->SetSizeField( 'request' => 'requestLen' );
+$STNBSession->Set
+(
+    'type'  => 0,
+    'flags' => 0,
+);
+
+sub new {
+    my $cls = shift;
+    my $arg = shift;
+    my $self = bless { }, $cls;
+    $self->{'Struct'} = $STNBSession->copy;
+    $self->Fill($arg);
+    return $self;
+}
+
+sub Fill {
+    my $self = shift;
+    my $data = shift;
+    return if !defined($data);
+    $self->{'Struct'}->Fill($data);
+}
+
+sub Set {
+    my $self = shift;
+    return $self->{'Struct'}->Set(@_);
+}
+
+sub Get {
+    my $self = shift;
+    return $self->{'Struct'}->Get(@_);
+}
+
+
+package Pex::SMB::Protocol::SMB;
+use Pex::Struct;
+use strict;
+
+# SMB Packet Structure
+my $STSMBHeader = Pex::Struct->new
+([
+    'smbmagic'      => 'b_u_32',
+    'command'       => 'u_8',
+    'error_class'   => 'u_8',
+    'reserved1'     => 'u_8',
+    'error_code'    => 'b_u_16',
+    'flags1'        => 'u_8',
+    'flags2'        => 'l_u_16',
+    'pid_high'      => 'b_u_16',
+    'signature1'    => 'b_u_32',
+    'signature2'    => 'b_u_32',
+    'reserved2'     => 'b_u_16',
+    'tree_id'       => 'b_u_16',
+    'process_id'    => 'b_u_16',
+    'user_id',      => 'b_u_16',
+    'multiplex_id'  => 'b_u_16',
+    'request'       => 'string',
+]);
+$STSMBHeader->Set
+(
+    'smbmagic'      => 0xff534d42,
+    'command'       => 0,
+    'error_class'   => 0,
+    'reserved1'     => 0,
+    'error_code'    => 0,
+    'flags1'        => 0,
+    'flags2'        => 0,
+    'pid_high'      => 0,
+    'signature1'    => 0,
+    'signature2'    => 0,
+    'reserved2'     => 0,
+    'tree_id'       => 0,
+    'process_id'    => $$,
+    'user_id'       => 0,
+    'multiplex_id'  => 0,
+);
+
+sub new {
+    my $cls = shift;
+    my $arg = shift;
+    my $self = bless { }, $cls;
+    $self->{'Struct'} = $STSMBHeader->copy;
+    $self->Fill($arg);
+    return $self;
+}
+
+sub Fill {
+    my $self = shift;
+    my $data = shift;
+    return if !defined($data);
+    $self->{'Struct'}->Fill($data);
+    $self->{'Struct'}->Set('request' => $self->{'Struct'}->{'LeftOver'});
+}
+
+sub Set {
+    my $self = shift;
+    return $self->{'Struct'}->Set(@_);
+}
+
+sub Get {
+    my $self = shift;
+    return $self->{'Struct'}->Get(@_);
+}
+
+
 # hdm - 04.12.04 - approved
 ddidata = string("Not Applicable");
 
