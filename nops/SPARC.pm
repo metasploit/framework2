@@ -129,26 +129,23 @@ sub Insbranch {
 sub Nops {
   my $self = shift;
   my $length = shift;
+  my $backup_length = $length;
 
   my $exploit = $self->GetVar('_Exploit');
   my $random  = $self->GetLocal('RandomNops');
   my $badChars = $exploit->PayloadBadChars;
-  my $nop, $tempnop, $count;
+  my ($nop, $tempnop, $count, $rand);
 
-# XXX: single nop mode needs to take badChars into account too
   if(! $random)
   {
-    return Inssethi() x ($length / 4);			# XXX: Lame.
+    $length = 4;
   }
-
-# DEBUG DEBUG DEBUG
-#  $nop = "\x91\xd0\x20\x01";
 
   for($count = 0; length($nop) < $length; $count++)
   {
-    $random = int(rand(scalar(@{$table})));
+    $rand = int(rand(scalar(@{$table})));
 
-    $tempnop = $table->[$random]->[0]($table->[$random]->[1], $length - length($nop));
+    $tempnop = $table->[$rand]->[0]($table->[$rand]->[1], $length - length($nop));
 
     if(!Pex::Utils::ArrayContains([split('', $tempnop)], [split('', $badChars)]))
     {
@@ -166,6 +163,11 @@ sub Nops {
 
       $self->PrintDebugLine(4, "Iterated $count times with no nop match (length(\$nop) = " . sprintf("%i", length($nop)) . ")");
     }
+  }
+
+  if(! $random)
+  {
+    return $nop x ($backup_length / 4);
   }
 
   return $nop;
