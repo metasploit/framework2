@@ -25,7 +25,6 @@ my $info =
                     ],
   'UserOpts'     => { 
                         'DLL'     => [1, 'PATH', 'The full path the VNC service dll'],
-                        'VNCPASS' => [1, 'DATA', 'The password to use with the VNC service', 'w00t'],
                         'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
                     },
                 
@@ -52,18 +51,25 @@ sub HandleConnection {
   $self->SUPER::HandleConnection;
   sleep(1);
 
-  my $pass = substr($self->GetVar('VNCPASS'), 0, 8);
-  $pass   .= "\x00" x (8-length($pass));
-
-  if (! $sock->connected) {
-    $self->PrintLine("[*] Connection closed before password could be sent");
-    $self->KillChild;    
-    return;    
-  }
-
-  $self->PrintLine('[*] Sending password to VNC service');
-  $sock->send($pass);
+  my $error = "OK\n";
   
+  if (! $error) {
+    $self->PrintLine("[*] No confirmation seen from the remote VNC service");
+    $sock->close;
+    $self->KillChild;    
+    return;
+  }
+  
+  chomp($error);
+  if ($error =~ m/ERROR:(.*)$/) {
+    $self->PrintLine("[*] Error creating VNC service: $1");
+    $sock->close;
+    $self->KillChild;    
+    return;
+  }
+  
+  $self->PrintLine("[*] VNC server returned: $error");
+
   # Create listener socket
   my $lis = IO::Socket::INET->new(
     'Proto'     => 'tcp',
@@ -98,7 +104,6 @@ sub HandleConnection {
     return;
   } 
   
-  $self->PrintLine('[*] VNC proxy started with password '.$self->GetVar('VNCPASS').'...');
   $self->VNCProxy($sock, $csock);
   $self->PrintLine('[*] VNC proxy finished');
   
