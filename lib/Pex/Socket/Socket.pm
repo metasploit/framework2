@@ -85,6 +85,15 @@ sub GetError {
   return($self->{'Error'});
 }
 
+sub IsError {
+  my $self = shift;
+  return(defined($self->GetError));
+}
+sub ClearError {
+  my $self = shift;
+  $self->SetError(undef);
+}
+
 
 sub Buffer {
   my $self = shift;
@@ -117,10 +126,10 @@ sub SocketError {
   my $ignoreConn = shift;
 
   my $reason;
-  if(!$self->GetSocket) {
+  if(!$self->Socket) {
     $reason = 'no socket';
   }
-  elsif(!$ignoreConn && !$self->GetSocket->connected) {
+  elsif(!$ignoreConn && !$self->Socket->connected) {
     $reason = 'not connected';
   }
 
@@ -175,16 +184,22 @@ sub _DoSend {
 sub Recv {
   my $self = shift;
   my $length = shift;
-  my $timeout = @_ ? shift : $self->GetRecvTimeout;
+  my $timeout = @_ ? shift : $self->RecvTimeout;
 
   return if($self->GetError);
   return if($self->SocketError(1));
 
-  return($self->RemoveBuffer . $self->_RecvGobble($timeout)) if($length == -1);
+  my $data;
+  if($length == -1) {
+    $data = $self->RemoveBuffer . $self->_RecvGobble($timeout);
+  }
+  else {
+    my $buffer = $self->RemoveBuffer($length);
+    $data = $buffer . $self->_RecvLength($length - length($buffer));
+  }
 
-  my $buffer = $self->RemoveBuffer($length);
-  $length -= length($buffer);
-  return($buffer . $self->_RecvLength($length));
+  $self->ClearError if(length($data));
+  return($data);
 }
   
 
@@ -194,7 +209,7 @@ sub _RecvGobble {
   my $self = shift;
   my $timeout = shift;
 
-  my $selector = IO::Select->new($self->GetSocket);
+  my $selector = IO::Select->new($self->Socket);
   my $data;
 
   my ($ready) = $selector->can_read($timeout);
@@ -204,7 +219,7 @@ sub _RecvGobble {
     return($data);
   }
 
-  my $timeoutLoop = $self->GetRecvTimeoutLoop;
+  my $timeoutLoop = $self->RecvLoopTimeout;
   while(1) {
     my ($ready) = $selector->can_read($timeoutLoop);
     last if(!$ready);
@@ -224,7 +239,7 @@ sub _RecvLength {
   my $length = shift;
   my $timeout = shift;
 
-  my $selector = IO::Select->new($self->GetSocket);
+  my $selector = IO::Select->new($self->Socket);
   my $data;
 
   while($length) {
@@ -232,7 +247,7 @@ sub _RecvLength {
 
     if(!$ready) {
       # $self->SetError("Timeout $timeout reached.");
-      $self->SetError("Socket disconnected.") if(!$self->GetSocket->connected);
+      $self->SetError("Socket disconnected.") if(!$self->Socket->connected);
       return($data);
     }
 

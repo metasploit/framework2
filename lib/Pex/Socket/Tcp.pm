@@ -23,7 +23,7 @@ sub new {
   my $self = bless({ }, $class);
 
   my $hash = { @_ };
-  return($self->_newSSL(@_));
+  return($self->_newSSL(@_)) if($hash->{'SSL'});
   $self->SetOptions($hash);
 
   return if(!$self->_MakeSocket);
@@ -75,7 +75,7 @@ sub TcpConnectSocket {
   my $port = shift;
   my $localPort = shift;
 
-  my $proxies = $self->GetProxies;
+  my $proxies = $self->Proxies;
   if($localPort && $proxies) {
     $self->SetError('A local port was specified and proxies are enabled, they are mutually exclusive.');
     return;
@@ -92,7 +92,7 @@ sub TcpConnectSocket {
       'PeerPort'  => $port,
       'Proto'     => 'tcp',
       'ReuseAddr' => 1,
-      'Timeout'   => $self->GetConnectTimeout,
+      'Timeout'   => $self->Timeout,
     );
     $config{'LocalPort'} = $localPort if($localPort);
     $sock = IO::Socket::INET->new(%config);  
@@ -106,44 +106,15 @@ sub TcpConnectSocket {
   return($sock);
 }
 
-sub Tcp {
+sub _MakeSocket {
   my $self = shift;
-  my $host = shift;
-  my $port = shift;
-  my $localPort = shift;
 
   return if($self->GetError);
 
-  $self->{'Socket'} = undef;
-  $self->SetError(undef);
-
-  my $sock = $self->TcpConnectSocket($host, $port, $localPort);
+  my $sock = $self->TcpConnectSocket($self->PeerAddr, $self->PeerPort, $self->LocalPort);
   return if($self->GetError || !$sock);
 
-  $self->{'Socket'} = $sock;
-
-
-  if($self->UseSSL) {
-    # Create SSL Context
-    $self->{'SSLCtx'} = Net::SSLeay::CTX_new();
-    # Configure session for maximum interoperability
-    Net::SSLeay::CTX_set_options($self->{'SSLCtx'}, &Net::SSLeay::OP_ALL);
-    # Create the SSL file descriptor
-    $self->{'SSLFd'}  = Net::SSLeay::new($self->{'SSLCtx'});
-    # Bind the SSL descriptor to the socket
-    Net::SSLeay::set_fd($self->{'SSLFd'}, $sock->fileno);        
-    # Negotiate connection
-    my $sslConn = Net::SSLeay::connect($self->{'SSLFd'});
-
-    if($sslConn <= 0) {
-      $self->SetError('Error setting up ssl: ' . Net::SSLeay::print_errs());
-      $self->close;
-      return;
-    }
-  }
-
-  # we have to wait until after the SSL negotiation before 
-  # setting the socket to non-blocking mode
+  $self->Socket($sock);
 
   $sock->blocking(0);
   $sock->autoflush(1);
@@ -155,7 +126,7 @@ sub Tcp {
 sub ConnectProxies {
     my $self = shift;
     my ($host, $port) = @_;
-    my @proxies = @{$self->GetProxies};
+    my @proxies = @{$self->Proxies};
     my ($base, $sock);
 
     $base = shift(@proxies);
@@ -166,7 +137,7 @@ sub ConnectProxies {
         'PeerPort'  => $base->[2],
         'Proto'     => 'tcp',
         'ReuseAddr' => 1,
-        'Timeout'   => $self->GetConnectTimeout,
+        'Timeout'   => $self->Timeout,
     );
     if (! $sock || ! $sock->connected)
     {
@@ -206,6 +177,40 @@ sub ConnectProxies {
         $lastproxy = $proxy;
     }
     return $sock;
+}
+
+sub _UnitTest {
+  my $class = shift;
+  print STDOUT "Connecting to google.com:80\n";
+  my $sock = __PACKAGE__->new('PeerAddr' => 'google.com', 'PeerPort', 80);
+  if(!$sock || $sock->IsError) {
+    print STDOUT "Error creating socket: $!\n";
+    return;
+  }
+
+  $sock->Send("GET / HTTP/1.0\r\n\r\n");
+
+  if($sock->IsError) {
+    print STDOUT "Error in Send: " . $sock->GetError . "\n";
+    return;
+  }
+
+  my $data = $sock->Recv(-1, 5);
+  if(!length($data) || $sock->IsError) {
+    print STDOUT "Error in Recv: " . $sock->GetError . "\n";
+    return;
+  }
+
+  if($data =~ /Server: ([^\s]+)/) {
+    print STDOUT "Got server header: $1\n";
+  }
+  else {
+    print STDOUT "Did not find server header\n";
+    return;
+  }
+
+  print STDOUT "Test seemed successful\n";
+
 }
 
 1;

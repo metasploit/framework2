@@ -58,6 +58,8 @@ sub _MakeSocket {
 
   my $sock = $self->Socket;
 
+  print "-$sock -\n";
+
   # Create SSL Context
   $self->{'SSLCtx'} = Net::SSLeay::CTX_new();
   # Configure session for maximum interoperability
@@ -71,7 +73,7 @@ sub _MakeSocket {
 
   if($sslConn <= 0) {
     $self->SetError('Error setting up ssl: ' . Net::SSLeay::print_errs());
-    $self->close;
+    $sock->close;
     return;
   }
 
@@ -106,6 +108,14 @@ sub _DoRecv {
   my $length = shift;
   my $trys = shift;
   return($self->_RecvSSL($trys));
+}
+
+sub _UnitTest {
+  my $class = shift;
+  my $sock = __PACKAGE__->new('PeerAddr' => 'metasploit.com', 'PeerPort' => '443');
+  if(!$sock || $sock->IsError) {
+    print STDOUT "Error creating socket: $!\n";
+  }
 }
 
 1;
