@@ -51,6 +51,8 @@ connect:
 	inc  ebx
 	int  0x80
 
+%ifndef USE_SINGLE_STAGE
+
 recv:
 	pop  ebx
 	cdq
@@ -60,3 +62,6 @@ recv:
 	mov  edi, ebx         ; not necessary if second stages use ebx instead of 
 	                      ; edi for fd
 	jmp  ecx
+
+
+%endif

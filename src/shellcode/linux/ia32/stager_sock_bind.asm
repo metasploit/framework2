@@ -67,6 +67,8 @@ accept:
 	int  0x80
 	xchg eax, ebx
 
+%ifndef USE_SINGLE_STAGE
+
 read:
 	mov  dh, 0xc
 	mov  al, 0x3
@@ -74,3 +76,5 @@ read:
 	mov  edi, ebx    ; not necessary if second stages use ebx instead of edi 
 	                 ; for fd
 	jmp  ecx
+
+%endif

@@ -43,6 +43,10 @@ findtag:
 	cmp  dword [esi], 0x2166736d ; tag: msf!
 	jnz  findtag
 	pop  edi
+
+%ifndef USE_SINGLE_STAGE
+jumpstage:
 	cld
 	lodsd
 	jmp  esi
+%endif
