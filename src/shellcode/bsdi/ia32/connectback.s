@@ -5,6 +5,7 @@
 # purpose : connectback
 # size    : 77 bytes
 # author  : skape (mmiller [at] hick.org)
+#           optyx (optyx [at] uberhax0r.net)
 #
 ##
 .globl main
