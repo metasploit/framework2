@@ -334,7 +334,7 @@ sub Recv {
     my ($ready) = $selector->can_read($timeout);
 
     if(!$ready) {
-      $self->SetError("Timeout $timeout reached.");
+      # $self->SetError("Timeout $timeout reached.");
       $self->SetError("Socket disconnected.") if(!$self->GetSocket->connected);
       return($data);
     }
