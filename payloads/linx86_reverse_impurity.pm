@@ -54,13 +54,13 @@ sub Generate
     my $off_size = 63;
 
     # allocation size
-    my $mall = pack("L", $size * 4);
+    my $mall = pack("V", $size * 4);
     my $off_mall = 76;
     
-    $size = pack("L", $size);
+    $size = pack("V", $size);
 
     # elf start address
-    my $start = pack("L", 0x13370074);
+    my $start = pack("V", 0x13370074);
     if (open(X, "<$pexec"))
     {
         my $elf;
