@@ -130,4 +130,14 @@ sub BufferC
     return $res;
 }
 
+sub PadBuffer {
+  my $string = shift;
+  my $length = shift;
+  my $pad = @_ ? shift : "\x00";
+
+  return if($length <= 0);
+
+  return(substr($string, 0, $length) . ($pad x ($length - length($string))));
+}
+
 1;
