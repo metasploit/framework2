@@ -1,13 +1,17 @@
 Pre-Release Tasks
 ==================
 
+ - Nop generator needs to work within badchars
+ 
+ - Nop generator needs mode for PA-RISC, SPARC, etc
+ 
+ - Nop generator needs a no-mod-regs option to avoid nops which modify regs needed by exploit
+
  - Verify that send() and Send() for UDP dont truncate
 
  - Fix /usr/bin/env errors for Solaris / perl 5.6
 
  - Finish writing msfencode 
- 
- - Finish writing and testing new handler system
  
  - The msfweb interface does not work correctly on Mac OS X
 
@@ -16,8 +20,6 @@ Pre-Release Tasks
  - Multiple return values of Check, not just 0/1, we need 0 for plain not vuln, 1 for looks vuln, 2 for confirmed, -1 for cant exploit, -2 for cant tell
 
  - Make the OS explicit. Remove win32, make it win2000, winxp, etc, etc for exploits and payloads
-
- - Fix msfconsole so that ^C during Exploit with unhandled payload does not kill interface
 
  - The winadduser payload needs to be rewritten using new api
 
@@ -30,8 +32,6 @@ Pre-Release Tasks
  - Find a host for the mailing list, public CVS, bugzilla, etc. 
  
  - Add documentation describing how the shared config file relates to msfcli and msfconsole
- 
- X Remove any exploits which are just plain broken - maybe Exchange?
  
  - The Pex library needs documentation and API guides for standalone use 
  
