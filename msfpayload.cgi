@@ -234,14 +234,14 @@ sub DisplayHeader {
                     background:     white;
                     font-family:    Verdana, Arial, Helvetica, Tahoma, sans-serif;
                     color:          black;
-                    font-size:      14pt;
+                    font-size:      11pt;
                     margin:         0;
                 }
 
-                A:link          { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
-                A:active        { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
-                A:visited       { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
-                A:hover         { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+                A:link          { font-size: 11pt; text-decoration: none; color: navy; font-weight: bold;}
+                A:active        { font-size: 11pt; text-decoration: none; color: navy; font-weight: bold;}
+                A:visited       { font-size: 11pt; text-decoration: none; color: navy; font-weight: bold;}
+                A:hover         { font-size: 11pt; text-decoration: none; color: navy; font-weight: bold;}
 
             </style>            
         </head>

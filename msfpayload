@@ -38,7 +38,7 @@ getopts('hv', \%opts);
 Version() if($opts{'v'});
 
 $ui->SetTempEnv('_MsfPayload', 1);
-#$ui->SetTempEnv('DebugLevel', 0);
+$ui->SetTempEnv('DebugLevel', 0);
 
 my $exploits = { };
 my $payloads = { };

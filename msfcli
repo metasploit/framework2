@@ -29,7 +29,6 @@ use Pex;
 
 Msf::UI::ActiveStateSucks();
 
-
 my $ui = Msf::TextUI->new($RealBin);
 my $FRAMEVERSION = $ui->Version;
 my $VERSION = '$Revision$';
@@ -39,6 +38,20 @@ getopts('hv', \%opts);
 Usage()   if($opts{'h'});
 Version() if($opts{'v'});
 
+my $mod = shift;
+my @ARG;
+my %tenv;
+
+# parse the command line options
+while(my($key, $val) = split('\=', shift(@ARGV))) {
+  if(!defined($val)) {
+    push(@ARG, $key);
+  }
+  else {
+    $tenv{$key} = $val;
+  }
+}
+
 my $exploits = { };
 my $payloads = { };
 my $exploitsIndex = $ui->LoadExploits;
@@ -46,8 +59,6 @@ my $payloadsIndex = $ui->LoadPayloads;
 my $encoders = $ui->LoadEncoders;
 my $nops     = $ui->LoadNops;
 
-my $mod = shift;
-my @ARG;
 
 # A quick note:
 # The Load methods return a hash of instantiated objects
@@ -67,6 +78,7 @@ if(!defined($mod)) {
   ListExploits();
   exit(0);
 }
+
 
 my $exploit = $exploits->{$mod};
 if (! $exploit) {
@@ -91,30 +103,23 @@ if (! $exploit) {
     }    
 }
 
-
-my $exploitName = $exploit->SelfName;
-$exploitName =~ s/.*:://g; # Remove package prefix
+my $exploitName = $exploit->SelfEndName;
 $ui->LoadTempEnv($exploitName);
+
+# merge command line env variables into temp env
+foreach (keys(%tenv)) {
+	$ui->SetTempEnv($_, $tenv{$_});
+}
 
 $ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
 $ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
 $ui->SetTempEnv('_Encoders', $encoders);
 $ui->SetTempEnv('_Nops', $nops);
 
-# parse the command line options
-while(my($key, $val) = split('\=', shift(@ARGV))) {
-  if(!defined($val)) {
-    push(@ARG, $key);
-  }
-  else {
-    $ui->SetTempEnv($key, $val);
-  }
-}
-
 my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
-
 my $payloadName = $ui->GetEnv('PAYLOAD');
 my $payload = $validPayloads->{$payloadName};
+
 
 # Mmmmm, candy
 $ui->SetTempEnv('_Exploits', $exploits);

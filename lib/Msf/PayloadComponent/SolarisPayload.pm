@@ -38,6 +38,14 @@ sub new {
     return($self);
 }
 
+# XXX - Solaris payloads are disabled for now, there are still some
+# problems with the stage shell and we simply ran out of time
+# to resolve them before release.
+sub Loadable {
+	my $self = shift; 
+    return $self->GetVar('SolarisDebug') ? 1 : undef;
+}
+
 sub InitSolaris {
     my $self = shift;
 #    $self->{'SolarisPayload'} = $self->{'Info'}->{'SolarisPayload'};
