@@ -124,23 +124,29 @@ printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n",
 ProcessCmd('use', shift(@ARGV)) if(@ARGV);
 ProcessScript($opts{'s'}) if(exists($opts{'s'}));
 
+SetupCmds();
+
 while (1)
 {
     last if(!ProcessCmd($console->readCommand()));
 }
 print "\n";
 
-sub ProcessCmd {
-  my $cmd = shift;
-  my @args = @_;
-
+sub SetupCmds {
   %virtualCmds = %globalCmds;
   
   my $stateMode = $state->{'Mode'};
     
   if ($stateMode eq 'Main')    { foreach (keys(%mainCmds)){ $virtualCmds{$_} = $mainCmds{$_} } }
   if ($stateMode eq 'Exploit') { foreach (keys(%exploitCmds)){ $virtualCmds{$_} = $exploitCmds{$_} } }
-    
+}
+
+sub ProcessCmd {
+  my $cmd = shift;
+  my @args = @_;
+
+  SetupCmds();
+
   return(0) if(!defined($cmd));
 
   if(exists($virtualCmds{$cmd})) {
