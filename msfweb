@@ -19,7 +19,6 @@ require 5.6.0;
 use strict;
 use FindBin qw{$Bin};
 use lib "$Bin/lib";
-use Msf::HandlerWeb;
 use Msf::WebUI;
 
 use POSIX;
