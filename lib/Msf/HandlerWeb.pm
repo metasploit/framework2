@@ -73,7 +73,9 @@ sub shell_proxy
             {
                 $victim->send("[*] Connected to " . $args[0]->peerhost . ":" . $args[0]->peerport . "\n\n");
             }
-            $self->SUPER->$pump($victim, @args);
+            
+            # In the ghetto, the mighty ghetto, some coders write like this...
+            eval("\$self->SUPER::$pump(\$victim, \@args)");
             $victim->send("[*] Exiting Shell Proxy...\n");
             $victim->close();
             undef($victim);
