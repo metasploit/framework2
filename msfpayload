@@ -22,11 +22,20 @@ use FindBin qw{$Bin};
 use POSIX;
 
 use lib "$Bin/lib";
+use Msf::TextUI;
 use Pex;
 
-my $payloads = Pex::LoadPayloads("$Bin/pay");
-my $sel = shift();
 
+my $ui = Msf::TextUI->new($Bin);
+
+my $payloadsIndex = $ui->LoadPayloads;
+my $payloads = { };
+
+foreach my $key (keys(%{$payloadsIndex})) {
+    $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
+}
+
+my $sel = shift();
 my $p = $payloads->{$sel};
 Usage() if ! $p;
 
@@ -50,20 +59,20 @@ if (! $action || $action =~ /^S/)
 {
     print "\n";
     print "        Name: $sel\n";
-    print "     Version: " . $p->Vers . "\n";
-    print "      Author: " . $p->Auth . "\n";
-    print "Architecture: " . $p->Arch . "\n";
+    print "     Version: " . $p->Version . "\n";
+    print "      Author: " . $p->Author . "\n";
+    print "Architecture: " . join(" ", @{$p->Arch}) . "\n";
     print "  Privileged: " . ($p->Priv ? "Yes" : "No") . "\n";
-    print "Supported OS: " . join(" ", $p->OS()) . "\n";
+    print "Supported OS: " . join(" ", @{$p->OS()}) . "\n";
     print "Handler Type: " . $p->Type . "\n";
     print "  Total Size: " . $p->Size . "\n\n";
     
-    if (scalar(keys(%{$p->Opts})))
+    if (scalar(keys(%{$p->UserOpts})))
     {
-        foreach my $o (keys(%{$p->Opts}))
+        foreach my $o (keys(%{$p->UserOpts}))
         {
-            print "\t" . $o . (" " x (20 - length($o))) . ($p->Opts->{$o}->[0] ? "Y" : "N") .
-                  "\t" . $p->Opts->{$o}->[1] . "\t" . $p->Opts->{$o}->[2] . "\n";
+            print "\t" . $o . (" " x (20 - length($o))) . ($p->UserOpts->{$o}->[0] ? "Y" : "N") .
+                  "\t" . $p->UserOpts->{$o}->[1] . "\t" . $p->UserOpts->{$o}->[2] . "\n";
         }
     }
     print "\n";
@@ -92,7 +101,7 @@ sub Usage
     print STDERR "Payloads: \n";
     foreach my $p (sort(keys(%{$payloads})))
     {
-        print STDERR "\t$p" . (" " x (20 - length($p))) . $payloads->{$p}->Desc . "\n";
+        print STDERR "\t$p" . (" " x (20 - length($p))) . $payloads->{$p}->Description . "\n";
     }
     exit(0);
 }

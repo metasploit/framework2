@@ -172,15 +172,16 @@ sub Exploit {
     }
 
     my @targets = $exploit->Targets;
-    my $target = $ui->GetTempEnv('TARGET');
+    my $target = $ui->GetEnv('TARGET');
     if (defined($target) && ! defined($targets[$target]))
     {
-      xMsg('exploit', 'Invalid target specified.');
+      print "[*] Invalid target specified\n";
+      exit(0);
     }
   
     # Important: Default the target to 0, maybe this should somehow
     # be in Msf::Exploit, maybe be part of the Validate process?
-    $ui->SetTempEnv('TARGET', 0) if (!defined($target));
+    $ui->SetEnv('TARGET', 0) if (!defined($target));
 
     if (defined($payload))
     {
@@ -188,7 +189,7 @@ sub Exploit {
         return if($ui->PrintError);
     }
 
-    $ui->SetTempEnv('HCALLBACK', \&xCallback);
+    $ui->SetEnv('HCALLBACK', \&xCallback);
 
     my $handler = Msf::HandlerCLI->new();
     
@@ -203,16 +204,16 @@ sub Exploit {
         {
             print STDERR "Handler (" . $payload->Type .") can $phand and $chand!\n";
             my ($csock, $psock);
-            $ui->SetTempEnv('HANDLER', $handler);
-            $ui->SetTempEnv('HCFUNC',  $chand);
+            $ui->SetEnv('HANDLER', $handler);
+            $ui->SetEnv('HCFUNC',  $chand);
             
-            xMsg("exploit", "creating link between child and parent process");
+            print "[*] Creating link between child and parent process\n";
             
             socketpair($csock, $psock, AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
-            || die "msfconsole: exploit: socketpair: $!";
+            || die "msfcli: exploit: socketpair: $!";
             
-            $ui->SetTempEnv('HCSOCK', $csock);
-            $ui->SetTempEnv('HPSOCK', $psock);
+            $ui->SetEnv('HCSOCK', $csock);
+            $ui->SetEnv('HPSOCK', $psock);
         }      
     }
     
@@ -224,18 +225,18 @@ sub Exploit {
         {
             if ($phand)
             {
-                xMsg("exploit", "starting handler $phand");
-                my $res = $handler->$phand($payload, $ui->GetTempEnv, $child);
+                print "[*] Starting handler $phand...\n";
+                my $res = $handler->$phand($payload, $ui->GetEnv, $child);
                 kill('TERM', $child);
 
                 if (! $res)
                 {
-                    xMsg("exploit", "handler error: " . $handler->Error() );
+                    print "[*] Handler error: ". $handler->Error. "\n";
                     kill('TERM', $child);
                 }
 
             } else {
-                xMsg("exploit", "no handler for payload type: " . $payload->Type());
+                print "[*] No handler for payload type: ". $payload->Type. "\n";
             }
         }
         
@@ -248,13 +249,6 @@ sub Exploit {
     }
     print "\n";
 }
-
-sub xMsg
-{
-    my ($loc, $msg) = @_;
-    print STDERR "msfconsole: $loc: $msg\n";
-}
-
 
 sub Usage {
     print "\nUsage: $0 <ID> [var=val] [MODE]\n";
