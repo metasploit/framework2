@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::FindConnection';
 
 my $info =
 {
-  'Name'         => 'BSD IA32 Srcport Findsock Shell',
+  'Name'         => 'BSD IA32 SrcPort Findsock Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Spawn a shell on the established connection',
   'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],

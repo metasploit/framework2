@@ -522,6 +522,7 @@ sub KeysToIcons {
 		'openbsd'	=> 'bsd',
 		'freebsd'	=> 'bsd',
 		'netbsd'	=> 'bsd',
+		'bsdi'		=> 'bsd',
 		'macos'		=> 'mac',
 	);
 
