@@ -41,6 +41,8 @@ sub new {
   return($self);
 }
 
+sub Size        { my $self = shift; return $self->_Info->{'Size'}; }
+
 # Fall throughs
 sub Build {
   my $self = shift;
