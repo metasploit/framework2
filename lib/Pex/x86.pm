@@ -4,6 +4,7 @@
 ##
 #         Name: x86.pm
 #       Author: spoonm <ninjatools [at] hush.com>
+#       Author: vlad902 <vlad902 [at] gmail.com>
 #      Version: $Revision$
 #      License:
 #
@@ -114,6 +115,60 @@ my $regs = {
 sub RegNameToNumber {
   my $name = shift;
   return($regs->{lc($name)});
+}
+
+# Doesn't do memory adressing.
+sub EncodeModRM {
+  my $dst = shift;
+  my $src = shift;
+
+  return 0xc0 + $src + ($dst << 3);
+}
+
+sub EncodeEffective {
+  my $shift_num = shift;
+  my $reg = shift;
+
+  return 0xc0 | ($shift_num << 3) | $reg;
+}
+
+sub mov {
+  my $constant = shift;
+  my $dst = RegNameToNumber(shift);
+
+# XXX: Add support for signedness
+  if($constant >= 0 && $constant <= 0x7f)
+  {
+    return "\x6a" . pack("C", $constant) . pack("C", 0x58 + $dst);
+  }
+  elsif($constant >= 0 && $constant <= 0xff)
+  {
+    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . pack("C", 0xb0 + $dst) . pack("C", $constant);
+  }
+  elsif($constant >= 0 && $constant <= 0xffff)
+  {
+    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . "\x66" . pack("C", 0xb8 + $dst) . pack("n", $constant);
+  }
+}
+
+sub sub {
+  my $constant = shift;
+  my $dst = RegNameToNumber(shift);
+
+# XXX: Needs work. Do special encoding for eax? (One byte smaller)
+  if($constant >= -0x7f && $constant <= 0x7f)
+  {
+    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . "\x83" . pack("C", EncodeEffective(5, $dst)) . pack("C", $constant); 
+  }
+  elsif($constant >= -0xffff && $constant <= 0)
+  {
+    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . "\x66\x81" . pack("C", EncodeEffective(5, $dst)) . pack("v", $constant); 
+  }
+  else
+  {
+    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . "\x81" . pack("C", EncodeEffective(5, $dst)) . pack("V", $constant); 
+  }
+
 }
 
 1;
