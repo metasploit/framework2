@@ -15,7 +15,6 @@ sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };
   my $self = bless($hash, $class);
-  $self->{'Error'};
   return($self);
 }
 sub _Env {
