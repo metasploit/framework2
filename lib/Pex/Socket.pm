@@ -195,7 +195,7 @@ sub GetBuffer {
 sub RemoveBuffer {
   my $self = shift;
   my $size = @_ ? shift : 999999999;
-
+  return('')if (! defined($self->{'Buffer'}) || ! length($self->{'Buffer'}));
   return(substr($self->{'Buffer'}, 0, $size, ''));
 }
 
