@@ -471,10 +471,11 @@ void cmd_quit(int argc, char * argv[])
 
 #define	MAX_ARGV	15
 
-int main (int argc, char **argv)
+int main(void)
 {
 	setvbuf(stdout, (char *)NULL, _IONBF, 0);
 	printf("--=[ Impurity Demo Shell\n");
+/* XXX: Big negative sbrk() to remove heap? */
     
 	while(1)
 	{
