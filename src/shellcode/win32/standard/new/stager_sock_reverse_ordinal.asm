@@ -4,14 +4,14 @@ BITS 32
 ; at CanSecWest 2004.
 ;
 ; skape vs spoonm vs vlad902 tagteam, bringing x86 back to the streets
-; October 2004, Happy Halloween, don't forget reflective tape!
+; October 2004, Happy Halloween, I'm going as that System Shutdown dialog box.
 ;
 ; walks the PEB loaded module list in initialized order looking for ws2_32.dll
 ; and then uses the function ordinals to resolve the absolute function address
 ;
 ; reverse connect + recv and jmp
 ;
-; 96 bytes yo, now let's get it under 90 :)
+; 93 bytes yo, now let's get it under 90 :)
 
 
 find_module_list:
