@@ -75,7 +75,7 @@ if (! $action)
     {
         my $subtable =
         "<table cellspacing=0 cellpadding=4 border=0>\n".
-        "<tr align='center'><td>Name</td><td>Required</td><td>Description</td><td>Default</td></tr>\n".
+        "<tr align='center'><td>Name</td><td>Required</td><td>Description</td><td>Default</td></tr>\n";
         
         foreach my $o (keys(%{$p->UserOpts}))
         {
