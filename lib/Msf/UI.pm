@@ -386,7 +386,13 @@ sub Encode {
 
 sub GetEncoders {
   my $self = shift;
-  my @preferred = split(',', $self->GetEnv('Encoder'));
+  my @preferred;
+  foreach my $encoder (split(',', $self->GetEnv('Encoder'))) {
+    if(index($encoder, '::') == -1) {
+      $encoder = 'Msf::Encoder::' . $encoder;
+    }
+    push(@preferred, $encoder);
+  }
   return(@preferred) if($self->GetEnv('EncoderDontFallThrough'));
   my @encoders;
   foreach my $encoder (keys(%{$self->GetTempEnv('_Encoders')})) {
@@ -397,7 +403,13 @@ sub GetEncoders {
 }
 sub GetNops {
   my $self = shift;
-  my @preferred = split(',', $self->GetEnv('Nop'));
+  my @preferred;
+  foreach my $nop (split(',', $self->GetEnv('Nop'))) {
+    if(index($nop, '::') == -1) {
+      $nop = 'Msf::Nop::' . $nop;
+    }
+    push(@preferred, $nop);
+  }
   return(@preferred) if($self->GetEnv('NopDontFallThrough'));
   my @nops;
   foreach my $nop (keys(%{$self->GetTempEnv('_Nops')})) {
