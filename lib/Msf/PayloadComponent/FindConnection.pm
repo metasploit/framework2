@@ -23,6 +23,7 @@ sub ChildHandler {
   my $sock = shift;
   my $blocking = $sock->blocking;
   my $tries = 0;
+  $self->{'_Buffer'} = '';
 
   $sock->blocking(1);
   $sock->autoflush(1);
@@ -38,6 +39,7 @@ AGAIN:
 
   eval { $ready[0]->send("echo ABCDE\r\n"); };
 
+AGAIN_NOSEND:
   @ready = $selector->can_read(0.5);
 
   goto CHECK_AGAIN if(!@ready || !$ready[0]->connected);
@@ -45,14 +47,28 @@ AGAIN:
   my $data;
   $ready[0]->recv($data, 4096);
   
-  goto CHECK_AGAIN if(!length($data));
+  goto AGAIN if(!length($data));
+	$self->{'_Buffer'} .= $data;
   if($data =~ /ABCDE/) {
     $self->PipeRemoteIn($ready[0]);
     $self->PipeRemoteOut($ready[0]);
     $self->PrintLine('[*] Findsock found shell...');
+
+	$self->{'_Buffer'} =~ s/echo ABCDE//gm;
+	$self->{'_Buffer'} =~ s/ABCDE//gm;
+
+	 if (length($self->{'_Buffer'}) > 0)
+	 {
+	 	$self->Print($self->{'_Buffer'});
+	}
+
     $self->HandleConsole;
     exit(0);
   }
+  else
+  {
+  	goto AGAIN_NOSEND;
+	}
 
 CHECK_AGAIN:
   if ($tries == 0)

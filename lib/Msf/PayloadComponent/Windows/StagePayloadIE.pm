@@ -1,4 +1,4 @@
-package Msf::PayloadComponent::Win32StagePayloadIE;
+package Msf::PayloadComponent::Windows::StagePayloadIE;
 use strict;
 use vars qw{@ISA};
 

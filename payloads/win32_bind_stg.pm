@@ -8,28 +8,37 @@
 ##
 
 package Msf::Payload::win32_bind_stg;
+
 use strict;
-use base 'Msf::PayloadComponent::Win32ShellStage';
-sub _Load {
-  Msf::PayloadComponent::Win32ShellStage->_Import('Msf::PayloadComponent::Win32BindStager');
-  __PACKAGE__->SUPER::_Load();
+use base 'Msf::PayloadComponent::Windows::ia32::ShellStage';
+
+sub _Load 
+{
+	Msf::PayloadComponent::Windows::ia32::ShellStage->_Import('Msf::PayloadComponent::Windows::ia32::BindStager');
+
+	__PACKAGE__->SUPER::_Load();
 }
 
 my $info =
 {
-  'Name'         => 'Windows Staged Bind Shell',
-  'Version'      => '$Revision$',
-  'Description'  => 'Listen for connection and spawn a shell',
-  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
+	'Name'         => 'Windows Staged Bind Shell',
+	'Version'      => '$Revision$',
+	'Description'  => 'Listen for connection and spawn a shell',
+	'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
 };
 
-sub new {
-  _Load();
-  my $class = shift;
-  my $hash = @_ ? shift : { };
-  $hash = $class->MergeHashRec($hash, {'Info' => $info});
-  my $self = $class->SUPER::new($hash, @_);
-  return($self);
+sub new 
+{
+	my $class = shift;
+	my $hash = @_ ? shift : { };
+	my $self;
+
+	_Load();
+
+	$hash = $class->MergeHashRec($hash, {'Info' => $info});
+	$self = $class->SUPER::new($hash, @_);
+
+	return($self);
 }
 
 1;
