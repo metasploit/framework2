@@ -317,6 +317,10 @@ sub RefConvert {
     return 'http://www.securityfocus.com/bid/'.$data;
   }
   
+  if ($type eq 'MSB') {
+    return 'http://www.microsoft.com/technet/security/bulletin/'.$data.'.mspx';
+  }  
+  
   return $data;
 }
 
