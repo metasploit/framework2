@@ -15,7 +15,6 @@ my $defaults =
   'UserOpts'    => { },
   'Refs'        => [ ],
   'Description' => 'No Description',
-  'AutoOpts'    => { },
 };
 
 sub new {
@@ -58,8 +57,7 @@ sub Info {
 }
 
 
-# Generic
-
+# Generic Accessors
 sub Name        { my $self = shift; return($self->Info->{'Name'}); }
 sub Version     { my $self = shift; return($self->Info->{'Version'}); }
 sub Author      { my $self = shift; return($self->Info->{'Author'}); }
@@ -70,11 +68,6 @@ sub Priv        { my $self = shift; return($self->Info->{'Priv'}); }
 sub UserOpts    { my $self = shift; return($self->Info->{'UserOpts'}); }
 sub Refs        { my $self = shift; return($self->Info->{'Refs'}); }
 sub Description { my $self = shift; return($self->Info->{'Description'}); }
-
-
-#fixme
-# Used?
-sub AutoOpts    { my $self = shift; return $self->Info->{'AutoOpts'}; }
 
 sub Loadable {
   return(1);

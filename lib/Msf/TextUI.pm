@@ -295,6 +295,9 @@ sub Exploit {
     $self->PrintLine("[*] Invalid payload specified: $payloadName");
     return;
   }
+
+  $exploit->Prepare;
+  return if($exploit->PrintError);
  
   $exploit->Validate;
   return if($exploit->PrintError);
