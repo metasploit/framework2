@@ -40,11 +40,7 @@ my $table = [
   [ \&Insarithmetic, [ 1, 6 ], ],			# orn
   [ \&Insarithmetic, [ 1, 7 ], ],			# xnor
   [ \&Insarithmetic, [ 1, 8 ], ],			# addx
-  [ \&Insarithmetic, [ 1, 10 ], ],			# umul 
-  [ \&Insarithmetic, [ 1, 11 ], ],			# smul 
   [ \&Insarithmetic, [ 1, 12 ], ],			# subx
-  [ \&Insarithmetic, [ 0, 14 ], ],			# udiv
-  [ \&Insarithmetic, [ 0, 15 ], ],			# sdiv
   [ \&Insarithmetic, [ 1, 16 ], ],			# addcc
   [ \&Insarithmetic, [ 1, 17 ], ],			# andcc
   [ \&Insarithmetic, [ 1, 18 ], ],			# orcc
@@ -54,11 +50,7 @@ my $table = [
   [ \&Insarithmetic, [ 1, 22 ], ],			# orncc
   [ \&Insarithmetic, [ 1, 23 ], ],			# xnorcc
   [ \&Insarithmetic, [ 1, 24 ], ],			# addxcc
-  [ \&Insarithmetic, [ 1, 26 ], ],			# umulcc
-  [ \&Insarithmetic, [ 1, 27 ], ],			# smulcc
   [ \&Insarithmetic, [ 1, 28 ], ],			# subxcc
-  [ \&Insarithmetic, [ 0, 30 ], ],			# udivcc
-  [ \&Insarithmetic, [ 0, 31 ], ],			# sdivcc
   [ \&Insarithmetic, [ 1, 32 ], ],			# taddcc
   [ \&Insarithmetic, [ 1, 33 ], ],			# tsubcc
   [ \&Insarithmetic, [ 1, 36 ], ],			# mulscc
@@ -83,6 +75,15 @@ my $table = [
   [ \&Insbranch, [ 13 ] ],				# bcc[,a]
   [ \&Insbranch, [ 14 ] ],				# bpos[,a]
   [ \&Insbranch, [ 15 ] ],				# bvc[,a]
+# Remove for SPARCV7 support
+#  [ \&Insarithmetic, [ 1, 10 ], ],			# umul 
+#  [ \&Insarithmetic, [ 1, 11 ], ],			# smul 
+#  [ \&Insarithmetic, [ 0, 14 ], ],			# udiv
+#  [ \&Insarithmetic, [ 0, 15 ], ],			# sdiv
+#  [ \&Insarithmetic, [ 1, 26 ], ],			# umulcc
+#  [ \&Insarithmetic, [ 1, 27 ], ],			# smulcc
+#  [ \&Insarithmetic, [ 0, 30 ], ],			# udivcc
+#  [ \&Insarithmetic, [ 0, 31 ], ],			# sdivcc
 ];
 
 # Returns valid destination register number between 0 and 31 excluding %sp
