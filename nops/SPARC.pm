@@ -75,7 +75,7 @@ my $table = [
   [ \&Insbranch, [ 13 ] ],				# bcc[,a]
   [ \&Insbranch, [ 14 ] ],				# bpos[,a]
   [ \&Insbranch, [ 15 ] ],				# bvc[,a]
-# Remove for SPARCV7 support
+# Removed for SPARCV7 support
 #  [ \&Insarithmetic, [ 1, 10 ], ],			# umul 
 #  [ \&Insarithmetic, [ 1, 11 ], ],			# smul 
 #  [ \&Insarithmetic, [ 0, 14 ], ],			# udiv
@@ -176,7 +176,7 @@ sub Nops {
       $count = 0;
     }
 
-    if($count > $length + 500)
+    if($count > $length + 1000)
     {
       if(length($nop) == 0)
       {
