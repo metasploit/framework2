@@ -24,7 +24,7 @@ _start:
   call LKernel32Base
 
   ; stealing code is what we do well...
-  ; Orignally written by skape (mmiler@hick.org)
+  ; Orignally written by skape (mmiller@hick.org)
   ; Modified and optimized by vlad902 (vlad902@gmail.com)
   ; all based on dino code...
 
