@@ -108,7 +108,7 @@ while (1)
     $nops     = $ui->LoadNops;
 
     foreach my $key (keys(%{$exploitsIndex})) {
-        $exploits->{$exploitsIndex->{$key}->Name} = $exploitsIndex->{$key};
+        $exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
     }
     
     foreach my $key (keys(%{$payloadsIndex})) {
@@ -123,7 +123,7 @@ while (1)
 	# XXX
     $ui->UnsetGlobalEnv('Logging');
     $ui->UnsetTempEnv('Logging');
-s
+
     my $logaction;
     if ($state->{'MODULE'})
     {
@@ -358,8 +358,8 @@ sub ExploitPayload
         {
             my $u = StateToURL('OPTIONS', $state);
             my $pname = $payloads->{$k}->Name();
-            $res .= "<tr><td><a href='".$u."PAYLOAD=" . $pname . "'>$pname</a></td>";
-            $res .= "<td>" .$payloads->{$k}->Description() . "</td></tr>\n";
+            $res .= "<tr><td><a href='".$u."PAYLOAD=" . $k . "'>$k</a></td>";
+            $res .= "<td>" .$pname . "</td></tr>\n";
         }
         $res .= "</table>\n";
     } else {
