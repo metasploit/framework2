@@ -18,11 +18,11 @@ require 5.6.0;
 
 use strict;
 
-use FindBin qw{$Bin};
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
 use Getopt::Std;
 use POSIX;
 
-use lib "$Bin/lib";
 use Msf::TextUI;
 use Msf::ColPrint;
 use Pex;

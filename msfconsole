@@ -18,14 +18,13 @@
 require 5.6.0;
 
 use strict;
-
-use FindBin qw{$Bin};
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
 use vars qw($VERSION);
 use IO::Socket;
 use POSIX;
 use Getopt::Std;
 
-use lib "$Bin/lib";
 
 use Pex::PsuedoShell;
 use Msf::TextUI;

@@ -31,9 +31,8 @@ require 5.6.0;
 use strict;
 
 use Getopt::Std;
-use FindBin qw{$Bin};
-
-use lib "$Bin/lib";
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
 use Pex::PEInfo;
 use Pex;
 

@@ -16,11 +16,11 @@
 
 require 5.6.0;
 
-use FindBin qw{$Bin};
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
 use Getopt::Std;
 use strict;
 
-use lib "$Bin/lib";
 use Pex::PEInfo;
 use Pex;
 use Pex::Nasm::Ndisasm;
