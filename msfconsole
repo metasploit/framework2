@@ -136,6 +136,10 @@ while (1)
 print "\n";
 
 sub Load {
+
+    my $tmpDL = $ui->GetTempEnv('DebugLevel');
+    $ui->UnsetTempEnv('DebugLevel');
+
     $exploitsIndex = $ui->LoadExploits;
     $payloadsIndex = $ui->LoadPayloads;
     $encoders      = $ui->LoadEncoders;
@@ -165,6 +169,10 @@ sub Load {
     # Important, reload the exploit object in state
     if($state->{'Mode'} eq 'Exploit') {
       $state->{'Exploit'}->{'Exploit'} = $exploits->{$state->{'Exploit'}->{'Name'}};
+    }
+    
+    if ($tmpDL) {
+        $ui->SetTempEnv('DebugLevel', $tmpDL);
     }
 }
 
