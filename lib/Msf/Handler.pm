@@ -14,7 +14,7 @@
 ##
 
 package Msf::Handler;
-use base 'Msf::Base';
+use base 'Msf::Module';
 use IO::Socket;
 use IO::Select;
 
