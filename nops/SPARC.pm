@@ -66,7 +66,7 @@ my $table = [
   [ \&Insarithmetic, [ 2, 38 ], ],			# srl
   [ \&Insarithmetic, [ 2, 39 ], ],			# sra
   [ \&Insarithmetic, [ 4, 40 ], ],			# rdy
-#  [ \&Insarithmetic, [ 3, 48 ], ],			# wry
+  [ \&Insarithmetic, [ 3, 48 ], ],			# wry
   [ \&Insbranch, [ 0 ] ],				# bn[,a]
   [ \&Insbranch, [ 1 ] ],				# be[,a]
   [ \&Insbranch, [ 2 ] ],				# ble[,a]
@@ -105,22 +105,23 @@ sub Inssethi {
 sub Insarithmetic {
   my $ref = shift;
   my $dst = get_dst_reg();
+  my $ver = $ref->[0];
 
 # WRY fix-ups.
-  if($ref->[0] == 3)
+  if($ver == 3)
   {
     $dst = 0;
-    $ref->[0] = 1; 
+    $ver = 1; 
   }
 
 # 0, ~1, !2, ~3, !4
 # Use one src reg with a signed 13-bit immediate (non-0)
-  if(($ref->[0] == 0) || ($ref->[0] == 1 && int(rand(2))))
+  if(($ver == 0) || ($ver == 1 && int(rand(2))))
   {
     return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | (1 << 13) | (int(rand((1 << 13) - 1)) + 1)));
   }
 # RDY
-  elsif($ref->[0] == 4)
+  elsif($ver == 4)
   {
 # $ref->[1] could be replaced with a static value since this only encodes for one function but it's done this way for consistancy.
     return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19)));
