@@ -345,18 +345,12 @@ sub LoadImage {
     $self->{'OPT_IMG_HDR'}  = \%OPT_IMAGE_HDR;
     $self->{'SECTIONS'}     = \%SECTIONS;
     $self->{'RVA'}          = \%RVA;
-   
 
     $self->_LoadImport();
-    print "Import\n";<>;
     $self->_LoadExport();
-    print "Export\n";<>;
-    $self->_LoadResources();
-    print "Resource\n";<>;    
+    $self->_LoadResources();  
     $self->_LoadVersionData();    
-    print "Version\n";<>;
-        
-    
+
     return($self);    
 }
 
@@ -432,6 +426,9 @@ sub _LoadImport {
         }    
     }
     $self->{'IMPORT'} = $itable;
+    undef $idata;
+    undef $data;
+    return;
 }
 
 sub _LoadExport {
