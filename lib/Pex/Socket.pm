@@ -423,7 +423,10 @@ sub Recv {
         $self->GetSocket->recv($tempData, 4096);
       }
 
-      last if(!length($tempData));
+      if(!length($tempData)) {
+        $self->SetError('Socket dry read.');
+        last;
+      }
       $data .= $tempData;   
     }
     return($data);
