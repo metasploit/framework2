@@ -24,7 +24,7 @@ use POSIX;
 use Pex;
 use CGI qw/:standard/;
 
-open (STDERR, ">/dev/null");
+# open (STDERR, ">/dev/null");
 
 my $query = new CGI; 
 print $query->header();
@@ -150,7 +150,7 @@ if ($action eq "BUILD")
     }
 
 
-    my $s = $p->Encode;
+    my $s = $ui->Encode;
     if (! $s)
     {
         print "<b>Error</b>: Shellcode build error: " . $ui->Error() . "<br>\n";
