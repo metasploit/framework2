@@ -10,7 +10,7 @@
 package Msf::Encoder::Sparc;
 use strict;
 use base 'Msf::Encoder';
-use Pex::Encoder;
+use Pex::Encoding::XorDwordFeedbackN;
 
 my $advanced = 
 {
@@ -38,7 +38,11 @@ sub EncodePayload {
     my $badchars = shift;
 
 
-    my $xor_key   = Pex::Encoder::KeyScanXorDwordFeedback($payload, $badchars);
+    my $xor_key = Pex::Encoding::XorDwordFeedbackN->KeyScan($payload, $badchars);
+    if(!$xor_key) {
+        $self->PrintDebugLine(3, 'Failed to find xor key');
+        return;                                            
+    }
 
     # Check for a null dword in the payload first, this will break the decoder
     my $check = $payload;
@@ -53,7 +57,7 @@ sub EncodePayload {
 
     # Append a null to the payload, this becomes the end tag
     $payload .= pack('N', 0);
-    my $xor_data  = Pex::Encoder::XorDwordFeedback($xor_key, $payload, 'N');
+    my $xor_data = Pex::Encoding::XorDwordFeedbackN->Encode($xor_key, $payload);
 
     my $encoder = 
         "\x20\xbf\xff\xff".   # /* bn,a  _start - 4 */
@@ -61,12 +65,12 @@ sub EncodePayload {
         "\x7f\xff\xff\xff".   # /* call  _start + 4 */
         "\x2f\x10\x50\x50".   # /* sethi %hi(0x41414141),%l7 */
         "\xae\x15\xe1\x41".   # /* or    %l7,%lo(0x41414141),%l7 */
-        "\x9e\x03\xe0\x24".   # /* add   %o7,0x24,%o7 */
-        "\xea\x03\xe0\x04".   # /* ld    [%o7 + 4],%l7 */
+        "\xea\x03\xe0\x28".   # /* ld    [%o7 + 0x28],%l7 */
         "\xaa\x9d\x40\x17".   # /* xorcc %l5,%l7,%l5 */
-        "\xea\x23\xe0\x04".   # /* st    %l5,[%o7 + 4] */
+        "\xea\x23\xe0\x28".   # /* st    %l5,[%o7 + 0x28] */
         "\xae\x05\xc0\x15".   # /* add   %l7,%l5,%l7 */
-        "\x12\xbf\xff\xfc".   # /* bnz   dec_loop */
+        "\x81\xdb\xe0\x28".   # /* flush %o7 + 0x28 */
+        "\x12\xbf\xff\xfb".   # /* bnz   dec_loop */
         "\x9e\x03\xe0\x04";   # /* add   %o7,4,%o7 */
     
     
