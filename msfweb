@@ -194,14 +194,14 @@ sub HTML_Header
                 background:     white;
                 font-family:    Verdana, Tahoma, Arial, Helvetica, sans-serif;
                 color:          black;
-                font-size:      14pt;
+                font-size:      12pt;
                 margin:         0;
             }
 
-            A:link          { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
-            A:active        { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
-            A:visited       { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
-            A:hover         { font-size: 14pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:link          { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:active        { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:visited       { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
+            A:hover         { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
 
         </style>
     </head>
