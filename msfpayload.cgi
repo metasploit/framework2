@@ -55,6 +55,7 @@ if (! exists($opt->{'PAYLOAD'}) || ! exists($payloads->{$opt->{'PAYLOAD'}}))
 
 my $sel = $opt->{'PAYLOAD'};
 my $p = $payloads->{$sel};
+my $popts = $p->UserOpts;
 
 if (! $action)
 {   
@@ -77,8 +78,6 @@ if (! $action)
     if (scalar(keys(%{$p->UserOpts})))
     {
         my $subtable = "<table cellspacing=0 cellpadding=4 border=0>\n";
-
-        my $popts = $p->UserOpts;
         foreach my $popt (sort(keys(%{$popts})))
         {
 
@@ -110,6 +109,15 @@ if ($action eq "BUILD")
 {
     DisplayHeader("Generating Payload");
 
+    my $optstr;
+    foreach (keys(%{$popts})) 
+    {
+        if(defined($opt->{$_}))
+        {
+            $optstr.= "$_=".$opt->{$_}
+        }
+    }
+
 
     my $s = $p->Build($opt);
     if (! $s)
@@ -119,11 +127,43 @@ if ($action eq "BUILD")
         exit(0);
     }
 
+    my $ctitle = "Raw Shellcode";
+    
+    if (defined($opt->{'BADCHARS'}) && defined($opt->{'ENCODE'}))
+    {
+        $ctitle = "Encoded Shellcode [";
+        my $badchars;
+        foreach my $hc (split(/\s+/, $opt->{'BADCHARS'}))
+        {
+            if ($hc =~ m/^0x(.|..)/) 
+            {
+                $badchars .= chr(hex($hc));
+                $ctitle .= sprintf("\\x%.2x", hex($hc));
+            }
+        }
+        $ctitle .= "]";
+        
+        my $e = Pex::Encoder::Encode($s, $badchars);
+        if (! $e)
+        {
+            print "<b>Error</b>: The encoder was not able to encode this payload<br>\n";
+            DisplayFooter();
+            exit(0);
+        }
+        $s = $e;
+    }
+
     my ($sC, $sP) = (Pex::Utils::BufferC($s), Pex::Utils::BufferPerl($s));
     print "<pre>\n";
     
+    print "/* $ctitle ($sel) [$optstr] http://metasploit.com /*\n";
     print "unsigned char scode[] =\n$sC\n\n\n";
+    
+    print "# $ctitle ($sel) [$optstr] http://metasploit.com\n";
     print "my \$shellcode =\n$sP\n\n\n";
+
+
+
 
     DisplayFooter();
     exit(0);
