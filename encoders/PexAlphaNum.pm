@@ -7,7 +7,6 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-
 package Msf::Encoder::PexAlphaNum;
 use strict;
 use base 'Msf::Encoder';
