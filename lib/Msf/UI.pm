@@ -223,7 +223,6 @@ sub Encode {
   my $exploit = $self->GetTempEnv('_Exploit');
   my $payload = $self->GetTempEnv('_Payload');
 
-  my @nops = $self->GetNops;
   my @encoders = $self->GetEncoders;
 
   my $payloadArch = $payload->Arch;
@@ -322,27 +321,60 @@ sub Encode {
   my $nopSize = $maxNops < $emptySpace ? $maxNops : $emptySpace;
   my $success = 0;
 
+  my ($rcode, $sled) = $self->MakeNopSled($nopSize, $payload, $badChars);
+  return if($rcode < 0);
+
+  $encodedPayload->SetNops($sled);
+
+#  $self->SetTempEnv('EncodedPayload', $encodedPayload);
+  return($encodedPayload);
+}
+
+sub MakeNopSled {
+  my $self = shift;
+  my $nopSize = shift;
+  my $payload = shift;
+  my $badChars = shift;
+
+  # success + empty sled
+  if($nopSize <= 0) {
+    return(1, '');
+  }
+
+  my $payloadArch = $payload->Arch;
+  my $payloadOS = $payload->OS;
+
+  my @nops = $self->GetNops;
+
+  $self->PrintDebugLine(1, "nopSize: $nopSize");
+
   foreach my $nopName (@nops) {
+
+    # Create a nop object from the package name
     $self->PrintDebugLine(1, "Trying $nopName");
     my $nop = $self->MakeNop($nopName);
     if(!$nop) {
       $self->PrintDebugLine(1, "Failed to make nop generator $nop");
-      next;
+      return(-1);
     }
+
     my $nopArch = $nop->Arch;
     my $nopOS = $nop->OS;
 
+    # Check to make sure it supports all the architectures of the payload
     if(!$self->ListCheck($payloadArch, $nopArch)) {
       $self->PrintDebugLine(2, "$nopName failed, doesn't support all architectures");
       $self->PrintDebugLine(4, "payloadArch: " . join(',', @{$payloadArch}));
       $self->PrintDebugLine(4, "nopArch: " . join(',', @{$nopArch}));
-      next;
+      return(-2);
     }
+
+    # Check to make sure it supports all the os's of the payload
     if(!$self->ListCheck($payloadOS, $nopOS)) {
       $self->PrintDebugLine(2, "$nopName failed, doesn't support all operating systems");
       $self->PrintDebugLine(4, "payloadOS: " . join(',', @{$payloadOS}));
       $self->PrintDebugLine(4, "nopOS: " . join(',', @{$nopOS}));
-      next;
+      return(-3);
     }
 
     my $nops = $nop->Nops($nopSize, $badChars);
@@ -351,33 +383,27 @@ sub Encode {
       $self->PrintDebugLine(1, "$nopName failed with an error");
       $self->PrintDebugLine(4, $nop->GetError);
       $nop->ClearError;
-      next;
+      return(-5);
     }
 
     if(length($nops) != $nopSize) {
       $self->PrintDebugLine(2, "$nopName failed, error generating nops");
       $self->PrintDebugLine(5, 'length: ' . length($nops) . 'wanted: ' . $nopSize);
-      next;
+      return(-6);
     }
 
     if(Pex::Text::BadCharCheck($badChars, $nops)) {
       $self->PrintDebugLine(2, "$nopName failed, bad chars in nops");
-      next;
+      return(-7);
     }
 
-    $success = 1;
-    $encodedPayload->SetNops($nops);
-	$encodedPayload->SetNopGen($nop, $badChars);
-    last;
+    return(1, $nops);
   }
 
-  if(!$success) {
-    $self->SetError("No nop generators succeeded");
-    return;
-  }
-#  $self->SetTempEnv('EncodedPayload', $encodedPayload);
-  return($encodedPayload);
+  $self->SetError("No nop generators succeeded");
+  return(-8);
 }
+
 
 sub GetEncoders {
   my $self = shift;
