@@ -327,7 +327,8 @@ sub DownloadFile {
         print STDERR "[*] Could not connect to $host: $!\n";
         exit(0);
     }
-    my ($vnum) = $VERSION =~ m/\$Revision$]+)/;
+
+    my ($vnum) = $VERSION =~ m/\$Revisio.\s+([^\$]+)/;
     my $req = "GET $path HTTP/1.0\r\nUser-Agent: MSFUPDATE/$vnum\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
