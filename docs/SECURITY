@@ -11,7 +11,7 @@ msfdev@metasploit.com.
     
     - We do not recommend that the msfweb component be used on untrusted
     networks. Actually, we don't recommend that you use msfweb at all, it is
-    more of a proof-of-concept that a real tool.
+    more of a proof-of-concept than a real tool.
     
     - We do not recommend that you install msfpayload.cgi on a web server that
     is exposed to an untrusted network. It is possible to configure it in such a
@@ -19,8 +19,6 @@ msfdev@metasploit.com.
     exercise to the user (Hint: symlink to cgi-bin and remove potentially
     hazardous payloads).
    
-    
-  
 
 [msfconsole]
 
