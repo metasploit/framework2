@@ -204,6 +204,7 @@ sub EncodeAlphaNum {
         # if it doesnt work, use this behemoth with minimized chars
         if (Pex::Utils::CharsInBuffer($prepend, $xbadc))
         {
+            # unique chars: 59 EB E8 A4 FF
             $prepend = 
             "\xeb\x59\x59\x59\x59\xeb\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59".
             "\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59".
@@ -218,10 +219,10 @@ sub EncodeAlphaNum {
     my $decoder = 'VTX630VX4A0B6HH0B30BCVX2BDBH4A2AD0ADTBDQB0ADAVX4Z8BDJOM';
     my $encoded;
     
-    my $allowed = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXY";
+    my $allowed = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXY';
     
     # first check to see if the encoder/alphabet is allowed 
-    if ( Pex::Utils::CharsInBuffer($allowed.$decoder."Z", $xbadc) )
+    if ( Pex::Utils::CharsInBuffer($allowed.$decoder.'Z', $xbadc) )
     {
         print "Encoder failed: restricted character in decoder or alphabet\n";
         return;
@@ -313,21 +314,21 @@ sub XorDecoderDwordAntiIds {
             my $lenops = "\x66\x81\xe9";
             $xorlen = pack("S", $loopCounter);
             
-            if ($xorlen =~ /\x00|\xff/)
+            if (Pex::Utils::CharsInBuffer($xorlen, $xbadc))
             {
                 $xorlen = pack("S", abs($loopCounter));
                 $lenops = "\x66\x81\xc1";
                 $loopmode = "add";
             }
             
-            if ($xorlen =~ /\x00|\xff/ && $loopCounter < 128)
+            if (Pex::Utils::CharsInBuffer($xorlen, $xbadc) && $loopCounter < 128)
             {
                 $xorlen = chr(abs($loopCounter)) . "\x59\x90\x90";
                 $lenops = "\x6a";
                 $loopmode = "push";
             }
             
-            if ($xorlen !~ /\x00|\xff/)
+            if (! Pex::Utils::CharsInBuffer($xorlen, $xbadc))
             {
                 my $decoder = 
                 "\xd9\xe1".                 # fabs
@@ -391,17 +392,7 @@ sub XorDecoderDwordJmpCall {
       "\xe8\xe5\xff\xff\xff";             # xor_end: call 0x2 (xor_begin)
                                           # xor_done:
   }
-    # hdm's old encoder
-    #        my $decoder =
-    #            "\xeb\x19".                     # jmp 804809b <xor_end>
-    #            "\x5e".                         # pop %esi
-    #            "\x31\xc9".                     # xor %ecx,%ecx
-    #            "\x81\xe9". $xorlen .           # sub -xorlen,%ecx
-    #            "\x81\x36". $xorkey .           # xorl xorkey,(%esi)
-    #            "\x81\xee\xfc\xff\xff\xff".     # sub $0xfffffffc,%esi (add esi, 0x04)
-    #            "\xe2\xf2".                     # loop 804808b <xor_xor>
-    #            "\xeb\x05".                     # jmp 80480a0 <xor_don>
-    #            "\xe8\xe2\xff\xff\xff";         # call 8048082 <xor_beg>
+
   return $decoder;
 }
 
@@ -608,9 +599,6 @@ sub XorByte {
     }
     return $res;
 }
-
-
-
 
 
 
