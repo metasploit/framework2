@@ -20,7 +20,7 @@ sub new {
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHash($hash, {'Info' => $info});
   my $self = $class->SUPER::new($hash, @_);
-  $self->_Info->{'Keys'} = $self->MergeArray($info->{'Keys'}, $self->Keys);
+  $self->_Info->{'Keys'} = [ @{$info->{'Keys'}}, @{$self->Keys} ];
   return($self);
 }
 
