@@ -3,12 +3,12 @@ use strict;
 use base 'Msf::Encoder';
 
 my %info = (
-  'Name'  => 'Pex Double Word Xor Encoder',
+  'Name'  => 'Null Encoder',
   'Version'  => '1.0',
   'Author'  => 'H D Mooore <hdm[at]metasploit.com> [Artistic License]',
   'Arch'  => [ 'x86' ],
   'OS'    => [ ],
-  'Desc'  =>  'Pex Double Word Xor Encoder',
+  'Desc'  =>  'This encoder does not encode',
   'Refs'  => [ ],
 );
 

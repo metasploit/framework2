@@ -50,14 +50,14 @@ sub DumpOptions {
   my $col = Msf::ColPrint->new($indent, 4);
   while(@_) {
     my $type = shift;
-    my $object = shift;
-    my $options = $object->UserOpts || { };
+    my $selfect = shift;
+    my $options = $selfect->UserOpts || { };
     $col->AddRow($type . ':', 'Name', 'Default', 'Description');
     $col->AddRow('__hr__', '__hr__', '__hr__', '__hr__');
     foreach my $opt (keys(%{$options}))
     {
         $col->AddRow($options->{$opt}->[0] ? "required" : "optional",
-            $opt, $object->GetVar($opt), $options->{$opt}->[2]);
+            $opt, $selfect->GetVar($opt), $options->{$opt}->[2]);
     }
     $col->AddRow;
   }
@@ -71,11 +71,11 @@ sub DumpAdvancedOptions {
   my $output;
   while(@_) {
     my $type = shift;
-    my $object = shift;
-    my $options = $object->Advanced || { };
+    my $selfect = shift;
+    my $options = $selfect->Advanced || { };
     $output .= "${indent}$type:\n${indent}" . ('-' x (length($type) + 1)) . "\n";
     foreach my $opt (keys(%{$options})) {
-      $output .= "${indent}Name:     $opt\n${indent}Default:  " . $object->GetVar($opt) . "\n";
+      $output .= "${indent}Name:     $opt\n${indent}Default:  " . $selfect->GetVar($opt) . "\n";
       $output .= "\n${indent}" . $self->WordWrap($options->{$opt}->[1], 2, 60);
       $output .= "\n\n";
     }

@@ -71,66 +71,66 @@ sub new
     return undef if ! -f $path;
     return undef if ! -r $path;
 
-    my $obj = bless {}, $cls;
-    $obj->{"PATH"} = $path;
-    $obj->{"TYPE"} = $type;
+    my $self = bless {}, $cls;
+    $self->{"PATH"} = $path;
+    $self->{"TYPE"} = $type;
 
-    my $res = $obj->load();
+    my $res = $self->load();
         
-    print STDERR "[*] Error loading payload: " . $obj->Error() . "\n" if ! $res;
+    print STDERR "[*] Error loading payload: " . $self->Error() . "\n" if ! $res;
     return($res);
 }
 
 sub set_error
 {
-    my ($obj,$error) = @_;
+    my ($self,$error) = @_;
     my @cinf = caller(1);
-    $obj->{"ERROR"} = $cinf[3] . " => $error";
+    $self->{"ERROR"} = $cinf[3] . " => $error";
 }
 
 sub Error
 {
-    my ($obj) = @_;
-    return ($obj->{"ERROR"});
+    my ($self) = @_;
+    return ($self->{"ERROR"});
 }
 
 sub load
 {
-    my ($obj) = @_;
+    my ($self) = @_;
     my $res;
 
-    if ($obj->{"TYPE"} eq "i")
+    if ($self->{"TYPE"} eq "i")
     {
-        $res = $obj->load_internal();
+        $res = $self->load_internal();
     } else {
-        $res = $obj->load_external();
+        $res = $self->load_external();
     }
     return($res);
 }
 
 sub load_internal
 {
-    my ($obj) = @_;
+    my ($self) = @_;
     my $options = {};
     my $buffer;
-    my $dynpkg = "PexPayload_" . scalar($obj);
+    my $dynpkg = "PexPayload_" . scalar($self);
     $dynpkg =~ s/=|\(|\)//g;
     
     local *TMP;
     
-    if (! -f $obj->{"PATH"} || ! -r $obj->{"PATH"})
+    if (! -f $self->{"PATH"} || ! -r $self->{"PATH"})
     {
-        $obj->set_error("could not open payload: not a readable file!");
+        $self->set_error("could not open payload: not a readable file!");
         return undef;   
     }
     
     # open the module file 
-    if ( open(TMP, "<" . $obj->{"PATH"}) )
+    if ( open(TMP, "<" . $self->{"PATH"}) )
     {
         while (<TMP>) { $buffer .= $_;}
         close (TMP);
     } else {
-        $obj->set_error("could not open payload: $!");
+        $self->set_error("could not open payload: $!");
         return undef;
     }
     
@@ -140,28 +140,28 @@ sub load_internal
     eval($buffer);
     if ($@)
     {
-        $obj->set_error("load error in payload: " . $obj->{"PATH"} . " $@");
+        $self->set_error("load error in payload: " . $self->{"PATH"} . " $@");
         return undef;
     }
 
     # set the subroutine reference to the generator
-    $obj->{"generate"} = eval('\&'.$dynpkg.'::generate'); 
+    $self->{"generate"} = eval('\&'.$dynpkg.'::generate'); 
 
     # configure the payload fields
     my $info = eval('$'.$dynpkg.'::payload');
 
-    return($obj->config($info));
+    return($self->config($info));
 }
 
 
 sub load_external
 {
-    my ($obj) = @_;
-    my $file = $obj->{"PATH"};
+    my ($self) = @_;
+    my $file = $self->{"PATH"};
     
     if (! -e $file)
     {
-        $obj->set_error("$file is not executable");
+        $self->set_error("$file is not executable");
         return(undef);
     }
     
@@ -170,7 +170,7 @@ sub load_external
     local *P;
     if (! open(P, "$file INFO|"))
     {
-        $obj->set_error("execution of $file failed: $!");
+        $self->set_error("execution of $file failed: $!");
         return(undef)
     }
     
@@ -196,50 +196,50 @@ sub load_external
     }
     close(P);
     
-    return($obj->config($info));
+    return($self->config($info));
 }
 
 
 sub config
 {
-    my ($obj, $info) = @_;
+    my ($self, $info) = @_;
 
     foreach my $var (qw{OS Name Vers Desc Arch Auth Priv Keys Mult Size Type Opts})
     {
         if (! exists($info->{$var}))
         {
-            $obj->set_error("missing parameter: $var");
+            $self->set_error("missing parameter: $var");
             return(undef);
         }
-        $obj->{$var} = $info->{$var}
+        $self->{$var} = $info->{$var}
     }
-    return($obj);
+    return($self);
 }
 
-sub OS   { my $obj = shift; return $obj->{"OS"} }
-sub Name { my $obj = shift; return $obj->{"Name"} }
-sub Vers { my $obj = shift; return $obj->{"Vers"} }
-sub Desc { my $obj = shift; return $obj->{"Desc"} }
-sub Auth { my $obj = shift; return $obj->{"Auth"} }
-sub Arch { my $obj = shift; return $obj->{"Arch"} }
-sub Priv { my $obj = shift; return $obj->{"Priv"} }
-sub Keys { my $obj = shift; return $obj->{"Keys"} }
-sub Mult { my $obj = shift; return $obj->{"Mult"} }
-sub Size { my $obj = shift; return $obj->{"Size"} }
-sub Type { my $obj = shift; return $obj->{"Type"} }
-sub Opts { my $obj = shift; return $obj->{"Opts"} }
+sub OS   { my $self = shift; return $self->{"OS"} }
+sub Name { my $self = shift; return $self->{"Name"} }
+sub Vers { my $self = shift; return $self->{"Vers"} }
+sub Desc { my $self = shift; return $self->{"Desc"} }
+sub Auth { my $self = shift; return $self->{"Auth"} }
+sub Arch { my $self = shift; return $self->{"Arch"} }
+sub Priv { my $self = shift; return $self->{"Priv"} }
+sub Keys { my $self = shift; return $self->{"Keys"} }
+sub Mult { my $self = shift; return $self->{"Mult"} }
+sub Size { my $self = shift; return $self->{"Size"} }
+sub Type { my $self = shift; return $self->{"Type"} }
+sub Opts { my $self = shift; return $self->{"Opts"} }
 
 sub Build
 {
-    my ($obj, $args) = @_;
+    my ($self, $args) = @_;
         
-    if ($obj->{"TYPE"} eq "i")
+    if ($self->{"TYPE"} eq "i")
     {
-        return($obj->{"generate"}->($args));
+        return($self->{"generate"}->($args));
     } else {
     
         local *P;
-        my $file = $obj->{"PATH"};
+        my $file = $self->{"PATH"};
         my $opt_str;
         
         # XXX - shell metacharacters in the option string will cause problems
@@ -247,7 +247,7 @@ sub Build
 
         if (! open(P, "$file BUILD $opt_str|"))
         {
-            $obj->set_error("execution of $file failed: $!");
+            $self->set_error("execution of $file failed: $!");
             return(undef)
         }
 
@@ -260,12 +260,12 @@ sub Build
 
 sub Validate
 {
-    my ($obj, $inp) = @_;
+    my ($self, $inp) = @_;
 
-    foreach my $o ( keys( %{ $obj->{Opts} } ) )
+    foreach my $o ( keys( %{ $self->{Opts} } ) )
     {
         
-        my ($req, $type, $dflt) = @{$obj->{Opts}->{$o}};
+        my ($req, $type, $dflt) = @{$self->{Opts}->{$o}};
         my $data = $inp->{$o};
         my $dflt;
         
@@ -274,7 +274,7 @@ sub Validate
         {
             if (! defined($dflt))
             {
-                $obj->set_error("Missing required option $o");
+                $self->set_error("Missing required option $o");
                 return(0);
             } else { $inp->{$o} = $dflt }
         }
@@ -284,26 +284,26 @@ sub Validate
             my $baddr = gethostbyname($data);
             if (! $baddr)
             {
-                $obj->set_error("Invalid address for option $o");
+                $self->set_error("Invalid address for option $o");
                 return(0);
             }
         }
 
         if (defined($data) && $type eq "PORT" && ($data <1 || $data > 65535))
         {
-            $obj->set_error("Invalid port for option $o");
+            $self->set_error("Invalid port for option $o");
             return(0);            
         }
 
         if (defined($data) && $type eq "BOOL" && $data !~ /^(y|n|t|f|0|1)/i)
         {
-            $obj->set_error("Invalid boolean for option $o");
+            $self->set_error("Invalid boolean for option $o");
             return(0);
         }
         
         if (defined($data) && $type eq "PATH" && ! -r $data)
         {
-            $obj->set_error("Invalid path for option $o");
+            $self->set_error("Invalid path for option $o");
             return(0);        
         }   
     }

@@ -20,12 +20,12 @@ use IO::Select;
 
 sub new { return bless {}, shift }
 
-sub Error { my $obj = shift; return $obj->{ERROR} }
-sub set_error { my ($obj, $msg) = @_; $obj->{ERROR} = $msg }
+sub Error { my $self = shift; return $self->{ERROR} }
+sub set_error { my ($self, $msg) = @_; $self->{ERROR} = $msg }
 
 sub DataPump
 {
-    my ($obj, $cli, $svr, $callback) = @_;
+    my ($self, $cli, $svr, $callback) = @_;
     my $interrupt = 0;
 
     if (ref($callback) ne "CODE") { $callback = sub { }; }
@@ -83,7 +83,7 @@ sub DataPump
 
 sub DataPumpXor
 {
-    my ($obj, $cli, $svr, $callback, $key) = @_;
+    my ($self, $cli, $svr, $callback, $key) = @_;
     my $interrupt = 0;
 
     if (ref($callback) ne "CODE") { $callback = sub { }; }

