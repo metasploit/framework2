@@ -18,34 +18,50 @@ use strict;
 
 use base 'Msf::Base';
 
-sub Int {
+sub Encode_int {
 	my $int = shift;
+
 	return pack("N", $int);
 }
-sub UInt {
-	my $int = shift;
-	return pack("N", $int);
-}
-sub Enum {
-	my $int = shift;
-	return pack("N", $int);
+sub Decode_int {
+	my $str_ref = shift;
+
+	my $int = unpack("N", $$str_ref);
+	$$str_ref = substr($$str_ref, 4);
+
+	return $int;
 }
 
-sub Bool {
+sub Encode_bool {
 	my $int = shift;
 
 	if($int < 0 || $int > 1)
 	{
-		PrintLine("Bool() took $int, not a binary value!");
-		return;
+		PrintLine("Encode_bool() took $int, not a binary value!");
 	}
+
 	return pack("N", $int);
+}
+sub Decode_bool {
+	my $str_ref = shift;
+
+	my $int = unpack("N", $$str_ref);
+	$$str_ref = substr($$str_ref, 4);
+
+	if($int < 0 || $int > 1)
+	{
+		PrintLine("Decode_bool() recieved a non-binary value!");
+	}
+
+	return $int;
 }
 
 # XXX: HyperInt + UHyperInt
 
+# XXX: Decode_fopaque
+
 # Fixed-length Opaque (ie. opaque foo[8192])
-sub FOpaque {
+sub Encode_fopaque {
 	my $str = shift;
 # XXX:	my $len = __alignup(shift, 4);???
 	my $len = shift;
@@ -56,30 +72,43 @@ sub FOpaque {
 }
 
 # Variable-length Opaque (ie. opaque foo<8192>)
-sub VOpaque {
+sub Encode_vopaque {
 	my $str = shift;
 	my $max_len = shift || (2 ** 32) - 1; 
 
 	if(length($str) > $max_len)
 	{
-		PrintLine(sprintf("VOpaque() took opaque data of %i bytes with a $max_len maximum!", length($str)));
+		PrintLine(sprintf("Encode_vopaque() took opaque data of %i bytes with a $max_len maximum!", length($str)));
 		return;
 	}
 
 	my $len = length($str);
 	$str .= chr(0) x (4 - (length($str) % 4)) if($len % 4);
 
-	return UInt($len) . $str;
+	return Encode_int($len) . $str;
 }
 
-sub String {
-	return VOpaque(@_);
+sub Decode_vopaque {
+	my $str_ref = shift;
+
+	my $num = unpack("N", $$str_ref); 
+	$$str_ref = substr($$str_ref, 4);
+
+	my $data = substr($$str_ref, 0, $num);
+	$$str_ref = substr($$str_ref, __alignup($num, 4));
+
+	return $data;
 }
+
+sub Encode_string { Encode_vopaque(@_); }
+sub Decode_string { Decode_vopaque(@_); } 
 
 # XXX: FArray
 
+# XXX: Decode_varray
+
 # Variable-length array
-sub VArray {
+sub Encode_varray {
 	my $data = shift;
 	my $ref = shift;
 	my $max_len = shift || (2 ** 32) - 1;
@@ -88,10 +117,10 @@ sub VArray {
 
 	if(scalar @tbl > $max_len)
 	{
-		PrintLine(sprintf("VArray() took array of %i elements with a $max_len maximum!", scalar @tbl));
+		PrintLine(sprintf("Encode_varray() took array of %i elements with a $max_len maximum!", scalar @tbl));
 	}
 
-	my $str = UInt(scalar @tbl);
+	my $str = Encode_int(scalar @tbl);
 	foreach(@tbl)
 	{
 		$str .= &$ref($_);
@@ -100,8 +129,11 @@ sub VArray {
 	return $str;
 }
 
-sub Void {
-	return;
+sub __alignup {
+	my $num = shift;
+	my $align = shift;
+
+	return (($num + $align - 1) & -$align);
 }
 
 1;
