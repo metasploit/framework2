@@ -59,7 +59,7 @@ if (! $action)
     my $p = $payloads->{$sel};
     
     DisplayHeader("Payload Information");
-    $query->start_form;
+    print $query->start_form;
     
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     PrintRow("Name",            $sel);
@@ -90,7 +90,9 @@ if (! $action)
         $subtable .= "</table>\n";
         PrintRow("Payload Options", $subtable);
     }
-    print "</table><br>\n";
+    print "</table><br><br>\n";
+    print "<center><input type='submit value='Generate Shellcode'><br></center>\n";
+    print $query->end_form;
         
     DisplayFooter();
     exit(0);
