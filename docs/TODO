@@ -1,6 +1,8 @@
 Pre-Release Tasks
 ==================
 
+ - Solaris, bsd, and cmd payloads need to be readded!
+
  - Nop generator needs to work within badchars
  
  - Nop generator needs mode for PA-RISC, SPARC, etc
