@@ -394,7 +394,7 @@ sub gInfo
             xMsg("info", "exploit: invalid exploit name");
             return
         }
-        xDisplayExploit($args[1]);
+        print $ui->DumpExploitSummary($exploits->{$args[1]});
     }
  
     if ($args[0] eq "payload")
@@ -408,9 +408,9 @@ sub gInfo
         if (! $payloads->{$args[1]})
         {
             xMsg("info", "payload: invalid payload name");
-            return
+            return;
         }
-        xDisplayPayload($args[1]);
+        print $ui->DumpPayloadSummary($payloads->{$args[1]});
     }
 }
 
@@ -735,97 +735,6 @@ sub xCheckSystemCommand
     foreach my $d (split(/:/, $ENV{'PATH'})) { return(1) if -x "$d/$cmd" }
     return(0);
 }
-
-# Can't remember where this bit of code came from...
-sub xWordWrap
-{
-    my $text = shift;
-    my $w    = shift || 60;
-    
-    $text =~ s/(?:^|\G\n?)(?:(.{1,$w})(?:\s|\n|$)|(\S{$w})|\n)/$1$2\n/sg;
-    return $text;
-}
-
-sub xDisplayExploit 
-{ 
-    my ($name) = @_;
-    my $x = $exploits->{$name};
-    
-    print "\nDetailed Exploit Information\n";
-    print   "============================\n\n";
-    print   "      Name: " . $x->Name . "\n";
-    print   "   Version: ". $x->Version . "\n";
-    print   " Target OS: " . join(", ", @{$x->OS}) . "\n";
-    print   "Privileged: " . ($x->Priv ? "Yes" : "No") . "\n";
-    print   "\n";
-    
-    print   "Provided By:\n";
-    print   "    " . $x->Author . "\n\n";
-    
-    print   "Available Targets:\n";
-    foreach ($x->Targets) { print "    " . $_ . "\n" }
-    
-    print "\n";
-    print  "Available Options:\n";
-    my %mopts = %{$x->UserOpts};
-    foreach my $k (sort(keys(%mopts)))
-    {
-        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
-        print "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
-    }
-    
-    if ($x->Payload)
-    {
-        print "\n";
-        print "Payload Information:\n";
-        print "     Size: " . $x->Payload->{'Size'} . "\n";
-        print "    Avoid: " . scalar(split(//, $x->Payload->{'BadChars'})) . " characters\n";
-    }
-    
-    my $desc = xWordWrap($x->Description);
-    $desc =~ s/\n/\n    /g;
-    print "\n";
-    print "Description:\n    $desc\n";
-    
-    print "References:\n";
-    foreach ($x->Refs) { print "    " . $_->[0] . "\n" }
-    print "\n";
-    
-}
-
-sub xDisplayPayload 
-{
-    my ($name) = @_;
-    my $p = $payloads->{$name};
-    
-    print "\nDetailed Payload Information\n";
-    print   "============================\n\n";
-    print   "       Name: " . $p->Name . "\n";
-    print   "    Version: ".  $p->Vers . "\n";
-    print   "     OS/CPU: " . $p->OS . "/" . $p->Arch . "\n"; 
-    print   "Needs Admin: " . ($p->Priv ? "Yes" : "No") . "\n";
-    print   "\n";
-    
-    print   "Provided By:\n";
-    print   "    " . $p->Auth . "\n\n";
-    
-    print  "Available Options:\n";
-    my %mopts = %{$p->Opts};
-    foreach my $k (sort(keys(%mopts)))
-    {
-        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
-        print "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
-    }
-    
-    my $desc = xWordWrap($p->Description);
-    $desc =~ s/\n/\n    /g;
-    print "\n";
-    print "Description:\n    $desc\n";
-
-    print "\n";
-}
-
-
 
 sub xGetAddressCache
 {

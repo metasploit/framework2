@@ -121,4 +121,33 @@ sub DumpExploitSummary {
   return($output);
 }
 
+sub DumpPayloadSummary {
+  my $self = shift;
+  my $p = shift;
+  my $output;
+  
+    $output .= "       Name: " . $p->Name . "\n";
+    $output .= "    Version: ".  $p->Version . "\n";
+    $output .= "     OS/CPU: " . join(", ", @{$p->OS}) . "/" . join(", ", @{$p->Arch}) . "\n"; 
+    $output .= "Needs Admin: " . ($p->Priv ? "Yes" : "No") . "\n";
+    $output .= "\n";
+    
+    $output .= "Provided By:\n";
+    $output .= "    " . $p->Author . "\n\n";
+    
+    $output .= "Available Options:\n";
+    my %mopts = %{$p->UserOpts};
+    foreach my $k (sort(keys(%mopts)))
+    {
+        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
+        $output .= "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
+    }
+    
+    my $desc = $self->WordWrap($p->Description, 4, 60);
+    $desc =~ s/\n/\n    /g;
+    $output .= "\n";
+    $output .= "Description:\n    $desc\n";
+    return($output);
+}
+
 1;
