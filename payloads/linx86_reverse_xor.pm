@@ -1,4 +1,4 @@
-package Msf::Payload::linx86reverse_xor;
+package Msf::Payload::linx86_reverse_xor;
 use strict;
 use base 'Msf::ExternalPayload';
 

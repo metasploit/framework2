@@ -38,25 +38,24 @@ sub Generate {
   my $opts = shift;
   my $prog = $self->{'Filename'};
   my $args;
+  
   foreach (keys(%{$opts})) {
     $args .= $_ . '=' . $opts->{$_} . ' ';
   }
-  print "$prog $args\n";
 
   if(! -e $prog) {
-    print "NOT HERE\n";
     $self->SetError("Program $prog does not exist");
     return;
   }
 
   local $/;
-  print open(PROG, "a$prog $args|");
-  print $! . "\n";
-  if($!) {
-    print "FUCK";
+  open(PROG, "$prog $args|") ||
+  do 
+  {
     $self->SetError("Couldn't open $prog: $!");
     return;
-  }
+  };
+  
   my $data = <PROG>;
   close(PROG);
   return($data);

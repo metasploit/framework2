@@ -1,4 +1,4 @@
-package Msf::Payload::linx86reverse_ie;
+package Msf::Payload::linx86_reverse_ie;
 use strict;
 use base 'Msf::ExternalPayload';
 

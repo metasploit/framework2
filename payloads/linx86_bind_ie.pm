@@ -1,4 +1,4 @@
-package Msf::Payload::linx86bind_ie;
+package Msf::Payload::linx86_bind_ie;
 use strict;
 use base 'Msf::ExternalPayload';
 
