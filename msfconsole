@@ -481,6 +481,7 @@ sub eTargets  {
 }
 
 sub eCheck {
+  xUpdateAddrCache();
   SaveTemp();
   FillTemp();
   $ui->Check;
@@ -488,6 +489,7 @@ sub eCheck {
 }
 
 sub eExploit {
+  xUpdateAddrCache();
   SaveTemp();
   FillTemp();
   $ui->Exploit;
@@ -531,6 +533,45 @@ sub xAddAddressCache
     $state->{'CacheAddress'}->{$addr}++
 }
 
+sub xUpdateAddrCache 
+{
+    my $x = $state->{'Exploit'}->{'Exploit'};
+    my $p = $ui->GetEnv('PAYLOAD');
+    my %options = ();
+
+    
+    # create a list of all exploit options of type ADDR
+    foreach (keys(%{$x->UserOpts})) {
+        next if $x->UserOpts->{$_}->[1] ne 'ADDR';
+        $options{$_}++;
+    }
+    foreach (keys(%{$x->Advanced})) {
+        next if $x->Advanced->{$_}->[1] ne 'ADDR';
+        $options{$_}++;
+    }  
+
+    # create a list of all payload options of type ADDR
+    if ($x->Payload && $p && exists($payloads->{$p}))
+    {
+        $p = $payloads->{$p};
+        foreach (keys(%{$p->UserOpts})) {
+            next if $p->UserOpts->{$_}->[1] ne 'ADDR';
+            $options{$_}++;
+        }        
+        foreach (keys(%{$p->Advanced})) {
+            next if $p->Advanced->{$_}->[1] ne 'ADDR';
+            $options{$_}++;
+        }
+    }
+    
+    # scan environments and add to the cache
+    foreach (keys(%options)) {
+        my $value = $ui->GetTempEnv($_) || $ui->GetEnv($_) || undef;
+        print "$_ => $value\n";
+        next if ! $value;
+        $state->{'CacheAddress'}->{$value}++;
+    }
+}
 
 #
 # TAB COMPLETION ROUTINES

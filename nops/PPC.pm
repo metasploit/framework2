@@ -12,10 +12,7 @@ my $info = {
   'Refs'    => [ ],
 };
 
-my $advanced = {
-#  'RandomNops' => [0, 'Use random nop equivalent instructions, otherwise default to 0x90'],
-
-};
+my $advanced = { };
 
 sub new {
   my $class = shift; 
@@ -31,7 +28,7 @@ sub Nops {
   my $badRegs = $exploit->NopBadRegs;
   my $badChars = $exploit->PayloadBadChars;
 
-  return("\x60\x60\x60\x60" x ($length / 4));
+  return(pack('N',0x60606060) x ($length / 4));
   
 }
 
