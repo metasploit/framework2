@@ -42,6 +42,7 @@ sub SetOptions {
 }
 
 sub _newSSL {
+  use Pex::Socket::SSLTcp;
   my $self = shift;
   return(Pex::Socket::SSLTcp->new(@_));
 }

@@ -24,4 +24,10 @@ sub _PexParent {
   return('Pex::Socket::Udp');
 }
 
+sub _newRaw {
+  use Msf::Socket::RawUdp;
+  my $self = shift;
+  return(Msf::Socket::RawUdp->new(@_));
+}
+
 1;

@@ -30,6 +30,7 @@ sub new {
 }
 
 sub _newRaw {
+  use Pex::Socket::RawUdp;
   my $self = shift;
   return(Pex::Socket::RawUdp->new(@_));
 }
