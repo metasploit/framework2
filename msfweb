@@ -14,15 +14,6 @@
 #
 ##
 
-# This is a really ghetto proof-of-concept for a web-based exploit interface
-
-#	TODO:
-#		+ Build out the 'admin' pages
-#		+ Build out the 'logs' pages
-#		+ Add an option for HTTP authentication
-#
-
-
 require 5.6.0;
 
 use strict;
@@ -43,8 +34,7 @@ my $VERSION = $ui->Version;
 
 $ui->SetGlobalEnv('_Console', 'Msf::PayloadComponent::WebConsole');
 
-my @sections = qw{ EXPLOITS PAYLOADS SESSIONS ADMIN LOGS };
-
+my @sections = qw{ EXPLOITS PAYLOADS SESSIONS };
 
 my $exploitsIndex;
 my $payloadsIndex;
@@ -175,7 +165,7 @@ $ui->SetTempEnv('_Defanged', $config{'Defanged'});
 # Create the inital list of modules
 LoadAllModules();
 
-# Pre-generate the complete lists without any filters
+# Pregenerate the complete lists without any filters
 if (! $config{'Reload'} ) {
 	ExploitList();
 	PayloadList();
@@ -771,7 +761,7 @@ sub SessionUpdate {
 [<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
     <head>
-        <title>Metasploit Framework Web Shell v$VERSION</title>
+        <title>Metasploit Framework Web Shell v$VERSION - Session $sid </title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
 		 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
     </head>
@@ -1920,7 +1910,7 @@ sub HTTPRequest {
 	# Convert multiple forward slashes to a single
 	$path =~ s/\/+/\//g;
 
-	# Break the invidual variables into chunks
+	# Break the individual variables into chunks
     my @chunks = split(/&/, $query);
     
 	# Process the chunks and place into %params
@@ -2461,7 +2451,6 @@ sub Run {
 					
 				} 
 				
-
 				# XXX - local cleanup up the original socket?
 				delete($socketInfo{$s});
 				next;
