@@ -80,7 +80,7 @@ sub DumpAdvancedOptions {
       if($i++) {
         $output .= "\n\n";
       }
-      $output .= "${indent}Name:     $opt\n${indent}Default:  " . $object->GetVar($opt) . "\n";
+      $output .= "${indent}Name:     $opt\n${indent}Default:  " . $object->GetLocal($opt) . "\n";
       $output .= "\n${indent}" . $self->WordWrap($options->{$opt}->[1], 2, 60);
 
     }
