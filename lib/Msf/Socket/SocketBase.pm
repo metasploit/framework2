@@ -20,7 +20,7 @@ use strict;
 sub _PexCall {
   my $self = shift;
   my $method = $self->_PexParent . '::' . shift;
-  print "Calling $method\n";
+  # print "Calling $method\n";
   return($self->$method(@_));
 }
 
