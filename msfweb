@@ -654,7 +654,7 @@ sub ModuleInfo {
 	foreach my $author (@authors) {
         $author =~ s/</&lt;/g;
         $author =~ s/>/&gt;/g;
-        $res .= "<tr><td align='left' width=80 class='textNormal'></td><td>$author</td></tr>\n";
+        $res .= "<tr><td align='left' width=80></td><td class='textNormal'>$author</td></tr>\n";
     }
     
     $res .= "<tr><td colspan=2 class='textNormal'>";
