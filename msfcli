@@ -44,11 +44,7 @@ my @ARG;
 # We should instantiate new objects when we are going to use them
 # But since the cli only does 1 exploitation a run, its ok.
 
-# Generate exploits index
-# Payloads are now indexed by hex number instead of package name
-my $i = 0;
-foreach my $key (sort(keys(%{$exploitsIndex})))
-{
+foreach my $key (sort(keys(%{$exploitsIndex}))) {
     $exploits->{@{[split(/::/,$key)]}[-1]} = $exploitsIndex->{$key};
 }
 
@@ -58,13 +54,36 @@ foreach my $key (keys(%{$payloadsIndex})) {
   $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
 }
 
-if(!defined($mod) || !defined($exploits->{$mod})) {
+if(!defined($mod)) {
   Msf::TextUI::PrintAsciiLogo();
   ListExploits();
   exit(0);
 }
 
 my $exploit = $exploits->{$mod};
+if (! $exploit) {
+    my %matches;
+    foreach my $exp (keys(%{$exploits})) {
+        next if $exp !~ /$mod/i;
+        $matches{$exp}=$exploits->{$exp};
+    }
+    if (scalar(keys(%matches)) == 0) {
+        Msf::TextUI::PrintAsciiLogo();
+        ListExploits();
+        exit(0);    
+    }    
+    if (scalar(keys(%matches)) == 1) {
+        $exploit = $matches{@{[keys(%matches)]}[0]};
+    }
+    if (scalar(keys(%matches)) >= 2) {
+        $exploits = \%matches;
+        Msf::TextUI::PrintAsciiLogo();
+        ListExploits();
+        exit(0); 
+    }    
+}
+
+
 my $exploitName = $exploit->SelfName;
 $exploitName =~ s/.*:://g; # Remove package prefix
 $ui->LoadTempEnv($exploitName);
