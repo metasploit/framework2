@@ -238,13 +238,13 @@ sub _RecvGobble {
     return($data);
   }
 
-  print "Gobble got data. $ready\n";
+#  print "Gobble got data. $ready\n";
 
   my $timeoutLoop = $self->RecvLoopTimeout;
   while(1) {
     my ($ready) = $selector->can_read($timeoutLoop);
     last if(!$ready);
-    print "Gobble got fun loop.\n";
+#    print "Gobble got fun loop.\n";
 
     my $tempData = $self->_DoRecv(4096, 1);
 
