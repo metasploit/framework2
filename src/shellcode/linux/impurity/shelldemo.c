@@ -15,6 +15,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <pwd.h>
+#include <grp.h>
 
 
 /* this was taken from solar eclipse's vuln.c */
@@ -120,7 +122,8 @@ int main (int argc, char **argv)
         printf("impurity demo > ");
         
         memset(cmd, 0, sizeof(cmd));
-        fgets(cmd, sizeof(cmd), stdin);
+        if(fgets(cmd, sizeof(cmd), stdin) == NULL)
+            exit(0);
         while(p=strstr(cmd, "\n")) *p = 0;
         p = cmd;
         
@@ -135,6 +138,9 @@ int main (int argc, char **argv)
                    "   write <fd> <bytes>   Write <bytes> to file descriptor\n"
                    "   close <fd>           Close a specified file descriptor\n"
                    "   unlink <path>        Remove the specified file\n"
+                   "   getid                Print uid/gid\n"
+                   "   setuid <uid>         Set UID to the specified number\n"
+                   "   setgid <gid>         Set GID to the specified number\n"
                    "   help                 Show this help screen\n"
                    "   quit                 Exit the Impurity Demo shell\n"
                    );
@@ -241,6 +247,64 @@ int main (int argc, char **argv)
                     printf("WRITE: %d\n", cnt);
                 }
             }
+        }
+
+        if (strlen(cmd)>=6 && (strncmp("setuid", cmd, 6) == 0))
+        {
+            int uid;
+            p += 7;
+
+            uid = atoi(p);
+
+            if(setuid(uid) == -1)
+            {
+                printf("SETUID: ERROR [%u]\n", uid);
+            } else {
+                printf("SETUID: %u\n", uid);
+            }
+        }
+
+        if (strlen(cmd)>=6 && (strncmp("setgid", cmd, 6) == 0))
+        {
+            int gid;
+            p += 7;
+
+            gid = atoi(p);
+
+            if(setgid(gid) == -1)
+            {
+                printf("SETGID: ERROR [%u]\n", gid);
+            } else {
+                printf("SETGID: %u\n", gid);
+            }
+        }
+
+        if (strlen(cmd)>=5 && (strncmp("getid", cmd, 5) == 0))
+        {
+            struct passwd * pwd = getpwuid(getuid());
+            struct group * grp = getgrgid(getgid());
+
+            printf("uid=%u", getuid());
+            if((pwd = getpwuid(getuid())) != NULL)
+                printf("(%s)", pwd->pw_name);
+            printf(" gid=%u", getgid());
+            if((grp = getgrgid(getgid())) != NULL)
+                printf("(%s)", grp->gr_name);
+
+            if(geteuid() != getuid())
+            {
+                printf(" euid=%u", geteuid());
+                if((pwd = getpwuid(geteuid())) != NULL)
+                    printf("(%s)", pwd->pw_name);
+            }
+            if(getegid() != getgid())
+            {
+                printf(" egid=%u", getegid());
+                if((grp = getgrgid(getegid())) != NULL)
+                    printf("(%s)", grp->gr_name);
+            }
+
+            putchar('\n');
         }
     }
     
