@@ -18,7 +18,7 @@ sub import {
 
 sub HandleConsole {
   my $self = shift;
-  my $console = $self->GetVar('Console');
+  my $console = $self->GetVar('_Console');
   $console = 'Msf::PayloadComponent::TextConsole' if(!$console);
   __PACKAGE__->import($console);
   $self->SUPER::HandleConsole;

@@ -32,7 +32,7 @@ Msf::UI::ActiveStateSucks();
 my $ui = Msf::WebUI->new($RealBin);
 my $VERSION = $ui->Version;
 
-$ui->SetGlobalEnv('Console', 'Msf::PayloadComponent::WebConsole');
+$ui->SetGlobalEnv('_Console', 'Msf::PayloadComponent::WebConsole');
 
 my $exploits = { };
 my $payloads = { };
