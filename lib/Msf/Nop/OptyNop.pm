@@ -190,22 +190,22 @@ my $table = [
   # \x6c -> \x6f -> insb, insd, outsb, outsd
 
   # \x70 -> \x7f conditional jmpy jmpy
-  [ "\x70",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jo
-  [ "\x71",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jno
-  [ "\x72",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jc
-  [ "\x73",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jnc
-  [ "\x74",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jz
-  [ "\x75",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jnz
-  [ "\x76",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jna
-  [ "\x77",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # ja
-  [ "\x78",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # js
-  [ "\x79",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jns
-  [ "\x7a",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jpe
-  [ "\x7b",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jpo
-  [ "\x7c",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jl
-  [ "\x7d",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jnl
-  [ "\x7e",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jng
-  [ "\x7f",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jg
+  [ "\x70\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jo
+  [ "\x71\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jno
+  [ "\x72\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jc
+  [ "\x73\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jnc
+  [ "\x74\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jz
+  [ "\x75\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jnz
+  [ "\x76\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jna
+  [ "\x77\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # ja
+  [ "\x78\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # js
+  [ "\x79\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jns
+  [ "\x7a\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jpe
+  [ "\x7b\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jpo
+  [ "\x7c\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jl
+  [ "\x7d\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jnl
+  [ "\x7e\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jng
+  [ "\x7f\x00",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jg
 
   # \x80 BYTE reg1, imm8
   [ "\x80\xc0",           3, $reg1, [ $sreg1b ] ], # /* addb $imm8,%reg1 */
@@ -366,11 +366,11 @@ my $table = [
   # \xe1 loope
   # \xe2 loop
 
-  [ "\xe3",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jecxz
+  [ "\xe3\x00",             2, $osize | $none, [ ], \&_InsHandlerJmp ], # jecxz
   # \xe4 -> \xe7 in/out
   # \xe8 call
   # \xe9, \xea jmp
-  [ "\xeb",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jmp byte offset
+  [ "\xeb\x00",             2, $osize | $none, [ ], \&_InsHandlerJmp ], # jmp byte offset
   # \xec, \xed, \xef in/out
   # \xf0 lock prefix (priv)
   # \xf1 int1
@@ -464,8 +464,8 @@ sub _GenerateSled {
       # ending byte to our current instruction
       next if(!$self->_InsHandler(1, $index, $pos, $len, $data, $lastIndex));
   
-      $pos -= $codeLen;
-      substr($data, $pos, $codeLen, $code);
+      $pos -= $codeLen - 1;
+      substr($data, $pos, $codeLen - 1, substr($code, 0, $codeLen - 1));
       print STDERR "+" if($debug);
       $c2++;
     }
@@ -495,7 +495,7 @@ sub _CheckIns {
   return(0) if(($insLen - 1) > ($len - $pos));
 
   # instruction would run off the front
-  return(0) if($codeLen > $pos);
+  return(0) if(($codeLen - 1) > $pos);
   # test to see if the instruction always modifies a bad register.
   return(0) if($self->_SmashCheck($index));
 
