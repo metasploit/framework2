@@ -179,9 +179,6 @@ sub ProcessScript {
 
 sub Load {
 
-#    my $tmpDL = $ui->GetTempEnv('DebugLevel');
-#    $ui->UnsetTempEnv('DebugLevel');
-
     $exploitsIndex = $ui->LoadExploits;
     $payloadsIndex = $ui->LoadPayloads;
     $encodersIndex = $ui->LoadEncoders;
@@ -259,14 +256,8 @@ sub gUnset
 
     if(!defined($key))
     {
-        my $answer;
-        while(1) {
-            print "Clear env? [yes/no]: ";
-            $answer = <STDIN>;
-            chomp $answer;
-            return if($answer eq 'no');
-            last if($answer eq 'yes');
-        }
+        my $ok = xAskYN('Clear env? [yes/no]: ');
+		return if $ok ne 'yes';
         $ui->UnsetGlobalEnv;
     }
     $ui->UnsetGlobalEnv($key);
@@ -288,8 +279,8 @@ sub eSet {
     }
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
-    if ($ui->GetTempEnv('PAYLOAD')) {
-        $prompt .= '('.$ui->GetTempEnv('PAYLOAD').')';
+    if ($ui->GetEnv('PAYLOAD')) {
+        $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
     }
     $prompt .= ' > ';
     $console->_prompt($prompt);
@@ -301,21 +292,15 @@ sub eUnset
 
     if(!defined($key))
     {
-        my $answer;
-        while(1) {
-            print "Clear temporary env? [yes/no]: ";
-            $answer = <STDIN>;
-            chomp $answer;
-            return if($answer eq 'no');
-            last if($answer eq 'yes');
-        }
+        my $ok = xAskYN('Clear temporary env? [yes/no]: ');
+		return if $ok ne 'yes';
         $ui->UnsetTempEnv;
     }
     $ui->UnsetTempEnv($key);
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
-    if ($ui->GetTempEnv('PAYLOAD')) {
-        $prompt .= '('.$ui->GetTempEnv('PAYLOAD').')';
+    if ($ui->GetEnv('PAYLOAD')) {
+        $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
     }
     $prompt .= ' > ';
     $console->_prompt($prompt);
@@ -385,9 +370,9 @@ sub gUse
     }
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
-    if ($ui->GetTempEnv('PAYLOAD'))
+    if ($ui->GetEnv('PAYLOAD'))
     {
-        $prompt .= '('.$ui->GetTempEnv('PAYLOAD').')';
+        $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
     }
     $prompt .= ' > ';
     $console->_prompt($prompt);
@@ -654,6 +639,27 @@ sub xUpdateAddrCache
         next if ! $value;
         $state->{'CacheAddress'}->{$value}++;
     }
+}
+
+sub xAskYN {
+	my $quest	= shift;
+	my $cinp	= IO::Handle->new_from_fd(0, '<');
+	my $cout	= IO::Handle->new_from_fd(1, '>');
+	my $iblock	= $cinp->blocking;
+	
+	$cinp->blocking(1);
+
+	my $res = 'run';
+	while ($res && $res ne 'yes' && $res ne 'no') {
+		$cout->printflush($quest);
+		if ( defined($res = $cinp->getline)) {
+			chomp($res);
+			$res = lc($res);
+		} 
+		else { $cout->printflush("\nError reading from input: $!\n"); }
+	}
+	$cinp->blocking($iblock);
+	return $res;
 }
 
 
