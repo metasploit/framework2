@@ -1,6 +1,7 @@
 package Pex::Poly::BlockMaster::Block;
 use strict;
 use Pex::Text;
+use Pex::Utils;
 
 sub new {
   my $class = shift;
@@ -14,13 +15,18 @@ sub new {
 sub _ClearState {
   my $self = shift;
   $self->_Done(0);
-  foreach my $dep (@{$self->_Depers}) {
-    $dep->_ClearState;
-  }
 }
-sub _SetupBlocks {
+
+# This is where we iterate through the IBlocks (this is the Inital Blocks of
+# possible data) and check for bad characters, and build a new block list
+# for _Blocks.
+sub _BuildInit {
   my $self = shift;
   my $badChars = shift;
+
+  # clear myself
+  $self->_ClearState;
+
   my $blocks = [ ];
 
   foreach my $block (@{$self->_IBlocks}) {
@@ -30,13 +36,17 @@ sub _SetupBlocks {
       push(@{$blocks}, $block);
     }
   }
+  # If no blocks worked, just use the first one (even though it's bad), and
+  # well, hope for the best :\
   if(!@{$blocks} && @{$self->_IBlocks}) {
     push(@{$blocks}, $self->_IBlocks->[0]);
   }
+
   $self->_Blocks($blocks);
  
+  # Cascade down through the dependents
   foreach my $dep (@{$self->_Depers}) {
-    $dep->_SetupBlocks($badChars);
+    $dep->_BuildInit($badChars);
   }
 }
 
@@ -46,12 +56,15 @@ sub Name {
   return($self->{'Name'});
 }
 
+# Dependencies
 sub _Deps {
   my $self = shift;
   $self->{'_Deps'} = shift if(@_);
   $self->{'_Deps'} = [ ] if(ref($self->{'_Deps'}) ne 'ARRAY');
   return($self->{'_Deps'});
 }
+
+# Dependents
 sub _Depers {
   my $self = shift;
   $self->{'_Depers'} = shift if(@_);
@@ -59,12 +72,15 @@ sub _Depers {
   return($self->{'_Depers'});
 }
 
+# Inital blocks
 sub _IBlocks {
   my $self = shift;
   $self->{'_IBlocks'} = shift if(@_);
   $self->{'_IBlocks'} = [ ] if(ref($self->{'_IBlocks'}) ne 'ARRAY');
   return($self->{'_IBlocks'});
 }
+
+# Blocks prepared for the current Build()
 sub _Blocks {
   my $self = shift;
   $self->{'_Blocks'} = shift if(@_);
@@ -72,6 +88,7 @@ sub _Blocks {
   return($self->{'_Blocks'});
 }
 
+# Done bit
 sub _Done {
   my $self = shift;
   $self->{'_Done'} = shift if(@_);
@@ -118,6 +135,8 @@ sub AddDepend {
     $dep->_AddDepers($self);
   }
 }
+
+# true if all of our dependencies are finished
 sub CanBuild {
   my $self = shift;
   foreach my $dep (@{$self->_Deps}) {
@@ -139,16 +158,65 @@ sub RandBlock {
   return($self->_Blocks->[$rand]);
 }
 
+sub _TopNextBlock {
+  my $self = shift;
+  if(!$self->_Done) {
+    return($self);
+  }
+  else {
+    my $ready = [ ];
+    foreach my $dep (@{$self->_Depers}) {
+      foreach my $r ($dep->_ReadyBlocks) {
+        push(@{$ready}, $r) if(!Pex::Utils::ArrayContains($ready, [ $r ]));
+      }
+    }
+    return if(!@{$ready});
+    return($ready->[int(rand(@{$ready}))]);
+  }
+  return;
+}
+
+# Returns the ready blocks, could very well have duplicates, but this will
+# be sorted out by _TopNextBlock
+sub _ReadyBlocks {
+  my $self = shift;
+  if(!$self->_Done) {
+    return($self) if($self->CanBuild);
+    # if we aren't done, and also aren't ready, then just return
+  }
+  else {
+    my @r;
+    foreach my $dep (@{$self->_Depers}) {
+      push(@r, $dep->_ReadyBlocks);
+    }
+    return(@r);
+  }
+  return;
+}
+
 sub NextBlock {
   my $self = shift;
+#  print "!! NextBlock called on " . $self->Name . "\n";
   if($self->_Done) {
-    foreach my $dep (@{$self->_Depers}) {
+    my @depers = @{$self->_Depers};
+    Pex::Utils::FisherYates(\@depers);
+#    foreach my $dep (@depers) {
+#      print $dep->Name . ',';
+#    }
+#    print "\n";
+    foreach my $dep (@depers) {
+#      print "** " . $self->Name . " -> " . $dep->Name . "\n";
       my $next = $dep->NextBlock;
       return($next) if($next);
     }
   }
   else {
+#    print "Returning self?\n";
     return($self) if($self->CanBuild);
+    # if we fall through here, and then return nothing, it means that we
+    # were not ready to build ourselves (have unfinished dependencies).  The
+    # cascading will then moving from the higher up blocks on, and hopefully
+    # finish this dependency.
   }
   return;
 }

@@ -9,12 +9,19 @@ sub new {
   return($self);
 }
 
+# These keep the "top" blocks.  It might be a better design decision to force
+# a single top block, even if it's empty, but I support more than one for now.
 sub _Blocks {
   my $self = shift;
   $self->{'_Blocks'} = shift if(@_);
   $self->{'_Blocks'} = [ ] if(ref($self->{'_Blocks'}) ne 'ARRAY');
   return($self->{'_Blocks'});
 }
+
+# Done blocks are an optimization so we don't need to ask each block
+# if it's done each time.  Since it's a cascading fall (poor design?), the
+# block would have to do a bit of work to decide if it's "done", and since
+# once it was done once, it isn't going to be not done later.
 sub _DoneBlocks {
   my $self = shift;
   $self->{'_DoneBlocks'} = shift if(@_);
@@ -47,7 +54,6 @@ sub _ClearDoneBlocks {
   }
   $self->_DoneBlocks($array);
 }
-
 sub _BlockDone {
   my $self = shift;
   my $index = $self->_BlockIndex(shift);
@@ -71,41 +77,39 @@ sub _IsBlockLeft {
   }
   return(0);
 }
+
+# We just iterate through the top blocks, calling _BuildInit on each, this will
+# get all of the top blocks (and cascade through all connected blocks) ready
+# for a new generation (Build call)
+sub _BuildInit {
+  my $self = shift;
+  my $badChars = shift;
+
+  # Prepare myself (BlockMaster) (clear DoneBlocks, etc)
+  $self->_ClearState;
+
+  foreach my $b (@{$self->_Blocks}) {
+    $b->_BuildInit($badChars);
+  }
+}
+
 sub _ClearState {
   my $self = shift;
   $self->_ClearDoneBlocks;
-  foreach my $b (@{$self->_Blocks}) {
-    $b->_ClearState;
-  }
 }
-sub _SetupBlocks {
-  my $self = shift;
-  my $badChars = shift;
-  foreach my $b (@{$self->_Blocks}) {
-    $b->_SetupBlocks($badChars);
-  }
-}
-
-sub _Connections {
-  my $self = shift;
-  my @conns;
-  foreach my $b (@{$self->_Blocks}) {
-    push(@conns, $b->_Connections);
-  }
-  return(@conns);
-}
-
 
 sub Build {
   my $self = shift;
-  $self->_ClearState;
-  $self->_SetupBlocks($self->BadChars);
+
+  # Gets ready y'all
+  $self->_BuildInit($self->BadChars);
+
   my $data;
   while($self->_IsBlockLeft) {
     my $block = $self->RandBlock;
     next if($self->_BlockDone($block));
 #    print $block->RandBlock . "\n";
-    my $next = $block->NextBlock;
+    my $next = $block->_TopNextBlock;
     if(!$next) {
       $self->_BlockDone($block, 1);
       next;
@@ -114,6 +118,34 @@ sub Build {
 #    print "-- $data\n";
   }
   return($data);
+}
+
+# This is a little stubby guy I wrote for generating the graphviz graphs.  It
+# will just generate an array of the connections between the blocks.  It
+# currently has repeats because of the design of the system and iteration.
+sub _Connections {
+  my $self = shift;
+  my @conns;
+  foreach my $b (@{$self->_Blocks}) {
+    my @c = $b->_Connections;
+    while(@c) {
+      my $c1 = shift(@c);
+      my $c2 = shift(@c);
+      push(@conns, $c1, $c2) if(!$self->_ConnectionExists(\@conns, $c1, $c2));
+    }
+  }
+  return(@conns);
+}
+
+sub _ConnectionExists {
+  my $self = shift;
+  my $array = shift || [ ];
+  my $a1 = shift;
+  my $a2 = shift;
+  for(my $i = 0; $i < @{$array}; $i += 2) {
+    return(1) if($array->[$i] eq $a1 && $array->[$i + 1] eq $a2);
+  }
+  return(0);
 }
 
 1;
