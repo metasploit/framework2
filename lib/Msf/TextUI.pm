@@ -125,10 +125,10 @@ sub DumpExploitSummary {
   $output .=   'Privileged: ' . ($exploit->Priv ? "Yes" : "No") . "\n";
   $output .=   "\n";
   
-  $output .=   "Provided By:\n\n";
+  $output .=   "Provided By:\n";
   $output .=   "    " . $exploit->Author . "\n\n";
   
-  $output .=   "Available Targets:\n\n";
+  $output .=   "Available Targets:\n";
   foreach ($exploit->TargetsList) { $output .= "    " . $_ . "\n" }
   
   $output .= "\n";
