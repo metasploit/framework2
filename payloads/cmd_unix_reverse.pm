@@ -7,13 +7,13 @@ sub load {
 
 my $info =
 {
-    'Name'         => 'cmd_unix_reverse',
-    'Version'      => '1.0',
-    'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
-    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
-    'Arch'         => [  ],
-    'Priv'         => 0,
-    'OS'           => [ 'solaris', 'linux', 'bsd' ],
+  'Name'         => 'cmd_unix_reverse',
+  'Version'      => '1.0',
+  'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Arch'         => [  ],
+  'Priv'         => 0,
+  'OS'           => [ 'solaris', 'linux', 'bsd' ],
 };
 
 sub new {
