@@ -282,11 +282,10 @@ sub BadCharIndex {
 }
 
 sub BadCharIndexes {
-  my $self = shift;
   my $badChars = @_ ? shift : return;
   my $string = @_ ? shift : return;
   my @indexes;
-  
+
   my $i = 0;
   foreach (split('', $string)) {
     if(index($badChars, $_) != -1) {
