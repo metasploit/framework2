@@ -25,8 +25,8 @@ my $info =
                     ],
   'UserOpts'     => { 
                         'DLL'     => [1, 'PATH', 'The full path the VNC service dll'],
-                        'VNCPASS' => [1, 'DATA', 'The password to use with the VNC service', 'w00t'],
-                        'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  0],
+                        'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
+                        'AUTOVNC' => [1, 'BOOL', 'Automatically launch vncviewer', 0],
                     },
                 
 };
@@ -52,19 +52,6 @@ sub HandleConnection {
   $self->SUPER::HandleConnection;
   sleep(1);
 
-
-  if (! $sock->connected) {
-    $self->PrintLine("[*] Connection closed before password could be sent");
-    $self->KillChild;
-    return;
-  }
-
-  my $pass = substr($self->GetVar('VNCPASS'), 0, 8);
-  $pass   .= "\x00" x (8-length($pass));
-
-  $self->PrintLine('[*] Sending password to VNC service');
-  $sock->send($pass);
-  
   # Create listener socket
   my $lis = IO::Socket::INET->new(
     'Proto'     => 'tcp',
@@ -81,6 +68,15 @@ sub HandleConnection {
   }
   
   $self->PrintLine('[*] VNC proxy listening on port '.$lis->sockport.'...');
+  
+  if ($self->GetVar('AUTOVNC')) {
+    my $pid = fork();
+    if (! $pid) {
+        system("vncviewer 127.0.0.1:".$self->GetVar('VNCPORT'));
+        exit(0);
+    }
+  }
+  
   
   # Accept connection from user
   my $sel = IO::Select->new($lis);
@@ -99,10 +95,12 @@ sub HandleConnection {
     return;
   } 
   
-  $self->PrintLine('[*] VNC proxy started with password '.$self->GetVar('VNCPASS').'...');
   $self->VNCProxy($sock, $csock);
   $self->PrintLine('[*] VNC proxy finished');
-  $self->KillChild;    
+  
+  $sock->close;
+  $csock->close;
+  $self->KillChild;
   return;
 }
 
