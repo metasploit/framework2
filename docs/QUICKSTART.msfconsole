@@ -2,10 +2,9 @@
 
 hdm@slasher framework $ ./msfconsole
                                                                                                                 
-+ -- --=[ msfconsole v2.0 [15 exploits - 19 payloads]
-                                                                                                                
-msf >
++ -- --=[ msfconsole v2.0 [20 exploits - 27 payloads]
 
+msf>
 
 
 2) Show available exploits

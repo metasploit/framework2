@@ -228,6 +228,7 @@ sub Close {
     }
     $self->GetSocket->close;
   }
+  $self->SetError(undef);
 }
 
 sub TcpConnectSocket {

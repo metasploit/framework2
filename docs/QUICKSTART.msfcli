@@ -6,7 +6,7 @@ hdm@slasher framework $ ./msfcli
  /     \_/ __ \   __\__  \  /  ___/\____ \|  |  /  _ \|  \   __\
 |  Y Y  \  ___/|  |  / __ \_\___ \ |  |_> >  |_(  <_> )  ||  |
 |__|_|  /\___  >__| (____  /____  >|   __/|____/\____/|__||__|
-      \/     \/  v2.0    \/     \/ |__|
+      \/     \/  v2.1    \/     \/ |__|
 
 ============
 = Exploits
@@ -21,17 +21,18 @@ hdm@slasher framework $ ./msfcli
   iis50_webdav_ntdll         IIS 5.0 WebDAV ntdll.dll Overflow
   imail_ldap                 IMail LDAP Service Buffer Overflow
   msrpc_dcom_ms03_026        Microsoft RPC DCOM MSO3-026
+  msrpc_dcom_ms03_039        Microsoft RPC DCOM MSO3-039
   mssql2000_resolution       MSSQL 2000 Resolution Overflow
   poptop_negative_read       PoPToP Negative Read Overflow
   realserver_describe_linux  RealServer Describe Buffer Overflow
+  samba_nttrans              Samba Fragment Reassembly Overflow
   samba_trans2open           Samba trans2open Overflow
   sambar6_search_results     Sambar 6 Search Results Buffer Overflow
   servu_mdtm_overflow        Serv-U FTPD MDTM Overflow
   solaris_sadmind_exec       Solaris sadmind Command Execution
+  subversion_date            PoPToP Negative Read Overflow
   warftpd_165_pass           War-FTPD 1.65 PASS Overflow
-
-
-
+  windows_ssl_pct            Windows SSL PCT Overflow
 
 2) Display the information for the selected exploit
 
