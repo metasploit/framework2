@@ -75,13 +75,18 @@ sub DumpAdvancedOptions {
     my $options = $object->Advanced || { };
     $type .= ' (' . $object->SelfName . ')';
     $output .= "${indent}$type:\n${indent}" . ('-' x (length($type) + 1)) . "\n";
+    my $i = 0;
     foreach my $opt (keys(%{$options})) {
+      if($i++) {
+        $output .= "\n\n";
+      }
       $output .= "${indent}Name:     $opt\n${indent}Default:  " . $object->GetVar($opt) . "\n";
       $output .= "\n${indent}" . $self->WordWrap($options->{$opt}->[1], 2, 60);
-      $output .= "\n\n";
+
     }
     $output .= "\n" if(@_);
   }
+  $output .= "\n";
   return($output);
 }
 
