@@ -21,7 +21,7 @@ use base 'Msf::Socket::SocketBase';
 sub Raw {
   my $self = shift;
   $self->_PexCall('Raw', @_) if(@_);
-  my $raw = $self->GetLocal('UdpSourceIp');
+  my $raw = $self->GetEnv('UdpSourceIp');
   return(1) if($raw);
   return($self->_PexCall('Raw'));
 }

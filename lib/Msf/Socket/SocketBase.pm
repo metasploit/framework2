@@ -24,19 +24,24 @@ sub _PexCall {
   return($self->$method(@_));
 }
 
+sub Timeout {
+  my $self = shift;
+  my $timeout = $self->GetVar('ConnectTimeout');
+  $timeout = $self->SUPER::Timeout if(!defined($timeout));
+  return($timeout);
+}
+sub RecvTimeout {
+  my $self = shift;
+  my $timeout = $self->GetVar('RecvTimeout');
+  $timeout = $self->SUPER::RecvTimeout if(!defined($timeout));
+  return($timeout);
+}
+sub RecvLoopTimeout {
+  my $self = shift;
+  my $timeout = $self->GetVar('RecvLoopTimeout');
+  $timeout = $self->SUPER::RecvLoopTimeout if(!defined($timeout));
+  return($timeout);
+}
 
-#sub SSL {
-#  my $self = shift;
-#  return($self->SUPER::SSL(@_)) if(@_);
-#  my $ssl = $self->GetLocal('ForceSSL');
-#  $ssl = $self->SUPER::SSL if(!defined($ssl));
-#  return($ssl);
-#}
-#sub Timeout {
-#  my $self = shift;
-#  my $timeout = $self->GetLocal('ConnectTimeout');
-#  $timeout = $self->SUPER::GetConnectTimeout if(!defined($timeout));
-#  return($timeout);
-#}
 
 1;

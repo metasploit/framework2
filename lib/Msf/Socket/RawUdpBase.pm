@@ -21,7 +21,7 @@ use base 'Msf::Socket::SocketBase';
 sub LocalAddr {
   my $self = shift;
   $self->_PexCall('LocalAddr', @_) if(@_);
-  my $src = $self->GetLocal('UdpSourceIp');
+  my $src = $self->GetEnv('UdpSourceIp');
   return($src) if($src);
   return($self->_PexCall('LocalAddr'));
 }

@@ -31,13 +31,13 @@ sub Init {
   }
 }
 
-#sub SSL {
-#  my $self = shift;
-#  return($self->SUPER::SSL(@_)) if(@_);
-#  my $ssl = $self->GetLocal('ForceSSL');
-#  $ssl = $self->SUPER::SSL if(!defined($ssl));
-#  return($ssl);
-#}
+sub SSL {
+  my $self = shift;
+  return($self->SUPER::SSL(@_)) if(@_);
+  my $ssl = $self->GetVar('ForceSSL');
+  $ssl = $self->SUPER::SSL if(!defined($ssl));
+  return($ssl);
+}
 
 
 1;
