@@ -1,3 +1,19 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: EncodedPayload.pm
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Encapsulates payload contents, nops, raw and encoded payload.
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
 package Msf::EncodedPayload;
 use strict;
 use base 'Msf::Base';

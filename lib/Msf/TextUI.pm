@@ -1,3 +1,20 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: TextUI.pm
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Instantiable class derived from UI with methods useful to
+#               text-based user interfaces.
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
 package Msf::TextUI;
 use strict;
 use base 'Msf::UI';
@@ -16,6 +33,7 @@ sub new {
 }
 
 sub WordWrap {
+  # We stole this from somewhere
   my $self = shift;
   my $text = shift;
   my $indent = @_ ? shift : 4;

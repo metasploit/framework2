@@ -5,7 +5,7 @@ use base 'Msf::Encoder';
 my $info = {
   'Name'  => 'None Encoder',
   'Version'  => '1.0',
-  'Author'  => 'spoonm <spoonm[at]ghettohackers.net> [Artistic License]',
+  'Author'  => 'spoonm <ninjatools [at] hush.com> [Artistic License]',
   'Arch'  => [ 'x86' ],
   'OS'    => [ ],
   'Desc'  =>  'This encoder does not encode',

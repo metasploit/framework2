@@ -1,3 +1,19 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: Config.pm
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Config file read/write/defaults etc.
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
 package Msf::Config;
 use strict;
 use base 'Msf::Base';

@@ -2,9 +2,10 @@
 ###############
 
 ##
-#         Name: Payload.pm
-#       Author: H D Moore <hdm [at] metasploit.com>
+#         Name: ExternalPayload.pm
+#       Author: spoonm <ninjatools [at] hush.com>
 #      Version: $Revision$
+#  Description: Parent class for External Payloads, inherits from Payload.
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

@@ -5,6 +5,7 @@
 #         Name: HandlerCLI.pm
 #       Author: H D Moore <hdm [at] metasploit.com>
 #      Version: $Revision$
+#  Description: Payload Handlers for command line ui's.
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

@@ -5,6 +5,7 @@
 #         Name: CommandPayload.pm
 #       Author: H D Moore <hdm [at] metasploit.com>
 #      Version: $Revision$
+#  Description: Parent class for Command based payloads, inherits from Payload.
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

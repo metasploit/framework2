@@ -4,8 +4,8 @@
 ##
 #         Name: msfpescan
 #       Author: H D Moore <hdm [at] metasploit.com>
-#      Purpose: Search PE files for given opcodes
 #      Version: $Revision$
+#  Description: Search PE files for given opcodes
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

@@ -4,9 +4,9 @@
 ##
 #         Name: msfcli
 #       Author: H D Moore <hdm [at] metasploit.com>
-#       Author: spoonm <spoonm [at] ghettohackers.net>
-#      Purpose: Simple command line interface for launching exploits
+#       Author: spoonm <ninjatools [at] hush.com>
 #      Version: $Revision$
+#  Description: Command line interface to the Metasploit Exploit Framework
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

@@ -1,3 +1,19 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: Module.pm
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Parent class for all modules.
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
 package Msf::Module;
 use strict;
 use base 'Msf::Base';

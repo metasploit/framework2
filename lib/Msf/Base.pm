@@ -1,3 +1,21 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: Base.pm
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Parent class to all Msf bits.  Responsible for globally holding
+#               the global and temporary environments, error and printing
+#               methods, and other general methods useful to child classes.
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
 package Msf::Base;
 use strict;
 

@@ -3,8 +3,9 @@
 
 ##
 #         Name: Encoder.pm
-#       Author: spoonm
+#       Author: spoonm <ninjatools [at] hush.com>
 #      Version: $Revision$
+#  Description: Parent class for Payload Encoders, inherits from Module.
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

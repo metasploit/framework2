@@ -4,15 +4,15 @@
 ##
 #         Name: msfdldebug
 #       Author: H D Moore <hdm [at] metasploit.com>
-#      Purpose: Download debug symbols for a given DLL or EXE
 #      Version: $Revision$
+#  Description: Download debug symbols for a given DLL or EXE
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework
 #      and is subject to the same licenses and copyrights as
 #      the rest of this package.
 #
-#   Notes:
+#      Notes:
 #          This script has been tested with the DLL files that ship with Windows NT 4.0.
 #          Windows 2000, and Windows XP. It does not support the RSDS .NET type yet,
 #          nor does it actually extract any of the symbols from the files it downloads. 

@@ -4,8 +4,8 @@
 ##
 #         Name: msfweb
 #       Author: H D Moore <hdm [at] metasploit.com>
-#      Purpose: Web interface launching exploits
 #      Version: $Revision$
+#  Description: Web interface to the Metasploit Exploit Framework
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

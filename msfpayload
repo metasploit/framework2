@@ -4,8 +4,8 @@
 ##
 #         Name: msfpayload
 #       Author: H D Moore <hdm [at] metasploit.com>
-#      Purpose: Command line interface for generating payloads
 #      Version: $Revision$
+#  Description: Command line interface for generating Metasploit payloads
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

@@ -3,14 +3,13 @@
 
 ##
 #         Name: PsuedoShell.pm
-#       Author: spoonm <spoonm [at] ghettohackers.net>
+#       Author: spoonm <ninjatools [at] hush.com>
 #       Author: H D Moore <hdm [at] metasploit.com> (minor updates)
 #      Version: $Revision$
 #      License:
 #
-#      This file is part of the Metasploit Exploit Framework
-#      and is subject to the same licenses and copyrights as
-#      the rest of this package.
+#      This file is not original to the Metasploit project, but to another.
+#      Use in Metasploit Exploit Framework falls under the package's license.
 #
 ##
 

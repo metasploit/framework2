@@ -5,6 +5,8 @@
 #         Name: Win32Payload.pm
 #       Author: H D Moore <hdm [at] metasploit.com>
 #      Version: $Revision$
+#  Description: Parent class for win32 payloads, supporting preforking,
+#               multiple process exit methods, etc. Inherits from Payload.
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

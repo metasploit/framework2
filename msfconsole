@@ -4,8 +4,8 @@
 ##
 #         Name: msfconsole
 #       Author: H D Moore <hdm [at] metasploit.com>
-#       Author: spoonm <spoonm [at] ghettohackers.net>
-#      Purpose: Console shell for launching exploits
+#       Author: spoonm <ninjatools [at] hush.com>
+#  Description: Console shell interface to the Metasploit Exploit Framework
 #      Version: $Revision$
 #      License:
 #

@@ -4,8 +4,8 @@
 ##
 #         Name: msfpayload.cgi
 #       Author: H D Moore <hdm [at] metasploit.com>
-#      Purpose: Web interface for generating payloads
 #      Version: $Revision$
+#  Description: Web interface for generating Metasploit payloads
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

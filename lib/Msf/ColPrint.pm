@@ -1,6 +1,11 @@
 #####     #####
 ## Col Print ##
 #####     #####
+
+# Author: spoonm <ninjatools [at] hush.com>
+# This file is not original to the Metasploit project, but to another.
+# Use in Metasploit Exploit Framework falls under the package's license.
+
 package Msf::ColPrint;
 use strict;
 

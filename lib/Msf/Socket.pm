@@ -3,8 +3,9 @@
 
 ##
 #         Name: Socket.pm
-#       Author: spoonm
+#       Author: spoonm <ninjatools [at] hush.com>
 #      Version: $Revision$
+#  Description: Socket wrapper around Pex::Socket.
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework

@@ -1,3 +1,20 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: UI.pm
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Instantiable class allowing user interfaces access to the msf
+#               framework (access to base, etc). Contains methods used by a ui.
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
 package Msf::UI;
 use strict;
 use base 'Msf::Base';
