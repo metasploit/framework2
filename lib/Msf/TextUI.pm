@@ -173,6 +173,7 @@ sub DumpExploitSummary {
 sub DumpPayloadSummary {
   my $self = shift;
   my $p = shift;
+  $p = $p->SelfName->new;
   my $output;
 
   $output .= "       Name: " . $p->Name . "\n";
