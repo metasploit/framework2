@@ -76,6 +76,7 @@ sub DumpOptions {
     my $type = shift;
     my $object = shift;
     my $options = $object->UserOpts || { };
+    
     $col->AddRow($type . ':', 'Name', 'Default', 'Description');
     $col->AddRow('__hr__', '__hr__', '__hr__', '__hr__');
     foreach my $opt (keys(%{$options}))
@@ -217,22 +218,25 @@ sub Options {
   my $payload = $self->GetTempEnv('_Payload');
   my $payloadName = $self->GetTempEnv('_PayloadName');
 
-  if($exploit->Payload && !defined($payloadName)) {
-    $self->PrintLine('[*] You must specify a payload before viewing the available options.');
-    return;
-  }
-
-  if($exploit->Payload && !$payload) {
+  if($exploit->Payload && defined($payloadName) && !$payload) {
     $self->PrintLine("[*] Invalid payload specified: $payloadName");
     return;
   }
-
-  $self->PrintLine;
-  $self->PrintLine('Exploit and Payload Options');
-  $self->PrintLine('===========================');
+  
+  $self->PrintLine; 
+  if ($payloadName)
+  {
+    $self->PrintLine('Exploit and Payload Options');
+    $self->PrintLine('===========================');
+  } else {
+    $self->PrintLine('Exploit Options');
+    $self->PrintLine('===============');
+  }
+  
+  
   $self->PrintLine;
   print $self->DumpOptions(2, 'Exploit', $exploit);
-  print $self->DumpOptions(2, 'Payload', $payload) if($exploit->Payload);
+  print $self->DumpOptions(2, 'Payload', $payload) if $payloadName;
   $self->PrintLine;
   $self->PrintLine;
 }
@@ -243,22 +247,25 @@ sub AdvancedOptions {
   my $payload = $self->GetTempEnv('_Payload');
   my $payloadName = $self->GetTempEnv('_PayloadName');
 
-  if($exploit->Payload && !defined($payloadName)) {
-    $self->PrintLine('[*] You must specify a payload before viewing the available options.');
-    return;
-  }
-
-  if($exploit->Payload && !$payload) {
+  if($exploit->Payload && defined($payloadName) && !$payload) {
     $self->PrintLine("[*] Invalid payload specified: $payloadName");
     return;
   }
-
+  
+  $self->PrintLine; 
+  if ($payloadName)
+  {
+    $self->PrintLine('Exploit and Payload Options');
+    $self->PrintLine('===========================');
+  } else {
+    $self->PrintLine('Exploit Options');
+    $self->PrintLine('===============');
+  }
+  
+  
   $self->PrintLine;
-  $self->PrintLine('Exploit and Payload Advanced Options');
-  $self->PrintLine('====================================');
-  $self->PrintLine;
-  print $self->DumpAdvancedOptions(2, 'Payload', $payload) if($exploit->Payload);
   print $self->DumpAdvancedOptions(2, 'Exploit', $exploit);
+  print $self->DumpAdvancedOptions(2, 'Payload', $payload) if $payloadName;
   $self->PrintLine;
   $self->PrintLine;
 }
@@ -307,7 +314,7 @@ sub Exploit {
   my $payloadName = $self->GetTempEnv('_PayloadName');
 
   if($exploit->Payload && !defined($payloadName)) {
-    $self->PrintLine('[*] You must specify a payload before viewing the available options.');
+    $self->PrintLine('[*] This exploit requires a valid payload to be specified first.');
     return;
   }
 
