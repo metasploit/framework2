@@ -34,7 +34,7 @@ sub _Initalize {
 sub ConfigFile {
   my $self = shift;
   if($^O eq 'WIN32') {
-    return(dirname(File::Spec::Functions::rel2abs($0)) . '\\' . $self->_ConfigFile);
+    return($self->ScriptBase . '\\' . $self->_ConfigFile);
   }
   return("$ENV{'HOME'}/" . $self->_ConfigFile);
 }
