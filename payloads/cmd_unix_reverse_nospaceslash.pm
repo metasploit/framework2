@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::cmd_hpux_lpd_reverse;
+package Msf::Payload::cmd_unix_reverse_nospaceslash;
 use strict;
 use base 'Msf::PayloadComponent::CommandPayload';
 sub load {
@@ -16,13 +16,13 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'cmd_hpux_lpd_reverse',
+  'Name'         => 'cmd_unix_reverse_nospaceslash',
   'Version'      => '$Revision$',
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
   'Arch'         => [  ],
   'Priv'         => 0,
-  'OS'           => [ 'hpux' ],
+  'OS'           => [ 'solaris', 'linux', 'bsd', 'hpux' ],
   'Keys'         => ['cmd_nospaceslash'],
 };
 
