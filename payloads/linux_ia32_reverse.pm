@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::ReverseConnection';
 
 my $info =
 {
-  'Name'         => 'Linux Reverse Shell',
+  'Name'         => 'Linux IA32 Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'skape <mmiller [at] hick.org>', ],

@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::BindConnection';
 
 my $info =
 {
-	'Name'         => 'Linux Bind Shell',
+	'Name'         => 'Linux IA32 Bind Shell',
 	'Version'      => '$Revision$',
 	'Description'  => 'Listen for connection and spawn a shell',
 	'Authors'      => [ 'skape <miller [at] hick.org>', 

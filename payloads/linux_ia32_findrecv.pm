@@ -9,7 +9,7 @@ my $advanced =
 
 my $info =
 {
-	'Name'         => 'Linux Recv Tag Findsock Shell',
+	'Name'         => 'Linux IA32 Recv Tag Findsock Shell',
 	'Version'      => '$Revision$',
 	'Description'  => 'Spawn a shell on the established connection, proxy/nat safe',
 	'Authors'      => [ 'skape <mmiller [at] hick.org>', ],
