@@ -10,6 +10,8 @@
 package Msf::Payload::win32_bind_vncinject;
 use strict;
 use base 'Msf::PayloadComponent::Win32InjectLibStage';
+use FindBin qw{$RealBin};
+
 sub load {
   Msf::PayloadComponent::Win32InjectLibStage->import('Msf::PayloadComponent::Win32BindStager');
 }
@@ -24,7 +26,7 @@ my $info =
                         'Jarkko Turkulainen <jt@klake.org> [Unknown License]',
                     ],
   'UserOpts'     => { 
-                        'DLL'     => [1, 'PATH', 'The full path the VNC service dll'],
+                        'DLL'     => [1, 'PATH', 'The full path the VNC service dll', "$RealBin/data/vncdll.dll"],
                         'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
                         'AUTOVNC' => [1, 'BOOL', 'Automatically launch vncviewer', 0],
                     },
