@@ -35,8 +35,9 @@ main:
   mov	ebx, esp
 
   push	edx
-  jmp	short getstr
-getstr_bak:
+  call	getstr
+db "/bin/ls > /tmp/test_single_exec", 0x00
+getstr:
   push	edi
   push	ebx
   mov	ecx, esp
@@ -45,7 +46,3 @@ getstr_bak:
   push	ebx
   push	eax
   int	0x80
-
-getstr:
-  call getstr_bak
-db "/bin/ls > /tmp/test_single_exec", 0x00
