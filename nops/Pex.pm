@@ -28,13 +28,17 @@ sub Nops {
 
   my $exploit = $self->GetVar('_Exploit');
   my $random  = $self->GetLocal('RandomNops');
+  my $badRegs = $exploit->NopBadRegs;
+  my $badChars = $exploit->PayloadBadChars;
 
-  if($random && $exploit && (!$exploit->NopModReg || !$exploit->NopModStack)) {
-    $self->PrintDebugLine(1, 'Exploit doesn\'t want stack/regs touched, going non-random');
-    $random = 0;
-  }
-
-  return(Pex::Utils::Nops($length, 'x86', $random, $exploit->PayloadBadChars));
+  return(Pex::Utils::Nops($length,
+    {
+       'Arch' => 'x86',
+       'RandomNops' => $random,
+       'BadRegs' => $badRegs,
+       'BadChars' => $badChars,
+    }
+  ));
 }
 
 1;
