@@ -1,9 +1,9 @@
 BITS 32
 
 section .text
-global _start
+global main
 
-_start:
+main:
 	push	byte 0x61
 	pop	eax
 	cdq

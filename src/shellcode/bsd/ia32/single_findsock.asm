@@ -22,9 +22,9 @@
 BITS 32
 
 section .text
-global _start
+global main
 
-_start:
+main:
   xor	edi, edi
   push	edi
   mov	ebp, esp
