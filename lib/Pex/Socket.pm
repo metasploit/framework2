@@ -69,11 +69,6 @@ sub SetOptions {
     }
     $self->UseSSL($use);
   }
-  if(exists($hash->{'Proxies'})) {
-    my $proxies = $hash->{'Proxies'};
-    $self->AddProxies(@{$proxies});
-    return if($self->GetError);
-  }
   if(exists($hash->{'Timeout'})) {
     $self->SetTimeout($hash->{'Timeout'});
   }
