@@ -1,0 +1,271 @@
+#!/usr/bin/perl
+###############a
+
+##
+#         Name: msfelfscan
+#	  Author: Richard Johnson <rjohnson [at] uninformed.org>
+##
+
+require 5.6.0;
+
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
+use Getopt::Std;
+use strict;
+
+use Pex::ELFInfo;
+use Pex::Nasm::Ndisasm;
+use Pex;
+
+use Msf::ColPrint;
+
+no utf8;
+
+my $VERSION = '$Revision$';
+
+my %opts = ();
+my %jmps =
+    (
+        "\xff\xd0" => ["eax", "call"],
+        "\xff\xe0" => ["eax", "jmp" ],
+        "\xff\xd1" => ["ecx", "call"],
+        "\xff\xe1" => ["ecx", "jmp" ],
+        "\xff\xd2" => ["edx", "call"],
+        "\xff\xe2" => ["edx", "jmp" ],
+        "\xff\xd3" => ["ebx", "call"],
+        "\xff\xe3" => ["ebx", "jmp" ],
+        "\xff\xe4" => ["esp", "jmp" ],
+        "\xff\xd5" => ["ebp", "call"],
+        "\xff\xe5" => ["ebp", "jmp" ],
+        "\xff\xd6" => ["esi", "call"],
+        "\xff\xe6" => ["esi", "jmp" ],
+        "\xff\xd7" => ["edi", "call"],
+        "\xff\xe7" => ["edi", "jmp" ],
+        
+        "\x50\xc3" => ["eax", "push"],
+        "\x53\xc3" => ["ebx", "push"],
+        "\x51\xc3" => ["ecx", "push"],
+        "\x52\xc3" => ["edx", "push"],
+        "\x54\xc3" => ["esp", "push"],
+        "\x55\xc3" => ["ebp", "push"],
+        "\x56\xc3" => ["esi", "push"],
+        "\x57\xc3" => ["edi", "push"],
+    );
+
+my %pops =
+    (
+        "eax"   => "\x58",
+        "ebx"   => "\x5b",
+        "ecx"   => "\x59",
+        "edx"   => "\x5a",
+        "esi"   => "\x5e",
+        "edi"   => "\x5f",
+        "ebp"   => "\x5d",
+    );
+
+
+getopts("f:d:j:sx:a:B:A:I:nhvED", \%opts);
+Usage()   if($opts{'h'});
+Version() if($opts{'v'});
+
+if ($opts{'h'} || 
+     (! defined($opts{'f'}) && ! defined($opts{'d'})) ||
+     (! defined($opts{'j'}) &&
+      ! defined($opts{'x'}) &&
+      ! defined($opts{'a'}) && 
+      ! defined($opts{'D'}) && 
+      ! $opts{'s'})
+   ) 
+{ 
+   Usage(); 
+   exit(0); 
+}
+
+my $func;
+my $args = { };
+
+if(exists($opts{'s'})) {
+  $func = \&popPopRet;
+}
+elsif(exists($opts{'j'})) {
+  $func = \&jmpReg;
+  $args->{'reg'} = $opts{'j'};
+}
+elsif(exists($opts{'x'})) {
+  $func = \&regex;
+  $args->{'regex'} = $opts{'x'};
+}
+elsif(exists($opts{'a'})) {
+  $func = \&address;
+  $args->{'address'} = hex($opts{'a'});
+}
+elsif(exists($opts{'D'})) {
+  $func = \&dumpinfo;
+  $args->{'dumpinfo'} = hex($opts{'D'});
+}
+
+$args->{'before'} = $opts{'B'} if(exists($opts{'B'}));
+$args->{'after'} = $opts{'A'} if(exists($opts{'A'}));
+
+if($opts{'f'}) {
+
+  my $filename = $opts{'f'};
+  my $elf = Pex::ELFInfo->new('File' => $filename, 'Debug' => $opts{'E'});
+  if (! $elf)
+  {
+      print STDERR "$0: could not load ELF image from file.\n";
+      exit(0);
+  }
+  if ($opts{'I'}) { $elf->ImageBase($opts{'I'}) }
+  &{$func}($elf, $args);
+}
+
+sub dumpinfo {
+    my $elf = shift;
+    my $args = shift;
+    my $col;
+    my @Ehdr 	= $elf->ElfHeaders;
+    my @Phdr   = $elf->ProgramHeaders;
+    
+    print "\n\n[ ELF Header ]\n\n";
+    $col = Msf::ColPrint->new(4, 4);
+    foreach my $hdr (@Ehdr) {
+	    $col->AddRow($hdr, sprintf("0x%.8x",$elf->ElfHeader($hdr)));
+    }
+    print $col->GetOutput;
+
+    print "\n\n[ Program Headers ]\n\n";
+    my $e_phnum = $elf->ElfHeader("e_phnum");
+    for(my $i = 0; $i < $e_phnum; $i++)
+    {	    
+	$col = Msf::ColPrint->new(4, 4);
+    	foreach my $hdr (@Phdr) {
+		    $col->AddRow($hdr, sprintf("0x%.8x",$elf->ProgramHeader($i, $hdr)));
+    	}
+	print $col->GetOutput;
+	printf("\n----\n");
+    }
+    
+}
+
+
+# Scan for pop/pop/ret addresses
+sub popPopRet
+{
+    my $elf = shift;
+    my $data = $elf->Raw;
+    my $args = shift;
+    foreach my $rA (keys(%pops))
+    {
+        foreach my $rB (keys(%pops))
+        {
+            my $opc = $pops{$rA} . $pops{$rB} . "\xc3";
+            my $lst = 0;
+            my $idx = index($data,  $opc, $lst);
+            while ($idx > 0)
+            {
+                printf("0x%.8x   $rA $rB ret\n", $elf->OffsetToVirtual($idx));
+                $lst = $idx + 1;
+                $idx = index($data, $opc, $lst);
+            }
+        }
+    }
+}
+
+# Scan for jmp/call/push,ret addresses
+sub jmpReg
+{
+    my $elf = shift;
+    my $data = $elf->Raw;
+    my $args = shift;
+    my $reg = $args->{'reg'};
+    foreach my $opc (keys(%jmps))
+    {
+        next if ($reg && lc($reg) ne $jmps{$opc}->[0]);
+
+        my $lst = 0;
+        my $idx = index($data, $opc, $lst);
+        while ($idx > 0)
+        {
+            my ($reg, $typ) = @{$jmps{$opc}};
+            printf("0x%.8x   $typ $reg\n", $elf->OffsetToVirtual($idx));
+            $lst = $idx + 1;
+            $idx = index($data, $opc, $lst);
+        }
+    }
+}
+
+# Regex
+sub regex {
+  my $elf = shift;
+  my $data = $elf->Raw;
+  my $args = shift;
+  my $regex = $args->{'regex'};
+  $regex .= '.' x $args->{'after'} if($args->{'after'});
+  $regex = ('.' x $args->{'before'}) . $regex if($args->{'before'});
+
+  while($data =~ m/($regex)/g) {
+    my $found = $1;
+    my $index = pos($data) - length($found);
+    printf("0x%.8x   %s\n", $elf->OffsetToVirtual($index), hexOutput($found));
+  }
+}
+
+sub address {
+  my $elf = shift;
+  my $data = $elf->Raw;
+  my $args = shift;
+
+  my $address = $args->{'address'} - $args->{'before'};
+  my $length = $args->{'before'} + $args->{'after'};
+  $length = 1 if(!$length);
+  my $index = $elf->VirtualToOffset($address);
+  my $found = substr($data, $index, $length);
+  return if(!defined($index) || length($found) == 0);
+  printf("0x%.8x   %s\n", $address, hexOutput($found));
+}
+
+sub hexOutput {
+  my $data = shift;
+  my $string = unpack('H*', $data);
+  if($opts{'n'}) {
+#    my $tempString = $string;
+#    $tempString =~ s/(..)/\\x$1/g;
+    $string .= "\n--- ndisasm output ---\n";
+#    $string .= `echo -ne "$tempString" | ndisasm -u /dev/stdin`;
+    $string .= Pex::Nasm::Ndisasm->DisasData($data);
+    $string .= "--- ndisasm output ---";
+  }
+  return($string);
+}
+
+
+sub Usage 
+{
+    print STDERR
+qq{  Usage: $0 <input> <mode> <options>
+Inputs:
+         -f  <file>    Read in ELF file
+Modes:
+         -j  <reg>     Search for jump equivalent instructions
+         -s            Search for pop+pop+ret combinations
+         -x  <regex>   Search for regex match
+         -a  <address> Show code at specified virtual address
+Options:
+         -A  <count>   Number of bytes to show after match
+         -B  <count>   Number of bytes to show before match
+         -I  address   Specify an alternate base load address
+         -n            Print disassembly of matched data
+};
+  exit(0);
+
+}
+sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
+    print STDERR qq{
+   Msfelfscan Version:  $ver 
+
+};
+  exit(0);
+}
+
