@@ -23,6 +23,7 @@
 #	5. Encoders
 #	6. Admin
 #	7. Logs
+#	8. All text to CSS
 
 require 5.6.0;
 
@@ -306,8 +307,8 @@ sub HTML_Footer {
 </table></td></tr></table>
 <br/>
 <div align='center' class='copy'>
-copyright &copy 2003-2005 metasploit.com<br/>
-
+	copyright &copy 2003-2005 metasploit.com<br/>
+</div>
 </body>
 </html>
 	];
@@ -459,7 +460,8 @@ sub ModuleInfo {
     $desc =~ s/\</\&lt;/g;
     $desc =~ s/\>/\&gt;/g;
     
-    $res = "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
+	$res .= "<div class='moduleInfo'>\n";
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
     $res .= "<tr><td align='left' width=80><b>Name:</b></td><td>" . $module->Name() . "</td></tr>\n";
     my ($rev)   = $module->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
     $res .= "<tr><td align='left' width=80><b>Version:</b></td><td>" . $rev . "</td></tr>\n";
@@ -482,6 +484,7 @@ sub ModuleInfo {
     foreach my $ref (@{$module->RefLinks}) { $res .= "<li> <a href='$ref'>$ref</a><br/>\n" }
 	
     $res .= "<br/></td></tr></table>\n";
+	$res .= "</div>\n";
 	return $res;
 }
 
@@ -919,20 +922,39 @@ sub ExploitExec
     $Browser->Send($out);
 	
 	$out = HTML_Header().
-          "<b>Processing exploit request (".$exploit->Name.")...</b><br/>\n".
-          "<b>Using payload: " . $payloadName . "<br/>\n".
-          "<pre>\n";
+           "<div class='moduleOutput'>\n".
+           "<b>Processing exploit request (".$exploit->Name.")...</b><br/>\n".
+           "<b>Using payload: " . $payloadName . "</div><br/>\n".
+qq[		   
+		<br/>
+		</td>
+	</tr>
+</table></td></tr></table>
+<br/>
+];
+
+
+
+
+	$out .=
+	
+	"<br\><hr size=1 width='80%'>".
+	"<div align='center' class='navHead'> Exploit Output </div>\n".
+	"<hr size=1 width='80%'><br\>".	
+	"<div align='left' class='moduleOutput' bgcolor='#dddddd'>\n".
+	"<blockquote><blockquote>\n".
+	"\n";
 	
 	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
     $ui->SetTempEnv('_BrowserSocket', $Browser);
     $ui->Exploit();
 
-	$out = "\n</pre><br/>". HTML_Footer();
+	$out = "\n</blockquote></blockquote>".
+	       "</div><br/></body></html>\n";
+		   
 	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 
-	$out = "";
-	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
 	$Browser->Close;
     

@@ -35,7 +35,7 @@ sub _HandleConsole {
   );  
   
   if (! $sock) {
-      $out = "WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!\n";
+      $out = "WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!<br\>\n";
 	  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	  return;
   }
@@ -45,7 +45,7 @@ sub _HandleConsole {
 
   $out = "[*] Proxy shell started on ".
 	     "<a href='telnet://$addr:".$sock->sockport."'>".
-	     "$addr:".$sock->sockport."</a>\n";
+	     "$addr:".$sock->sockport."</a><br\>\n";
 	
   $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
@@ -62,14 +62,14 @@ sub _HandleConsole {
   }
   
   if (! $csock) {
-      $out = "[*] Shutting down proxy shell due to timeout\n";
+      $out = "[*] Shutting down proxy shell due to timeout<br\>\n";
 	  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	  return;
   }
   
   my $cs = Pex::Socket::Tcp->new_from_socket($csock);
 
-  $out = "[*] Connection to proxy shell from ".$csock->peerhost.":".$csock->peerport."\n";
+  $out = "[*] Connection to proxy shell from ".$csock->peerhost.":".$csock->peerport."<br\>\n";
   $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	  
   $cs->Send("\r\nMetasploit Web Interface Shell Proxy\r\n\r\n");

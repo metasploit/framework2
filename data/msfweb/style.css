@@ -8,37 +8,37 @@ body
     background:     white;
     font-family:    Verdana, Tahoma, Arial, Helvetica, sans-serif;
     color:          black;
-    font-size:      12pt;
+    font-size:      10pt;
     margin:         0;
 }
 
-A:link          { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
-A:active        { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
-A:visited       { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
-A:hover         { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
+A:link          { font-size: 10pt; text-decoration: none; color: navy; font-weight: bold;}
+A:active        { font-size: 10pt; text-decoration: none; color: navy; font-weight: bold;}
+A:visited       { font-size: 10pt; text-decoration: none; color: navy; font-weight: bold;}
+A:hover         { font-size: 10pt; text-decoration: none; color: navy; font-weight: bold;}
 
 .tabDark {
 	background:		#dddddd;
-	font-size:		12pt;
+	font-size:		10pt;
 	font-weight:	bold;
 }
 
 .tabLight {
 	background:		#ffffff;
-	font-size:		12pt;
+	font-size:		10pt;
 	font-weight:	bold;
 }
 
 .tabActive {
 	background:		#feff9c;
 	color:			black;
-	font-size:		12pt;
+	font-size:		10pt;
 	font-weight:	bold;
 }
 
 .sectionTitle {
 	color:			black;
-	font-size:		14pt;
+	font-size:		10pt;
 	font-weight:	bold;
 }
 
@@ -46,34 +46,32 @@ A:hover         { font-size: 12pt; text-decoration: none; color: navy; font-weig
 .listBody {
 	background:		white;
 	color:			black;
-	font-size:		12pt;
+	font-size:		10pt;
 }
 
 A.nav {
-	font-size:		11pt;
+	font-size:		10pt;
 	font-weight:	bold;
-	font-variant:	small-caps;
 }
 
 .nav { 
-	font-size:		13pt;
-	font-variant:	small-caps;
+	font-size:		10pt;
 	font-weight:	normal;
 	font-weight:	bold;
 }
 
 .navHead { 
-	font-size:		11pt;
+	font-size:		10pt;
 	font-weight:	bold;
 }
 
 .copy {
-	font-size:		11pt;
+	font-size:		10pt;
 	font-variant:	small-caps;
 }
 
 .modHead {
-	font-size:		11pt;
+	font-size:		10pt;
 	font-weight:	bold;
 	color:			white;
 }
@@ -85,8 +83,17 @@ A.nav {
 }
 
 .boldText { 
-	font-size: 		12pt; 
+	font-size: 		10pt; 
 	color: 			black; 
 	font-weight: 	bold;
 }
 
+.moduleOutput {
+	font-size:		10pt;
+	color:			black;
+}
+
+.moduleInfo {
+	font-size:		10pt;
+	color:			black;
+}

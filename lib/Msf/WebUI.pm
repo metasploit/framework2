@@ -52,6 +52,9 @@ sub PrintLine {
 	# strip out bad web joojoo
 	$data = XSS_Filter($data);
 	
+	# append a line break for html mode
+	$data .= "<br/>\n";
+	
     # If we are in exploit mode, write output to browser
     if (my $s = $self->GetTempEnv('_BrowserSocket')) {
 		$data .= "\n";
