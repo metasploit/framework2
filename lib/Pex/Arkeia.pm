@@ -28,7 +28,7 @@ sub ClientInfo {
 	);
 
 	$sock->Send($req);
-	$res = $sock->Recv(-1, 10);
+	$res = Recv($sock, 10);
 	
 	# Check for a null response
 	if (! $res ) {
@@ -53,7 +53,7 @@ sub ClientInfo {
 	);
 
 	$sock->Send($req);
-	$res = $sock->Recv(-1, 5);
+	$res = Recv($sock, 10);
 
 	# Check for a null response
 	if (! $res ) {
@@ -79,7 +79,7 @@ sub ClientInfo {
 	);
 
 	$sock->Send($req);
-	$res = $sock->Recv(-1, 5);
+	$res = Recv($sock, 10);
 
 	# Check for a null resposne
 	if (! $res ) {
@@ -106,7 +106,7 @@ sub ClientInfo {
 		0x00, 0x00, 0x00, 0x00, 0x00
 	);
 	$sock->Send($req);
-	$res = $sock->Recv(-1, 5);
+	$res = Recv($sock, 10);
 
 	# Check for a null response
 	if (! $res ) {
@@ -131,7 +131,11 @@ sub ClientInfo {
 		0x00
 	);
 	$sock->Send($req);
-	$res = $sock->Recv(-1, 5);
+	# Wait for the response we want
+	for (1 .. 5) {
+		$res = Recv($sock, 10);
+		last if $res =~ /VERSION/ms;
+	}
 
 	# Check for a null response
 	if (! $res) {
@@ -157,16 +161,21 @@ sub ClientInfo {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	);
 	$sock->Send($req);
-	$res = $sock->Recv(-1, 5);
 
+	# Wait for the response we want
+	for (1 .. 5) {
+		$res = Recv($sock, 10);
+		last if substr($res, 0, 2) eq "\x00\x43";
+	}
+	
 	# Check for a null response
 	if (! $res) {
 		$ret{'Error'} = 'No response to sixth request';
 		return %ret;	
 	}
-	
+
 	# Check for an unexpected response
-	if (substr($res, 0, 4) ne "\x00\x43\x00\x00") {
+	if (substr($res, 0, 2) ne "\x00\x43") {
 		$ret{'Error'} = 'Invalid response to sixth request';
 		return %ret;
 	}
@@ -182,8 +191,13 @@ sub ClientInfo {
 		0x00
 	);
 	$sock->Send($req);
-	$res = $sock->Recv(-1, 5);
-
+	
+	# Wait for the response we want
+	for (1 .. 5) {
+		$res = Recv($sock, 10);
+		last if substr($res, 0, 2) eq "\x00\x69";
+	}
+	
 	# Check for a null response
 	if (! $res) {
 		$ret{'Error'} = 'No response to seventh request';
@@ -199,5 +213,213 @@ sub ClientInfo {
 	return %ret;
 }
 
+sub GetFile {
+	my $sock = shift;
+	my ($name, $drive, $path) = @_;	
+	my ($hed, $req, $res);
+	my %ret;
+
+	##
+	# First we send the "authentication" request to the service
+	##
+	$req = pack('C*', 
+		0x00, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x70,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x01, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x01, 0x00, 0x00, 0x7f, 0x41, 0x52, 0x4b, 0x46, 
+		0x53, 0x00, 0x72, 0x6f, 0x6f, 0x74, 0x00, 0x72, 
+		0x6f, 0x6f, 0x74, 0x00, 0x00, 0x00, 0x34, 0x2e, 
+		0x33, 0x2e, 0x30, 0x2d, 0x31, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
+	);
+
+	$sock->Send($req);
+	$res = Recv($sock, 10);
+	
+	# Check for a null response
+	if (! $res ) {
+		$ret{'Error'} = 'No response to first request';
+		return %ret;
+	}
+
+	# Check for an unexpected response	
+	if (substr($res, 0, 4) ne "\x00\x60\x00\x04") {
+		$ret{'Error'} = 'Invalid response to first request';
+		return %ret;
+	}
+
+
+	##
+	# This request is required to finish the authentication
+	##
+	$req = pack('C*',
+		0x00, 0x73, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 
+		0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00 
+	);
+
+	$sock->Send($req);
+	$res = Recv($sock, 10);
+
+	# Check for a null response
+	if (! $res ) {
+		$ret{'Error'} = 'No response to second request';
+		return %ret;
+	}
+	
+	# Check for an unexpected response	
+	if (substr($res, 0, 4) ne "\x00\x60\x00\x04") {
+		$ret{'Error'} = 'Invalid response to second request';
+		return %ret;
+	}
+
+
+	##
+	# No idea, might be some type of session identifier
+	##
+	$req = pack('C*',
+		0x00, 0x61, 0x00, 0x04, 0x00, 0x01, 0x00, 0x1a, 
+		0x00, 0x00, 0x31, 0x31, 0x30, 0x36, 0x36, 0x35, 
+		0x39, 0x35, 0x34, 0x33, 0x00, 0x45, 0x4e, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00 
+	);
+
+	$sock->Send($req);
+	$res = Recv($sock, 10);
+
+	# Check for a null resposne
+	if (! $res ) {
+		$ret{'Error'} = 'No response to third request';
+		return %ret;
+	}
+
+	# Check for an unexpected response	
+	if (substr($res, 0, 4) ne "\x00\x43\x00\x00") {
+		$ret{'Error'} = 'Invalid response to third request';
+		return %ret;
+	}
+
+	##
+	# ARKFS_BACKUP_ALL
+	##
+	$req = pack('C*',
+		0x00, 0x62, 0x00, 0x01, 0x00, 0x02, 0x00, 0x1d, 
+		0x41, 0x52, 0x4b, 0x46, 0x53, 0x5f, 0x42, 0x41, 
+		0x43, 0x4b, 0x55, 0x50, 0x5f, 0x41, 0x4c, 0x4c, 
+		0x00, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00 
+	);
+
+	$sock->Send($req);
+	$res = Recv($sock, 10);
+
+	# Check for a null resposne
+	if (! $res ) {
+		$ret{'Error'} = 'No response to fourth request';
+		return %ret;
+	}
+
+	# Check for an unexpected response	
+	if (substr($res, 0, 4) ne "\x00\x43\x00\x00") {
+		$ret{'Error'} = 'Invalid response to fourth request';
+		return %ret;
+	}
+
+	##
+	# Prepare the real request
+	##
+	$req = pack('C*',
+		0x00, 0x63, 0x00, 0x04, 0x00, 0x03, 0x00, 0x15, 
+		0x31, 0x00, 0x31, 0x00, 0x31, 0x00, 0x30, 0x3a, 
+		0x33, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00 
+	);
+	$sock->Send($req);
+	
+	
+	##
+	# The actual file request
+	##
+	my %getreq =
+	(
+		"Ps_host"	=>	$name,
+		"Ps_pluga"	=> "file",
+
+		"Ps_volum"	=> $drive,
+		"Ps_locat"	=> "/",
+		
+		# These need to match 
+		"Ps_cmpnt"	=> $path,
+		"Ps_flloc"	=> $path,
+				
+		"PRECOVERY"	=> "0",
+		"Ps_allowedfs"	=> "NORMAL_FS",
+		"Ps_cpres"	=> "NO_COMPRESS",
+		"Ps_crypt"	=> "NO_CRYPT",
+		"Pn_det"	=> "3",
+
+		"Pn_bkpsid"	=> time(),
+	);
+
+	$req  = 'T';
+	foreach (keys %getreq) { $req .= $_ ."\x00".$getreq{$_}."\x00" }
+	$req .= 'E';
+
+	$hed = pack('C*', 0x00, 0x66, 0x00, 0x04, 0x00, 0x04).pack('n', length($req));	
+	$sock->Send($hed);
+	$sock->Send($req);
+
+	# There are three responses, we want the last one
+	for (1 .. 3) {
+		$res = Recv($sock, 10);
+		
+		# Save any error messages from the server
+		if (substr($res, 0, 2) eq "\x00\x65") {
+			$ret{'Info'} = substr($res, 8);
+		}
+		
+		last if substr($res, 0, 2) eq "\x00\x74";
+	}
+
+	# Check for a null response
+	if (! $res ) {
+		$ret{'Error'} = 'No response to sixth request';
+		return %ret;
+	}
+	
+	# Check for an unexpected response	
+	if (substr($res, 0, 4) ne "\x00\x74\x00\x04") {
+		$ret{'Error'} = 'Invalid response to sixth request';
+		return %ret;
+	}
+
+	$ret{'Data'} = $res;
+	return %ret;
+}
+
+
+sub Recv {
+	my $sock = shift;
+	my $tlim = shift || 10;
+	
+	my ($head, $data, $dlen);
+
+	$head = $sock->Recv(8, $tlim);
+	return if ! $head;
+	
+	$dlen = unpack('n', substr($head, 6, 2));
+	return $head if ! $dlen;
+
+	$data = $sock->Recv($dlen, $tlim);
+	return $head . $data;
+}
 
 1;
