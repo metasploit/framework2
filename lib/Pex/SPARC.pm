@@ -55,7 +55,8 @@ sub Set {
 	my $dst = shift;
 
 # XXX: Add support for signedness
-	if($constant <= 8191 && $constant >= 0)
+# 4095 because of sign extension
+	if($constant <= 4095 && $constant >= 0)
 	{
 		return Ori("g0", $constant, $dst)
 	}
