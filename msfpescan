@@ -24,6 +24,8 @@ use lib "$Bin/lib";
 use Pex::PEInfo;
 use Pex;
 
+my $VERSION = '$Revision$';
+
 my %opts = ();
 my %jmps =
     (
@@ -65,7 +67,9 @@ my %pops =
     );
 
 
-getopts("f:d:j:sx:a:B:A:I:nh", \%opts);
+getopts("f:d:j:sx:a:B:A:I:nhv", \%opts);
+Usage()   if($opts{'h'});
+Version() if($opts{'v'});
 if ($opts{'h'} || (! defined($opts{'f'}) && ! defined($opts{'d'})) || (! defined($opts{'j'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { usage(); exit(0); }
 
 my $func;
@@ -231,6 +235,14 @@ Options:
 
 };
 
+}
+sub Version {
+    print STDERR qq{
+   Framework Version:  Doesn't use Msf Framework
+   Msfpescan Version:  $VERSION
+
+};
+  exit(0);
 }
 
 package SkapeFoo;
