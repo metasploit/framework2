@@ -97,7 +97,7 @@ sub EncodeFnstenv
 #
 sub EncodeAlphaNum {
     my ($rawshell, $xbadc) = @_;
-    $type = shift || '[esp]';    
+    my $type = shift || '[esp]';    
 
     if (! exists($baseaddr{$type}))
     {
