@@ -3,6 +3,7 @@
 ;        Name: stager_stdin
 ;   Platforms: *BSD, Linux
 ;     Authors: vlad902 <vlad902 [at] gmail.com>
+;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
 ;
