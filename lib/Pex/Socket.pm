@@ -359,6 +359,10 @@ sub Recv {
     }
     else {
       $self->GetSocket->recv($tempData, $length);
+      if(!length($tempData)) {
+        $self->SetError('Socket is dead.');
+        return($data);
+      }
     }
 
     $data .= $tempData;
