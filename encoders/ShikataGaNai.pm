@@ -64,6 +64,7 @@ sub _BuildDecoder {
   return($delta->Build)
 }
 
+  # spoon's variable length dword xor add feedback whoozle codez
 sub _BuildBM {
   my $self = shift;
   my $xor = shift;
@@ -71,11 +72,10 @@ sub _BuildBM {
   my $xorkey = pack('V', $xor);
   my $l = Pex::Encoder::PackLength($len);
 
-  # spoon's variable length dword xor add feedback whoozle codez
-
   my $fpuins = $bmb->new('fpuIns');
-  for(my $b = 0xe8; $b <= 0xee; $b++) {
-    $fpuins->AddBlock("[>0 fpu<]\xd9" . chr($b));
+
+  foreach my $fpu ($self->_MakeFPUs) {
+    $fpuins->AddBlock('[>0 fpu<]' . $fpu);
   }
 
   my $fnstenv = $bmb->new('fnstenv', "\xd9\x74\x24\xf4"); # fnstenv [esp - 12]
@@ -133,6 +133,54 @@ sub _BuildBM {
       
   my $block = Pex::Poly::BlockMaster->new($fpuins, $zero, $movkey);
   return($block);
+}
+
+sub _MakeFPUs {
+  my $self = shift;
+  my @fpus;
+
+  # load constants
+  for(my $b = 0xe8; $b <= 0xee; $b++) {
+    push(@fpus, "\xd9" . chr($b));
+  }
+  # fxch
+  for(my $b = 0xc8; $b <= 0xcf; $b++) {
+    push(@fpus, "\xd9" . chr($b));
+  }
+
+  # fnop
+  push(@fpus, "\xd9\xd0");
+  # fabs
+  push(@fpus, "\xd9\xe1");
+  # fchs
+  push(@fpus, "\xd9\xe1");
+  # fchs
+  push(@fpus, "\xdb\xe1");
+  # conditional movez
+  for(my $b = 0xc0; $b <= 0xdf; $b++) {
+    push(@fpus, "\xda" . chr($b));
+    push(@fpus, "\xdb" . chr($b));
+  }
+  # fdecstp
+  push(@fpus, "\xd9\xf6");
+  # fincstp
+  push(@fpus, "\xd9\xf7");
+  # ffree
+  for(my $b = 0xc0; $b <= 0xc7; $b++) {
+    push(@fpus, "\xdd" . chr($b));
+  }
+  # fninit
+  push(@fpus, "\xdb\xe3");
+
+  # fld st(i)
+  for(my $b = 0xc0; $b <= 0xc7; $b++) {
+    push(@fpus, "\xd9" . chr($b));
+  }
+
+  # fxam
+  push(@fpus, "\xd9\xe5");
+
+  return(@fpus);
 }
 
 # This is a *really* bad method of doing this, temporary
