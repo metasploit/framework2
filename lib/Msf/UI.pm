@@ -50,10 +50,7 @@ sub _Initalize {
 
 sub ConfigFile {
   my $self = shift;
-  if($^O eq 'WIN32') {
-    return($self->ScriptBase . '\\' . $self->_ConfigFile);
-  }
-  return("$ENV{'HOME'}/" . $self->_ConfigFile);
+  return($ENV{'HOME'} ."/". $self->_ConfigFile);
 }
 
 sub LoadExploits {

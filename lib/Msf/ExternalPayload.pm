@@ -38,10 +38,10 @@ sub Generate {
   my $self = shift;
   my $opts = shift;
   my $prog = $self->{'Filename'};
-  my $args;
+  my @args;
   
   foreach (keys(%{$opts})) {
-    $args .= $_ . '=' . $opts->{$_} . ' ';
+    push @args, $_.'='.$opts->{$_};
   }
   
   if(! -e $prog)  {
@@ -49,17 +49,26 @@ sub Generate {
     return;
   }
 
-  $self->PrintDebugLine(3, "Running: $prog $args");
+  $self->PrintDebugLine(3, "Running: $prog ".join(" ",@args));
+
+  local *PROG;
   local $/;
-  open(PROG, "$prog $args 2>/dev/null |") ||
-  do 
-  {
-    $self->SetError("Couldn't open $prog: $!");
-    return;
-  };
   
+  if(! open(PROG, "-|"))
+  {
+      exec($prog, @args);
+      exit(0);
+  }
+
   my $data = <PROG>;
   close(PROG);
+  
+  if (! $data)
+  {
+    $self->SetError("Payload creation failed");
+    return;  
+  }
+  
   return($data);
 }
 

