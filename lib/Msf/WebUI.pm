@@ -34,6 +34,7 @@ sub new {
   # create a new empty printline buffer
   $self->SetTempEnv('_PrintLineBuffer', [ ]);
   $self->_OverridePrintLine(\&PrintLine);
+  $self->_OverridePrint(\&Print); 
   
   return($self);
 }
@@ -41,32 +42,40 @@ sub new {
 # We overload the UI::PrintLine call so that we can
 # buffer the output from the exploit and display it
 # as needed
-sub PrintLine {
+
+sub Print {
     my $self = shift;
     my $data = shift;
-
+	my $line = shift;
 
     # ignore empty messages
     return(0) if ! length($data);
 	
 	# strip out bad web joojoo
-	$data = XSS_Filter($data);
+	$data = XSS_Filter($data);	
 	
-	# append a line break for html mode
-	$data .= "<br/>\n";
-	
-    # If we are in exploit mode, write output to browser
+	# append a line break if required
+	$data .= "<br/>\n" if $line;
+
+ 	# If we are in exploit mode, write output to browser
     if (my $s = $self->GetTempEnv('_BrowserSocket')) {
+		
 		# automatically scroll to the end of the page...	
 		$data .= "<script language='javascript'>self.scrollTo(0, 999999999)</script>\n";		
 		$s->Send(sprintf("%x\r\n%s\r\n", length($data), $data));
-        return;
+        return(1);
     }
     
     my @buffer = @{$self->GetEnv('_PrintLineBuffer')};
     push @buffer, $data;
-    $self->SetTempEnv('_PrintLineBuffer', \@buffer);
-    return(1);
+    $self->SetTempEnv('_PrintLineBuffer', \@buffer);	    
+	return(1);
+}
+
+sub PrintLine {
+    my $self = shift;
+    my $data = shift;
+	return $self->Print($data, 1);	
 }
 
 sub PrintError {

@@ -157,7 +157,6 @@ sub SetGlobalEnv {
 
   for(my $i = 0; $i < @pairs; $i += 2) {
       if ($pairs[$i] =~ /^socks/) {
-          # Msf::Socket::socks_setup($pairs[$i], $pairs[$i + 1]);
           Pex::Socket::socks_setup($pairs[$i], $pairs[$i + 1]);
       }
     print "SetGlobal $pairs[$i] => " . $pairs[$i + 1] . "\n" if($envDebug);

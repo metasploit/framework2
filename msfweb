@@ -1537,7 +1537,7 @@ sub ExploitExec
     $ui->SetTempEnv('_UI', $ui);
    
     
-    if ($state->{"ExploitAction"} eq "Vulnerability Check") {
+    if ($state->{'ExploitAction'} eq '-Check-') {
         $res .= "\n<form action='$burl' method='GET'>\n";
         foreach (keys(%{$state})) {
             if ($_ ne "MODE")  {
