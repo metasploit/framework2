@@ -55,92 +55,108 @@ my $asize = $osize << 1; # \x67
 my $prefix = $asize << 1;
 
 my $table = [
-  [ "\xfe\xc0",           2, $reg1, [ $reg ] ], # /* incb %reg1 */
-  [ "\x40",               1, $reg1, [ $reg ] ], # /* incl %reg1 */
-  [ "\xfe\xc8",           2, $reg1, [ $reg ] ], # /* decb %reg1 */
-  [ "\x48",               1, $reg1, [ $reg ] ], # /* decl %reg1 */
-  [ "\x50",               1, $reg1, [ $esp ] ], # /* pushl %reg1 */
-  [ "\x68",               5, $none, [ $esp ] ], # /* pushl $imm32 */
-  [ "\x88\xc0",           2, $reg2, [ $reg ] ], # /* movb %reg1,%reg2 */
-  [ "\xb0",               2, $reg1, [ $reg ] ], # /* movb $imm8,%reg1 */
-  [ "\x89\xc0",           2, $reg2, [ $reg ] ], # /* movl %reg1,%reg2 */
-  [ "\xb8",               5, $reg1, [ $reg ] ], # /* movl $imm32,%reg1 */
-  [ "\x30\xc0",           2, $reg2, [ $reg ] ], # /* xorb %reg1,%reg2 */
-  [ "\x80\xf0",           3, $reg1, [ $reg ] ], # /* xorb $imm8,%reg1 */
-  [ "\x31\xc0",           2, $reg2, [ $reg ] ], # /* xorl %reg1,%reg2 */
-  [ "\x81\xf0",           6, $reg1, [ $reg ] ], # /* xorl $imm32,%reg1 */
-  [ "\xf6\xe0",           2, $reg1, [ $eax ] ], # /* mulb %reg1 */
-  [ "\xf7\xe0",           2, $reg1, [ $eax, $edx ] ], # /* mull %reg1 */
-  [ "\x20\xc0",           2, $reg2, [ $reg ] ], # /* andb %reg1,%reg2 */
-  [ "\x80\xe0",           3, $reg1, [ $reg ] ], # /* andb $imm8,%reg1 */
-  [ "\x21\xc0",           2, $reg2, [ $reg ] ], # /* andl %reg1,%reg2 */
-  [ "\x81\xe0",           6, $reg1, [ $reg ] ], # /* andl $imm32,%reg1 */
-  [ "\x08\xc0",           2, $reg2, [ $reg ] ], # /* orb %reg1,%reg2 */
-  [ "\x80\xc8",           3, $reg1, [ $reg ] ], # /* orb $imm8,%reg1 */
-  [ "\x0c",               2, $none, [ $eax ] ], # /* orb $imm8,%al */
-  [ "\x09\xc0",           2, $reg2, [ $reg ] ], # /* orl %reg1,%reg2 */
-  [ "\x81\xc8",           6, $reg1, [ $reg ] ], # /* orl $imm32,%reg1 */
-  [ "\x0d",               5, $none, [ $eax ] ], # /* orl $imm32,%eax */
-  [ "\x04",               2, $none, [ $eax ] ], # /* addb $imm8,%al */
-  [ "\x80\xc0",           3, $reg1, [ $reg ] ], # /* addb $imm8,%reg1 */
+  # comment naming convention, reg2 is the low 3 bits and reg1 is higher
+  [ "\x00\xc0",           2, $reg2, [ $reg ] ], # add BYTE reg2, reg1
   [ "\x01\xc0",           2, $reg2, [ $reg ] ], # /* addl %reg1,%reg2 */
-  [ "\x81\xc0",           6, $reg2, [ $reg ] ], # /* addl $imm32,%reg1 */
+  [ "\x02\xc0",           2, $regrev | $reg2, [ $reg ] ], # add BYTE reg1, reg2
+  [ "\x03\xc0",           2, $regrev | $reg2, [ $reg ] ], # add reg1, reg2
+  [ "\x04",               2, $none, [ $eax ] ], # /* addb $imm8,%al */
   [ "\x05",               5, $none, [ $eax ] ], # /* addl $imm32,%eax */
-  [ "\x28\xc0",           2, $reg2, [ $reg ] ], # /* subb %reg1,%reg2 */
-  [ "\x80\xe8",           3, $reg1, [ $reg ] ], # /* subb $imm8,%reg1 */
-  [ "\x29\xc0",           2, $reg2, [ $reg ] ], # /* subl %reg1,%reg2 */
-  [ "\x81\xe8",           6, $reg1, [ $reg ] ], # /* subl $imm32,%reg1 */
-  [ "\xf6\xd0",           2, $reg1, [ $reg ] ], # /* notb %reg1 */
-  [ "\xf7\xd0",           2, $reg1, [ $reg ] ], # /* notl %reg1 */
-  [ "\x84\xc0",           2, $reg2, [ ] ], # /* testb %reg1,%reg2 */
-  [ "\xf6\xc0",           3, $reg1, [ ] ], # /* testb $imm8,%reg1 */
-  [ "\xa8",               2, $none, [ ] ], # /* testb $imm8,%al */
-  [ "\x85\xc0",           2, $reg2, [ ] ], # /* testl %reg1,%reg2 */
-  [ "\xf7\xc0",           6, $reg1, [ ] ], # /* testl $imm32,%reg1 */
-  [ "\xa9",               5, $none, [ ] ], # /* testl $imm32,%eax */
-  [ "\x38\xc0",           2, $reg2, [ ] ], # /* cmpb %reg1,%reg2 */
-  [ "\x3c",               2, $none, [ ] ], # /* cmpb $imm8,%al */
-  [ "\x80\xf8",           3, $reg1, [ ] ], # /* cmpb $imm8,%reg1 */
-  [ "\x39\xc0",           2, $reg2, [ ] ], # /* cmpl %reg1,%reg2 */
-  [ "\x3d",               5, $none, [ ] ], # /* cmpl $imm32,%eax */
-  [ "\x81\xf8",           6, $reg1, [ ] ], # /* cmpl $imm32,%reg1 */
-  [ "\xd4",               2, $none, [ $eax ] ], # /* aam $imm8 */
-  [ "\xd5",               2, $none, [ $eax ] ], # /* aad $imm8 */
-  [ "\xf5",               1, $none, [ ] ], # /* cmc */
-  [ "\xf8",               1, $none, [ ] ], # /* clc */
-  [ "\xf9",               1, $none, [ ] ], # /* stc */
-  [ "\xfc",               1, $none, [ ] ], # /* cld */
-  [ "\xfd",               1, $none, [ ] ], # /* std */
+
   [ "\x06",               1, $none, [ $esp ] ], # /* push %es */
+  # \x07 -> pop es
+
+  [ "\x08\xc0",           2, $reg2, [ $reg ] ], # /* orb %reg1,%reg2 */
+  [ "\x09\xc0",           2, $reg2, [ $reg ] ], # /* orl %reg1,%reg2 */
+  [ "\x0a\xc0",           2, $regrev | $reg2, [ $reg ] ], # or BYTE reg1, reg2
+  [ "\x0b\xc0",           2, $regrev | $reg2, [ $reg ] ], # or reg1, reg2
+
+  [ "\x0c",               2, $none, [ $eax ] ], # /* orb $imm8,%al */
+  [ "\x0d",               5, $none, [ $eax ] ], # /* orl $imm32,%eax */
+
   [ "\x0e",               1, $none, [ $esp ] ], # /* push %cs */
+  # \x0f -> pop cs / invalid
+
+  [ "\x10\xc0",           2, $reg2, [ $reg ] ], # adc BYTE reg2, reg1
+  [ "\x11\xc0",           2, $reg2, [ $reg ] ], # adc reg2, reg1
+  [ "\x12\xc0",           2, $regrev | $reg2, [ $reg ] ], # adc BYTE reg1, reg2
+  [ "\x13\xc0",           2, $regrev | $reg2, [ $reg ] ], # adc reg1, reg2
   [ "\x14",               2, $none, [ $eax ] ], # /* adc $imm8,%al */
   [ "\x15",               5, $none, [ $eax ] ], # /* adc $imm32,%eax */
+
   [ "\x16",               1, $none, [ $esp ] ], # /* push %ss */
+  # \x17 -> pop ss
+
+  [ "\x18\xc0",           2, $reg2, [ $reg ] ], # sbb BYTE reg2, reg1
+  [ "\x19\xc0",           2, $reg2, [ $reg ] ], # sbb reg2, reg1
+  [ "\x1a\xc0",           2, $regrev | $reg2, [ $reg ] ], # sbb BYTE reg1, reg2
+  [ "\x1b\xc0",           2, $regrev | $reg2, [ $reg ] ], # sbb reg1, reg2
   [ "\x1c",               2, $none, [ $eax ] ], # /* sbbb $imm8,%al */
   [ "\x1d",               5, $none, [ $eax ] ], # /* sbbl $imm32,%eax */
-  [ "\x80\xd8",           3, $reg1, [ $reg ] ], # /* sbbb $imm8,%reg1 */
-  [ "\x83\xd8",           3, $reg1, [ $reg ] ], # /* sbbl $imm8,%reg1 */
-  [ "\x81\xd8",           6, $reg1, [ $reg ] ], # /* sbbl $imm32,%reg1 */
+
   [ "\x1e",               1, $none, [ $esp ] ], # /* push %ds */
+  # \x1f -> pop ds
 
-# added by spoon...
-  # xchg eax, eax == 0x90 == nop... fancy
-  [ "\x90",               1, $reg1, [ $eax, $reg ] ], # /* # xchg eax,reg1 */
-  [ "\x99",               1, $none, [ $edx ] ], # /* # cdq */
-  [ "\x37",               1, $none, [ $eax ] ], # /* # aaa */
-  [ "\x3f",               1, $none, [ $eax ] ], # /* # aas */
-  [ "\x27",               1, $none, [ $eax ] ], # /* # daa */
-  [ "\x2f",               1, $none, [ $eax ] ], # /* # das */
-  [ "\x98",               1, $none, [ $eax ] ], # /* # cwde */
-  [ "\x9f",               1, $none, [ $eax ] ], # /* # lahf */
-  [ "\xd6",               1, $none, [ $eax ] ], # /* # salc */
-  [ "\x9b",               1, $none, [ ] ], # /* # wait */
+  [ "\x20\xc0",           2, $reg2, [ $reg ] ], # /* andb %reg1,%reg2 */
+  [ "\x21\xc0",           2, $reg2, [ $reg ] ], # /* andl %reg1,%reg2 */
+  [ "\x22\xc0",           2, $regrev | $reg2, [ $reg ] ], # and BYTE reg1, reg2
+  [ "\x23\xc0",           2, $regrev | $reg2, [ $reg ] ], # and reg1, reg2
+  [ "\x24",               2, $none, [ $eax ] ], # and al, imm8
+  [ "\x25",               5, $none, [ $eax ] ], # and eax, imm32
+
+  # \x26 es segment override prefix
+  [ "\x27",               1, $none, [ $eax ] ], # daa
+
+  [ "\x28\xc0",           2, $reg2, [ $reg ] ], # /* subb %reg1,%reg2 */
+  [ "\x29\xc0",           2, $reg2, [ $reg ] ], # /* subl %reg1,%reg2 */
+
+  [ "\x30\xc0",           2, $reg2, [ $reg ] ], # /* xorb %reg1,%reg2 */
+  [ "\x31\xc0",           2, $reg2, [ $reg ] ], # /* xorl %reg1,%reg2 */
+  [ "\x32\xc0",           2, $regrev | $reg2, [ $reg ] ], # xor BYTE reg1, reg2
+  [ "\x33\xc0",           2, $regrev | $reg2, [ $reg ] ], # xor reg1, reg2
+  [ "\x34",               2, $none, [ $eax ] ], # xor al, imm8
+  [ "\x35",               5, $none, [ $eax ] ], # xor eax, imm32
+
+  # \x36 ss segment override prefix
+  [ "\x37",               1, $none, [ $eax ] ], # aaa
+
+  [ "\x38\xc0",           2, $reg2, [ ] ], # /* cmpb %reg1,%reg2 */
+  [ "\x39\xc0",           2, $reg2, [ ] ], # /* cmpl %reg1,%reg2 */
+  [ "\x3a\xc0",           2, $regrev | $reg2, [ ] ], # cmp BYTE reg1, reg2
+  [ "\x3b\xc0",           2, $regrev | $reg2, [ ] ], # cmp reg1, reg2
+  [ "\x3c",               2, $none, [ ] ], # /* cmpb $imm8,%al */
+  [ "\x3d",               5, $none, [ ] ], # /* cmpl $imm32,%eax */
+
+  # \x3e ds segment override prefix
+  [ "\x3f",               1, $none, [ $eax ] ], # aas
+
+  # \x40 -> \x47
+  [ "\x40",               1, $reg1, [ $reg ] ], # /* incl %reg1 */
+  # \x48 -> \x4f
+  [ "\x48",               1, $reg1, [ $reg ] ], # /* decl %reg1 */
+  # \x50 -> \x57
+  [ "\x50",               1, $reg1, [ $esp ] ], # /* pushl %reg1 */
+  # \x58 -> \x5f
   [ "\x58",               1, $reg1, [ $esp, $reg ] ], # /* # pop reg1 */
-  [ "\x9c",               1, $none, [ $esp ] ], # /* # pushf */
-  [ "\x60",               1, $none, [ $esp ] ], # /* # pusha */
 
-# jmpy jmp jmp
-  [ "\xeb",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jmp byte offset
+  [ "\x60",               1, $none, [ $esp ] ], # /* # pusha */
+  # \x61 -> popa
+  # \x62 -> bound
+  # \x63 -> arpl (priv..)
+  # \x64 -> fs segment override prefix
+  # \x65 -> gs segnment override prefix
+
+  # prefixin mixin
+  [ "\x66",               2, $prefix | $osize | $none, [ ], \&_InsHandlerPrefix ], # operand size
+  [ "\x67",               2, $prefix | $asize | $none, [ ], \&_InsHandlerPrefix ], # address size
+
+  [ "\x68",               5, $none, [ $esp ] ], # /* pushl $imm32 */
+  [ "\x69\xc0",           6, $regrev | $reg2, [ $reg ] ], # imul reg1, reg2, imm32
+  [ "\x6a",               2, $none, [ $esp ] ], # push BYTE imm8
+  [ "\x6b\xc0",           3, $regrev | $reg2, [ $reg ] ], # imul reg1, reg2, imm8
+  # \x6c -> \x6f -> insb, insd, outsb, outsd
+
+  # \x70 -> \x7f conditional jmpy jmpy
   [ "\x70",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jo
   [ "\x71",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jno
   [ "\x72",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jc
@@ -158,9 +174,84 @@ my $table = [
   [ "\x7e",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jng
   [ "\x7f",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jg
 
-# prefixy
-  [ "\x66",               2, $prefix | $osize | $none, [ ], \&_InsHandlerPrefix ], # operand size
-  [ "\x67",               2, $prefix | $asize | $none, [ ], \&_InsHandlerPrefix ], # address size
+  # \x80 BYTE reg1, imm8
+  [ "\x80\xc0",           3, $reg1, [ $reg ] ], # /* addb $imm8,%reg1 */
+  [ "\x80\xc8",           3, $reg1, [ $reg ] ], # /* orb $imm8,%reg1 */
+  [ "\x80\xd0",           3, $reg1, [ $reg ] ], # adc BYTE reg1, imm8
+  [ "\x80\xd8",           3, $reg1, [ $reg ] ], # /* sbbb $imm8,%reg1 */
+  [ "\x80\xe0",           3, $reg1, [ $reg ] ], # /* andb $imm8,%reg1 */
+  [ "\x80\xe8",           3, $reg1, [ $reg ] ], # /* subb $imm8,%reg1 */
+  [ "\x80\xf0",           3, $reg1, [ $reg ] ], # /* xorb $imm8,%reg1 */
+  [ "\x80\xf8",           3, $reg1, [ ] ], # /* cmpb $imm8,%reg1 */
+
+  # \x81 reg1, imm32
+  [ "\x81\xc0",           6, $reg2, [ $reg ] ], # /* addl $imm32,%reg1 */
+  [ "\x81\xc8",           6, $reg1, [ $reg ] ], # /* orl $imm32,%reg1 */
+  [ "\x81\xd0",           6, $reg1, [ $reg ] ], # adc reg1, imm32
+  [ "\x81\xd8",           6, $reg1, [ $reg ] ], # /* sbbl $imm32,%reg1 */
+  [ "\x81\xe0",           6, $reg1, [ $reg ] ], # /* andl $imm32,%reg1 */
+  [ "\x81\xe8",           6, $reg1, [ $reg ] ], # /* subl $imm32,%reg1 */
+  [ "\x81\xf0",           6, $reg1, [ $reg ] ], # /* xorl $imm32,%reg1 *
+  [ "\x81\xf8",           6, $reg1, [ ] ], # /* cmpl $imm32,%reg1 */
+
+  # \x82 ?
+
+  # \x38 reg1, imm8
+  [ "\x83\xc0",           3, $reg1, [ $reg ] ], # add reg1, imm8
+  [ "\x83\xc8",           3, $reg1, [ $reg ] ], # or reg1, imm8
+  [ "\x83\xd0",           3, $reg1, [ $reg ] ], # adc reg1, imm8
+  [ "\x83\xd8",           3, $reg1, [ $reg ] ], # sbb reg1, imm8
+  [ "\x83\xe0",           3, $reg1, [ $reg ] ], # and reg1, imm8
+  [ "\x83\xe8",           3, $reg1, [ $reg ] ], # sub reg1, imm8
+  [ "\x83\xf0",           3, $reg1, [ $reg ] ], # xor reg1, imm8
+  [ "\x83\xf8",           3, $reg1, [ ] ], # cmp reg1, imm8
+
+  [ "\x84\xc0",           2, $reg2, [ ] ], # /* testb %reg1,%reg2 */
+  [ "\x85\xc0",           2, $reg2, [ ] ], # /* testl %reg1,%reg2 */
+
+
+  [ "\x88\xc0",           2, $reg2, [ $reg ] ], # /* movb %reg1,%reg2 */
+  [ "\x89\xc0",           2, $reg2, [ $reg ] ], # /* movl %reg1,%reg2 */
+  [ "\xa8",               2, $none, [ ] ], # /* testb $imm8,%al */
+  [ "\xa9",               5, $none, [ ] ], # /* testl $imm32,%eax */
+  [ "\xb0",               2, $reg1, [ $reg ] ], # /* movb $imm8,%reg1 */
+  [ "\xb8",               5, $reg1, [ $reg ] ], # /* movl $imm32,%reg1 */
+  [ "\xd4",               2, $none, [ $eax ] ], # /* aam $imm8 */
+  [ "\xd5",               2, $none, [ $eax ] ], # /* aad $imm8 */
+  [ "\xf5",               1, $none, [ ] ], # /* cmc */
+  [ "\xf6\xc0",           3, $reg1, [ ] ], # /* testb $imm8,%reg1 */
+  [ "\xf6\xd0",           2, $reg1, [ $reg ] ], # /* notb %reg1 */
+  [ "\xf6\xe0",           2, $reg1, [ $eax ] ], # /* mulb %reg1 */
+  [ "\xf7\xc0",           6, $reg1, [ ] ], # /* testl $imm32,%reg1 */
+  [ "\xf7\xd0",           2, $reg1, [ $reg ] ], # /* notl %reg1 */
+  [ "\xf7\xe0",           2, $reg1, [ $eax, $edx ] ], # /* mull %reg1 */
+  [ "\xf8",               1, $none, [ ] ], # /* clc */
+  [ "\xf9",               1, $none, [ ] ], # /* stc */
+  [ "\xfc",               1, $none, [ ] ], # /* cld */
+  [ "\xfd",               1, $none, [ ] ], # /* std */
+  [ "\xfe\xc0",           2, $reg1, [ $reg ] ], # /* incb %reg1 */
+  [ "\xfe\xc8",           2, $reg1, [ $reg ] ], # /* decb %reg1 */
+
+# added by spoon...
+  # xchg eax, eax == 0x90 == nop... fancy
+  [ "\x90",               1, $reg1, [ $eax, $reg ] ], # /* # xchg eax,reg1 */
+  [ "\x99",               1, $none, [ $edx ] ], # /* # cdq */
+
+
+
+  [ "\x2f",               1, $none, [ $eax ] ], # /* # das */
+  [ "\x98",               1, $none, [ $eax ] ], # /* # cwde */
+  [ "\x9f",               1, $none, [ $eax ] ], # /* # lahf */
+  [ "\xd6",               1, $none, [ $eax ] ], # /* # salc */
+  [ "\x9b",               1, $none, [ ] ], # /* # wait */
+
+  [ "\x9c",               1, $none, [ $esp ] ], # /* # pushf */
+
+
+# jmpy jmp jmp
+  [ "\xeb",               2, $osize | $none, [ ], \&_InsHandlerJmp ], # jmp byte offset
+
+
 ];
 
 sub _BadRegs {
