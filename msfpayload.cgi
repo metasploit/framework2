@@ -285,6 +285,12 @@ sub DisplayPayloads {
     print "</table><br>";
 #    print CreatePayloadRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit' value='$p'>",
 #                         $payloads->{$p}->Description . $query->end_form);
+
+print "<!--//\n";
+foreach keys(%ENV) {
+    print "$_ => ".$ENV{$_}."\n";
+}
+print "\n//-->\n";
 }
 
 sub PrintRow {
@@ -315,3 +321,4 @@ sub Encode {
     $data =~ s/>/&gt;/g;
     return $data;
 }
+
