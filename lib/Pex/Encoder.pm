@@ -601,60 +601,59 @@ sub XorByte {
     return $res;
 }
 
-
-
 # <joke>
 # THIS ALGORITHM IS PATEND-PENDING BY JULIANO[at]COREST.COM AND USED UNDER LICENSE
 # ATTEMPTS TO REVERSE ENGINEER THIS CODE WILL BE PROSECUTED UNDER THE DMCA
 # </joke>
 
-sub XorKeyScanDword
-{
-    my ($dat, $bad) = @_;
-    my (@dh, @lu, %avh);
-    my $x = 0;
+# I added some randomness, seems to work.  The idea is that you won't get the
+# same key for the same payload like you would before. -spn
 
-    while ($x < length($dat) && (my $p = substr($dat, $x, 4)))
-    {
-        my @c = unpack("C4", $p);
-        foreach my $z (0 .. 3)
-        {
-            $dh[$z]->{$c[$z]}++ if defined($c[$z])
-        }
-        $x += 4;
-    }
-
-    foreach my $c (split(//, $bad))
-    {
-        $avh{ord($c)}++;
-        foreach my $z (0 .. 3)
-        {
-            foreach my $x (keys(%{$dh[$z]}))
-            {
-                $lu[$z]->{ord($c) ^ $x}++;
-            }
-        }
-    }
-
-    for my $iA (1 .. 255)
-    {
-        next if (exists($lu[0]->{$iA}) || $avh{$iA});
-        for my $iB (1 .. 255)
-        {
-            next if (exists($lu[1]->{$iB}) || $avh{$iB});
-            for my $iC (1 .. 255)
-            {
-                next if (exists($lu[2]->{$iC}) || $avh{$iC});
-                for my $iD (1 .. 255)
-                {
-                    next if (exists($lu[3]->{$iD}) || $avh{$iD});
-                    return unpack("V", pack("CCCC", $iA, $iB, $iC, $iD));
-                }
-            }
-        }
-    }
-    return undef;
+sub XorKeyScanDword {
+  my @bytes = XorKeyScanDwordBytes(@_);
+  return if(@bytes != 4);
+  return(unpack('V', pack('C4', @bytes)));
 }
 
+sub XorKeyScanDwordBytes {
+  my $data = shift;
+  my $badChars = shift;
+
+  my %badChars;
+  my @dataFreq;
+  my @badKeys;
+  my @keys;
+
+  my $i = 0;
+  foreach my $c (split('', $data)) {
+    $dataFreq[$i++ % 4]->{ord($c)}++;
+  }
+
+  foreach my $c (split('', $badChars)) {
+    $badChars{ord($c)}++;
+    for my $i (0 .. 3) {
+      foreach my $d (keys(%{$dataFreq[$i]})) {
+        $badKeys[$i]->{ord($c) ^ $d}++;
+      }
+    }
+  }
+
+LOOP:
+  for my $d (0 .. 3) {
+    my $r = int(rand(254));
+    for my $c ($r .. $r + 254) {
+      $c = ($c % 255) + 1;
+      next if($badKeys[$d]->{$c} || $badChars{$c});
+      $keys[$d] = $c;
+      next LOOP;
+    }
+    # shit.
+#    print "Damn on $d\n";
+    return;
+  }
+  #print "SUCCESS! " . join('-', @keys) . "\n";
+#  return(unpack('V', pack('C4', @keys)));
+  return(@keys);
+}
 
 1;
