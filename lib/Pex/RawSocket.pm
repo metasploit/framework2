@@ -10,11 +10,19 @@
 #
 ##
 
+# Successfully tested on:
+#
+# + Linux x86 (2.4, 2.6)
+# + Cygwin (1.5.x)
+# + Mac OS X (10.3.3)
+#
+#
+
 package Pex::RawSocket;
 use Socket;
 use strict;
 
-my $PROTO_IP   = defined(_PROTO_IP())       || 0;
+my $PROTO_IP   = defined(_IPPROTO_IP())     || 0;
 my $PROTO_RAW  = defined(_IPPROTO_RAW())    || 255;
 my $OPT_IPHDR  = defined(_IP_HDRINCL())     || 2;
 
@@ -47,7 +55,7 @@ sub handle {
 }
 
 
-sub _PROTO_IP {
+sub _IPPROTO_IP {
     if (defined(&IPPROTO_IP)) {
         return IPPROTO_IP();
     }
@@ -64,7 +72,7 @@ sub _PROTO_IP {
     } 
 }
 
-sub _PROTO_RAW {
+sub _IPPROTO_RAW {
     if (defined(&IPPROTO_RAW)) {
         return IPPROTO_RAW();
     }
@@ -81,7 +89,7 @@ sub _PROTO_RAW {
     } 
 }
 
-sub IP_HDRINCL {
+sub _IP_HDRINCL {
     if (defined(&IP_HDRINCL)) {
         return IP_HDRINCL();
     }
