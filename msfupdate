@@ -193,6 +193,11 @@ print "\n";
 
 exit(0) if $opts{s};
 
+if (! keys(%{%upd})) {
+    print "[*] No new updates are available\n";
+    exit(0);
+}
+
 if (! $opts{a}) {
     print "Continue? (yes or no) ";
     my $resp;
@@ -241,23 +246,6 @@ if (keys(%{$err})) {
     foreach (%{$err}) {
         print "\t".$err->{$_}."\t$_\n";
     }
-}
-
-if ($new_data) {
-
-    print "Changes against update set\n";
-    print "==========================\n\n";
-    foreach (keys(%{$upd})) {
-        print "\t".$upd->{$_}."\t$_\n";
-    }
-    print "\n\n";
-
-    print "Changes between old and new\n";
-    print "==========================\n\n";
-    foreach (keys(%{$upx})) {
-        print "\t".$upx->{$_}."\t$_\n";
-    }
-    print "\n\n";
 }
 
 
