@@ -97,7 +97,19 @@ sub EncodeFnstenv
 #
 sub EncodeAlphaNum {
     my ($rawshell, $xbadc) = @_;
-    my $type = shift || '[esp]';    
+    my $type = shift;
+    
+    if (! $type)
+    {
+        $type    = '[esp]';
+        $prepend = 
+        "\xeb\x46\xeb\x49\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46".
+        "\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46".
+        "\x49\x46\x49\x46\x49\x46\x49\x46\x46\x49\x46\x49\x49\x46\x49\x46".
+        "\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x46\x49\x46\x49".
+        "\x49\x46\x49\x46\x46\x49\x46\x49\xe8\xb5\xff\xff\xff";
+
+    }
 
     if (! exists($baseaddr{$type}))
     {
@@ -108,6 +120,7 @@ sub EncodeAlphaNum {
     # the decoder in all its glory (hardcoded for 9 byte baseaddr)
     my $decoder = 'VTX630VX4A0B6HH0B30BCVX2BDBH4A2AD0ADTBDQB0ADAVX4Z8BDJOM';
     my $encoded;
+    my $prepend;
     
     my $allowed = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXY";
     

@@ -22,7 +22,14 @@ sub EncodePayload {
   my $self = shift;
   my $rawshell = shift;
   my $badChars = shift;
-  return(Pex::Encoder::EncodeAlphaNum($rawshell, $badChars, $self->GetVar("GETPCTYPE")));
+  
+  my $type = $self->GetVar('GETPCTYPE');
+  if (! $type && grep {/win32/} @{ $self->GetVar('_Payload')->OS})
+  {
+    $type = 'win32';
+  }
+  
+  return(Pex::Encoder::EncodeAlphaNum($rawshell, $badChars, $type));
 }
 
 1;
