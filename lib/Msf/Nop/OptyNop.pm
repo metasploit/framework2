@@ -11,6 +11,22 @@ use Pex::Text;
 
 # thanks much to scrippie for input and ideas...
 
+# It is much more likely to reach a register-less instruction, or one whose
+# registers are in it's first code byte (ie codeLen == 1) and have it work.
+# So this will throw off our spread a bit, because these will pretty much
+# always work, but more complicated instructions have a less likely chance
+# of working, but we want those instructions!
+# This is a synthetic weight to try to get more of these... the higher it
+# goes the more complicated instructions you should get, but also slower!
+my $synWeight = 3;
+
+# Make sure to tune w/ bigger sleds, small sleds are hard to get complex
+# instructions for anyway...
+
+# Print a . for all simple (codeLen == 1/SetReg) and print a + for all the
+# more complicated instructions.  Nice to use to tune synWeight.
+my $debug = 0;
+
 my $none  = 0;
 my $reg1  = 1;
 my $reg2  = 2;
@@ -279,7 +295,7 @@ my $table = [
   [ "\xc1\xe0",           3, $reg1, [ $sreg1 ] ], # shl reg1, imm8
   [ "\xc1\xe8",           3, $reg1, [ $sreg1 ] ], # shr reg1, imm8
   # \xc1\xf0 ? deadspace? sal == shl.... so....
-  [ "\xc1\xf8",           3, $reg1, [ $sreg1b ] ], # sar reg1, imm8
+  [ "\xc1\xf8",           3, $reg1, [ $sreg1 ] ], # sar reg1, imm8
 
   # \xc2 ret word distance
   # \xc3 ret
@@ -307,14 +323,14 @@ my $table = [
   [ "\xd0\xf8",           2, $reg1, [ $sreg1b ] ], # sar BYTE reg1, 1
 
   # \xd1 reg1, 1
-  [ "\xd1\xc0",           2, $reg1, [ $sreg1b ] ], # rol reg1, 1
-  [ "\xd1\xc8",           2, $reg1, [ $sreg1b ] ], # ror reg1, 1
-  [ "\xd1\xd0",           2, $reg1, [ $sreg1b ] ], # rcl reg1, 1
-  [ "\xd1\xd8",           2, $reg1, [ $sreg1b ] ], # rcr reg1, 1
-  [ "\xd1\xe0",           2, $reg1, [ $sreg1b ] ], # shl reg1, 1
-  [ "\xd1\xe8",           2, $reg1, [ $sreg1b ] ], # shr reg1, 1
+  [ "\xd1\xc0",           2, $reg1, [ $sreg1 ] ], # rol reg1, 1
+  [ "\xd1\xc8",           2, $reg1, [ $sreg1 ] ], # ror reg1, 1
+  [ "\xd1\xd0",           2, $reg1, [ $sreg1 ] ], # rcl reg1, 1
+  [ "\xd1\xd8",           2, $reg1, [ $sreg1 ] ], # rcr reg1, 1
+  [ "\xd1\xe0",           2, $reg1, [ $sreg1 ] ], # shl reg1, 1
+  [ "\xd1\xe8",           2, $reg1, [ $sreg1 ] ], # shr reg1, 1
   # \xd1\xf0 ? deadspace? sal == shl.... so....
-  [ "\xd1\xf8",           2, $reg1, [ $sreg1b ] ], # sar reg1, 1
+  [ "\xd1\xf8",           2, $reg1, [ $sreg1 ] ], # sar reg1, 1
  
   # \xd2 BYTE reg1, cl
   [ "\xd2\xc0",           2, $reg1, [ $sreg1b ] ], # rol BYTE reg1, cl
@@ -327,14 +343,14 @@ my $table = [
   [ "\xd2\xf8",           2, $reg1, [ $sreg1b ] ], # sar BYTE reg1, cl
 
   # \xd3 reg1, cl
-  [ "\xd3\xc0",           2, $reg1, [ $sreg1b ] ], # rol reg1, cl
-  [ "\xd3\xc8",           2, $reg1, [ $sreg1b ] ], # ror reg1, cl
-  [ "\xd3\xd0",           2, $reg1, [ $sreg1b ] ], # rcl reg1, cl
-  [ "\xd3\xd8",           2, $reg1, [ $sreg1b ] ], # rcr reg1, cl
-  [ "\xd3\xe0",           2, $reg1, [ $sreg1b ] ], # shl reg1, cl
-  [ "\xd3\xe8",           2, $reg1, [ $sreg1b ] ], # shr reg1, cl
+  [ "\xd3\xc0",           2, $reg1, [ $sreg1 ] ], # rol reg1, cl
+  [ "\xd3\xc8",           2, $reg1, [ $sreg1 ] ], # ror reg1, cl
+  [ "\xd3\xd0",           2, $reg1, [ $sreg1 ] ], # rcl reg1, cl
+  [ "\xd3\xd8",           2, $reg1, [ $sreg1 ] ], # rcr reg1, cl
+  [ "\xd3\xe0",           2, $reg1, [ $sreg1 ] ], # shl reg1, cl
+  [ "\xd3\xe8",           2, $reg1, [ $sreg1 ] ], # shr reg1, cl
   # \xd2\xf0 ? deadspace? sal == shl.... so....
-  [ "\xd3\xf8",           2, $reg1, [ $sreg1b ] ], # sar reg1, cl
+  [ "\xd3\xf8",           2, $reg1, [ $sreg1 ] ], # sar reg1, cl
  
   [ "\xd4",               2, $none, [ $eax ]    ], # /* aam $imm8 */
   [ "\xd5",               2, $none, [ $eax ]    ], # /* aad $imm8 */
@@ -382,11 +398,11 @@ my $table = [
   [ "\xfe\xc0",           2, $reg1, [ $sreg1b ] ], # /* incb %reg1 */
   [ "\xfe\xc8",           2, $reg1, [ $sreg1b ] ], # /* decb %reg1 */
 
-  [ "\xff\xc0",           2, $reg1, [ $sreg1b ] ], # inc reg
-  [ "\xff\xc8",           2, $reg1, [ $sreg1b ] ], # dec reg
+  [ "\xff\xc0",           2, $reg1, [ $sreg1 ] ], # inc reg
+  [ "\xff\xc8",           2, $reg1, [ $sreg1 ] ], # dec reg
   # \xff\xd0 -> \xff\xd8 call reg1, deadspace?
   # \xff\xe0 -> \xff\xe8 jmp reg1, deadspace?
-  [ "\xff\xf0",           2, $reg1, [ $sreg1b ] ], # push reg
+  [ "\xff\xf0",           2, $reg1, [ $esp ] ], # push reg
   # \xff\xf8 deadspace?
 ];
 
@@ -426,8 +442,10 @@ sub _GenerateSled {
 
     # Check to see if it's a one byte codelen type that wants SetRegs called
     if($self->_InsHandler(0, $index, $pos, $len, $data, $lastIndex)) {
+      next if(int(rand($synWeight)) != 0);
       $pos--;
       substr($data, $pos, 1, $self->_SetRegs(substr($code, -1, 1), $index));
+      print STDERR "." if($debug);
     }
     else {
       # Check to see if the byte that already exists will make for a valid
@@ -436,11 +454,13 @@ sub _GenerateSled {
   
       $pos -= $codeLen;
       substr($data, $pos, $codeLen, $code);
+      print STDERR "+" if($debug);
     }
     $lastIndex = $index;
 
   }
 
+  print STDERR "\n" if($debug);
   return($data);
 }
 
