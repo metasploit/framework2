@@ -21,6 +21,7 @@ use base 'Msf::UI';
 use Msf::ColPrint;
 use IO::Socket;
 use POSIX;
+use Msf::Logging;
 
 sub new {
   my $class = shift;
@@ -304,7 +305,11 @@ sub Check {
   $exploit->Validate; # verify that all required exploit options have been set
   return if($exploit->PrintError);
 
+  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $exploit->SelfEndName . ' CHECK ' . $exploit->GetVar('RHOST'));
+
   my $res = $exploit->Check;
+# This isn't ready yet.
+#  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $exploit->SelfEndName . ' CHECK RESULT ' . $exploit->CheckCode($res));
   return if($exploit->PrintError);
 
   # The check routine prints out data and returns 1/0
@@ -369,6 +374,8 @@ sub Exploit {
     return if($self->PrintError || !$encodedPayload);
     $self->SetTempEnv('EncodedPayload', $encodedPayload);
   }
+
+  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $exploit->SelfEndName . ' EXPLOIT ' . $exploit->GetVar('RHOST'));
 
 #fixme
   if(!defined($payload)) {

@@ -3,19 +3,13 @@ use strict;
 use base 'Msf::Payload';
 use IO::Handle;
 use IO::Select;
+use Msf::Logging;
 
-sub LogDir {
+sub Log {
   my $self = shift;
-  $self->{'LogDir'} = shift if(@_);
-  return($self->{'LogDir'});
+  $self->{'Log'} = shift if(@_);
+  return($self->{'Log'});
 }
-
-sub LogFile {
-  my $self = shift;
-  $self->{'LogFile'} = shift if(@_);
-  return($self->{'LogFile'});
-}
-
 sub ConsoleIn {
     my $self = shift;
     return IO::Handle->new_from_fd(0, '<');
@@ -106,21 +100,21 @@ sub RecvFilter {
 
 sub StartLog {
   my $self = shift;
-  if($self->GetVar('Logging') ne 'Enabled') {
-    $self->LogDir('');
-    return;
-  }
-
-  my $logDir = $self->GetVar('LogDir');
-  $logDir = $self->CreateLogDir($logDir);
-  $self->LogDir($logDir);
-  if(!defined($logDir)) {
-    $self->PrintLine('[*] Error creating log directory.');
+  if(!$self->GetVar('Logging')) {
+    $self->Log('');
     return;
   }
 
   my $logFile = time() . '_' . $self->GetVar('_Exploit')->SelfEndName . '_' . $self->SocketIn->peerhost . '.log';
-  $self->LogFile($logFile);
+
+  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $self->GetVar('_Exploit')->SelfEndName . ' EXPLOIT SUCCESS');
+
+  $self->Log(Msf::Logging->new($logFile));
+  if(!$self->Log) {
+    $self->PrintLine('[*] Error in logging, disabling.');
+    $self->Log('');
+    return;
+  }
 
   my $headers = 'Time: ' . localtime(time()) . ' (' . time() . ")\n";
   $headers .= 'Name: ' . $self->GetVar('_Exploit')->Name . ' (' . $self->GetVar('_Exploit')->SelfName . ')' . "\n";
@@ -145,12 +139,13 @@ sub StartLog {
   }  
   
   $headers .= "\n";
-  if(!$self->WriteLog($headers)) {
-    $self->PrintLine('[*] Disabling logging.');
-    $self->LogDir('');
-    $self->LogFile('');
+  $self->Log->Print($headers);
+  if($self->Log->IsError) {
+    $self->PrintLine('[*] Disabling logging: ' . $self->Log->GetError);
+    $self->Log('');
     return;
   }
+  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $self->GetVar('_Exploit')->SelfEndName . ' SESSION LOG ' . $logFile);
 }
 
 sub StopLog {
@@ -159,37 +154,14 @@ sub StopLog {
 sub SendLog {
   my $self = shift;
   my $data = shift;
-  return if(!defined($self->LogFile));
-  $self->WriteLog(time() . ' CLIENT ' . unpack('H*', $data) . "\n");
+  return if(!$self->Log);
+  $self->Log->PrintLine(time() . ' CLIENT ' . unpack('H*', $data));
 }
 sub RecvLog {
   my $self = shift;
   my $data = shift;
-  return if(!defined($self->LogFile));
-  $self->WriteLog(time() . ' SERVER ' . unpack('H*', $data) . "\n");
-}
-
-sub WriteLog {
-  my $self = shift;
-  my $data = shift;
-  my $logDir = $self->LogDir;
-  my $logFile = $self->LogFile;
-  if(!open(OUTFILE, ">>$logDir/$logFile")) {
-    $self->PrintLine('[*] Error writing to log file: $logDir/$logFile: $!');
-    return(0);
-  }
-  print OUTFILE $data;
-  close(OUTFILE);
-  return(1);
-}
-
-sub CreateLogDir {
-  my $self = shift;
-  my $dir = defined($ENV{'HOME'}) ? $ENV{'HOME'} : $self->ScriptBase;
-  $dir .= '/.msflogs';
-
-  return if(! -d $dir && !mkdir($dir, 0700));
-  return($dir);
+  return if(!$self->Log);
+  $self->Log->PrintLine(time() . ' SERVER ' . unpack('H*', $data));
 }
 
 1;
