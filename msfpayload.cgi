@@ -276,22 +276,18 @@ sub DisplayPayloads {
             $ost->{$pos->[0]}->{$par->[0]}->{$p}++;
         }
     }
-    foreach my $arch (keys(%{$ost})) {
-        foreach my $proc (keys(%{$ost->{$arch}})) {
+    foreach my $arch (sort(keys(%{$ost}))) {
+        foreach my $proc (sort(keys(%{$ost->{$arch}}))) {
             print "<tr><td>\n";
-            print "[$proc/$arch]<br><blockquote>\n";
-            foreach my $pay (keys(%{$ost->{$arch}->{$proc}})) {
-                print "<a href='".$ENV{'SCRIPT_NAME'}."?PAYLOAD=$pay'>$pay</a><br>\n";
+            print "<u><font color='green'>[$arch/$proc]</font></u><blockquote>\n";
+            foreach my $pay (sort(keys(%{$ost->{$arch}->{$proc}}))) {
+                print " - <a href='".$ENV{'SCRIPT_NAME'}."?PAYLOAD=$pay'>$pay</a><br>\n";
             }
-            print "</blockquote>\n";
+            print "</blockquote><br>\n";
             print "</td></tr>\n";
         }
     }
     print "</table><br>";
-#    print CreatePayloadRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit' value='$p'>",
-#                         $payloads->{$p}->Description . $query->end_form);
-
-    system('env');
 }
 
 sub PrintRow {
