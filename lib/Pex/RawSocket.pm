@@ -14,9 +14,9 @@ package Pex::RawSocket;
 use Socket;
 use strict;
 
-my $PROTO_IP   = defined(&IPPROTO_IP)  ? IPPROTO_IP()  : 0;
-my $PROTO_RAW  = defined(&IPPROTO_RAW) ? IPPROTO_RAW() : 255;
-my $OPT_IPHDR  = defined(&IP_HDRINCL)  ? IP_HDRINCL()  : 3;
+my $PROTO_IP   = defined(_PROTO_IP())       || 0;
+my $PROTO_RAW  = defined(_IPPROTO_RAW())    || 255;
+my $OPT_IPHDR  = defined(_IP_HDRINCL())     || 2;
 
 sub new {
     my $cls = shift;
@@ -46,4 +46,61 @@ sub handle {
     return $self->{'SOCKET'};
 }
 
+
+sub _PROTO_IP {
+    if (defined(&IPPROTO_IP)) {
+        return IPPROTO_IP();
+    }
+    if (
+            $^O eq 'darwin'   ||
+            $^O eq 'linux'    ||
+            $^O eq 'freebsd'  ||
+            $^O eq 'openbsd'  ||
+            $^O eq 'netbsd'   ||
+            $^O eq 'aix'      ||
+        0
+        ) {
+        return 0;
+    } 
+}
+
+sub _PROTO_RAW {
+    if (defined(&IPPROTO_RAW)) {
+        return IPPROTO_RAW();
+    }
+    if (
+            $^O eq 'darwin'   ||
+            $^O eq 'linux'    ||
+            $^O eq 'freebsd'  ||
+            $^O eq 'openbsd'  ||
+            $^O eq 'netbsd'   ||
+            $^O eq 'aix'      ||
+        0
+        ) {
+        return 255;
+    } 
+}
+
+sub IP_HDRINCL {
+    if (defined(&IP_HDRINCL)) {
+        return IP_HDRINCL();
+    }
+    if (
+            $^O eq 'darwin'   ||
+            $^O eq 'freebsd'  ||
+            $^O eq 'openbsd'  ||
+            $^O eq 'netbsd'   ||
+            $^O eq 'aix'      ||
+            $^O eq 'cygwin'   ||
+        0
+        ) {
+        return 2;
+    } 
+    if ($^O eq 'linux') {
+        return 3;
+    }
+    if ($^O eq 'hpux') {
+        return 0x1002;
+    }    
+}
 1;
