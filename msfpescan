@@ -59,10 +59,20 @@ my %jmps =
         "\x57\xc3" => ["edi", "push"],
     );
 
+my %pops =
+    (
+        "eax"   => "\x58",
+        "ebx"   => "\x5b",
+        "ecx"   => "\x59",
+        "edx"   => "\x5a",
+        "esi"   => "\x5e",
+        "edi"   => "\x5f",
+        "ebp"   => "\x5d",
+    );
 
 
-getopts("jcf:r:p:l:", \%opts);
-if (! $opts{f} || (! $opts{j} && ! $opts{c})) { usage() }
+getopts("sjcf:r:p:l:I:", \%opts);
+if (! $opts{f} || (! $opts{j} && ! $opts{c}) && ! $opts{s}) { usage() }
 
 my $filename = $opts{f};
 my $pe = Pex::PEInfo->new($filename);
@@ -74,7 +84,30 @@ if (! $pe)
 }
 
 my $data = $pe->Raw;
+if ($opts{I}) { $pe->ImageBase($opts{I}) }
 
+# Scan for pop/pop/ret addresses
+if (exists($opts{s})) 
+{
+    foreach my $rA (keys(%pops))
+    {
+        foreach my $rB (keys(%pops))
+        {
+            my $opc = $pops{$rA} . $pops{$rB} . "\xc3";
+            my $lst = 0;
+            my $idx = index($data,  $opc, $lst);
+            while ($idx > 0)
+            {
+                printf("$rA $rB ret\t0x%.8x\n", $pe->OffsetToVirtual($idx));
+                $lst = $idx + 1;
+                $idx = index($data, $opc, $lst);
+            }
+        }
+    }
+    exit(0);
+}
+
+# Scan for jmp/call/push,ret addresses
 if (exists($opts{j})) 
 {
     foreach my $opc (keys(%jmps))
@@ -134,14 +167,16 @@ if (exists($opts{c}))
 
 sub usage 
 {
-    print STDERR "  Usage: $0 -f filename.exe <-j|-c> <options>\n";
+    print STDERR "  Usage: $0 -f filename.exe <-j|-c|-s> <options>\n";
     print STDERR "  Modes:\n";
     print STDERR "         -j           Search for jump equivalent instructions\n";
     print STDERR "         -c           Search for custom byte pattern\n";
+    print STDERR "         -s           Search for pop+pop+ret combinations\n";
     print STDERR "Options:\n";
     print STDERR "         -r           Specify register for jump search mode\n";
     print STDERR "         -p  <data>   Pattern to search for in custom mode (FFD4)\n";
     print STDERR "         -l  <count>  Number of bytes to show after pattern\n";
+    print STDERR "         -I  address  Use this ImageBase address instead of one from file\n";
     print STDERR "\n";
     exit(0);
 

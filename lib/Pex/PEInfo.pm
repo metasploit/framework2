@@ -103,6 +103,12 @@ sub Sections {
     return keys(%SECTIONS);
 }
 
+sub ImageBase {
+    my $selfect = shift;
+    $OPT_IMAGE_HDR{"ImageBase"} = hex(shift()) if @_;
+    return $OPT_IMAGE_HDR{"ImageBase"};
+}
+
 sub LoadImage {
     my ($selfect, $fn) = @_;
     my $data;   
