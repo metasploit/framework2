@@ -140,4 +140,11 @@ sub PadBuffer {
   return(substr($string, 0, $length) . ($pad x ($length - length($string))));
 }
 
+sub CharsInBuffer {
+    my $buff = shift;
+    my @char = split(//, shift());
+    for (@char) { return(1) if index($buff, $_) != -1 }
+    return(0);
+}
+
 1;
