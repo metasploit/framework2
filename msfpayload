@@ -24,11 +24,17 @@ use POSIX;
 use lib "$Bin/lib";
 use Msf::TextUI;
 use Pex;
+use Getopt::Std;
 
 Msf::UI::ActiveStateSucks();
 
 my $ui = Msf::TextUI->new($Bin);
-my $VERSION = $ui->Version;
+my $FRAMEVERSION = $ui->Version;
+my $VERSION = '$Revision$';
+
+my %opts;
+getopts('hv', \%opts);
+Version() if($opts{'v'});
 
 $ui->SetTempEnv('_MsfPayload', 1);
 #$ui->SetTempEnv('DebugLevel', 0);
@@ -55,6 +61,7 @@ $ui->SetTempEnv('_Nops', $nops);
 
 my $sel = shift(@ARGV);
 my $p = $payloads->{$sel};
+Usage() if($opts{'h'});
 Usage() if ! $p;
 
 my $action = uc(pop(@ARGV));
@@ -104,4 +111,12 @@ sub Usage
     }
     print STDERR "\n";
     exit(0);
+}
+sub Version {
+    print STDERR qq{
+   Framework Version:  $FRAMEVERSION
+  Msfconsole Version:  $VERSION
+
+};
+  exit(0);
 }

@@ -27,12 +27,18 @@ use Msf::TextUI;
 use Msf::ColPrint;
 use Pex;
 use Pex::Text;
-my %opts = ();
 
 Msf::UI::ActiveStateSucks();
-
 my $ui = Msf::TextUI->new($Bin);
-my $VERSION = $ui->Version;
+
+my $FRAMEVERSION = $ui->Version;
+my $VERSION = '$Revision$';
+
+my %opts = ();
+getopts("i:a:o:t:b:e:s:lhvn:", \%opts);
+Usage()   if($opts{'h'});
+Version() if($opts{'v'});
+
 #$ui->SetTempEnv('DebugLevel', 0);
 
 my $payloadArch = ['x86'];
@@ -52,15 +58,10 @@ foreach my $key (keys(%{$encodersIndex})) {
 
 $ui->SetTempEnv('_Encoders', $encodersIndex);
 
-getopts("i:a:o:t:b:e:s:lhn:", \%opts);
-
 foreach my $opt (@ARGV) {
   $ui->SetTempEnv(split('=', $opt));
 }
 
-if ($opts{'h'}) {
-    Usage();
-}
 if($opts{'n'}) {
   my $encoder = $opts{'n'};
   Fatal('Invalid encoder specified') if(!exists($encoders->{$encoder}));
@@ -195,7 +196,6 @@ sub Info {
 
 sub Usage {
     print STDERR qq{
-
   Usage: $0 <options> [var=val]
 Options:
          -i <file>      Specify the file that contains the raw shellcode
@@ -210,6 +210,14 @@ Options:
          
 };
     exit(0);
+}
+sub Version {
+    print STDERR qq{
+   Framework Version:  $FRAMEVERSION
+  Msfconsole Version:  $VERSION
+
+};
+  exit(0);
 }
 
 sub ListEncoders {
