@@ -82,7 +82,7 @@ sub Build {
     
     if (exists($stage->{'Offsets'}->{'EXITFUNC'}))
     {
-        my ($offset, $opack) = $stage->{'Offsets'}->{'EXITFUNC'};
+        my ($offset, $opack) = @{ $stage->{'Offsets'}->{'EXITFUNC'} };
         my $func = $self->GetVar('EXITFUNC') || 'process';
         my $hash = $exit_types->{$func} || $exit_types->{'process'};
         substr($generated, $offset, 4, pack('V', $hash));
