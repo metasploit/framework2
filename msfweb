@@ -24,6 +24,7 @@
 #	5. Encoders
 #	6. Admin
 #	7. Logs
+#   AutoOpts override!!!
 
 require 5.6.0;
 
@@ -217,7 +218,8 @@ sub ProcessWebRequest {
 	if ($req->{'base'} eq 'EXPLOITS') {
 	
     	if ($state->{'MODE'} eq 'MAIN')    { $res .= ExploitList($state) }
-    	if ($state->{'MODE'} eq 'SELECT')  { $res .= ExploitPayload($state) }
+		if ($state->{'MODE'} eq 'SELECT')  { $res .= ExploitTarget($state) }
+    	if ($state->{'MODE'} eq 'PAYLOAD') { $res .= ExploitPayload($state) }
     	if ($state->{'MODE'} eq 'OPTIONS') { $res .= ExploitOptions($state) }
     	if ($state->{'MODE'} eq 'TARGETS') { $res .= ExploitTargets($state) }
     	if ($state->{'MODE'} eq 'CHECK')   { $res .= ExploitCheck($state) }
@@ -228,8 +230,9 @@ sub ProcessWebRequest {
 
 	if ($req->{'base'} eq 'PAYLOADS') {
 	
-    	if ($state->{'MODE'} eq 'MAIN')    { $res .= PayloadList($state) }
-		if ($state->{'MODE'} eq 'SELECT')  { $res .= PayloadOptions($state) }
+    	if ($state->{'MODE'} eq 'MAIN')      { $res .= PayloadList($state) }
+		if ($state->{'MODE'} eq 'SELECT')    { $res .= PayloadOptions($state) }
+		if ($state->{'MODE'} eq 'GENERATE')  { $res .= PayloadGenerate($state) }
 	}
 	
 	if ($req->{'base'} eq 'ENCODERS') {
@@ -523,13 +526,134 @@ sub PayloadOptions
                 "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
                 "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
-    
+	
     $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
-    $res .= "<tr><td colspan=6><input type='submit' name='ACTION' value='GENERATE'></td></tr>\n";
+	
+	# Display encoding options only when an arch is set	
+	if (scalar( @{ $p->Arch } )) {
+		$res .= "<tr><td colspan=6>";
+		$res .= "Max Size: ";
+		$res .= "<input type='text' size=10 name='MaxSize' value=''>";
+		$res .= "</td></tr>\n";
+		
+		$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+		
+		$res .= "<tr><td colspan=6>";
+		$res .= "Restricted Characters (format: 0x00 0x01)<br\> ";
+		$res .= "<input type='text' size=60 name='BadChars' value='0x00 '>";
+		$res .= "</td></tr>\n";
+		
+		
+	}
+	
+	$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+    $res .= "<tr><td colspan=6><input type='submit' name='ACTION' value='Generate Payload'></td></tr>\n";
     $res .= "</form>\n";
     $res .= "</table>\n";  
     return $res;
 }
+
+sub PayloadGenerate
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+
+    if (! exists($payloads->{$module})) {
+        return "<b>Invalid Module</b>";
+    }
+
+    my $p = $payloads->{$module};
+    my $o = StateToOptions($state);
+	
+	my $optstr;
+    foreach my $k (keys(%{ $o })) {
+        $ui->SetTempEnv($k, $o->{$k});
+		$optstr .= " $k=".$o->{$k};
+    }
+	
+	my $badChars = CharsToBytes($state->{'BadChars'});
+	my $maxSize  = $state->{'MaxSize'} || 65000;
+	my $rawShell = $p->Build();
+
+	
+	my ($payloadArch)	= $p->Arch;
+	my ($payloadOS)		= $p->OS;
+
+	my $finalEncoder;
+	my $encodedPayload;
+	
+		
+	if (! $badChars) {
+		$finalEncoder = 'None';
+		$encodedPayload = Msf::EncodedPayload->new($rawShell, $rawShell);
+	}
+	
+	foreach my $encoderName (keys %{ $encodersIndex }) {
+		next if ! $badChars;
+		
+		my $encoder		= $encodersIndex->{$encoderName};		
+		my $encoderArch	= $encoder->Arch;
+		my $encoderOS	= $encoder->OS;
+
+		next if ! $ui->ListCheck($payloadArch, $encoderArch);
+		next if ! $ui->ListCheck($payloadOS, $encoderOS);
+
+		my $encodedShell = $encoder->Encode($rawShell, $badChars);
+
+		next if ! $encodedShell;
+
+		if ($encoder->IsError) {
+			$encoder->ClearError;
+			next;
+		}
+
+		next if Pex::Text::BadCharCheck($badChars, $encodedShell);
+		
+		$encodedPayload = Msf::EncodedPayload->new($rawShell, $encodedShell);
+
+		if (length($encodedPayload->Payload) > $maxSize) {
+			print STDERR "[*] $encoderName failed, encoded payload too large (".length($encodedPayload->Payload)." bytes)\n";
+			undef($encodedPayload);
+			next;
+		}
+		
+		$finalEncoder = $encoder->SelfEndName;
+		last;
+	}
+
+	if (! $encodedPayload) {
+    	$res .= "No encoders succeeded :(\n";
+		return;
+	}	
+	
+	my $sC = Pex::Text::BufferC($encodedPayload->Payload);
+	my $sP = Pex::Text::BufferPerl($encodedPayload->Payload);
+
+	if ($p->Multistage) {
+		$res .= "<div class='boldText'>Warning: only the loading stage of multi-stage payloads will be displayed!</div>\n<br\>";	
+	}
+
+
+
+	$optstr =~ s/\<|\>//g;
+	$optstr .= " Size=".length($encodedPayload->Payload);
+	$optstr .= " Encoder=$finalEncoder";
+	
+	$res .= "<pre>\n";
+	$res .= "<div class='shellcode'>";
+	$res .= "/* $module - $optstr http://metasploit.com */\n";
+	$res .= "unsigned char scode[] =\n$sC\n\n\n";
+
+	$res .= "# $module - $optstr http://metasploit.com\n";
+	$res .= "my \$shellcode =\n$sP\n\n\n";
+
+	$res .= "</div></pre>\n";
+	
+	return $res;	
+}
+
+
 
 sub EncoderOptions
 {
@@ -578,7 +702,7 @@ sub EncoderOptions
     return $res;
 }
 
-sub ExploitPayload
+sub ExploitTarget
 {
     my ($state) = @_;
     my $module = $state->{'MODULE'};
@@ -592,14 +716,51 @@ sub ExploitPayload
     
 	$res .= ModuleInfo($x);
 
+	# Display available targets
+
+    if (scalar($x->TargetsList) ) {
+        $res .= "<table align='center' cellpadding=4 border=0 cellspacing=0 width=750>\n";
+		$res .= "<tr><td class='nav' align='left'  colspan=2>Select Target:</td></td>";
+
+		my $tidx = 0;
+        foreach my $k ( $x->TargetsList )
+        {
+            my $u = StateToURL('PAYLOAD', $state);
+			my $default;
+			
+			if ($tidx == $x->DefaultTarget) {
+				$default = "(default)";
+			}
+			
+            $res .= "<tr><td align='right'>$tidx - </td><td><a href='".$u."OPT_TARGET=$tidx'> $k $default</a></td></tr>\n";
+			$tidx++;
+        }
+        $res .= "</table>\n";
+    } else {
+        return ExploitOptions($state);
+    }
+}
+
+sub ExploitPayload
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    
+    if (! exists($exploits->{$module})) {
+        return "<b>Invalid Module</b>";
+    }
+    
+    my $x = $exploits->{$module};
+
 	# Display available payloads
 
     my $matches = $ui->MatchPayloads($x, $payloads) if($x->Payload);
 
     if (defined($x->Payload) ) {
-		$res .= "<hr size=1 color='#000000' width='80%'><br\>\n";
-        $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
-		$res .= "<tr><td class='nav' align='center'>Payloads</td>";
+		$res .= "<p class='nav'>Select Payload:<br\></p>\n";
+        $res .= "<table align='center' cellpadding=0 border=0 cellspacing=0 width=750>\n";
+		$res .= "<tr><td class='nav' align='center'>Payload</td>";
 		$res .= "    <td class='nav' align='center'>Description</td></tr>\n";
 		$res .= "<tr><td colspan=2><br\></td></tr>\n";
 				
@@ -670,16 +831,6 @@ sub ExploitOptions
                 "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
                 "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
                 "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
-    }
-    
-    if (scalar($x->TargetsList)) {
-        my $tidx = 0;
-        $res .= "<tr><td colspan=6><br/><b>Available Targets:</b><blockquote>\n";
-        foreach my $tgt ($x->TargetsList) {
-            $res .= "<input type='radio' name='OPT_TARGET' value='$tidx'> $tgt<br/>\n";
-            $tidx++;
-        }
-        $res .= "</blockquote></td></tr>\n";
     }
     
     $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
@@ -928,6 +1079,22 @@ sub GenerateSID {
 	return unpack("H*", pack('N', $skey) ^ $data);
 }
 
+sub CharsToBytes {
+	my $chars = shift;
+	my $badChars;
+	foreach my $hc (split(/\s+/, $chars)) {
+		if ($hc =~ m/^0x(.|..)/) {
+			$badChars .= chr(hex($hc));
+		} else {
+			# it isn't hex char... maybe just plain char?
+			foreach (split(//, $hc)) {
+				$badChars .= $_;
+			}
+		}
+	}
+	return $badChars;
+}
+
 sub LoadAllModules {
 	$exploitsIndex	= $ui->LoadExploits;
 	$payloadsIndex	= $ui->LoadPayloads;
@@ -991,7 +1158,7 @@ sub LoadAllModules {
 
 	$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
 	$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
-	$ui->SetTempEnv('_Encoders', $encoders);
+	$ui->SetTempEnv('_Encoders', $encodersIndex);
 	$ui->SetTempEnv('_Nops', $nops);
 	
 	
