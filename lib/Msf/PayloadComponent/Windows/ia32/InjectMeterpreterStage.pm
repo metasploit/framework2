@@ -35,6 +35,7 @@ my $info =
 		{ 
 			'METDLL'  => [1, 'PATH', 'The full path the meterpreter server dll', "$RealBin/data/meterpreter/metsrv.dll"],
 		},
+	'NonShellStage' => 1
 };
 
 sub new

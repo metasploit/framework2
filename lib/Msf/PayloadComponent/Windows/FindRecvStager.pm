@@ -39,14 +39,15 @@ sub ChildHandler
 {
 	my $self = shift;
 	my $sock = shift;
-	my $stage = $self->BuildPayload($self->StagePayload);
-	my $tag   = substr($self->GetLocal('FINDTAG') . ("\x01" x 4), 0, 4);
-	my $data  = $tag . $stage;
+	my $tag = substr($self->GetLocal('FINDTAG') . ("\x01" x 4), 0, 4);
 
-	eval { $sock->send($data); };
+	# Set the stage prefix to the tag we're using
+	$self->StagePrefix($tag);
 
-	# XXX: We should only do this if the second stage is a shell payload...
-	return $self->SUPER::ChildHandler($sock);
+	$self->PipeRemoteIn($sock);
+	$self->PipeRemoteOut($sock);
+
+	$self->HandleConnection($sock);
 }
 
 1;

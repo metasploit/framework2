@@ -1,9 +1,8 @@
 ###############
 ##
 #
-#    Name: BindStager.pm
+#    Name: FindRecvOrdinalStager.pm
 # Version: $Revision$
-#  Source: src/shellcode/linux/ia32/stager_sock_find.asm
 # License:
 #
 #      This file is part of the Metasploit Exploit Framework

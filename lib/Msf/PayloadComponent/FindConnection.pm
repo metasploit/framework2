@@ -23,11 +23,12 @@ sub ChildHandler {
   my $sock = shift;
   my $blocking = $sock->blocking;
   my $tries = 0;
+
   $self->{'_Buffer'} = '';
 
   $sock->blocking(1);
   $sock->autoflush(1);
-
+  
   sleep(1);
 
   my $selector = IO::Select->new($sock);

@@ -48,6 +48,19 @@ sub StagePayload
 }
 
 #
+# The prefix for the stage.  This is how tags are prefixed to the stage.
+#
+sub StagePrefix
+{
+	my $self = shift;
+	my $prefix = @_ ? shift : undef;
+
+	$self->{'_StagePrefix'} = $prefix if (defined($prefix));
+
+	return $self->{'_StagePrefix'};
+}
+
+#
 # Transmits the stage that we were handed such that it will be executed and
 # all the lored's people will be happy
 #
@@ -67,6 +80,9 @@ sub HandleConnection
 	$blocking = $sock->blocking;
 
 	$sock->blocking(1);
+
+	# If the stage has a prefix (such as a tag) use it.
+	$payload = $self->StagePrefix . $payload if (defined($self->StagePrefix));
 
 	# Transmit the stage to the remote side
 	$self->PrintLine('[*] Sending Stage (' . length($payload) . ' bytes)');
