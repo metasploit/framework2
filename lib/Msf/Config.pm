@@ -17,15 +17,9 @@ sub PopulateConfig {
   my ($globalEnv, $tempEnvs) = $self->ReadConfig($configFile);
   $self->SetGlobalEnv(%{$self->MergeHash($globalEnv, $defaults)});
 
-  $self->SaveTempEnv('_Save');
-  $self->UnsetTempEnv;
   foreach my $tempEnv (keys %{$tempEnvs}) {
-    $self->SetTempEnv(%{$tempEnvs->{$tempEnv}});
-    $self->SaveTempEnv($tempEnv);
-    $self->UnsetTempEnv;
+    $self->SetSavedTempEnv($tempEnv, %{$tempEnvs->{$tempEnv}});
   }
-  $self->LoadTempEnv('_Save');
-  $self->DeleteTempEnv('_Save');
 }
 
 sub SaveConfig {
