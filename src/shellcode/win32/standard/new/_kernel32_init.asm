@@ -69,9 +69,8 @@ find_function_compare:
   mov	cx, [ebx + 2 * ecx]
   mov	ebx, [edi + 0x1c]
   add	ebx, ebp
-  mov	eax, [ebx + 4 * ecx]
-  add	eax, ebp
-  mov	[esp + 0x1c], eax
+  add	ebp, [ebx + 4 * ecx]
+  mov	[esp + 0x1c], ebp
 find_function_finished:
   popad
   ret 0x8
