@@ -33,6 +33,27 @@ sub new {
   return($self)
 }
 
+sub new_from_socket {
+  my $class = shift;
+  my $sock = shift;
+  my $self = bless({ }, $class);
+  my $hash =
+  {
+    LocalAddr => $sock->sockhost,
+    LocalPort => $sock->sockport,
+    PeerAddr  => $sock->peerhost,
+    PeerHost  => $sock->peerport, 
+  };
+
+  $self->SetOptions($hash);
+  $self->Init;
+  
+  $self->Socket($sock);
+  $sock->blocking(0);
+  $sock->autoflush(1);
+  return ($self);
+}
+
 sub SetOptions {
   my $self = shift;
   my $hash = shift;

@@ -212,7 +212,7 @@ sub Recv {
   }
   else {
     my $buffer = $self->RemoveBuffer($length);
-    $data = $buffer . $self->_RecvLength($length - length($buffer));
+    $data = $buffer . $self->_RecvLength($length - length($buffer), $timeout);
   }
 
   $self->ClearError if(length($data));
