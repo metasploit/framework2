@@ -8,24 +8,33 @@ sub new {
   my $hash = @_ ? shift : { };
   my $self = bless($hash, $class);
 
+# We don't need this anymore
+# use _Info and _Advanced, they will set themselves in undefined
   # Make sure Info and Defaults always exists
   # Makes life easier checking elsewhere
-  if(!defined($self->{'Info'})) {
-    $self->PrintDebugLine(4, "$self: No Info hash, setting to { }");
-    $self->{'Info'} = { };
-  }
-  if(!defined($self->{'Defaults'})) {
-    $self->PrintDebugLine(4, "$self: No Defaults hash, setting to { }");
-    $self->{'Defaults'} = { };
-  }
+#  if(!defined($self->{'Info'})) {
+#    $self->PrintDebugLine(4, "$self: No Info hash, setting to { }");
+#    $self->{'Info'} = { };
+#  }
+#  if(!defined($self->{'Advanced'})) {
+#    $self->PrintDebugLine(4, "$self: No Advanced hash, setting to { }");
+#    $self->{'Advanced'} = { };
+#  }
   return($self);
 }
 
 # Internal accessors/mutators
 sub _Info {
   my $self = shift;
+  $self->{'Info'} = { } if(!defined($self->{'Info'}));
   $self->{'Info'} = shift if(@_);
   return($self->{'Info'});
+}
+sub _Advanced {
+  my $self = shift;
+  $self->{'Advanced'} = { } if(!defined($self->{'Advanced'}));
+  $self->{'Advanced'} = shift if(@_);
+  return($self->{'Advanced'});
 }
 
 sub SetDefaults {
@@ -35,35 +44,33 @@ sub SetDefaults {
 }
 
 
-#fixme Screw this mess
 # Generic
-sub Name        { my $self = shift; return defined($self->{'Info'}->{'Name'}) ? $self->{'Info'}->{'Name'} : undef }
-sub Version     { my $self = shift; return defined($self->{'Info'}->{'Version'}) ? $self->{'Info'}->{'Version'} : undef }
-sub Author      { my $self = shift; return defined($self->{'Info'}->{'Author'}) ? $self->{'Info'}->{'Author'} : undef }
-sub Arch        { my $self = shift; return defined($self->{'Info'}->{'Arch'}) ? $self->{'Info'}->{'Arch'} : undef }
-sub OS          { my $self = shift; return defined($self->{'Info'}->{'OS'}) ? $self->{'Info'}->{'OS'} : undef }
-sub Keys        { my $self = shift; return defined($self->{'Info'}->{'Keys'}) ? $self->{'Info'}->{'Keys'} : undef }
-sub Priv        { my $self = shift; return defined($self->{'Info'}->{'Priv'}) ? $self->{'Info'}->{'Priv'} : undef }
-sub UserOpts    { my $self = shift; return defined($self->{'Info'}->{'UserOpts'}) ? $self->{'Info'}->{'UserOpts'} : undef }
-sub Refs        { my $self = shift; return defined($self->{'Info'}->{'Refs'}) ? $self->{'Info'}->{'Refs'} : undef }
-sub Description { my $self = shift; return defined($self->{'Info'}->{'Description'}) ? $self->{'Info'}->{'Description'} : undef }
 
+sub Name        { my $self = shift; return $self->_Info->{'Name'}; }
+sub Version     { my $self = shift; return $self->_Info->{'Version'}; }
+sub Author      { my $self = shift; return $self->_Info->{'Author'}; }
+sub Arch        { my $self = shift; return $self->_Info->{'Arch'}; }
+sub OS          { my $self = shift; return $self->_Info->{'OS'}; }
+sub Keys        { my $self = shift; return $self->_Info->{'Keys'}; }
+sub Priv        { my $self = shift; return $self->_Info->{'Priv'}; }
+sub UserOpts    { my $self = shift; return $self->_Info->{'UserOpts'}; }
+sub Refs        { my $self = shift; return $self->_Info->{'Refs'}; }
+sub Description { my $self = shift; return $self->_Info->{'Description'}; }
+
+#fixme
 # Used?
-sub AutoOpts    { my $self = shift; return defined($self->{'Info'}->{'AutoOpts'}) ? $self->{'Info'}->{'AutoOpts'} : undef }
+sub AutoOpts    { my $self = shift; return $self->_Info->{'AutoOpts'}; }
 
 # Exploit Specific (move to Msf::Exploit?)
-sub Payload     { my $self = shift; return defined($self->{'Info'}->{'Payload'}) ? $self->{'Info'}->{'Payload'} : undef }
+sub Payload     { my $self = shift; return $self->_Info->{'Payload'}; }
 
 # Payload Specific (move to Msf::Payload?)
-sub Type     { my $self = shift; return defined($self->{'Info'}->{'Type'}) ? $self->{'Info'}->{'Type'} : undef }
-sub Size     { my $self = shift; return defined($self->{'Info'}->{'Size'}) ? $self->{'Info'}->{'Size'} : undef }
-
+sub Type        { my $self = shift; return $self->_Info->{'Type'}; }
+sub Size        { my $self = shift; return $self->_Info->{'Size'}; }
 
 sub Validate {
   my $self = shift;
-  my $userOpts = $self->{'Info'}->{'UserOpts'};
-
-  return(1) if(!defined($userOpts));
+  my $userOpts = $self->UserOpts;
 
   foreach my $key (keys(%{$userOpts})) {
     my ($reqd, $type, $desc, $dflt) = @{$userOpts->{$key}};
@@ -121,7 +128,7 @@ sub Validate {
 # 1) KEY in TempEnv
 # 2) KEY in Env
 # 3) SelfName::KEY in Env
-# 4) KEY in Defaults
+# 4) KEY in Advanced
 # 5) KEY in UserOpts
 sub GetVar {
   my $self = shift;
@@ -134,7 +141,7 @@ sub GetVar {
   return($val) if(defined($val));
   $val = $self->GetGlobalEnv($self->SelfName . '::' . $key);
   return($val) if(defined($val));
-  $val = $self->GetDefaultValue($key);
+  $val = $self->GetAdvancedValue($key);
   return($val) if(defined($val));
   $val = $self->GetUserOptsDefault($key);
   return($val);
@@ -148,9 +155,9 @@ sub SetVar {
   return($self->SetTempEnv($key, $val)) if(defined($self->GetTempEnv($key)));
   return($self->SetGlobalEnv($key, $val)) if(defined($self->GetGlobalEnv($key)));
   return($self->SetGlobalEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetGlobalEnv($self->SelfName . '::' . $key)));
-  return($self->SetDefault($key, $val)) if(defined($self->GetDefault($key)));
-  # Even thought it was is in UserOpts, we just mask it in Defaults
-  return($self->SetDefault($key, $val)) if(defined($self->GetOptsDefault($key)));
+  return($self->SetAdvanced($key, $val)) if(defined($self->GetAdvanced($key)));
+  # Even thought it was is in UserOpts, we just mask it in Advanced
+  return($self->SetAdvanced($key, $val)) if(defined($self->GetUserOptsDefault($key)));
   return;
 }
 
@@ -165,7 +172,7 @@ sub GetLocal {
   return($val) if(defined($val));
   $val = $self->GetGlobalEnv($self->SelfName . '::' . $key);
   return($val) if(defined($val));
-  $val = $self->GetDefaultValue($key);
+  $val = $self->GetAdvancedValue($key);
   return($val) if(defined($val));
   $val = $self->GetUserOptsDefault($key);
   return($val);
@@ -178,56 +185,49 @@ sub SetLocal {
 
   return($self->SetTempEnv($key, $val)) if(defined($self->GetTempEnv($key)));
   return($self->SetGlobalEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetGlobalEnv($self->SelfName . '::' . $key)));
-  return($self->SetDefault($key, $val)) if(defined($self->GetDefault($key)));
-  # Even thought it was is in UserOpts, we just mask it in Defaults
-  return($self->SetDefault($key, $val)) if(defined($self->GetOptsDefault($key)));
+  return($self->SetAdvanced($key, $val)) if(defined($self->GetAdvanced($key)));
+  # Even thought it was is in UserOpts, we just mask it in Advanced
+  return($self->SetAdvanced($key, $val)) if(defined($self->GetUserOptsDefault($key)));
   return;
 }
 
 sub Advanced {
   my $self = shift;
-  return($self->{'Defaults'});
+  return($self->_Advanced);
 }
 
-
-# The Default/Advanced hash
-sub GetDefault {
+sub GetAdvanced {
   my $self = shift;
   my $key = shift;
-  return if(!defined($self->{'Defaults'}));
-  return if(!defined($self->{'Defaults'}->{$key}));
-  return($self->{'Defaults'}->{$key});
+  return($self->_Advanced->{$key});
 }
 
-sub GetDefaultValue {
+sub GetAdvancedValue {
   my $self = shift;
   my $key = shift;
 
+#fixme why was this an issue? can't remember
   # Incase we get called with our scope prepended.
   my $removeChunk = $self->SelfName . '::';
   my $find = index($key, $removeChunk);
   substr($key, $find, length($removeChunk), '') if($find != -1);
-  return if(!defined($self->{'Defaults'}));
-  return if(!defined($self->{'Defaults'}->{$key}));
-  return($self->{'Defaults'}->{$key}->[0]);
+  return if(!defined($self->_Advanced->{$key}));
+  return($self->_Advanced->{$key}->[0]);
 }
 
-sub SetDefault {
+sub SetAdvanced {
   my $self = shift;
   my $key = shift;
   my $val = shift;
-  return if(!defined($self->{'Defaults'}));
-  return($self->{'Defaults'}->{$key} = $val);
+  return($self->_Advanced->{$key} = $val);
 }
 
 # UserOpts hash
 sub GetUserOpts {
   my $self = shift;
   my $key = shift;
-  my $userOpts = $self->{'Info'}->{'UserOpts'};
-  $userOpts = { } if(!$userOpts);
+  my $userOpts = $self->UserOpts;
   return($userOpts) if(!$key);
-
   return($userOpts->{$key});
 }
 
@@ -239,6 +239,5 @@ sub GetUserOptsDefault {
   my (undef, undef, undef, $default) = @$userOpts;
   return($default);
 }
-
 
 1;
