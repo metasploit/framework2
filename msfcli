@@ -61,6 +61,7 @@ foreach my $key (keys(%{$payloadsIndex})) {
 }
 
 if(!defined($mod) || !defined($exploits->{$mod})) {
+  Msf::TextUI::PrintAsciiLogo();
   ListExploits();
   exit(0);
 }
@@ -135,7 +136,7 @@ sub Usage {
 }
 
 sub ListExploits {
-  print "============\n= Exploits\n\n";
+  print "\n============\n= Exploits\n\n";
   print $ui->DumpExploits(2, $exploits);
   print "\n";
 }

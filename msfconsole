@@ -109,6 +109,8 @@ my %exploitCmds =
 $state->{'LocalAddress'} = Pex::InternetIP();
 xAddAddressCache($state->{'LocalAddress'});
 
+Msf::TextUI::PrintAsciiLogo();
+
 # print initialization message
 printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n", 
        $VERSION, 
