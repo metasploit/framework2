@@ -394,7 +394,7 @@ sub gInfo
             xMsg("info", "exploit: invalid exploit name");
             return
         }
-        print $ui->DumpExploitSummary($exploits->{$args[1]});
+        print "\n".$ui->DumpExploitSummary($exploits->{$args[1]});
     }
  
     if ($args[0] eq "payload")
@@ -410,7 +410,7 @@ sub gInfo
             xMsg("info", "payload: invalid payload name");
             return;
         }
-        print $ui->DumpPayloadSummary($payloads->{$args[1]});
+        print "\n".$ui->DumpPayloadSummary($payloads->{$args[1]});
     }
 }
 
@@ -755,9 +755,9 @@ sub xAddAddressCache
 
 sub xCreateSetList
 {
-    if ($state->{"MODE"} eq "Main") { return () } 
+    if ($state->{"Mode"} eq "Main") { return () } 
     
-    if ($state->{"MODE"} eq "Exploit") 
+    if ($state->{"Mode"} eq "Exploit") 
     {
         my %options = ();
         
@@ -780,9 +780,9 @@ sub xCreateSetList
 
 sub xCreateSetValueList
 {
-    if ($state->{"MODE"} eq "Main") { return () } 
+    if ($state->{"Mode"} eq "Main") { return () } 
     
-    if ($state->{"MODE"} eq "Exploit") 
+    if ($state->{"Mode"} eq "Exploit") 
     {
         my %results = ();
         
@@ -826,86 +826,54 @@ sub xCreateSetValueList
 sub xTabCompletion
 {
     my ($text, $line, $start, $end) = @_;
-
-    # this handles command matching
-    if ($start == 0)
-    {
-        my @matches = $console->_term->completion_matches($text, \&xTabCompletionCmd);
-        return(@matches);
-    }
-    
     my ($cmd, @args) = split(/\s+/, $line);
-    #print STDERR "[*] t=$text l=$line s=$start e=$end ($cmd) -> " . join(", ", @args) . "\n";
     
-    if (lc($cmd) eq "use")
-    {
-        my @matches = $console->_term->completion_matches($text, \&xTabCompletionUse);
-        return(@matches);
-    }
+    $state->{'TabVals'} = [ ];
+    
+    # this handles command matching
+    if ($start == 0) { $state->{'TabVals'} = [sort(keys(%virtualCmds))] }
+    
+    if (lc($cmd) eq "use") { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
     
     if (lc($cmd) eq "show")
     {
-        if ($state->{'MODE'} eq "Main")
-        {
-            my @matches = $console->_term->completion_matches($text, \&xTabCompletionShowMain);
-            return(@matches);
-        }
-        
-        if ($state->{'MODE'} eq "Exploit")
-        {
-            my @matches = $console->_term->completion_matches($text, \&xTabCompletionShowExploit);
-            return(@matches);        
-        }
+        if ($state->{'Mode'} eq "Main") { $state->{'TabVals'} = ["exploits", "payloads", "config"] }
+        if ($state->{'Mode'} eq "Exploit") { $state->{'TabVals'} = ["options", "targets", "payloads"] }
     }
     
     if (lc($cmd) eq "info")
     {
         # display variables if no args are specified
-        if (! $args[0] || (! $args[1] && ($args[0] && $text)))
-        {
-            my @matches = $console->_term->completion_matches($text, \&xTabCompletionInfo);
-            return(@matches);
-        }
-        
+        if (! $args[0] || (! $args[1] && ($args[0] && $text))) { $state->{'TabVals'} = ["exploit", "payload"] }
         if (! $args[1] || (! $args[2] && ($args[1] && $text)))
         {
-            if ($args[0] eq "exploit")
-            {
-                my @matches = $console->_term->completion_matches($text, \&xTabCompletionInfoExploit);
-                return(@matches);
-            }
-            
-            if ($args[0] eq "payload")
-            {
-                my @matches = $console->_term->completion_matches($text, \&xTabCompletionInfoPayload);
-                return(@matches);
-            }            
+            if ($args[0] eq "exploit") { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
+            if ($args[0] eq "payload") { $state->{'TabVals'} = [sort(keys(%{$payloads}))] }
         }
     }
-
         
     if (lc($cmd) eq "set")
     {
         # display variables if no args are specified
         if (! $args[0] || (! $args[1] && ($args[0] && $text)))
         {
-            my @matches = $console->_term->completion_matches($text, \&xTabCompletionSet);
-            return(@matches);
+            $state->{'TabVals'} = [sort(xCreateSetList())];
         }
         
         if (! $args[1] || (! $args[2] && ($args[1] && $text)))
         {
             $state->{'X'}->{'SETNAME'} = $args[0];
-            my @matches = $console->_term->completion_matches($text, \&xTabCompletionSetValue);
-            return(@matches);        
+            $state->{'TabVals'} = [sort(xCreateSetValueList())];
         }
     }
+
      
     if (lc($cmd) eq "exec") {  return () }   
-    
-    # default to file system matches
-    return ();
+           
+    my @matches = $console->_term->completion_matches($text, \&xTabCompletionMatcher);
+    return(@matches); 
 }
+
 
 # This is a localized closure for matching speed, this routine has been borrowed
 # from http://lists.n0i.net/pipermail/perl/2003-October/000015.html
@@ -913,18 +881,19 @@ sub xTabCompletion
     my $list_index;
     my @name;
     
-    sub xTabCompletionCmd
+    sub xTabCompletionMatcher
     {
-        my ($text, $state) = @_;
+        my ($text, $mstate) = @_;
         $text = quotemeta($text);
 
         # If this is a new word to complete, initialize now.  This
         # includes saving the length of TEXT for efficiency, and
         # initializing the index variable to 0.
 
-        unless ($state) {
+        unless ($mstate) {
 	        $list_index = 0;
-            @name = sort(keys(%virtualCmds));
+            @name = @{$state->{'TabVals'}};
+            return undef if (scalar(@name) == 0);
         }
 
         # Return the next name which partially matches from the
@@ -936,176 +905,6 @@ sub xTabCompletion
         }
 
         # If no names matched, then return NULL.
-        return undef;
-
-    }
-}
-
-# use "exploit" command completion
-{
-    my $list_index;
-    my @name;
-    sub xTabCompletionUse
-    {
-        my ($text, $state) = @_;
-        $text = quotemeta($text);
-        unless ($state) {
-	        $list_index = 0;
-	        @name = sort(keys(%{$exploits}));
-        }
-        while ($list_index <= $#name) {
-	        $list_index++;
-	        return $name[$list_index - 1]
-                if ($name[$list_index - 1] =~ /^$text/);
-        }
-        return undef;
-
-    }
-}
-
-# show "exploit" | "payloads" completion
-{
-    my $list_index;
-    my @name;
-    sub xTabCompletionShowMain
-    {
-        my ($text, $state) = @_;
-        $text = quotemeta($text);
-        unless ($state) {
-	        $list_index = 0;
-	        @name = ("exploits", "payloads", "config");
-        }
-        while ($list_index <= $#name) {
-	        $list_index++;
-	        return $name[$list_index - 1]
-                if ($name[$list_index - 1] =~ /^$text/);
-        }
-        return undef;
-    }
-}
-
-# show "options|targets|payloads"
-{
-    my $list_index;
-    my @name;
-    sub xTabCompletionShowExploit
-    {
-        my ($text, $state) = @_;
-        $text = quotemeta($text);
-        unless ($state) {
-	        $list_index = 0;
-	        @name = ("options", "targets", "payloads");
-        }
-        while ($list_index <= $#name) {
-	        $list_index++;
-	        return $name[$list_index - 1]
-                if ($name[$list_index - 1] =~ /^$text/);
-        }
-        return undef;
-    }
-}
-
-# info "exploit" | "payload" completion
-{
-    my $list_index;
-    my @name;
-    sub xTabCompletionInfo
-    {
-        my ($text, $state) = @_;
-        $text = quotemeta($text);
-        unless ($state) {
-	        $list_index = 0;
-	        @name = ("exploit", "payload");
-        }
-        while ($list_index <= $#name) {
-	        $list_index++;
-	        return $name[$list_index - 1]
-                if ($name[$list_index - 1] =~ /^$text/);
-        }
-        return undef;
-    }
-}
-
-# info exploit completion
-{
-    my $list_index;
-    my @name;
-    sub xTabCompletionInfoExploit
-    {
-        my ($text, $state) = @_;
-        $text = quotemeta($text);
-        unless ($state) {
-	        $list_index = 0;
-	        @name = keys(%{$exploits});
-        }
-        while ($list_index <= $#name) {
-	        $list_index++;
-	        return $name[$list_index - 1]
-                if ($name[$list_index - 1] =~ /^$text/);
-        }
-        return undef;
-    }
-}
-
-# info payload completion
-{
-    my $list_index;
-    my @name;
-    sub xTabCompletionInfoPayload
-    {
-        my ($text, $state) = @_;
-        $text = quotemeta($text);
-        unless ($state) {
-	        $list_index = 0;
-	        @name = keys(%{$payloads});
-        }
-        while ($list_index <= $#name) {
-	        $list_index++;
-	        return $name[$list_index - 1]
-                if ($name[$list_index - 1] =~ /^$text/);
-        }
-        return undef;
-    }
-}
-
-# set variable name completion
-{
-    my $list_index;
-    my @name;
-    sub xTabCompletionSet
-    {
-        my ($text, $state) = @_;
-        $text = quotemeta($text);
-        unless ($state) {
-	        $list_index = 0;
-	        @name = sort(xCreateSetList());
-        }
-        while ($list_index <= $#name) {
-	        $list_index++;
-	        return $name[$list_index - 1]
-                if ($name[$list_index - 1] =~ /^$text/);
-        }
-        return undef;
-    }
-}
-
-# set variable value completion
-{
-    my $list_index;
-    my @name;
-    sub xTabCompletionSetValue
-    {
-        my ($text, $state) = @_;
-        $text = quotemeta($text);
-        unless ($state) {
-	        $list_index = 0;
-	        @name = sort(xCreateSetValueList());
-        }
-        while ($list_index <= $#name) {
-	        $list_index++;
-	        return $name[$list_index - 1]
-                if ($name[$list_index - 1] =~ /^$text/);
-        }
         return undef;
     }
 }
