@@ -21,11 +21,15 @@ sub CheckHandler {
     return(0);
   }
 
-  @ready = $self->ListenerSelector->can_read(.5);
+  # if we already saw one connection, wait for a while before giving up
+  @ready = $self->ListenerSelector->can_read(10);
   if(@ready) {
     $sock2 = $ready[0]->accept();
     $self->PrintLine('[*] Recieved second connection.');
 
+    $sock1->Send("echo foo;\n");
+    $sock2->Send("echo foo;\n");
+    
     my $selector = IO::Select->new($sock1, $sock2);
     @ready = $selector->can_read(2);
     if(!@ready) {
