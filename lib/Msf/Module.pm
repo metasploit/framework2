@@ -121,9 +121,9 @@ sub GetVar {
 
   $val = $self->GetTempEnv($key);
   return($val) if(defined($val));
-  $val = $self->GetEnv($key);
+  $val = $self->GetGlobalEnv($key);
   return($val) if(defined($val));
-  $val = $self->GetEnv($self->SelfName . '::' . $key);
+  $val = $self->GetGlobalEnv($self->SelfName . '::' . $key);
   return($val) if(defined($val));
   $val = $self->GetDefaultValue($key);
   return($val) if(defined($val));
@@ -137,8 +137,8 @@ sub SetVar {
   my $val = shift;
 
   return($self->SetTempEnv($key, $val)) if(defined($self->GetTempEnv($key)));
-  return($self->SetEnv($key, $val)) if(defined($self->GetEnv($key)));
-  return($self->SetEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetEnv($self->SelfName . '::' . $key)));
+  return($self->SetGlobalEnv($key, $val)) if(defined($self->GetGlobalEnv($key)));
+  return($self->SetGlobalEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetGlobalEnv($self->SelfName . '::' . $key)));
   return($self->SetDefault($key, $val)) if(defined($self->GetDefault($key)));
   # Even thought it was is in UserOpts, we just mask it in Defaults
   return($self->SetDefault($key, $val)) if(defined($self->GetOptsDefault($key)));
@@ -154,7 +154,7 @@ sub GetLocal {
 
   $val = $self->GetTempEnv($key);
   return($val) if(defined($val));
-  $val = $self->GetEnv($self->SelfName . '::' . $key);
+  $val = $self->GetGlobalEnv($self->SelfName . '::' . $key);
   return($val) if(defined($val));
   $val = $self->GetDefaultValue($key);
   return($val) if(defined($val));
@@ -168,7 +168,7 @@ sub SetLocal {
   my $val = shift;
 
   return($self->SetTempEnv($key, $val)) if(defined($self->GetTempEnv($key)));
-  return($self->SetEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetEnv($self->SelfName . '::' . $key)));
+  return($self->SetGlobalEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetGlobalEnv($self->SelfName . '::' . $key)));
   return($self->SetDefault($key, $val)) if(defined($self->GetDefault($key)));
   # Even thought it was is in UserOpts, we just mask it in Defaults
   return($self->SetDefault($key, $val)) if(defined($self->GetOptsDefault($key)));
