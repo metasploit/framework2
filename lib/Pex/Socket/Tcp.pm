@@ -38,11 +38,14 @@ sub new_from_socket {
   my $sock = shift;
   my $self = bless({ }, $class);
   my $hash =
+  eval 
   {
-    LocalAddr => eval { $sock->sockhost },
-    LocalPort => eval { $sock->sockport },
-    PeerAddr  => eval { $sock->peerhost },
-    PeerHost  => eval { $sock->peerport }, 
+    {
+    	LocalAddr => $sock->sockhost,
+    	LocalPort => $sock->sockport,
+    	PeerAddr  => $sock->peerhost,
+    	PeerPort  => $sock->peerport, 
+    }
   };
 
   # Verify that the socket is actually one

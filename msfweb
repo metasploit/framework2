@@ -63,29 +63,60 @@ my $moduleOS	= { };
 my $moduleList	= { };
 my $modules	    = { };
 my $burl;
+my %args;
+
+# Configuration defaults...
+my %config	= 
+(
+	'BindAddr'	=> '127.0.0.1',
+	'BindPort'	=> 55555,
+	'LogFile'	=> '-',
+	'LogLevel'	=> 0,
+);
 
 
-my %args = ();
-getopts("vha:hr", \%args);
+# Process the command line options
+getopts("a:l:v:p:h", \%args);
 
-if ($args{h}) { Usage() }
-# if ($args{v}) { $verbose++ }
+# Show the help output
+if ($args{'h'}) { Usage() }
 
-my ($host, $port) = ("127.0.0.1", 55555);
-if ($args{a})
+
+# IP address and possible TCP port
+if (exists($args{'a'}))
 {
-    ($host, $port) = split(/:/, $args{a});
-    if (! $port) { $port = 55555 }
+    my ($host, $port) = split(/:/, $args{'a'});
+	$config{'BindAddr'} = $host;
+	
+	if ($port) {
+		$config{'BindPort'} = $port;
+	}
 }
 
+# TCP port
+if (exists($args{'p'})) {
+	$config{'BindPort'} = $args{'p'};
+}
 
-print "[*] Starting Metasploit v$VERSION Web Interface on $host:$port...\n";
+# Log file name
+if (exists($args{'l'})) {
+	$config{'LogFile'} = $args{'l'};
+}
+
+# Log verbosity level
+if (exists($args{'v'})) {
+	$config{'LogLevel'} = $args{'v'};
+}
+
+my $bindstr = $config{'BindAddr'}. ':' .$config{'BindPort'};
+print STDERR "+----=[ Metasploit Framework Web Interface ($bindstr)\n";
+
 
 # Set the cache directory
 $ui->SetTempEnv('_CacheDir', "$RealBin/data/msfweb");
 
 # Set the theme directory
-$ui->SetTempEnv('_ThemeDir', "$RealBin/data/msfweb/gblack");
+$ui->SetTempEnv('_ThemeDir', "$RealBin/data/msfweb/themes/gblack");
 
 
 # Create the inital list of modules
@@ -99,20 +130,21 @@ if (! $args{'r'}) {
 
 my $ghettoWeb = GhettoWeb->new
 (
-	'host'	=> $host,
-	'port'	=> $port,
+	'host'	=> $config{'BindAddr'},
+	'port'	=> $config{'BindPort'},
 	'fnWeb'	=> \&ProcessWebRequest,
 	'fnIPC'	=> \&ProcessIPCRequest,
 	'fnHRP'	=> \&HTTPRequest,
 );
 
-$ghettoWeb->LogFile('/tmp/ghetto.log');
+$ghettoWeb->LogFile($config{'LogFile'});
+$ghettoWeb->LogLevel($config{'LogLevel'});
+
 $ghettoWeb->Run();
 
 if ($ghettoWeb->IsError) {
 	print STDERR "[*] Error: ".$ghettoWeb->GetError."\n";
 }
-
 
 
 exit(0);
@@ -131,10 +163,25 @@ exit(0);
 ######################################################################
 ######################################################################
 
+sub Usage {
+    print STDERR qq{
+Usage: $0 <options>
+
+Options:
+		-a	<ip address>  Bind to this IP instead of the loopback address
+		-p	<tcp port>    Bind to this TCP port instead of 55555
+		-l	<log file>    The path name to use for a log file (stderr)
+		-v	<log level>   A number between 0 and 10 that controls log verbosity
+
+};
+    exit(0);
+}
+
+
 sub ProcessResRequest {
 	my ($req, $cli, $ipc) = @_;
 
-	my $theme = $ui->GetTempEnv('_ThemeDir') || "$RealBin/data/msfweb/default";
+	my $theme = $ui->GetTempEnv('_ThemeDir') || "$RealBin/data/msfweb/themes/default";
 
 	my %files =
 	(
@@ -205,7 +252,7 @@ sub ProcessIPCRequest {
 		my @list = $self->SessionList();
 		my $data;
 		foreach my $sid (@list) {
-			$data .= "sid=".unpack("H*", "$sid").",". $self->SessionInfo($sid)." ";
+			$data .= 'sid='. unpack('H*', $sid). ',' .$self->SessionInfo($sid). ' ';
 		}
 		$ipc->printflush("LIST $data\n");
 	}
@@ -296,11 +343,6 @@ sub ProcessWebRequest {
     $cli->Send(HTTPResponse(200, $res));
     $cli->Close();
 	
-    exit(0);
-}
-
-sub Usage {
-    print STDERR "Usage: $0 -a hostname:port [-v -r]\n";
     exit(0);
 }
 
@@ -1856,18 +1898,41 @@ sub LogFile {
 	return $self->{'_LogFile'};
 }
 
+sub LogLevel {
+	my $self = shift;
+	$self->{'_LogLevel'} = shift() if @_;
+	return $self->{'_LogLevel'};
+}
+
 sub Log {
     my $self	= shift;
 	my $lvl		= shift;
 	my $msg		= @_ ? shift() : return;
 	
-	if ( open(X, ">>".$self->LogFile) ) {
-    	print X scalar(localtime())." <$lvl> $msg\n";
-    	close(X);
+	return if $lvl > $self->LogLevel;
+	
+	if (! open(X, ">>".$self->LogFile) ) {
+		print STDERR "FATAL: could not open the log file '". $self->LogFile ."': $!\n";
+		exit(0);
 	}
+	
+	$msg = $self->TermEscape($msg);
+	
+    print X scalar(localtime())." <$lvl> $msg\n";
+    close(X);
 }
 
-
+sub TermEscape {
+	my $self = shift;
+	my $data = shift;
+	my $res;
+	
+	foreach my $c (unpack('C*', $data)) {
+		if ($c >= 0x20 && $c < 0x80) {	$res .= chr($c); }
+		else { $res .= sprintf("\\x%.2x", $c); }
+	}
+	return $res;
+}
 
 sub Run {
 	my $self = shift;
@@ -1941,7 +2006,7 @@ sub Run {
 				}
 
 				$socketInfo{$client} = [$client, 0, 'client'];
-				$self->Log(3, "New client connection from ".$client->peerhost);
+				$self->Log(3, "Connection from ".$client->peerhost .':'. $client->peerport);
 				next;
 			}
 
@@ -1950,29 +2015,39 @@ sub Run {
 				my $cli = Msf::Socket::Tcp->new_from_socket($s);
 				my $res = $fnHRP->($self, $cli);
 
+				my $cinfo = $cli->PeerAddr .':'. $cli->PeerPort;
+				
 				if ($res) {
 					my ($par, $chi);
 
-					# Create the comm channel between parent and child
-					socketpair($par, $chi, AF_UNIX, SOCK_STREAM, PF_UNSPEC);
-
+					# Do not create IPC pipes for resource requests
+					if ($res->{'base'} ne 'RESOURCE') {
+						# Create the comm channel between parent and child
+						socketpair($par, $chi, AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+					}
+					
 					# Spawn off the child process
 					my $pid = fork();
 					if (! $pid) {
 						
 						# Close the http listener inside the child
 						$httpd->close;
-						$self->Log(3,  "fnWeb called with pid $$...");						
+						$self->Log(3,  "Processing HTTP request for $cinfo with child $$");						
 						$fnWeb->($self, $res, $cli, $chi);
 						exit(0);
 					}
-
-					$socketInfo{$par} = [$par, $pid, 'ipc'];
-					$socketInfo{$chi} = [$chi, $pid, 'ipc_child'];
+					
+					# Do not track IPC pipes for resource requests
+					if ($res->{'base'} ne 'RESOURCE') {
+						$socketInfo{$par} = [$par, $pid, 'ipc'];
+						$socketInfo{$chi} = [$chi, $pid, 'ipc_child'];
+					}
+					
 				} 
 				else {
-					eval { $s->shutdown(2); };
-					eval { $s->close; };
+					# Invalid request, trash it for now
+					$self->Log(3,  "Invalid HTTP request from $cinfo");		
+					eval { $s->shutdown(2); $s->close; };
 				}
 
 				# XXX - local cleanup up the original socket?
@@ -1982,7 +2057,8 @@ sub Run {
 
 			# A new IPC request
 			if ($socketInfo{$s}->[2] eq 'ipc') {
-				$self->Log(3,  "fnIPC called with pid $$ ($s)...");
+				my $ipc_pid = $socketInfo{$s}->[1];
+				$self->Log(3,  "Processing IPC request for child $ipc_pid [ $s ]");
 				$fnIPC->($self, $s);
 				next;
 			}
@@ -1995,9 +2071,12 @@ sub Run {
 		foreach my $s (keys %socketInfo) {
 			my $spid = $socketInfo{$s}->[1];
 			if ($spid && ! kill(0, $spid)) {
-				$self->Log(3, "Removed $s ($spid) of type ".$socketInfo{$s}->[2]);
-				eval { $socketInfo{$s}->[0]->shutdown(2); };
-				eval { $socketInfo{$s}->[0]->close; };
+				$self->Log(4, "Removing socket $s for process $spid of type ".$socketInfo{$s}->[2]);
+				eval 
+				{ 
+					$socketInfo{$s}->[0]->shutdown(2); 
+					$socketInfo{$s}->[0]->close;
+				};
 				delete($socketInfo{$s});
 			}
 		}
