@@ -12,7 +12,6 @@ my $info =
     Arch         => [ 'x86' ],
     Priv         => 0,
     OS           => [ 'win32' ],
-    Keys         => '', 
     Multistage   => 0,
     Type         => 'bind_shell',
     Size         => '',

@@ -11,7 +11,6 @@ my $info =
     Arch         => [ 'x86' ],
     Priv         => 0,
     OS           => [ 'bsd' ],
-    Keys         => '', 
     Multistage   => 0,
     Type         => 'reverse_shell',
     Size         => '',

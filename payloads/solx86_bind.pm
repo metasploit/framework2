@@ -11,7 +11,6 @@ my $info =
     Arch         => [ 'x86' ],
     Priv         => 0,
     OS           => [ 'solaris' ],
-    Keys         => '', 
     Multistage   => 0,
     Type         => 'bind_shell',
     Size         => '',

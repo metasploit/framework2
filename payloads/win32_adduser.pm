@@ -12,7 +12,6 @@ my $info =
     Arch         => [ 'x86' ],
     Priv         => 1,
     OS           => [ 'win32' ],
-    Keys         => '', 
     Multistage   => 0,
     Type         => 'none',
     Size         => '',
