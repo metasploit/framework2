@@ -40,7 +40,7 @@ findtag:
 	push byte 0x66
 	pop  eax
 	int  0x80
-	cmp  dword [esi], 0x2166736d
+	cmp  dword [esi], 0x2166736d ; tag: msf!
 	jnz  findtag
 	pop  edi
 	cld

@@ -1,6 +1,6 @@
 ;;
 ;
-;        Name: stage_udp_shell
+;        Name: provider_udp_shell
 ;        Type: Provider
 ;   Qualities: None
 ;     Authors: skape <mmiller [at] hick.org>
@@ -14,8 +14,7 @@
 ; Description:
 ;
 ;        This payload redirects stdio to a file descriptor and executes
-;        /bin/sh with readline disabled, thus making it possible to use
-;        with connectionless sockets like UDP.
+;        /bin/sh.
 ;
 ;;
 BITS   32
@@ -24,4 +23,4 @@ GLOBAL _start
 %include "generic.asm"
 
 _start:
-	execve_binsh EXECUTE_REDIRECT_IO | EXECUTE_DISABLE_READLINE
+	execve_binsh EXECUTE_REDIRECT_IO

