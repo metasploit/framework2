@@ -94,7 +94,7 @@ sub LoadModules {
     my $module = $entry->new();
 
     if(!$module->Loadable || $module->PrintError) {
-      $self->PrintLine("[*] Loadable failed for $entry");
+      $self->PrintDebugLine(1, "[*] Loadable failed for $entry");
       delete($::{$entry."::"});
       next;
     }
