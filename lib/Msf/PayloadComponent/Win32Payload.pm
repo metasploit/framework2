@@ -56,6 +56,7 @@ sub Size {
     my $self = shift;
     my $size = length($self->Build);
     $self->PrintDebugLine(3, "Win32Payload: returning Size of $size");
+    $self->PrintDebugLine(5, "Win32Payload: size on $self");
     return $size;
 }
 

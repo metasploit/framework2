@@ -36,7 +36,6 @@ my $info =
 };
 
 sub new {
-    _Load();
     my $class = shift;
     my $hash = @_ ? shift : { };
     $hash = $class->MergeHashRec($hash, {'Info' => $info});
