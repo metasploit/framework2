@@ -49,7 +49,7 @@ while ( my ($k, $v) = split(/\=/, shift()) )
         $opt->{"ARG".$idx} = uc($k);
         $idx++;
     } else {
-        $opt->{uc($k)} = $v;
+        $ui->SetTempEnv($k, $v);
     }   
 }
 

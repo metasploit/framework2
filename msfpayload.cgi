@@ -40,7 +40,11 @@ foreach my $key (keys(%{$payloadsIndex})) {
 
 my @params = defined($query->param) ? $query->param : ( );
 
-foreach my $name (@params) { $opt->{uc($name)} = $query->param($name) }
+foreach my $name (@params) 
+{
+    $ui->SetTempEnv(uc($name)) = $query->param($name);
+    $opt->{uc($name)} = $query->param($name);
+}
 
 my $action = uc($opt->{'ACTION'});
 
