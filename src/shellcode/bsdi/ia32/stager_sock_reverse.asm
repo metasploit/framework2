@@ -64,6 +64,8 @@ connect:
 	pop  eax
 	call esi
 
+%ifndef USE_SINGLE_STAGE
+
 read:
 	mov  al, 0x3
 	mov  dh, 0xc
@@ -73,3 +75,5 @@ read:
 	call esi
 	pop  edi
 	ret
+
+%endif

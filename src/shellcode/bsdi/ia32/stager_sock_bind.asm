@@ -76,6 +76,8 @@ accept:
 	call esi
 	xchg eax, edi
 
+%ifndef USE_SINGLE_STAGE
+
 read:
 	push byte 0x3
 	pop  eax
@@ -85,3 +87,5 @@ read:
 	push edi
 	call esi
 	jmp  ebp
+
+%endif
