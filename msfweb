@@ -483,6 +483,7 @@ sub ExploitExec
     $ui->SetTempEnv('_PayloadName', $payloadName);
     $ui->SetTempEnv('_Payload', $payload);
     $ui->SetTempEnv('_ValidPayloads', $validPayloads);
+    $exploit->ApplyAutoOpts;
    
     
     if ($state->{"ExploitAction"} eq "Vulnerability Check")

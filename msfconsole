@@ -857,6 +857,13 @@ sub FillTemp {
   my $exploit = $state->{'Exploit'}->{'Exploit'};
   $ui->SetTempEnv('_Exploit', $exploit);
 
+  # XXX added by spoon, maybe this should be looked at...
+  # applying the AutoOpts settings to the local temp env we have setup,
+  # specifically this fixes things like the EXITFUNC display issues
+  # this will later get called again in Exploit::Prepare, maybe we should
+  # look into just having it done once....
+  $exploit->ApplyAutoOpts;
+
   my $payloadName = $ui->GetEnv('PAYLOAD');
   $ui->SetTempEnv('_PayloadName', $payloadName);
   my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);

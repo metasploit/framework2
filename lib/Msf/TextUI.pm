@@ -327,13 +327,6 @@ sub Options {
     $self->PrintLine('===============');
   }
 
-  # XXX hack by spoon, added Oct 31, 2004
-  # since we are already in the temporary environment that will get
-  # restored, we can apply the AutoOpts to get correct output for 
-  # show options, in specific, things like EXITFUNC
-  # this should maybe be handled more elegantly/globally
-  $exploit->ApplyAutoOpts;
-  
   $self->PrintLine;
   print $self->DumpOptions(2, 'Exploit', $exploit);
   print $self->DumpOptions(2, 'Payload', $payload) if($payloadName);
