@@ -26,15 +26,27 @@ use Msf::HandlerCLI;
 use Msf::TextUI;
 
 my $ui = Msf::TextUI->new($Bin);
-  
+
+# Grab the 0x00 style module index
+my $mod = shift;
+my @ARG;
+
+# parse the command line options
+while( my($key, $val) = split('\=', shift())) {
+  if (! defined($val)) {
+    push(@ARG, $key);
+  }
+  else {
+    $ui->SetEnv($key, $val);
+  }
+}
+
 my $exploits = { };
 my $payloads = { };
 my $exploitsIndex = $ui->LoadExploits;
 my $payloadsIndex = $ui->LoadPayloads;
 my $encoders = $ui->LoadEncoders;
 my $nops     = $ui->LoadNops;
-
-my @ARG;
 
 # A quick note:
 # The Load methods return a hash of instantiated objects
@@ -55,8 +67,6 @@ foreach my $key (keys(%{$payloadsIndex})) {
   $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
 }
 
-my $mod = shift;
-
 if(!defined($mod) || !defined($exploits->{$mod})) {
   ListExploits();
   exit(0);
@@ -64,15 +74,6 @@ if(!defined($mod) || !defined($exploits->{$mod})) {
 
 my $exploit = $exploits->{$mod};
 
-# parse the command line options
-while( my($key, $val) = split('\=', shift())) {
-  if (! defined($val)) {
-    push(@ARG, $key);
-  }
-  else {
-    $ui->SetEnv($key, $val);
-  }
-}
 
 my $payloadName = $ui->GetEnv('PAYLOAD');
 my $payload = $payloads->{$payloadName};
