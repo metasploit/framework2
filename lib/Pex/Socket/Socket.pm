@@ -82,7 +82,7 @@ sub SetOptions {
   $self->RecvLoopTimeout(.5);
   $self->TimeoutErrors(0);
 
-  my @options = ('Timeout', 'RecvTimeout', 'RecvLoopTimeout', 'PeerAddr', 'PeerPort', 'LocalPeerPort');
+  my @options = ('Timeout', 'RecvTimeout', 'RecvLoopTimeout', 'PeerAddr', 'PeerPort', 'LocalPort');
   foreach my $option (@options) {
     $self->$option($hash->{$option}) if(exists($hash->{$option}));
   }
