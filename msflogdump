@@ -23,11 +23,12 @@ foreach my $filename (@ARGV) {
     s/\r//g;
     chomp;
 
-    if(/Conn: ([^ ]+) ([^ ]+)/ig) {
-      my $src  = $1;
-      my $dest = $2;
-      print "Connection: $BLUE$src$NORMAL -> $RED$dest$NORMAL\n";
-      print "-" x 60 . "\n";
+    if(/Socket(In|Out): ([^ ]+) ([^ ]+)/ig) {
+      my $in   = $1;
+      my $src  = $2;
+      my $dest = $3;
+      print "Socket$in: $BLUE$src$NORMAL -> $RED$dest$NORMAL\n";
+      print "-" x 60 . "\n" if($in eq 'Out');
     }
     elsif(/(.*?) CLIENT (.*)/ig) {
       print $BLUE . HexToAscii($2) . $NORMAL;
