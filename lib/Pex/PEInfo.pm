@@ -400,14 +400,14 @@ sub _LoadExport {
     my $name_ptr = $self->_RV2O($fields[8]);
     my $ord_ptr  = $self->_RV2O($fields[9]);
 
-    # build the ordinal -> address map first
+    # Build the ordinal -> address map first
     my @ord_table = ();
     for (my $idx = 0; $idx < $fields[5]; $idx++) {
         my $func_cur = unpack('V',  substr($data, $func_ptr + (4 * $idx), 4));
         $ord_table[$idx] = $func_cur;
     }
 
-    # scan the name -> ordinal map and match it up
+    # Scan the name -> ordinal map and match it up
     for (my $idx = 0; $idx < $fields[5]; $idx++) {
 
         # Pull the ordinal number for this name
@@ -426,13 +426,38 @@ sub _LoadExport {
         # Add the ordinal base value
         $ord_cur += $fields[4];
 
-        $etable->{$etable->{'name'}}->{$name_str}->{'ord'} = $ord_cur;
-        $etable->{$etable->{'name'}}->{$name_str}->{'add'} = $func_cur + $self->ImageBase;
+        $etable->{'funcs'}->{$name_str}->{'ord'} = $ord_cur;
+        $etable->{'funcs'}->{$name_str}->{'add'} = $func_cur + $self->ImageBase;
+        $etable->{'ordinals'}->[$ord_cur]        = $name_str;
         
         if ($self->Debug) {    
             printf("0x%.8x %.4d %s\n", $func_cur, $ord_cur, $name_str);
         }
     }
+    
+    for (my $idx = 0; $idx < scalar(@ord_table); $idx++) {
+        my $ord = $idx + $fields[4];
+        my $ord_str = "#$ord";
+        
+        if (! exists($etable->{$ord_str})) {
+
+            my $forwarder = unpack('Z*', substr($data, $self->_RV2O($ord_table[$idx]), 512));
+            if ($forwarder =~ /^\w+\.\w+$/) {
+                $ord_str = $forwarder;
+                $etable->{'funcs'}->{$ord_str}->{'forwarder'}++;
+            }
+            
+            $etable->{'ordinals'}->[$ord] = $ord_str;
+            $etable->{'funcs'}->{$ord_str}->{'ord'} = $ord;
+            $etable->{'funcs'}->{$ord_str}->{'add'} = $ord_table[$idx] + $self->ImageBase;
+
+            if ($self->Debug) {    
+                printf("0x%.8x %.4d %s\n", $ord_table[$idx], $ord, $ord_str);
+            }
+           
+        }
+    }
+    
 
     $self->{'EXPORT'} = $etable;
 }
