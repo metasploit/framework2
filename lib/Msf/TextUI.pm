@@ -354,7 +354,7 @@ sub Exploit {
   
   # Important: Default the target to 0, maybe this should somehow
   # be in Msf::Exploit, maybe be part of the Validate process?
-  $target = $exploit->DefaultTarget if(!defined($target));
+  $target = $exploit->DefaultTarget if(!defined($target) && $exploit->TargetsList);
 
   if($target == -1) {
     $self->PrintLine('[*] Exploit does not default targets, one must be specified.');
