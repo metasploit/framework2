@@ -115,7 +115,7 @@ sub Usage
 sub Version {
     print STDERR qq{
    Framework Version:  $FRAMEVERSION
-  Msfconsole Version:  $VERSION
+  Msfpayload Version:  $VERSION
 
 };
   exit(0);

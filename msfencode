@@ -214,7 +214,7 @@ Options:
 sub Version {
     print STDERR qq{
    Framework Version:  $FRAMEVERSION
-  Msfconsole Version:  $VERSION
+   Msfencode Version:  $VERSION
 
 };
   exit(0);

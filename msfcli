@@ -36,9 +36,7 @@ my $VERSION = '$Revision$';
 
 my %opts;
 getopts('hv', \%opts);
-if ($opts{'h'}) {
-    Usage();
-}
+Usage()   if($opts{'h'});
 Version() if($opts{'v'});
 
 my $exploits = { };
