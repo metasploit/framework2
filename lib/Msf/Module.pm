@@ -109,10 +109,11 @@ sub Validate {
 }
 
 # Pecking order:
-# 1) KEY in Config
-# 2) SelfName::KEY in Config
-# 3) KEY in Defaults
-# 4) KEY in UserOpts
+# 1) KEY in TempEnv
+# 2) KEY in Env
+# 3) SelfName::KEY in Env
+# 4) KEY in Defaults
+# 5) KEY in UserOpts
 sub GetVar {
   my $self = shift;
   my $key = shift;
@@ -151,6 +152,8 @@ sub GetLocal {
   my $key = shift;
   my $val;
 
+  $val = $self->GetTempEnv($key);
+  return($val) if(defined($val));
   $val = $self->GetEnv($self->SelfName . '::' . $key);
   return($val) if(defined($val));
   $val = $self->GetDefaultValue($key);
@@ -164,6 +167,7 @@ sub SetLocal {
   my $key = shift;
   my $val = shift;
 
+  return($self->SetTempEnv($key, $val)) if(defined($self->GetTempEnv($key)));
   return($self->SetEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetEnv($self->SelfName . '::' . $key)));
   return($self->SetDefault($key, $val)) if(defined($self->GetDefault($key)));
   # Even thought it was is in UserOpts, we just mask it in Defaults
