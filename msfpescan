@@ -120,7 +120,7 @@ else {
   foreach my $file (@files) {
     if($file =~ /^(.{8})\.rng/) {
       #print "Good file: $dir $file\n";
-      my $pe = SkapeFoo->new($dir . $file, hex($1));
+      my $pe = SkapeFoo->new($dir . '/' . $file, hex($1));
       &{$func}($pe, $args);
     }
   }
