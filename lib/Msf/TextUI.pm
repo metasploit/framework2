@@ -390,9 +390,8 @@ sub Exploit {
         my $res = $handler->$pHandler($child);
         kill('TERM', $child);
 
-        if(!$res) {
+        if($handler->Error) {
           $self->PrintLine('Handler error: ' . $handler->Error);
-          kill('TERM', $child);
         }
       }
       else {
