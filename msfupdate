@@ -188,11 +188,11 @@ sub DownloadFile {
     return $data;
 }
 
+# Prevent MiTM attacks on the update downloads when run over SSL
 sub SSLVerify {
     my ($ok, $x509_store_ctx) = @_;
     my $cert = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_store_ctx);
     
-    # Verify the issuer string for the Metasploit CA
     if ($cert) {
         my $x509_issuer =  Net::SSLeay::X509_get_issuer_name($cert);
         my $issuer = Net::SSLeay::X509_NAME_oneline($x509_issuer);
