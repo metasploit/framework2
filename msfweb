@@ -398,7 +398,7 @@ sub ExploitList
 
 	# Dump out all of the matching exploits for this key, os, or arch
 	foreach my $ename (sort @{ $exploitMerge->{$kname} }) {
-		$eList .= "<tr><td> <li> </td><td><a href='".$burl."MODE=SUMMARY&";
+		$eList .= "<tr><td> <li> <a href='".$burl."MODE=SUMMARY&";
 		$eList .= "MODULE=".URLEncode($ename)."'>".$exploits->{$ename}->Name."</a>";
 		$eList .= "</td></tr>\n";
 	}
