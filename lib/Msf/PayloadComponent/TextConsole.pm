@@ -9,10 +9,21 @@ sub LogDir {
   $self->{'LogDir'} = shift if(@_);
   return($self->{'LogDir'});
 }
+
 sub LogFile {
   my $self = shift;
   $self->{'LogFile'} = shift if(@_);
   return($self->{'LogFile'});
+}
+
+sub ConsoleIn {
+    my $self = shift;
+    return IO::Handle->new_from_fd(0, '<');
+}
+
+sub ConsoleOut {
+    my $self = shift;
+    return IO::Handle->new_from_fd(1, '>');
 }
 
 sub HandleConsole {
@@ -36,15 +47,20 @@ sub HandleConsole {
   $SIG{'TERM'} = $sigHandler;
   $SIG{'INT'} = $sigHandler;
 
-  my $stdin = IO::Handle->new_from_fd(0, '<');
+  my $consoleIn  = $self->ConsoleIn;
+  my $consoleOut = $self->ConsoleOut;
+  
   $sockIn->blocking(1);
   $sockIn->autoflush(1);
   $sockOut->blocking(1);
   $sockOut->autoflush(1);
-  $stdin->blocking(1);
-  $stdin->autoflush(1);
+  
+  $consoleIn->blocking(1);
+  $consoleIn->autoflush(1);
+  $consoleOut->blocking(1);
+  $consoleOut->autoflush(1);
 
-  my $selector = IO::Select->new($stdin, $sockIn);
+  my $selector = IO::Select->new($consoleIn, $sockIn);
 
   $self->StartLog;
 
@@ -52,8 +68,8 @@ LOOPER:
   while($loop) {
     my @ready = $selector->can_read;
     foreach my $ready (@ready) {
-      if($ready == $stdin) {
-        my $data = $stdin->getline;
+      if($ready == $consoleIn) {
+        my $data = $consoleIn->getline;
         $self->SendLog($data);
         $data = $self->SendFilter($data);
         $sockOut->send($data);
@@ -64,7 +80,7 @@ LOOPER:
         last LOOPER if(!length($data));
         $data = $self->RecvFilter($data);
         $self->RecvLog($data);
-        print $data;
+        print $consoleOut $data;
       }
       else {
         print "Well thats a bug.\n";

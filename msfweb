@@ -14,6 +14,8 @@
 #
 ##
 
+# This is a really ghetto proof-of-concept for a web-based exploit interface
+
 require 5.6.0;
 
 use strict;
@@ -62,7 +64,7 @@ my $httpd = IO::Socket::INET->new
     Listen    => 5,
 ) || die "socket: $!";
 
-print "[*] Starting Metasploit Web Interface on $host:$port...\n";
+print "[*] Starting Metasploit v$VERSION Web Interface on $host:$port...\n";
 
 $SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
 
@@ -342,6 +344,7 @@ sub ExploitOptions
     $res .= "<form action='/' method='GET'>\n";
     foreach (keys(%{$state}))
     {
+        next if $_ eq 'client';
         if ($_ ne "MODE")
         {
             $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";

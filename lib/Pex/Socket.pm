@@ -388,7 +388,7 @@ sub Recv {
       return($data);
     }
 
-    my $timeoutLoop = $self->GetTimeoutLoop;
+    my $timeoutLoop = $self->GetRecvTimeoutLoop;
     while(1) {
       my ($ready) = $selector->can_read($timeoutLoop);
       last if(!$ready);

@@ -4,6 +4,7 @@
 ##
 #         Name: WebUI.pm
 #       Author: spoonm <ninjatools [at] hush.com>
+#       Author: H D Moore <hdm [at] metasploit.com>
 #      Version: $Revision$
 #  Description: Instantiable class derived from UI with methods useful to
 #               text-based user interfaces.
@@ -79,8 +80,12 @@ sub Check {
 
 sub Exploit {
   my $self = shift;
-  my $exploit = $self->ModuleName($self->GetTempEnv('_Exploit'))->new;
-  my $payload = $self->ModuleName($self->GetTempEnv('_Payload'))->new;
+  my $exploit = $self->GetTempEnv('_Exploit');
+  $exploit = $self->ModuleName($exploit)->new;
+
+  my $payload = $self->GetTempEnv('_Payload');
+  $payload = $self->ModuleName($payload)->new if($payload);
+
   my $payloadName = $self->GetTempEnv('_PayloadName');
 
   if($exploit->Payload && !defined($payloadName)) {
@@ -113,16 +118,22 @@ sub Exploit {
     return;
   }
   
-  # Important: Default the target to 0, maybe this should somehow
-  # be in Msf::Exploit, maybe be part of the Validate process?
-  $self->SetTempEnv('TARGET', 0) if(!defined($target));
+  # Default target is gauranteed by radio form (screw POST hax0rs)
+  $target = $exploit->DefaultTarget if(!defined($target) && $exploit->TargetsList);
+
+  if($target == -1) {
+    $self->PrintLine('[*] Exploit does not default targets, one must be specified.');
+    return;
+  }
+  else {
+    $self->SetTempEnv('TARGET', $target);
+  }
 
   if(defined($payload)) {
     my $encodedPayload = $self->Encode;
     return if($self->PrintError || !$encodedPayload);
     $self->SetTempEnv('EncodedPayload', $encodedPayload);
   }
-
 
 #fixme
   if(!defined($payload)) {
@@ -138,12 +149,12 @@ sub Exploit {
       $payload->ParentHandler;
     }
     else {
+      srand();
       $exploit->Exploit;
       sleep(1);
       exit(0);
     }
   }
-
 
   print "\n";
 

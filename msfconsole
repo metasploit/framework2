@@ -502,7 +502,7 @@ sub eTargets  {
 }
 
 sub eCheck {
-  xLogHandler("CONSOLE", "Vulncheck launched against " . $ui->GetEnv('RHOST')); 
+  xLogHandler("CONSOLE", "Check launched against " . $ui->GetEnv('RHOST')); 
   SaveTemp();
   FillTemp();
   $ui->Check;
