@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+use strict;
+
+die "[log file...]\n" if(!@ARGV);
+
+# heh, shokdial is good for something
+my $NORMAL = "\033[0m";
+my $BLUE   = "\033[34m";
+my $RED    = "\033[31m";
+
+foreach my $filename (@ARGV) {
+  open(INFILE, "<$filename") or do { print STDOUT "Error opening $_: $!\n"; next; };
+  while(<INFILE>) {
+    s/\r//g;
+    chomp;
+
+    if(/Conn: ([^ ]+) ([^ ]+)/ig) {
+      my $src  = $1;
+      my $dest = $2;
+      print "Connection: $BLUE$src$NORMAL -> $RED$dest$NORMAL\n";
+      print "-" x 60 . "\n";
+    }
+    elsif(/(.*?) CLIENT (.*)/ig) {
+      print $BLUE . HexToAscii($2) . $NORMAL;
+    }
+    elsif(/(.*?) SERVER (.*)/ig) {
+      print $RED . HexToAscii($2) . $NORMAL;
+    }
+  }
+}
+
+sub HexToAscii {
+  my $hex = shift;
+  $hex =~ s/([0-9a-f]{2})/chr(hex($1))/egi;
+  return($hex);
+}
