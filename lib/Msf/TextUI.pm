@@ -38,7 +38,7 @@ sub WordWrap {
   my $text = shift;
   my $indent = @_ ? shift : 4;
   my $size = @_ ? shift : 60;
-  my $indent = " " x $indent;
+  $indent = " " x $indent;
   $text =~ s/(?:^|\G\n?)(?:(.{1,$size})(?:\s|\n|$)|(\S{$size})|\n)/$1$2\n/sg;
   $text =~ s/\n/\n$indent/g;
   return($text);
