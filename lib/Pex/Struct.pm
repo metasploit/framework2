@@ -148,6 +148,15 @@ sub SetSizeField {
   $struct->[3] = $field;
 }
 
+sub SetSize {
+  my $self = shift;
+  my $name = shift;
+  my $size= shift;
+  my $struct = $self->GetStruct($name);
+  return if(!$struct);
+  $struct->[4] = $size;
+}
+
 sub Fill {
   my $self = shift;
   my $data = shift;
@@ -158,6 +167,9 @@ sub Fill {
     my $length = $type->[3];
     if(!defined($length) || $length < 0) {
       $length = $self->Get($struct->[3]);
+    }
+    if(!defined($length) || $length < 0) {
+      $length = $struct->[4];
     }
     return(0) if(!defined($length) || $length < 0);
     $self->SetRaw($struct->[0], substr($data, 0, $length, ''));
