@@ -98,7 +98,7 @@ if (!$opts{x} && $opts{u}) {
         }
     }
     
-    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current/.current");
+    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.html/.current");
 }
 
 $now = Hashit($now_data);
@@ -231,7 +231,7 @@ foreach my $entry (keys(%{$upd})) {
     if ($mod->{$entry}) {
         next;
     } 
-    my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current/$entry");
+    my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.html/$entry");
     if ($new->{$entry} ne md5_hex($data)) {
         print "$entry: ". $new->{$entry} ." != " .md5_hex($data)."\n";
         my $errmsg = $data ? 'checksum mismatch' : 'download failed';
