@@ -2,6 +2,7 @@
 package Msf::Nop::OptyNop;
 use strict;
 use base 'Msf::Nop';
+use Pex::Text;
 
 my $none  = 0;
 my $reg1  = 1;
@@ -16,6 +17,19 @@ my $ebp = 5;
 my $esi = 6;
 my $edi = 7;
 my $reg = 8;
+
+# you can do pretty much aribitrary \x66 and \x67 injection before any
+# instruction, including rotating both....
+# deserves more testing....
+# spoonm@chibi:~/msfcvs/framework$ echo -ne "\x66\x67\x66\x67\x99\xcc" | ndisasm -u -
+# 00000000  6667666799        a16 cwd
+# 00000005  CC                int3
+# spoonm@chibi:~/msfcvs/framework$ echo -ne "\x66\x67\x66\x67\x99\xcc" | ./testybitch
+# read: 6
+# Trace/breakpoint trap
+
+# someday this will all be leeter, but it's not so bad for now :)
+
 
 my $table = [
   [ "\xfe\xc0",           2, $reg1, [ $reg ] ], # /* incb %reg1 */
@@ -115,6 +129,19 @@ my $table = [
   [ "\x83\xd8",           3, $reg1, [ $reg ] ], # /* sbbl $imm8,%reg1 */
   [ "\x81\xd8",           6, $reg1, [ $reg ] ], # /* sbbl $imm32,%reg1 */
   [ "\x1e",               1, $none, [ $esp ] ], # /* push %ds */
+# added by spoon...
+  # xchg eax, eax == 0x90 == nop... fancy
+  [ "\x90",               1, $reg1, [ $eax, $reg ] ], # /* # xchg eax,reg1 */
+  [ "\x99",               1, $none, [ $edx ] ], # /* # cdq */
+  [ "\x37",               1, $none, [ $eax ] ], # /* # aaa */
+  [ "\x3f",               1, $none, [ $eax ] ], # /* # aas */
+  [ "\x27",               1, $none, [ $eax ] ], # /* # daa */
+  [ "\x2f",               1, $none, [ $eax ] ], # /* # das */
+  [ "\x98",               1, $none, [ $eax ] ], # /* # cwde */
+  [ "\x9f",               1, $none, [ $eax ] ], # /* # lahf */
+  [ "\xd6",               1, $none, [ $eax ] ], # /* # salc */
+  [ "\x9b",               1, $none, [ ] ], # /* # wait */
+  [ "\x58",               1, $reg1, [ $esp, $reg ] ], # /* # pop reg1 */
 ];
 
 # XXX

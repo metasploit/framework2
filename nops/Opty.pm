@@ -10,7 +10,7 @@
 package Msf::Nop::Opty;
 use strict;
 use base 'Msf::Nop::OptyNop';
-use Pex::Utils;
+use Pex::x86;
 
 my $info = {
   'Name'    => 'Optyx uber nop generator',
@@ -37,14 +37,23 @@ sub Nops {
 
   my $exploit = $self->GetVar('_Exploit');
   my $random  = $self->GetLocal('RandomNops');
-  my $badRegs = $exploit->NopSaveRegs;
   my $badChars = $exploit->PayloadBadChars;
 
+  my $badRegs = [ ];
+  foreach my $breg (@{$exploit->NopSaveRegs}) {
+    push(@{$badRegs}, Pex::x86::RegNameToNumber($breg));
+  }
+  $self->_BadRegs($badRegs);
   $self->_BadChars($badChars);
 
   return($self->_GenerateSlide($length));
 }
 
+sub _BadRegs {
+  my $self = shift;
+  $self->{'_BadRegs'} = shift if(@_);
+  return($self->{'_BadRegs'});
+}
 sub _BadChars {
   my $self = shift;
   $self->{'_BadChars'} = shift if(@_);
