@@ -267,7 +267,7 @@ sub DisplayPayloads {
         if ( ref($pos) ne 'ARRAY' || 
              scalar(@{$pos}) > 1  || 
              scalar(@{$pos}) == 0 || 
-             ref($pae) ne 'ARRAY' || 
+             ref($par) ne 'ARRAY' || 
              scalar(@{$par}) > 1  ||
              scalar(@{$par}) == 0 || 
            ) {
