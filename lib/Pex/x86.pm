@@ -16,12 +16,12 @@
 package Pex::x86;
 use strict;
 
-sub jmpShort {
-  my $dist = number(shift, -2);
-  return("\xeb" . numberPackLSB($dist));
+sub JmpShort {
+  my $dist = RelNumber(shift, -2);
+  return("\xeb" . PackLSB($dist));
 }
 
-sub number {
+sub RelNumber {
   my $number = shift;
   my $delta = @_ ? shift : 0;
 
@@ -40,42 +40,64 @@ sub number {
   return($number);
 }
 
-sub numberPack8 {
+sub Pack8 {
   my $number = shift;
-  $number = number($number);
-  return(numberPackLSB($number));
+  $number = RelNumber($number);
+  return(PackLSB($number));
 }
-sub numberPack16 {
+sub Pack16 {
   my $number = shift;
-  $number = number($number);
-  return(numberPackLSW($number));
+  $number = RelNumber($number);
+  return(PackLSW($number));
 }
-sub numberPack32 {
+sub Pack32 {
   my $number = shift;
-  $number = number($number);
-  return(numberPack($number));
-}
-
-sub numberPackLSB {
-  my $number = shift;
-  return(substr(numberPack($number), 0, 1));
+  $number = RelNumber($number);
+  return(Pack($number));
 }
 
-sub numberPackLSW {
+sub PackLSB {
   my $number = shift;
-  return(substr(numberPack($number), 0, 2));
+  return(substr(PackDword($number), 0, 1));
+}
+sub PackMSB {
+  my $number = shift;
+  return(substr(PackDword($number), 3, 1));
 }
 
-sub numberPack {
+sub PackLSW {
+  my $number = shift;
+  return(substr(PackDword($number), 0, 2));
+}
+sub PackMSW {
+  my $number = shift;
+  return(substr(PackDword($number), 2, 2));
+}
+
+sub PackDword {
   my $number = shift;
   return(pack('V', $number));
 }
 
-sub numberUnpack {
+sub Unpack {
   my $packed = shift;
-#  print "Length: " . length($packed) . "\n";
   $packed .= "\x00" x (4 - length($packed));
-#  print "Length: " . length($packed) . "\n";
   return(unpack('V', $packed));
 }
+
+sub UnpackSigned {
+  my $packed = shift;
+  my $signExtend = 0;
+  if(ord(substr($packed, -1, 1) & "\x80") == 0x80) {
+    $packed = ~$packed;
+    $signExtend = 1;
+  }
+  $packed .= "\x00" x (4 - length($packed));
+  my $value = unpack('V', $packed);
+  if($signExtend) {
+    $value = ($value + 1) * -1;
+  }
+  return($value);
+}
+
 1;
