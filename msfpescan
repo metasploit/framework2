@@ -71,8 +71,8 @@ my %pops =
     );
 
 
-getopts("f:j:c:sx:a:l:I:n", \%opts);
-if (! defined($opts{'f'}) || (! defined($opts{'j'}) && ! defined($opts{'c'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { usage() }
+getopts("f:j:c:sx:a:l:I:nh", \%opts);
+if ($opts{'h'} || ! defined($opts{'f'}) || (! defined($opts{'j'}) && ! defined($opts{'c'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { usage() }
 
 my $filename = $opts{'f'};
 my $pe = Pex::PEInfo->new($filename);

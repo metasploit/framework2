@@ -44,7 +44,7 @@ my $nops;
 my ($x, $opt, $verbose, $cli);
 
 my %args = ();
-getopts("vha:", \%args);
+getopts("vha:h", \%args);
 
 if ($args{h}) { Usage() }
 if ($args{v}) { $verbose++ }
