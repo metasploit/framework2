@@ -485,9 +485,8 @@ sub ConnectProxies {
     return undef if ! $sock;
     
     my $lastproxy = $base;
-    foreach my $proxy (@proxies) 
+    foreach my $proxy (@proxies)  
     {
-    
         if ($lastproxy->[0] eq 'http') {
             $sock->send("CONNECT ".$proxy->[1].":".$proxy->[2]." HTTP/1.0\r\n\r\n");
         }
@@ -496,9 +495,8 @@ sub ConnectProxies {
             $sock->send("\x04\x01".pack('n',$proxy->[2]).gethostbyname($proxy->[1])."\x00");
             $sock->recv(my $res, 8);
             if ($res && ord(substr($res,1,1)) != 90) {
-                # socks server denied our request :(
-                $sock->close;
                 $self->SetError("Socks server at $lastproxy->[1] denied our request");
+                $sock->close;
                 return;
             }
         }
