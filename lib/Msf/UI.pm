@@ -165,17 +165,27 @@ CHECK:
     # matched payload also has the same keys. This allows us to create
     # specific payloads for weird exploit scenarios (for instance, where
     # the process doesn't have a valid heap (hdm)
-    foreach my $key (@{$exploit->Keys}) {
-      if(!scalar(grep { $_ eq $key } @{$payload->Keys})) {
-        $self->PrintDebugLine(3, $payload->Name . " failed, keys do not match");
-        next CHECK;
-      }
-    }
+#    foreach my $key (@{$exploit->Keys}) {
+#      if(!scalar(grep { $_ eq $key } @{$payload->Keys})) {
+#        $self->PrintDebugLine(3, $payload->Name . " failed, keys do not match");
+#        next CHECK;
+#      }
+#    }
+#
+#    # If the exploit has not Keys but the payload does, ignore it.
+#    if (! scalar(@{$exploit->Keys}) && scalar(@{$payload->Keys}))
+#    {
+#        next CHECK;
+#    }
 
-    # If the exploit has not Keys but the payload does, ignore it.
-    if (! scalar(@{$exploit->Keys}) && scalar(@{$payload->Keys}))
-    {
-        next CHECK;
+    # New key foo (spn)
+    if(!Pex::Utils::CheckKeys(
+      $exploit->PayloadKeysParsed,
+      $payload->Keys,
+      $exploit->PayloadKeysType)) {
+
+      $self->PrintDebugLine(3, $payload->Name . " failed key check");
+      next CHECK;
     }
     
     if($exploit->Priv < $payload->Priv) {
@@ -237,6 +247,9 @@ sub Encode {
       $self->PrintDebugLine(4, "payloadOS: " . join(',', @{$payloadOS}));
       $self->PrintDebugLine(4, "encoderOS: " . join(',', @{$encoderOS}));
       next;
+    }
+    if(!Pex::Utils::KeysCheck($exploit->EncoderKeys, $encoder->Keys, $exploit->EncoderKeysType)) {
+      $self->PrintDebugLine(2, "$encoderName failed Keys check");
     }
     
     my $rawShell = $exploit->PayloadPrepend . $payload->Build . $exploit->PayloadAppend;
@@ -387,14 +400,9 @@ sub ListCheck {
   my $self = shift;
   my $list1 = shift || [ ];
   my $list2 = shift || [ ];
-  if(@{$list2}) { # A empty list means it supports all
-    foreach my $entry (@{$list1}) {
-      if(!scalar(grep { $_ eq $entry } @{$list2})) {
-        return(0);
-      }
-    }
-  }
-  return(1);
+
+  return(1) if(!@{$list2});
+  return(Pex::Utils::ArrayContainsAll($list2, $list1));
 }
 
 sub SaveConfig {

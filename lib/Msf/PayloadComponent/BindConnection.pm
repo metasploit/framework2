@@ -10,6 +10,7 @@ my $info = {
     {
       'LPORT' => [1, 'PORT', 'Listening port for bind shell', 4444],
     },
+  'Keys' => ['bind'],
 };
 
 sub new {

@@ -127,9 +127,12 @@ sub Nops {
   return join ("", @nops[ map { rand @nops } ( 1 .. $length )]);
 }
 
+
+
+# Returns true if array1 contains an element in array2
 sub ArrayContains {
-  my $array1 = shift;
-  my $array2 = shift;
+  my $array1 = shift || [ ];
+  my $array2 = shift || [ ];
 
   foreach my $e (@{$array2}) {
     return(1) if(grep { $_ eq $e } @{$array1});
@@ -138,6 +141,17 @@ sub ArrayContains {
   return(0);
 }
 
+# All of array2 must be in array1
+sub ArrayContainsAll {
+  my $array1 = shift || [ ];
+  my $array2 = shift || [ ];
+  foreach my $entry (@{$array2}) {
+    if(!scalar(grep { $_ eq $entry } @{$array1})) {
+      return(0);
+    }
+  }
+  return(1);
+}
 
 #
 # This returns a hash value that is usable by the win32
@@ -242,6 +256,56 @@ sub ReadFile {
   my $data = <INFILE>;
   close(INFILE);
   return($data);
+}
+
+
+# KeysCheck(['foo'], ['bar', 'foo'], and/or) => 1
+# KeysCheck(['foo', 'bar'], ['foo'], or => 1, and => 0
+# if keys1 is empty, always 1
+# then if keys2 is empty, 0
+sub CheckKeys {
+  # Need to come up with better names for this
+  my $keys1 = shift;
+  my $keys2 = shift;
+  my $type = @_ ? shift : 'or';
+
+  return(1) if(!@{$keys1});
+  return(0) if(!@{$keys2});
+
+  if($type eq 'or') {
+    return(ArrayContains($keys2, $keys1));
+  }
+  else {
+    return(ArrayContainsAll($keys2, $keys1));
+  }
+}
+
+sub ParseKeys {
+  my $defaults = shift;
+  my $keys = shift;
+
+  my %defaults;
+  my %user;
+  foreach my $def (@{$defaults}) {
+    $defaults{$def} = 1;
+  }
+
+  foreach my $key (@{$keys}) {
+    my $first = substr($key, 0, 1);
+    my $rest = substr($key, 1);
+    if($first eq '-') {
+      delete($defaults{$rest});
+    }
+    elsif($first eq '+') {
+      $defaults{$rest} = 1;
+    }
+    else {
+      $user{$key} = 1;
+    }
+  }
+
+  return(keys(%user)) if(keys(%user));
+  return(keys(%defaults));
 }
 
 1;
