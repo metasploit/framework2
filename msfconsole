@@ -50,7 +50,7 @@ my $exploits;
 my $payloads;
 
 my %opts;
-getopts('hvqs:u:', \%opts);
+getopts('hvqs:', \%opts);
 
 Usage() if($opts{'h'});
 Version() if($opts{'v'});
