@@ -31,11 +31,11 @@ sub new {
   select(STDOUT); $|++;
   
   # create a new empty printline buffer
-  $self->{'PrintLine'} = [ ];
+  $self->SetTempEnv('PrintLine', [ ]);
+  $self->_OverridePrintLine(\&PrintLine);
   
   return($self);
 }
-
 
 # We overload the UI::PrintLine call so that we can
 # buffer exploit output and display as needed
@@ -49,15 +49,20 @@ sub PrintLine {
         $s->send($msg, "\n");
         return;
     }
+    print STDERR "$self PrintLine: $msg\n";
     
-    push @{$self->{'PrintLine'}}, $msg;
+    my @buffer = @{$self->GetEnv('PrintLine')};
+    push @buffer, $msg;
+    $self->SetTempEnv('PrintLine', \@buffer);
 }
 
 sub DumpLines {
     my $self = shift;
-    my $res  = $self->{'PrintLine'};
-    $self->{'PrintLine'} = [ ];
-    return $res;
+    my @res  = @{$self->GetEnv('PrintLine')};
+
+    print "$self DumpLines: " . join(" | ", @res) . "\n";
+    #$self->{'PrintLine'} = [ ];
+    return \@res;
 }
 
 
