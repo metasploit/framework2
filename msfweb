@@ -299,7 +299,7 @@ sub ExploitPayload
     }
 
     my $x = $exploits->{$module};
-    my $matches = $ui->MatchPayloads($x, $payloads);
+    my $matches = $ui->MatchPayloads($x, $payloads) if($x->Payload);
 
     if (defined($x->Payload) )
     {
@@ -418,7 +418,7 @@ sub ExploitExec
     
     $ui->SetTempEnv('PAYLOAD', $state->{'PAYLOAD'});
     
-    my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
+    my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
 
     my $payloadName = $ui->GetTempEnv('PAYLOAD');
     my $payload = $validPayloads->{$payloadName};

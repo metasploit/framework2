@@ -647,8 +647,12 @@ sub xLogEntry
 
 sub xValidPayloads
 {
-    $state->{'Exploit'}->{'Payloads'} = $ui->MatchPayloads(shift, $payloads);
-    return $state->{'Exploit'}->{'Payloads'};
+    my $exploit = shift;
+    if($exploit->Payload) {
+      $state->{'Exploit'}->{'Payloads'} = $ui->MatchPayloads(shift, $payloads);
+      return $state->{'Exploit'}->{'Payloads'};
+    }
+    return;
 }
 
 sub xCheckSystemCommand
@@ -855,7 +859,7 @@ sub FillTemp {
 
   my $payloadName = $ui->GetEnv('PAYLOAD');
   $ui->SetTempEnv('_PayloadName', $payloadName);
-  my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
+  my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
   $ui->SetTempEnv('_Payload', $validPayloads->{$payloadName});
   $ui->SetTempEnv('_ValidPayloads', $validPayloads);
 }

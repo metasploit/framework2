@@ -86,7 +86,7 @@ while(my($key, $val) = split('\=', shift(@ARGV))) {
   }
 }
 
-my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
+my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
 
 my $payloadName = $ui->GetEnv('PAYLOAD');
 my $payload = $validPayloads->{$payloadName};
