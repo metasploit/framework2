@@ -46,7 +46,7 @@ sub PrintLine {
     # If we are exploit mode, write output to browser
     if (my $s = $self->GetEnv('BROWSER'))
     {
-        $s->send("$msf <br>\n");
+        $s->send("$msg <br>\n");
         return;
     }
     
@@ -58,7 +58,7 @@ sub PrintLine {
 sub DumpLines {
     my $self = shift;
     my @res  = @{$self->GetEnv('PrintLine')};
-    $self->SetTempEnv('PrintLine', [ ])
+    $self->SetTempEnv('PrintLine', [ ]);
     return \@res;
 }
 

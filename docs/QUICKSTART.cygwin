@@ -1,5 +1,5 @@
 This document is a quick guide to using the Cygwin environment with the
-Metasploit Framework.
+Metasploit Framework v2.0.
 
 
 
@@ -14,27 +14,16 @@ directory. Select the option to install from the Internet and specify the
 server to use, the directory to install it under, and where to put the
 temporary files.
 
-When you package selection screen comes up, you have a few choices:
+To support tab completion and SSL sockets, make sure you have the following
+components selected:
 
-1) Leave it a default and lose the ability to configure SSL and tab completion
-2) Manually select all of the necessary development tools
-3) Install everything and spend some time waiting for it to finish
+ - gcc
+ - make
+ - rebase
+ - libreadline
+ - openssl-devel
 
-If you are in a hurry, are short on bandwidth, or do not need SSL or tab
-completion support, then the first option may be feasible. 
-
-If you would like nifty tab completion and the ability to extend the Framework,
-you should manually select all of the standard Gnu development tools. Make sure
-that OpenSSL, Python, Autoconf, Automake, Make, Flex, Bison, and YACC are
-selected. If you want to change any of the assembly payloads, you will need to
-also select NASM from the packages list. 
-
-Finally, if you plan on really using the Cygwin environment, just select
-everything by clicking the word Default next to ALL until it says Install. It
-will take some time to download and install the full suite, even on broadband.
-Take some advice from the original Eggdrop developer and go make a pizza :)
-
-The "Full" install requires downloading about ~360Mb of files.
+InlineEgg payloads require the python interpreter to function.
 
 
 
@@ -47,6 +36,39 @@ each package via tar -zxf <file>, changing into the directory, typing
 perl Makefile.PL, make, and make install. Tab completion makes the msfconsole
 interface extremely efficient.
 
+If you have Visual Studio installed, you may need to "unset LIBS" before trying
+to compile anything, the double-quote in the path will break certain Makefiles.
+
+
+
+Libary Rebasing
+================
+
+Once you have compiled and installed all required modules, you MUST use the
+"rebase" utility before you can use the framework. If you try to load a shared
+library (compiled perl module) into your application before rebasing it, it may
+puke and die with an error like the following: 
+   
+   C:\cygwin\bin\cygperl.exe: *** unable to remap [...]
+
+You can obtain the latest version of it here:
+  http://www.tishler.net/jason/software/rebase/
+  
+The "rebaseall" application will automatically rebase the system libraries, you 
+should run this at least once, especially if you plan on using InlineEgg payloads.
+To rebase the Net::SSLeay module, perform the following steps:
+
+# 1: Locate the DLL file inside the perl tree
+$ find /lib/perl5 -name 'SSLeay.dll'
+
+# 2: Change the permission of the DLL to 755
+$ chmod 755 /lib/perl5/path/to/SSLeay.dll
+
+# 3: Run the rebase utility on the DLL
+$ rebase -d -b 0x4d455441 /lib/perl5/path/to/SSLeay.dll
+
+You should be able to load any of the interfaces without the remap error now.
+
 
 
 Random Cygwin Tips
@@ -54,7 +76,12 @@ Random Cygwin Tips
 
  - You can access your windows drives from the Cygwin shell through the 
    /cygdrive directory. This directory is not normally visible. If you 
-   install the Framework in C:\Framework, you can make a link to it from
+   install the framework in C:\Framework, you can make a link to it from
    inside your Cygwin home directory with the following command:
    
    $ ln -sf /cydrive/c/Framework framework
+
+
+ - If you have Visual Studio installed, make sure you "unset LIB" before 
+   trying to build anything under Cygwin. The double-quotes in the environment
+   will introduce a syntax error in generated Makefiles.
