@@ -769,7 +769,7 @@ sub xCreateSetList
         if ($x->Payload && $p && exists($payloads->{$p}))
         {
             $p = $payloads->{$p};
-            foreach (keys(%{$p->Opts})) { $options{$_}++ }
+            foreach (keys(%{$p->UserOpts})) { $options{$_}++ }
         }
         
         if ($x->Payload) { $options{"PAYLOAD"}++ }
@@ -810,9 +810,9 @@ sub xCreateSetValueList
             ($req, $type, $desc, $dflt) = @{$x->UserOpts->{$n}};  
         }
         
-        if ($p && exists($p->Opts->{$n}))
+        if ($p && exists($p->UserOpts->{$n}))
         {
-            ($req, $type, $desc, $dflt) = @{$p->Opts->{$n}};  
+            ($req, $type, $desc, $dflt) = @{$p->UserOpts->{$n}};  
         }        
         
         if ($dflt) { return ($dflt) }
