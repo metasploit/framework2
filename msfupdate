@@ -52,6 +52,7 @@ chdir($RealBin);
 
 my ($old_data, $now_data, $new_data);
 my ($old, $now, $new);
+my ($mod, $upx, $upd, $err);
 
 $now_data = ScanFiles('.');
 
@@ -98,9 +99,11 @@ $now = Hashit($now_data);
 $old = Hashit($old_data);
 $new = Hashit($new_data);
 
-my $mod = Diff($old, $now);
-my $upx = Diff($old, $new);
-my $upd = Diff($now, $new);
+$mod = Diff($old, $now);
+$upx = Diff($old, $new);
+$upd = Diff($now, $new);
+
+$err = { };
 
 if ($opts{m}) {
     if (! keys(%{$mod})) {
@@ -148,19 +151,18 @@ if (keys(%{$mod})) {
     }
 }
 
-# Ignore user created files unless the delete flag is set
-if (! $opts{d}) {
-    foreach (keys(%{$upd})) {
-        if ($upd->{$_} eq 'Del') {
-            delete($upd->{$_});
-        }
+# Do not remove user-created files
+foreach (keys(%{$upd})) {
+    if ($upd->{$_} eq 'Del') {
+        delete($upd->{$_});
     }
 }
+
 
 # After all of this stuff, this is what we have
 # - $mod is a table of anything the user wants to keep
 # - $upd is a table of everything online new or updated
-# - $upd contains Del items only if the user specified -d
+
 
 # The plan of attack is:
 # - Iterate through each item in $upd, if there is a match in
@@ -174,8 +176,44 @@ if (! $opts{d}) {
 # - After all files have been processed, we rebuild the local
 #   .current file and get ready for the next update.
 #
-# HD goes to sleep.
 
+foreach my $entry (keys(%{$upd})) {
+    if ($mod->{$entry}) {
+        print "[*] Ignoring user-modified file $entry\n";
+        next;
+    }
+    
+    my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current/$entry");
+    if ($upd->{$entry} ne md5_hex($data)) {
+        print "[*] Error downloading file $entry\n";
+        if ($data) {
+            $err->{$entry} = "md5 sum mismatch";
+        }
+        else {
+            $err->{$entry} = "download error";
+        }
+        next;
+    }
+    
+    # overwrite the local file O_o
+    WriteFile($entry, $data);
+    
+    # set executable permissions just in case
+    chmod(0755, $entry);
+    
+    print "[*] Successfully downloaded $entry (".length($data)." bytes)\n";
+}
+
+print "[*] Regenerating local file database\n";
+$now_data = ScanFiles('.');
+WriteFile('.current', $now_data);
+
+if (keys(%{$err})) {
+    print "[*] The following errors were encountered:\n";
+    foreach (%{$err}) {
+        print "\t".$err->{$_}."\t$_\n";
+    }
+}
 
 if ($new_data) {
 
