@@ -77,6 +77,7 @@ my %config	=
 	'Theme'		=> 'default',
 	'ThemeDir'	=> "$RealBin/data/msfweb/themes",
 	'CacheDir'	=> "$RealBin/data/msfweb/cache",
+	'IconDir'	=> "$RealBin/data/msfweb/icons",
 );
 
 
@@ -155,6 +156,13 @@ if (! -r  $config{'ThemeDir'} .'/'. $config{'Theme'} .'/style.css') {
 $ui->SetTempEnv('_Theme', $config{'ThemeDir'} .'/'. $config{'Theme'} );
 
 
+# Verify that the icon directory exists
+if (! -r  $config{'IconDir'} .'/win32.gif') {
+	print STDERR "ERROR: the specified icon directory does not exist\n";
+	exit(1);
+}
+$ui->SetTempEnv('_IconDir', $config{'IconDir'});
+
 
 # Create the inital list of modules
 LoadAllModules();
@@ -218,28 +226,65 @@ Options:
     exit(0);
 }
 
-
 sub ProcessResRequest {
 	my ($req, $cli, $ipc) = @_;
 
-	my $theme = $ui->GetTempEnv('_Theme') || "$RealBin/data/msfweb/themes/default";
-
-	my %files =
-	(
-		'LOGO'	=> ['image/jpg', 'logo.jpg'],
-		'STYLE'	=> ['text/css',  'style.css'],
-	);
-	
-	if ( exists( $files{ $req->{'params'}->{'ID'} } ) ) {
-		my ($type, $path) = @{ $files{ $req->{'params'}->{'ID'} } };
-		my $data;
+	# Process requests for shared icons
+	if (exists($req->{'params'}->{'ICON'})) {
+		my $os = $req->{'params'}->{'ICON'};
+		my $icondir = $ui->GetTempEnv('_IconDir') || "$RealBin/data/msfweb/icons";
 		
-		if ( open (X, "<$theme/$path") ) {
+		my %icons =
+		(
+			'aix'	=> ['image/gif', 'aix.gif'],
+			'amiga'	=> ['image/gif', 'amiga.gif'],	
+			'beos'	=> ['image/gif', 'be.gif'],
+			'bsd'	=> ['image/gif', 'bsd.gif'],
+			'cisco'	=> ['image/gif', 'cisco.gif'],
+			'hpux'	=> ['image/gif', 'hpux.gif'],
+			'irix'	=> ['image/gif', 'irix.gif'],
+			'linux'	=> ['image/gif', 'linux.gif'],
+			'novell'=> ['image/gif', 'novell.gif'],						
+			'os2'	=> ['image/gif', 'os2.gif'],
+			'osx'	=> ['image/gif', 'osx.gif'],
+			'sun'	=> ['image/gif', 'sun.gif'],
+			'win32'	=> ['image/gif', 'win32.gif'],
+			'unknown'	=> ['image/gif', 'clear.gif'],
+		);
+		
+		my ($type, $path) = @{ $icons{$os} || $icons{'unknown'} };
+		my $data;
+
+		if ( open (X, "<$icondir/$path") ) {
 			while (<X>) { $data .= $_ }
 			close (X);
 		}
-		
+
 		$cli->Send(HTTPResponse(200, $data, $type));
+		return;
+	}
+
+	# Process requests for theme-based resources
+	if (exists($req->{'params'}->{'ID'})) {
+		my $theme = $ui->GetTempEnv('_Theme') || "$RealBin/data/msfweb/themes/default";	
+		my %files =
+		(
+			'LOGO'	=> ['image/jpg', 'logo.jpg'],
+			'STYLE'	=> ['text/css',  'style.css'],
+		);
+
+		if ( exists( $files{ $req->{'params'}->{'ID'} } ) ) {
+			my ($type, $path) = @{ $files{ $req->{'params'}->{'ID'} } };
+			my $data;
+
+			if ( open (X, "<$theme/$path") ) {
+				while (<X>) { $data .= $_ }
+				close (X);
+			}
+
+			$cli->Send(HTTPResponse(200, $data, $type));
+		}
+		return;
 	}
 }
 
@@ -260,6 +305,7 @@ sub ProcessIPCRequest {
 	if ($cmd eq 'SESSION') {
 		my $sid = $self->SessionNew($ipc);
 		$ipc->printflush("SID $sid\n");
+
 	}
 	
 	# NEW <sid> <pid of exploit pipe handler>
@@ -462,6 +508,31 @@ sub HTML_Footer {
 	];
 }
 
+
+sub KeysToIcons {
+	my @keys = @_;
+	my %icons;
+	my %match;
+	
+	@icons { qw { aix amiga beos bsd cisco hpux irix linux novell os2 osx sun win32 unknown } } = ();
+	my %osmaps =
+	(
+		'solaris'	=> 'sun',
+		'ios'		=> 'cisco',
+		'openbsd'	=> 'bsd',
+		'freebsd'	=> 'bsd',
+		'netbsd'	=> 'bsd',
+		'macos'		=> 'mac',
+	);
+
+	foreach (@keys) {
+		$match{ $_ }++ if exists($icons{$_});
+		$match{ $osmaps{ $_ } }++ if exists($icons{ $osmaps{ $_ } });
+	}
+
+	return sort keys %match;
+}
+
 sub URLEncode {
     my ($data) = @_;
     my $res;
@@ -563,7 +634,7 @@ sub SessionLoad {
         <title>Metasploit Framework Web Console v$VERSION</title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
     </head>
-<frameset rows="*, 45" border=0 frameborder=0 framespacing=0>
+<frameset rows="*, 60" border=0 frameborder=0 framespacing=0>
   <frame src="/SESSIONS?MODE=UPDATE&SID=$sid" name="update">
   <frame src="/SESSIONS?MODE=COMMAND&SID=$sid" name="command">
   <noframes><body>This feature requires frames...</body></noframes>
@@ -678,7 +749,6 @@ sub SessionUpdate {
 			if ($init != $1) {
 				$init = $1;
 				$foff = 0;
-				print STDERR "Resetting INIT markers ($init)\n";
 			}
 		}
 
@@ -842,7 +912,14 @@ sub ModuleList
 
 	# Dump out all of the matching modules for this key, os, or arch
 	foreach my $ename (sort @{ $moduleMerge->{$mfilt} }) {
-		$mList .= "<tr><td>  -  <a href='/". uc($mtype) ."?MODE=SELECT&";
+	
+		my $icons;
+		foreach ( KeysToIcons( @{ $modules->{$mtype}->{$ename}->OS } ) ) {
+			$icons  .= "<img src='/RESOURCE?ICON=$_' border=0> ";
+		}
+	
+		$mList .= "<tr><td> -  $icons ";
+		$mList .="<a href='/". uc($mtype) ."?MODE=SELECT&";
 		$mList .= "MODULE=".URLEncode($ename)."'>".$modules->{$mtype}->{$ename}->Name."</a>";
 		$mList .= "</td></tr>\n";
 	}
@@ -1577,15 +1654,41 @@ sub HTTPRequest {
     my $cli		= shift;
 	my $opt		= shift;
 	
-	my $timeout	= exists($opt->{'Timeout'}) ? $opt->{'Timeout'} : 30;
-	my $raw		= $cli->Recv(-1, $timeout);
-	return {} if ! $raw;
+	my $timeout	= exists($opt->{'Timeout'}) ? $opt->{'Timeout'} : 5;
+	my $raw;
 		
 	my ($meth, $uri, $path, $query);
 	my %headers;
 	my %params;
+	my @lines;
+	my $linec = 0;
 
-	my @lines	= split(/\n/, $raw);
+	# Read one line at a time until we hit the header separator
+	# Defend against cheesy denial of service attacks...
+		
+	while ($raw ne "\r\n")
+	{
+		$raw = $cli->RecvLine($timeout);
+		
+		if (! $raw) {
+			$self->Log(1, "ERROR: invalid request from ".$cli->PeerAddr);
+			return { };
+		}
+		
+		if (length($raw) > 65535) {
+			$self->Log(1, "ERROR: oversized request from ".$cli->PeerAddr. " (".length($raw).")");
+			return { };
+		}
+		
+		if (scalar(@lines) > 100) {
+			$self->Log(1, "ERROR: too many HTTP headers from ".$cli->PeerAddr. " (".scalar(@lines).")");
+			return { };
+		}
+
+		push @lines, $raw;
+	}
+	
+	
 	my $rmeth	= shift(@lines);
 		
 	# Parse the request method and URI

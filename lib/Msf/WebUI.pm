@@ -57,7 +57,8 @@ sub PrintLine {
 	
     # If we are in exploit mode, write output to browser
     if (my $s = $self->GetTempEnv('_BrowserSocket')) {
-		$data .= "\n";
+		# automatically scroll to the end of the page...	
+		$data .= "<script language='javascript'>self.scrollTo(0, 999999999)</script>\n";		
 		$s->Send(sprintf("%x\r\n%s\r\n", length($data), $data));
         return;
     }
