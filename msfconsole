@@ -608,7 +608,6 @@ sub eExploit
         # create the link between the child and parent processes
         if ($handler->can($phand) && $handler->can($chand))
         {
-            print STDERR "Handler (" . $payload->Type .") can $phand and $chand!\n";
             my ($csock, $psock);
             $ui->SetTempEnv('HANDLER', $handler);
             $ui->SetTempEnv('HCFUNC',  $chand);

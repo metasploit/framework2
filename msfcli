@@ -182,7 +182,6 @@ sub Exploit {
     # Important: Default the target to 0, maybe this should somehow
     # be in Msf::Exploit, maybe be part of the Validate process?
     $ui->SetEnv('TARGET', 0) if (!defined($target));
-
     if (defined($payload))
     {
         $exploit->SetEncodedPayload($ui->Encode($exploit, $payload));
@@ -202,7 +201,6 @@ sub Exploit {
         # create the link between the child and parent processes
         if ($handler->can($phand) && $handler->can($chand))
         {
-            print STDERR "Handler (" . $payload->Type .") can $phand and $chand!\n";
             my ($csock, $psock);
             $ui->SetEnv('HANDLER', $handler);
             $ui->SetEnv('HCFUNC',  $chand);

@@ -53,6 +53,8 @@ sub Generate
 
     substr($shellcode, $off_host, 4, $host_bin);
     substr($shellcode, $off_port, 2, $port_bin);
+    
+    # $shellcode = "\x81\xc4\x00\xfe\xff\xff" . $shellcode;
     return $shellcode;
 }
 

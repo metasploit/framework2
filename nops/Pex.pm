@@ -13,7 +13,7 @@ my $info = {
 };
 
 my $defaults = {
-  'Random' => [0, 'Use random nop equivalent instructions, otherwise will be all 0x90'],
+  'Random' => [0, 'Use random nop equivalent instructions, otherwise default to 0x90'],
 };
 
 sub new {

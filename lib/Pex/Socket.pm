@@ -126,7 +126,7 @@ sub tcp
         Type      =>, SOCK_STREAM
     );
     
-    if ($lport) { $sconfig{LocalPort} => $lport }
+    if ($lport) { $sconfig{LocalPort} = $lport }
       
     my $s = IO::Socket::INET->new(%sconfig);
 
@@ -137,6 +137,10 @@ sub tcp
         return(undef);
     }
 
+    #print "Socket: ($lport) " . join(" ", keys(%sconfig)) ."\n";
+    #print STDERR $s->sockhost . ":" . $s->sockport . " -> " .
+    #             $s->peerhost . ":" . $s->peerport . "\n";
+                 
     if ($self->{"USE_SSL"})
     {
         # Create SSL Context

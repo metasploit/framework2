@@ -1,14 +1,11 @@
  MetaSploit Framework TODO 
 ===========================
-  
- - Write sample handler callbacks for macros and logging
-    
- - Write end-user documentation
- 
- - Verify that everything still works under ActiveState
 
- - Validate target parameter
- 
- - Make options case insensitive
+ - Finish rewriting the configuration and logging system in msfconsole
 
- - Fix BSD exploits (only bsdreverse works?)
+ - Rewrite msfweb to work with new architecture
+ 
+ - Rewrite BSD bind payload (SIGSYS error after listen() call)
+
+ - Rewrite all handlers to no longer use $opt argument, then change all references to handlers
+ 
