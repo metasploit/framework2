@@ -83,6 +83,8 @@ my $exploit = $exploits->{$mod};
 my $payloadName = $ui->GetEnv('PAYLOAD');
 my $payload = $payloads->{$payloadName};
 
+print "HAH\n" if(defined($payloadName));
+
 if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
 {
   $ui->PrintLine('[*] Invalid payload specified.');
@@ -172,6 +174,9 @@ sub Check {
 }
 
 sub Exploit {
+    if (defined($exploit->Payload) && !$payload) {
+        die("[*] You must specify a payload for this exploit.\n");
+    }
 
     $exploit->Validate;
     return if($exploit->PrintError);
