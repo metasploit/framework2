@@ -362,7 +362,10 @@ sub Send {
       $sent = Net::SSLeay::ssl_write_all($self->{'SSLFd'}, $data);
     }
     else {
-      $sent = $self->GetSocket->send($data);
+      # avoid send on a dead socket
+      if ($self->GetSocket->connected) {
+        $sent = $self->GetSocket->send($data);
+      }
     }
 
     last if($sent == length($data));
