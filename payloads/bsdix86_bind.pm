@@ -14,7 +14,7 @@ use base 'Msf::PayloadComponent::BindConnection';
 
 my $info =
 {
-	'Name'         => 'bsdix86bind',
+	'Name'         => 'x86 BSDI bind',
 	'Version'      => '$Revision$',
 	'Description'  => 'Listen for connection and spawn a shell',
 	'Authors'      => [ 'skape <mmiller [at] hick.org>', 

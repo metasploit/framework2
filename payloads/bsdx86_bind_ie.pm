@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'bsdx86bind_ie',
+  'Name'         => 'Gera\'s InlineEgg x86 BSD bind',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
