@@ -17,7 +17,7 @@ sub _Load {
 
 my $info =
 {
-  'Name'         => 'Linux InlineEgg Bind Shell',
+  'Name'         => 'Linux IA32 InlineEgg Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
