@@ -59,12 +59,12 @@ sub GetEnv {
 
 # fixme SetEnv...
 # the cli wont work until this does, setting Temp
-sub SetEnv {
-  my $self = shift;
-  my $key = shift;
-  my $val = shift;
-  return $self->SetTempEnv($key, $val);
-}
+#sub SetEnv {
+#  my $self = shift;
+#  my $key = shift;
+#  my $val = shift;
+#  return $self->SetTempEnv($key, $val);
+#}
 
 
 sub GetGlobalEnv {
