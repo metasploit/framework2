@@ -251,6 +251,11 @@ sub HTML_Header {
 				font-size:		11pt;
 				font-weight:	bold;
 			}
+			
+			.copy {
+				font-size:		11pt;
+				font-variant:	small-caps;
+			}
 		
         </style>
     </head>
@@ -294,6 +299,9 @@ sub HTML_Footer {
 	</tr>
 </table></td></tr></table>
 <br/>
+<div align='center' class='copy'>
+copyright &copy 2003-2005 metasploit.com<br/>
+
 </body>
 </html>
 	];
