@@ -37,7 +37,7 @@ BEGIN
 }
 
 my %opts;
-getopts('hvmruas', \%opts);
+getopts('hvusmaxf', \%opts);
 
 if ($opts{v}) {
     print "Msfupdate Version: $VERSION\n";
@@ -70,7 +70,13 @@ if ($opts{r}) {
     exit(0);
 }
 
-if ($opts{u}) {
+# Allow the user to disable SSL mode entirely
+if ($opts{f}) {
+    $SSL_SUPPORT = 0;
+}
+
+# Display a big nasty warning for non-SSL unless -x is specified
+if (!$opts{x} && $opts{u}) {
     if (! $SSL_SUPPORT) {
         print "[*] WARNING: The Net::SSLeay module is not installed.\n";
         print "    The update process will fall back to plain HTTP,\n";
@@ -122,6 +128,11 @@ foreach (keys(%{$mod})) {
     if ($mod->{$_} ne 'Mod') {
         delete($mod->{$_});
     }
+}
+
+if (! $new_data) {
+    print "[*] Could not obtain the current version information from the update server\n";
+    exit(0);
 }
 
 # They modified something, ask them what they want to do with it
@@ -246,6 +257,8 @@ sub Usage {
     print STDERR "         -s             Only display update tasks, do not actually download\n";
     print STDERR "         -m             Show any files locally modified since last update\n";
     print STDERR "         -a             Do not prompt, default to overwrite all files\n";
+    print STDERR "         -x             Do not require confirmation for non-SSL updates\n";
+    print STDERR "         -f             Disable ssl support entirely, use with -x to avoid warnings\n";
     # Developer options
     # print STDERR "         -r             Rebuild the local version database\n";
     exit(0);
@@ -304,8 +317,8 @@ sub DownloadFile {
         exit(0);
     }
 
-    my ($vnum) = $VERSION =~ m/\$Revisio.\s+([^\$]+)/;
-    my $req = "GET $path HTTP/1.0\r\nUser-Agent: MSFUPDATE/$vnum\r\n\r\n";
+    my ($vnum) = $VERSION =~ m/\$Revisio.:\s+([^\$]+)/;
+    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$vnum\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
         # Reset the verified flag
