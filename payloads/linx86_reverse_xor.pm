@@ -11,7 +11,7 @@ package Msf::Payload::linx86_reverse_xor;
 use strict;
 use base 'Msf::PayloadComponent::InlineEggPayload';
 sub _Load {
-  Msf::PayloadComponent::InlineEggPayload->import('Msf::PayloadComponent::ReverseConnection');
+  Msf::PayloadComponent::InlineEggPayload->_Import('Msf::PayloadComponent::ReverseConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

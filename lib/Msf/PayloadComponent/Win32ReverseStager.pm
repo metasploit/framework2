@@ -2,7 +2,7 @@ package Msf::PayloadComponent::Win32ReverseStager;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
 sub _Load {
-  Msf::PayloadComponent::Win32Payload->import('Msf::PayloadComponent::ReverseConnection');
+  Msf::PayloadComponent::Win32Payload->_Import('Msf::PayloadComponent::ReverseConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

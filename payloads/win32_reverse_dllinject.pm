@@ -11,7 +11,7 @@ package Msf::Payload::win32_reverse_dllinject;
 use strict;
 use base 'Msf::PayloadComponent::Win32InjectLibStage';
 sub _Load {
-  Msf::PayloadComponent::Win32InjectLibStage->import('Msf::PayloadComponent::Win32ReverseStager');
+  Msf::PayloadComponent::Win32InjectLibStage->_Import('Msf::PayloadComponent::Win32ReverseStager');
   __PACKAGE__->SUPER::_Load();
 }
 

@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::Win32InjectLibStage';
 use FindBin qw{$RealBin};
 
 sub _Load {
-  Msf::PayloadComponent::Win32InjectLibStage->import('Msf::PayloadComponent::Win32ReverseStager');
+  Msf::PayloadComponent::Win32InjectLibStage->_Import('Msf::PayloadComponent::Win32ReverseStager');
   __PACKAGE__->SUPER::_Load();
 }
 

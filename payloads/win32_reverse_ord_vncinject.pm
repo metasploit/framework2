@@ -17,7 +17,7 @@ use FindBin qw{$RealBin};
 # socket in edi, and that is the same as the ordinal stager spec.  So, no 
 # adapter needed or anything, just stage and go!
 sub _Load {
-  Msf::PayloadComponent::Win32InjectVncStage->import('Msf::PayloadComponent::Win32ReverseOrdinalStager');
+  Msf::PayloadComponent::Win32InjectVncStage->_Import('Msf::PayloadComponent::Win32ReverseOrdinalStager');
   __PACKAGE__->SUPER::_Load();
 }
 

@@ -11,7 +11,7 @@ package Msf::Payload::win32_reverse_ord;
 use strict;
 use base 'Msf::PayloadComponent::Win32PipedShellStage';
 sub _Load {
-  Msf::PayloadComponent::Win32PipedShellStage->import(
+  Msf::PayloadComponent::Win32PipedShellStage->_Import(
     'Msf::PayloadComponent::Win32ReverseOrdinalStager'
   );
   __PACKAGE__->SUPER::_Load();

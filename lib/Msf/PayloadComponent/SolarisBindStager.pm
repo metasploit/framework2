@@ -3,7 +3,7 @@ use strict;
 use Pex::SPARC;
 use base 'Msf::PayloadComponent::SolarisPayload';
 sub _Load {
-  Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::SolarisPayload->_Import('Msf::PayloadComponent::BindConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

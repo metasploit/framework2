@@ -11,7 +11,7 @@ package Msf::Payload::solsparc_findsock;
 use strict;
 use base 'Msf::PayloadComponent::SolarisShellStage';
 sub _Load {
-  Msf::PayloadComponent::SolarisShellStage->import('Msf::PayloadComponent::SolarisFindStager');
+  Msf::PayloadComponent::SolarisShellStage->_Import('Msf::PayloadComponent::SolarisFindStager');
   __PACKAGE__->SUPER::_Load();
 }
 

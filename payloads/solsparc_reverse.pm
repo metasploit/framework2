@@ -11,7 +11,7 @@ package Msf::Payload::solsparc_reverse;
 use strict;
 use base 'Msf::PayloadComponent::SolarisShellStage';
 sub _Load {
-  Msf::PayloadComponent::SolarisShellStage->import('Msf::PayloadComponent::SolarisReverseStager');
+  Msf::PayloadComponent::SolarisShellStage->_Import('Msf::PayloadComponent::SolarisReverseStager');
   __PACKAGE__->SUPER::_Load();
 }
 

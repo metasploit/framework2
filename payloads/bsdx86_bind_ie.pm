@@ -11,7 +11,7 @@ package Msf::Payload::bsdx86_bind_ie;
 use strict;
 use base 'Msf::PayloadComponent::InlineEggPayload';
 sub _Load {
-  Msf::PayloadComponent::InlineEggPayload->import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::InlineEggPayload->_Import('Msf::PayloadComponent::BindConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

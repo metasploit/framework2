@@ -11,7 +11,7 @@ package Msf::Payload::cmd_sol_bind;
 use strict;
 use base 'Msf::PayloadComponent::CommandPayload';
 sub _Load {
-  Msf::PayloadComponent::CommandPayload->import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::CommandPayload->_Import('Msf::PayloadComponent::BindConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

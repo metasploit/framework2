@@ -11,7 +11,7 @@ package Msf::Payload::win32_bind_dllinject;
 use strict;
 use base 'Msf::PayloadComponent::Win32InjectLibStage';
 sub _Load {
-  Msf::PayloadComponent::Win32InjectLibStage->import('Msf::PayloadComponent::Win32BindStager');
+  Msf::PayloadComponent::Win32InjectLibStage->_Import('Msf::PayloadComponent::Win32BindStager');
   __PACKAGE__->SUPER::_Load();
 }
 

@@ -11,7 +11,7 @@ package Msf::Payload::win32_bind_stg_upexec;
 use strict;
 use base 'Msf::PayloadComponent::Win32UploadExecStage';
 sub _Load {
-  Msf::PayloadComponent::Win32UploadExecStage->import('Msf::PayloadComponent::Win32BindStager');
+  Msf::PayloadComponent::Win32UploadExecStage->_Import('Msf::PayloadComponent::Win32BindStager');
   __PACKAGE__->SUPER::_Load();
 }
 

@@ -14,7 +14,7 @@ use FindBin qw{$RealBin};
 use Pex::Meterpreter::Client;
 
 sub _Load {
-  Msf::PayloadComponent::Win32InjectLibStage->import('Msf::PayloadComponent::Win32BindStager');
+  Msf::PayloadComponent::Win32InjectLibStage->_Import('Msf::PayloadComponent::Win32BindStager');
   __PACKAGE__->SUPER::_Load();
 }
 

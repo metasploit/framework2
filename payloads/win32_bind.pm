@@ -11,7 +11,7 @@ package Msf::Payload::win32_bind;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
 sub load {
-  Msf::PayloadComponent::Win32Payload->import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::Win32Payload->_Import('Msf::PayloadComponent::BindConnection');
 }
 
 my $info =

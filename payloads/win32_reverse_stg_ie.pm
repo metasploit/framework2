@@ -11,7 +11,7 @@ package Msf::Payload::win32_reverse_stg_ie;
 use strict;
 use base 'Msf::PayloadComponent::Win32StagePayloadIE';
 sub _Load {
-  Msf::PayloadComponent::Win32StagePayloadIE->import('Msf::PayloadComponent::Win32ReverseStagerIE');
+  Msf::PayloadComponent::Win32StagePayloadIE->_Import('Msf::PayloadComponent::Win32ReverseStagerIE');
   __PACKAGE__->SUPER::_Load();
 }
 

@@ -18,7 +18,7 @@ package Msf::PayloadComponent::ExternalPayload;
 use strict;
 use vars qw{@ISA};
 
-sub import {
+sub _Import {
   my $class = shift;
   @ISA = ();
   foreach (@_) {

@@ -11,7 +11,7 @@ package Msf::Payload::win32_exec;
 use strict;
 use base 'Msf::PayloadComponent::Win32Execute';
 sub _Load {
-  Msf::PayloadComponent::Win32Execute->import('Msf::PayloadComponent::NoConnection');
+  Msf::PayloadComponent::Win32Execute->_Import('Msf::PayloadComponent::NoConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

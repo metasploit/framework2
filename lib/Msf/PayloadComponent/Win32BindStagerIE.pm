@@ -2,7 +2,7 @@ package Msf::PayloadComponent::Win32BindStager;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
 sub _Load {
-  Msf::PayloadComponent::Win32Payload->import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::Win32Payload->_Import('Msf::PayloadComponent::BindConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

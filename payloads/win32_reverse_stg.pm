@@ -11,7 +11,7 @@ package Msf::Payload::win32_reverse_stg;
 use strict;
 use base 'Msf::PayloadComponent::Win32ShellStage';
 sub _Load {
-  Msf::PayloadComponent::Win32ShellStage->import('Msf::PayloadComponent::Win32ReverseStager');
+  Msf::PayloadComponent::Win32ShellStage->_Import('Msf::PayloadComponent::Win32ReverseStager');
   __PACKAGE__->SUPER::_Load();
 }
 

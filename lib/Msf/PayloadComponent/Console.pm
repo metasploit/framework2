@@ -7,7 +7,7 @@ use IO::Select;
 use base 'Msf::Payload';
 use vars qw{ @ISA };
 
-sub import {
+sub _Import {
   my $class = shift;
   @ISA = ('Msf::Payload');
   foreach (@_) {
@@ -20,7 +20,7 @@ sub HandleConsole {
   my $self = shift;
   my $console = $self->GetVar('_Console');
   $console = 'Msf::PayloadComponent::TextConsole' if(!$console);
-  __PACKAGE__->import($console);
+  __PACKAGE__->_Import($console);
   $self->_HandleConsole;
 #  $self->SUPER::HandleConsole;
 }

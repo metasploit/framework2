@@ -11,7 +11,7 @@ package Msf::Payload::cmd_unix_reverse_bash;
 use strict;
 use base 'Msf::PayloadComponent::CommandPayload';
 sub _Load {
-  Msf::PayloadComponent::CommandPayload->import('Msf::PayloadComponent::ReverseConnection');
+  Msf::PayloadComponent::CommandPayload->_Import('Msf::PayloadComponent::ReverseConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

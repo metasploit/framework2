@@ -11,7 +11,7 @@ package Msf::Payload::win32_reverse;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
 sub load {
-  Msf::PayloadComponent::Win32Payload->import('Msf::PayloadComponent::ReverseConnection');
+  Msf::PayloadComponent::Win32Payload->_Import('Msf::PayloadComponent::ReverseConnection');
 }
 
 my $info =

@@ -11,7 +11,7 @@ package Msf::Payload::solsparc_bind;
 use strict;
 use base 'Msf::PayloadComponent::SolarisShellStage';
 sub _Load {
-  Msf::PayloadComponent::SolarisShellStage->import('Msf::PayloadComponent::SolarisBindStager');
+  Msf::PayloadComponent::SolarisShellStage->_Import('Msf::PayloadComponent::SolarisBindStager');
   __PACKAGE__->SUPER::_Load();
 }
 

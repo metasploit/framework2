@@ -2,7 +2,7 @@ package Msf::PayloadComponent::SolarisReverseStager;
 use strict;
 use base 'Msf::PayloadComponent::SolarisPayload';
 sub _Load {
-  Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::ReverseConnection');
+  Msf::PayloadComponent::SolarisPayload->_Import('Msf::PayloadComponent::ReverseConnection');
   __PACKAGE__->SUPER::_Load();
 }
 

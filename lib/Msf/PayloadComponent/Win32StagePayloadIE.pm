@@ -2,7 +2,7 @@ package Msf::PayloadComponent::Win32StagePayloadIE;
 use strict;
 use vars qw{@ISA};
 
-sub import {
+sub _Import {
   my $class = shift;
   @ISA = ();
   foreach (@_) {
