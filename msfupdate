@@ -11,6 +11,8 @@ use IO::Socket;
 use IO::Select;
 use POSIX;
 
+my $UPDATE_HOST = "metasploit.com";
+my $UPDATE_PATH = "/projects/Framework/updates";
 my $SSL_SUPPORT;
 
 # Determine if SSL support is enabled
@@ -27,7 +29,32 @@ BEGIN
 }
 
 chdir($RealBin);
-my $res = ScanFiles('.');
+
+my $now_data = ScanFiles('.');
+my $old_data = ReadFile('.current');
+my $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.txt");
+
+my $now = Hashit($now_data);
+my $old = Hashit($old_data);
+my $new = Hashit($new_data);
+
+my $mod = Diff($old, $now);
+
+print "Changes since last update\n";
+print "==========================\n\n";
+foreach (keys(%{$mod})) {
+    print "\t".$mod->{$_}."\t$_\n";
+}
+print "\n\n";
+
+my $upd = Diff($now, $new);
+print "Changes against update set\n";
+print "==========================\n\n";
+foreach (keys(%{$upd})) {
+    print "\t".$upd->{$_}."\t$_\n";
+}
+print "\n\n";
+
 
 sub ScanFiles {
     my $dir = shift;
@@ -63,7 +90,85 @@ sub ScanFiles {
     return $res;   
 }
 
-sub HashFile {
+
+
+sub DownloadFile {
+    my $host = shift;
+    my $path = shift;
+    my $port = $SSL_ENABLED ? 443 : 80;
+    my $data;
+    
+    my $sock = IO::Socket::INET->new
+    (
+        PeerAddr    => $host,
+        PeerPort    => $port,
+        Proto       => 'tcp',
+    );
+    
+    if (! $sock) {
+        print STDERR "[*] Could not connect to $host: $!\n";
+        exit(0);
+    }
+
+    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate\r\n\r\n";
+
+    if ($SSL_ENABLED) {
+        $sock->blocking(1);
+
+        # Create SSL Context
+        my $ctx = Net::SSLeay::CTX_new();
+        
+        # Configure session for maximum interoperability
+        Net::SSLeay::CTX_set_options($ctx, &Net::SSLeay::OP_ALL);
+        
+        # Create a new SSL object with context
+        my $ssl = Net::SSLeay::new($ctx);
+        
+        # Bind the SSL descriptor to the socket
+        Net::SSLeay::set_fd($ssl, $sock->fileno);
+        
+        # Negotiate connection
+        my $sslConn = Net::SSLeay::connect($sock->fileno);
+
+        if ($sslConn <= 0) {
+            print STDERR "[*] SSL error:". Net::SSLeay::print_errs()."\n";
+            $sock->close;
+            return;
+        }
+        
+        Net::SSLeay::write_all($ssl, $req);
+        $sock->shutdown(1);
+        
+        $data = Net::SSLeay::read_all($ssl);
+        
+        Net::SSLeay::free ($ssl);
+        Net::SSLeay::CTX_free ($ctx);
+        $sock->close;
+        
+        $data = ProcessHTTP($data);
+        return $data;
+    }
+    
+    $sock->send($req);
+    $sock->shutdown(1);
+    while (<$sock>) { $data .= $_ }
+    close ($sock);
+    $data = ProcessHTTP($data);    
+    return $data;
+}
+
+sub ProcessHTTP {
+    my $http = shift;
+    
+    if ($http =~ m/(.*[^\r\n\r\n]+)\r\n\r\n(.*)/sm) {
+        my ($head, $body) = ($1, $2);
+        return if $head !~ /HTTP\/1.. 200\s+/;
+        return $body;
+    }
+    return;
+}
+
+sub ReadFile {
     my $path = shift;
     my $data;
     my $inp;
@@ -72,5 +177,46 @@ sub HashFile {
     while (<$inp>) { $data .= $_ }
     close($inp);
     
+    return $data;
+}
+
+sub HashFile {
+    my $path = shift;
+    my $data = ReadFile($path);
     return md5_hex($data);
+}
+
+sub Hashit {
+    my $data = shift;
+    my $hash = {};
+    foreach my $line (split(/\n/, $data)) {
+        my ($md5, $path) = split(/\s+/, $line);
+        $hash->{$path} = $md5;
+    }
+    return $hash;
+}
+
+sub Diff {
+    my $setA = shift;
+    my $setB = shift;
+    my $res;
+    
+    foreach (keys(%{$setA})) {
+        if (exists($setB->{$_})) {
+            if ($setA->{$_} ne $setB->{$_}) {
+                $res->{$_} = 'Mod';
+            }
+        } 
+        else {
+            $res->{$_} = 'Del';
+        }
+    }
+    
+    foreach (keys(%{$setB})) {
+        if (! exists($setA->{$_})) {
+            $res->{$_} = 'New';
+        }
+    }
+    
+    return $res;
 }
