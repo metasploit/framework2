@@ -63,5 +63,6 @@ recv:
 	                      ; edi for fd
 	jmp  ecx
 
-
+%else
+	pop  edi
 %endif

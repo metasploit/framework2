@@ -77,4 +77,6 @@ read:
 	                 ; for fd
 	jmp  ecx
 
+%else
+	mov  edi, ebx
 %endif
