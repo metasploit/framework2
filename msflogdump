@@ -1,5 +1,18 @@
 #!/usr/bin/perl
 
+##
+#         Name: msfcli
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Simple utility to view log files created with msf
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
 use Getopt::Std;
 use strict;
 

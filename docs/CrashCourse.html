@@ -1,0 +1,1004 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 1.1.0  (Linux)">
+	<META NAME="CREATED" CONTENT="20040405;23213600">
+	<META NAME="CHANGED" CONTENT="20040407;2001000">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in; margin-left: 1.25in; margin-right: 1.25in; margin-top: 1in; margin-bottom: 1in }
+		P { margin-bottom: 0.08in }
+		H3 { margin-top: 0in; margin-bottom: 0.1in; color: #008000; font-family: "Trebuchet MS", "Verdana", "Arial", "Helvetica", sans-serif }
+		TD P { margin-bottom: 0.08in }
+		PRE { margin-left: 0.1in; margin-right: 0.05in; margin-top: 0.05in; margin-bottom: 0.05in }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=5 STYLE="font-size: 20pt"><B>Metasploit
+Framework Version 2.0</B></FONT></FONT></P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>User
+Crash Course</B></FONT></FONT></P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<DIV ID="Table of Contents1" DIR="LTR">
+	<DIV ID="Table of Contents1_Head" DIR="LTR">
+		<P STYLE="margin-top: 0.17in; border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-left: none; border-right: none; padding: 0.02in 0in; page-break-before: auto; page-break-after: avoid">
+		<FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Table of Contents</B></FONT></FONT></P>
+	</DIV>
+	<P STYLE="margin-bottom: 0in">Introduction	2</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">What is it?	2</P>
+	<P STYLE="margin-bottom: 0in">Installation	3</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Installation on
+	Unix	3</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Installation on
+	Windows	3</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Platform Caveats	3</P>
+	<P STYLE="margin-bottom: 0in">Getting Started	4</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">The Console
+	Interface	4</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Console
+	Efficiency	4</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Selecting an
+	Exploit	4</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Exploit Basics	4</P>
+	<P STYLE="margin-bottom: 0in">Environments	5</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Global
+	Environment	5</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Temporary
+	Environment	6</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Using the
+	Environments Effectively	7</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Advanced
+	Environment Settings	8</P>
+	<P STYLE="margin-bottom: 0in">Using the Framework	11</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Configuring an
+	Exploit	11</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Selecting the
+	Payload	11</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Launching the
+	Exploit	11</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">The Command Line
+	Interface	12</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">The Web
+	Interface	12</P>
+	<P STYLE="margin-bottom: 0in">Advanced Features	13</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">InlineEgg Python
+	Payloads	13</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Impurity ELF
+	Injection	14</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Chainable
+	Proxies	14</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">UploadExec
+	Payloads	14</P>
+	<P STYLE="margin-bottom: 0in">More Information	15</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Web Site	15</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Mailing List	15</P>
+	<P STYLE="margin-left: 0.2in; margin-bottom: 0in">Developers	15</P>
+</DIV>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Introduction</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>This
+document is the user guide for version 2.0 of the Metasploit
+Framework, its goal is to provide a basic overview of what the
+Framework is, how it works, and what you can do with it.</FONT></FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>What
+is it?</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+Metasploit Framework is a complete environment for writing, testing,
+and using exploit code. This environment provides a solid platform
+for penetration-testing, shellcode development, and vulnerability
+research. The majority of the Framework is composed of
+object-oriented Perl code, with optional components written in C,
+assembler, and Python. </FONT></FONT>
+</P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Installation</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Installation
+on Unix</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Installing
+the Framework is as easy as extracting the tarball, changing into the
+created directory, and executing your preferred user interface. We
+strongly recommend that you compile and install the
+Term::ReadLine::Gnu Perl module found in the 'extras' subdirectory.
+This package enables extensive tab-completion support in the
+<I>msfconsole</I> interface; <I>msfconsole</I> is the preferred UI
+for everyday use.  If SSL support is desired, you should install the
+Net::SSLeay Perl module as well, this can also be found in the
+'extras' subdirectory. </FONT></FONT>
+</P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>To
+perform a system-wide installation, we recommend that you copy the
+entire Framework directory into a globally accessible location
+(/usr/local/share/msf) and then create symbolic links from the msf*
+applications to a directory in the system path (/usr/local/bin).</FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Installation
+on Windows</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>After
+months of working around ActiveState bugs, we finally decided to
+scrap it and only support Cygwin Perl. The Metasploit Framework Win32
+installer bundles a stripped-down copy of the Cygwin environment,
+this is the preferred way to use the Framework on the Windows
+platform. If you would like to install the Framework into an existing
+Cygwin environment, please refer to the file 'docs/QUICKSTART.cygwin'
+in the installation directory; there are a number of issues with
+installing the Term::ReadLine::Gnu and Net::SSLeay modules that
+require jumping through hoops to solve. </FONT></FONT>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Platform
+Caveats</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-weight: medium">While
+we have tried to support as many platforms as possible, there are
+some compatibility bugs that have cropped up. One of the most
+annoying ones is a bug in the version of Internet Explorer shipped
+with Mac OS X. For some reason the browsers refuses to display web
+pages until the connection has closed or all data has finished
+loading. This prevents the <I><SPAN LANG="en-US">msfweb</SPAN></I>
+user interface from working correctly with Internet Explorer. This
+issue can be worked around by using a different browser, such as a
+Safari or <SPAN LANG="en-US">Mozilla.</SPAN></SPAN></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Getting
+Started</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<H3><FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>The
+Console Interface</B></FONT></FONT></FONT></H3>
+<P STYLE="margin-bottom: 0in; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>After
+you have installed the Framework, you should verify that everything
+is working correctly.  The quickest way to do this is to execute the
+<I>msfconsole </I><SPAN STYLE="font-style: normal">user interface.
+This interface should display an ASCII Metasploit logo, print the
+current version, number of payloads, number of exploits, and drop to
+a 'msf' prompt. From this prompt, type <B>help</B> to get a list of
+valid commands. You are currently in the 'main' mode; this allows you
+to list exploits, list payloads, and configure global options.  To
+list all available exploits, type <B>show exploits</B>. To obtain
+more information about a given exploit, type <B>info exploit
+module_name</B>.</SPAN></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Console
+Efficiency</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<FONT FACE="Arial, sans-serif"><FONT SIZE=3>The console has been
+designed with efficiency in mind and be used as a standard shell in
+many situations. If you enter an unknown command, the console will
+scan your PATH environment to determine if you typed a system
+command. If it finds a match, that command will be executed with the
+supplied arguments. This allows you to use your standard set of tools
+without having to leave the console. Tab completion defaults to
+file-name matching when the command entered is not an internal
+console command. This allows you to navigate the file system
+normally, similar to using a bash shell.</FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal"><FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Selecting
+an Exploit</B></FONT></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<FONT FACE="Arial, sans-serif"><FONT SIZE=3>From the msf prompt, you
+can choose an exploit with the <B>use</B> command. This command takes
+the name of the exploit module as the first argument, enters exploit
+mode, and loads the Temporary environment for that exploit. You can
+switch between active exploits with the <B>use</B> command and drop
+back to the main shell with the <B>back</B> command.</FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Exploit
+Basics</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<BR>
+</P>
+<P STYLE="margin-bottom: 0in; font-style: normal; font-weight: medium">
+<FONT FACE="Arial, sans-serif"><FONT SIZE=3>After selecting an
+exploit, your available command selection changes. Enter the <B>help</B>
+command again to get an idea of what is available. The <B>show</B>
+command now has a completely different set of arguments, these allow
+you to view the standard options, advanced options, exploit targets,
+and compatible payloads. The <B>check</B> command invokes the
+vulnerability check mode of the selected exploit. The <B>exploit</B>
+command actually launches the selected exploit.</FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-style: normal; page-break-before: always">
+<FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Environments</B></FONT></FONT></P>
+<P STYLE="margin-bottom: 0in; font-style: normal"><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif">The environment system is a core
+component of the Framework; the interfaces use it to configure
+various options, the payloads use it generate the resulting opcodes,
+the exploits use it to define parameters, and it is used internally
+to pass options between disparate modules. The environment system is
+logically divided into a Global and Temporary environment. Each
+exploit maintains its own Temporary environment, which overrides the
+Global environment. When you select an exploit via the 'use' command,
+the Temporary environment for that exploit is loaded and the previous
+one is saved off. If you switch back to the previous exploit, the
+Temporary environment for that exploit is loaded again. </FONT>
+</P>
+<P><BR><BR>
+</P>
+<H3><FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Global
+Environment</B></FONT></FONT></FONT></H3>
+<P><FONT FACE="Arial, sans-serif">The Global environment is accessed
+through the console via the &quot;g&quot; family of functions (<B><SPAN LANG="en-US">setg</SPAN></B>,
+<B><SPAN LANG="en-US">unsetg</SPAN></B>). The following example is
+the Global environment state after a fresh installation. Calling <B>setg
+</B>with no arguments displays the current global environment,
+calling <B>unsetg </B>with no arguments will clear the entire global
+environment. Default settings are automatically loaded when the
+interface starts. </FONT>
+</P>
+<P><BR><BR>
+</P>
+<PRE STYLE="margin-left: 0.52in; margin-right: 0.47in; border: 1px solid #555555; padding: 0.02in">
+<FONT FACE="Arial, sans-serif">+ -- --=[ msfconsole v2.0 [22 exploits - 30 payloads]</FONT>
+
+<FONT FACE="Arial, sans-serif">msf &gt; <B>setg</B></FONT>
+<FONT FACE="Arial, sans-serif"><SPAN LANG="en-US">DebugLevel</SPAN>: 0</FONT>
+<FONT FACE="Arial, sans-serif">Encoder: <SPAN LANG="en-US">Msf</SPAN>::Encoder::<SPAN LANG="en-US">PexFnstenvMov</SPAN></FONT>
+<FONT FACE="Arial, sans-serif">Logging: Disabled</FONT>
+<FONT FACE="Arial, sans-serif"><SPAN LANG="en-US">Nop</SPAN>: Msf::Nop::Pex</FONT>
+<FONT FACE="Arial, sans-serif">msf &gt; </FONT>
+      </PRE><P>
+<BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<H3 STYLE="page-break-before: always"><FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Temporary
+Environment</B></FONT></FONT></FONT></H3>
+<P><FONT FACE="Arial, sans-serif">The Temporary environment in only
+available in exploit mode (via <B>use <SPAN LANG="en-US">exploitname</SPAN></B>).
+Every exploit module has its own separate Temporary environment and
+this environment will be saved when moving between different exploit
+modules. The <B>save </B>command can be used to synchronize the
+Global and all Temporary environments to disk, where they will be
+loaded as defaults next time the interface starts. </FONT>
+</P>
+<P><FONT FACE="Arial, sans-serif">The following example shows how the
+<B>use</B> command selects an active exploit and how the <B>back</B>
+command reverts to the main mode.</FONT></P>
+<P><BR><BR>
+</P>
+<PRE STYLE="margin-left: 0.52in; margin-right: 0.47in; border: 1px solid #555555; padding: 0.02in"><FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf &gt; <B>use apache_chunked_win32 </B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf apache_chunked_win32 &gt; <B>set</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf apache_chunked_win32 &gt; <B>set FOO BAR</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>FOO -&gt; BAR</FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf apache_chunked_win32 &gt; <B>set</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>FOO: BAR</FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf apache_chunked_win32 &gt; <B>back</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf &gt; <B>use poptop_negative_read</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf <SPAN STYLE="font-weight: medium">poptop_negative_read</SPAN> &gt; <B>set</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf <SPAN STYLE="font-weight: medium">poptop_negative_read </SPAN>&gt; <B>back</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf &gt; <B>use apache_chunked_win32</B> </FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf apache_chunked_win32 &gt; <B>set</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>FOO: BAR</FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf apache_chunked_win32 &gt; </FONT></FONT>
+      </PRE><P>
+<BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<P STYLE="page-break-before: always"><BR><BR>
+</P>
+<H3><FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Using
+the Environments Effectively</B></FONT></FONT></FONT></H3>
+<P STYLE="font-weight: medium"><FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>This
+split environment system allows you save time during exploit
+development and penetration testing. Common options between exploits
+can be defined in the Global environment once and automatically used
+in any exploit you load thereafter. </FONT></FONT></FONT>
+</P>
+<P STYLE="font-weight: medium"><FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+example below shows how the LPORT, LHOST, and PAYLOAD global
+environments can be used to save time when exploiting a set of
+Windows-based targets. If this environment was set and a Linux
+exploit was being used, the Temporary environment (via <B>set</B> and
+<B>unset</B>) could be used to override these defaults. </FONT></FONT></FONT>
+</P>
+<P><BR><BR>
+</P>
+<PRE STYLE="margin-left: 0.52in; margin-right: 0.47in; border: 1px solid #555555; padding: 0.02in"><FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf &gt; <B>setg LPORT 12344</B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>LPORT -&gt; 12344</FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf &gt; <B>setg LHOST 192.168.0.10 </B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>LHOST -&gt; 192.168.0.10</FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf &gt; <B>setg PAYLOAD <SPAN LANG="en-US">winreverse</SPAN></B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>PAYLOAD -&gt; winreverse</FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf &gt; <B>use apache_chunked_win32 </B></FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>msf apache_chunked_win32 &gt; <B>show options</B> </FONT></FONT>
+
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>Exploit and Payload Options</FONT></FONT>
+<FONT FACE="Arial, sans-serif"><FONT SIZE=2>===========================</FONT></FONT>
+
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>Exploit:    Name      Default    Description                    </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>--------    ------    -------    ---------------------------    </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>optional    SSL                  Use SSL                        </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>required    RHOST                The target address             </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>optional    PAD                  Specify the exact pad value    </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>required    RPORT     80         The target port                </FONT></FONT>
+  
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>Payload:    Name        Default         Description                                   </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>--------    --------    ------------    ------------------------------------------    </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>optional    EXITFUNC    <SPAN LANG="en-US">seh</SPAN>             Exit technique: &quot;process&quot;, &quot;thread&quot;, &quot;seh&quot;    </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>required    LHOST       192.168.0.10    Local address to receive connection           </FONT></FONT>
+  <FONT FACE="Arial, sans-serif"><FONT SIZE=2>required    LPORT       12344           Local port to receive connection </FONT>             </FONT>
+
+      </PRE><P>
+<BR><BR>
+</P>
+<H3 STYLE="page-break-before: always"><FONT COLOR="#000000"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Advanced
+Environment Settings</FONT></FONT></FONT></H3>
+<P><BR><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif">The environment allow you to
+control aspects of the user interface, logging options, and the
+behavior of certain routines. Many components of the Framework can be
+controlled through environment settings, some examples of these are
+below. Please note the environment name can change, depending on
+whether the option is being set in the Global or Temporary
+environment. Many of the module-specific options require the full
+module name to specified when set in the Global environment.</FONT></P>
+<P><BR><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>DebugLevel</B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>DebugLevel</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This option tells the Framework
+			and Modules how verbose their output should be, increasing the
+			DebugLevel gives you more detailed information about whats going
+			on under the hood. Supported values of DebugLevel range from 0 to
+			5.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Encoder</B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Encoder</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This option allows you to
+			specify the exact order in which the Encoder modules should be
+			used. The default configuration is to cycle through these until
+			one is capable of encoding the payload correctly, this option can
+			be used to change the precedence. The value should be a
+			comma-separated list of encoder names.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Nop</B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Nop</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This has the same behavior as
+			the Encoder entry above, except it is used to specify the
+			preferred <SPAN LANG="en-US">nop</SPAN> generator module.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Logging</B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Logging</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">If set to a non-zero value, this
+			will enable session logging. Session logs are stored in ~/.<SPAN LANG="en-US">msflogs</SPAN>
+			by default, the directory can be changed used the <SPAN LANG="en-US">LogDir</SPAN>
+			environment variable. You can use the <B>msflogdump</B> utility to
+			view the generated session logs. These logs contain the complete
+			environment for the exploit as well as per-packet timestamps. </FONT>
+			</P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>LogDir</B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>LogDir</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This option specifies what
+			directory the log files should be stored in. It defaults to
+			~/.msflogs.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Msf::Socket::<SPAN LANG="en-US">ConnectTimeout</SPAN></B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>ConnectTimeout</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This option allows you to
+			specify the connect timeout for TCP sockets. This value defaults
+			to 10 and may need to be increased to exploit systems across slow
+			links.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Msf::Socket::<SPAN LANG="en-US">RecvTimeout</SPAN></B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>RecvTimeout</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This option specifies the
+			maximum number of seconds allowed for socket reads that specified
+			the special length value of -1.  This may need to be increased if
+			you are exploiting systems over a slow link and running into
+			problems.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Msf::Socket::<SPAN LANG="en-US">RecvTimeoutLoop</SPAN></B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>RecvTimeoutLoop</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This option specifies the
+			maximum number of seconds to wait for data on a socket before
+			returning it. Each time that data is received within this period,
+			the loop starts again. This may need to be increased if you are
+			exploiting systems over a slow link and running into problems.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Msf::Socket::Proxies</B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Proxies</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This environment variable forces
+			all TCP sockets to go through the specified proxy chain. The
+			format of the chain type:host:port for each proxy, separated by
+			commas. The 2.0 release includes support for socks4 and <SPAN LANG="en-US">http</SPAN>
+			proxy types.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<TABLE WIDTH=547 BORDER=0 CELLPADDING=4 CELLSPACING=0 STYLE="page-break-inside: avoid">
+	<COL WIDTH=144>
+	<COL WIDTH=387>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Global Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>Msf::Nop::Pex::<SPAN LANG="en-US">RandomNops</SPAN></B></FONT></P>
+		</TD>
+	</TR>
+	<TR VALIGN=TOP>
+		<TD WIDTH=144>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Temporary Name:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif"><B>RandomNops</B></FONT></P>
+		</TD>
+	</TR>
+	<TR>
+		<TD WIDTH=144 VALIGN=TOP>
+			<P ALIGN=RIGHT><FONT FACE="Arial, sans-serif"><B>Description:</B></FONT></P>
+		</TD>
+		<TD WIDTH=387>
+			<P><FONT FACE="Arial, sans-serif">This option is specific to the
+			Pex nop generator, it allows randomized nop sleds to be used
+			instead of the standard nop character. This may cause issues with
+			exploits that depend on registers to be set with specific values.
+			It should only be used after being tested with the relative
+			exploit.</FONT></P>
+		</TD>
+	</TR>
+</TABLE>
+<P><BR><BR>
+</P>
+<P STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Using
+the Framework</B></FONT></FONT></P>
+<P><BR><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Configuring an
+Exploit</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Once
+you have selected an exploit, the first step is to determine what
+options it requires. This can be accomplished with the <B>show
+options</B> command. Most exploits use RHOST to specify the target
+address and RPORT to set the target port. Use the <B>set</B> command
+to configure the appropriate values for all required options. Once
+this is complete, you can try the <B>check</B> command to determine
+if the remote host is vulnerable. Not all exploits have a
+vulnerability check routine, others return a response and expect you
+to analyze it before proceeding. </FONT></FONT>
+</P>
+<P><BR><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Selecting the
+Payload</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Now
+that the exploit options have been set, you need to choose a payload.
+The payload is the actual code which will run on the target system
+after a successful exploit attempt. Use the <B>show payloads</B>
+command to list all payloads compatible with the current exploit. If
+you are behind a firewall, you may want to use a bind shell payload,
+if your target is behind one and you are not, you would use a reverse
+connect payload. You can use <B>info payload payload_name</B> to get
+more information about a given payload. </FONT></FONT>
+</P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Once
+you have decided on a payload, use the <B>set</B> command to specify
+the PAYLOAD environment variable. Once the payload has been set, use
+the <B>show options</B> command to display all available payload
+options. Most payloads require at least one option to be set for them
+to function. </FONT></FONT>
+</P>
+<P><BR><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Launching the
+Exploit</B></FONT></FONT></P>
+<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><SPAN STYLE="font-weight: medium">After
+the exploit and payload options have been set, you may need to
+configure the exploit target. If a default target is not set, the
+exploit command will return an error. You can use the </SPAN><B>show
+targets</B><SPAN STYLE="font-weight: medium"> command to list all
+available targets and then the </SPAN><B>set </B><SPAN STYLE="font-weight: medium">command
+to specify a value for the TARGET environment variable. Once an
+appropriate target has been selected, you can use the </SPAN><B>exploit
+</B><SPAN STYLE="font-weight: medium">command to attack the remote
+host. If everything went well, your payload will execute and
+potentially drop you to a command shell in the console. </SPAN></FONT></FONT>
+</P>
+<P><BR><BR>
+</P>
+<P STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>The
+Command Line Interface</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>If
+the console is overkill for your needs, you may want to try the
+<U><SPAN LANG="en-US">msfcli</SPAN></U> interface. This interface
+takes a match string as the first parameter, followed by the options
+in a VAR=VAL format, and finally an action code to specify what
+should be done. The match string is compared against the available
+exploits, in the case that more than one is found, it provides a
+list. </FONT></FONT>
+</P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+action code is a single letter; S for summary, O for options, A for
+advanced options, P for payloads, T for targets, C to try a
+vulnerability checks, and E to exploit. The saved environment will be
+loaded and used at startup, this allows you to configure various
+default options in the Global environment of <I>msfconsole</I>, save
+them, and take advantage of the in the <I>msfcli</I> interface. </FONT></FONT>
+</P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+command line interface is well suited for automated exploitation and
+batch testing, combined with a custom payload and an intelligent
+scanner, it could be ruthless :)</FONT></FONT></P>
+<P><BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>The Web Interface</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><BR><BR>
+</P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+<I>msfweb</I> interface is a functional web server that allows you
+launch attacks from your web browser. This interface is still very
+primitive, but might be useful for users working in a team
+environment (pen-testing, etc). The connection to the exploited host
+is <SPAN LANG="en-US">proxied</SPAN> to a random listening port on
+the web server and the user is given a telnet protocol link to this
+dynamically created listener. </FONT></FONT>
+</P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Be
+aware that this interface has no security measures in place, anyone
+on the network may connect to this web server or the dynamically
+selected proxy port. The default configuration is to listen on the
+<SPAN LANG="en-US">loopback</SPAN> address only, this can be changed
+by passing the -a option with a value consisting of address:port.
+Just like the command line interface, the saved environment is loaded
+on startup and can affect module settings.</FONT></FONT></P>
+<P><BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<P STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>Advanced
+Features</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><BR><BR>
+</P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>This
+section covers some of the advanced features that can be found in
+this release. These features can be used in any compatible exploit
+and highlight the strength of developing attack code using an exploit
+framework.</FONT></FONT></P>
+<P STYLE="font-weight: medium"><BR><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>InlineEgg Python
+Payloads</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>InlineEgg
+is a library for assembly programs using the Python scripting
+language, the more common use of this library is create advanced
+exploit payloads.  The Framework supports InlineEgg payload through
+the ExternalPayload module interface; this allows transparent support
+if the Python scripting language is installed.</FONT></FONT></P>
+<P ALIGN=LEFT STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>This
+release includes InlineEgg examples for Linux, BSD, and Windows. The
+Linux examples are linx86reverse_ie, linux86reverse_bind, and
+linux86reverse_xor. These payloads can be used in the exact same way
+as any other; however the contents are dynamically generated by the
+Python scripts found the payloads/external subdirectory. The BSD
+examples work in the exact same way, as long as Python is installed,
+they should be available. </FONT></FONT>
+</P>
+<P ALIGN=LEFT STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+Windows  InlineEgg example is named win32reverse_stg_ie and works in
+a slightly different fashion. This payload has an option named IEGG,
+this option specifies the path to the InlineEgg Python script that
+contains your final payload. This is a staged payload; the first
+stage is a standard reverse connect payload, the second stage sends
+the address of GetProcAddress and LoadLibraryA over the connection,
+and the third stage is generated locally and sent across the network.
+An example InlineEgg script is included in the payloads/external
+subdirectory, called 'win32_stg_winexec.py'. For more information
+about InlineEgg, please see Gera's web site, located at:</FONT></FONT></P>
+<P ALIGN=LEFT STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><A HREF="http://community.corest.com/~gera/ProgrammingPearls/InlineEgg.html">http://community.corest.com/~gera/ProgrammingPearls/InlineEgg.html</A></FONT></FONT></P>
+<P ALIGN=LEFT STYLE="font-weight: medium"><BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<P STYLE="page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Impurity
+ELF Injection</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Impurity
+was a concept developed by Alexander Cuttergo that outlined a method
+of executing an ELF image in-memory. This technique allows for
+arbitrarily complex payloads to be written in standard C, the only
+requirement is a special loader payload. The Framework includes a
+Linux loader for Impurity executables, the payload is named
+linx86reverse_imp and requires the PEXEC option to be set to the path
+of the executable. Impurity executables must be compiled in a
+specific way, please see the documentation in the impurity
+subdirectory for more information about this process. The included
+&ldquo;shelldemo&rdquo; application allows you to list, access, read,
+write and open file handles in the exploited process.  The original
+mailing list post is archived online at:</FONT></FONT></P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><A HREF="http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html">http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html</A></FONT></FONT></P>
+<P STYLE="font-weight: medium"><BR><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Chainable Proxies</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+Framework includes transparent support for TCP proxies, this release
+has handler routines for HTTP CONNECT and SOCKSv4 servers. To use a
+proxy with a given exploit, the Msf::Socket::Proxies Global
+environment variable needs to be set. The value of this variable is a
+comma-separated list of proxy servers, where each server is in the
+format type:host:port. The type values are 'http' for HTTP CONNECT
+and 'socks4' for SOCKS v4. The proxy chain can be of any length;
+testing shows that the system was stable with over five hundred SOCKS
+and HTTP proxies configured randomly in a chain. The proxy chain only
+masks the exploit request, the automatic connection to the payload is
+not relayed through the proxy chain at this time.</FONT></FONT></P>
+<P STYLE="font-weight: medium"><BR><BR>
+</P>
+<P><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>UploadExec Payloads</B></FONT></FONT></P>
+<P STYLE="font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>Although
+Unix systems normally include all of the tools you need
+post-exploitation, Windows systems are notoriously lacking in a
+decent command line tool kit. The UploadExec payloads included in
+this release allow you to simultaneously exploit a system, upload
+your favorite tool, and execute it, all across the payload socket
+connection. When combined with a self-extracting rootkit or scripting
+language interpreter (perl.exe!), this can be a very powerful
+feature.</FONT></FONT></P>
+<P STYLE="font-weight: medium"><BR><BR>
+</P>
+<P STYLE="font-style: normal; page-break-before: always"><FONT FACE="Arial, sans-serif"><FONT SIZE=5><B>More
+Information</B></FONT></FONT></P>
+<P STYLE="font-style: normal"><BR><BR>
+</P>
+<P STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Web
+Site</B></FONT></FONT></P>
+<P STYLE="font-style: normal; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>The
+metasploit.com web site is the first place to check for updated
+modules and new releases. This web site also hosts the Opcode
+Database and a decent Windows shellcode archive. </FONT></FONT>
+</P>
+<P STYLE="font-style: normal; font-weight: medium"><BR><BR>
+</P>
+<P STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Mailing
+List</B></FONT></FONT></P>
+<P STYLE="font-style: normal; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>You
+can subscribe to the Metasploit Framework mailing list by sending a
+blank email to framework-subscribe [at] metasploit.com. This is the
+preferred way to submit bugs, suggest new features, and discuss the
+Framework with other users.</FONT></FONT></P>
+<P STYLE="font-style: normal"><BR><BR>
+</P>
+<P STYLE="font-style: normal"><FONT FACE="Arial, sans-serif"><FONT SIZE=3><B>Developers</B></FONT></FONT></P>
+<P STYLE="font-style: normal; font-weight: medium"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>If
+you would like to get involved in the development of the next version
+of the Framework, please contact the developers. They can be reached
+at msfdev [at] metasploit.com.</FONT></FONT></P>
+<P STYLE="font-style: normal"><BR><BR>
+</P>
+<P STYLE="font-weight: medium"><BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<P><BR><BR>
+</P>
+<DIV TYPE=FOOTER>
+	<P ALIGN=CENTER STYLE="margin-top: 0.2in; margin-bottom: 0in"><FONT COLOR="#808080"><FONT FACE="Arial, sans-serif"><FONT SIZE=2 STYLE="font-size: 11pt">Copyright
+	&copy; METASPLOIT.COM 2003, 2004</FONT></FONT></FONT></P>
+</DIV>
+</BODY>
+</HTML>
