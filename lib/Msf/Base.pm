@@ -13,6 +13,7 @@ sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };
   my $self = bless($hash, $class);
+  $self->{'Error'};
   return($self);
 }
 sub _Env {
@@ -24,20 +25,26 @@ sub _Env {
 sub _TempEnv {
   my $self = shift;
   $Msf::Base::TempEnv = shift if(@_);
-  $Msf::Base::TempEnv = { } if(!defined($Msf::Base::Temp));
-  return($Msf::Base::Temp);
+  $Msf::Base::TempEnv = { } if(!defined($Msf::Base::TempEnv));
+  return($Msf::Base::TempEnv);
 }
 sub _TempEnvs {
   my $self = shift;
   $Msf::Base::TempEnvs = shift if(@_);
-  $Msf::Base::TempEnvs = { } if(!defined($Msf::Base::Temps));
-  return($Msf::Base::Temps);
+  $Msf::Base::TempEnvs = { } if(!defined($Msf::Base::TempEnvs));
+  return($Msf::Base::TempEnv);
+}
+sub _Error {
+  my $self = shift;
+  $self->{'Error'} = shift if(@_);
+  return($self->{'Error'});
 }
 
 sub GetEnv {
   my $self = shift;
   my $key = shift;
   my $env = $self->_Env;
+  print join(' ', caller()) if($envDebug >= 3);
   if(defined($key)) {
     print "Get $key => " . $env->{$key} . "\n" if($envDebug);
     return($env->{$key});
@@ -105,6 +112,11 @@ sub UnsetTempEnv {
   }
 }
 
+sub GetTempEnvs {
+  my $self = shift;
+  return($self->_TempEnvs);
+}
+
 sub SaveTempEnv {
   my $self = shift;
   my $name = shift;
@@ -118,6 +130,31 @@ sub LoadTempEnv {
   return($self->_TempEnv);
 }
 
+sub GetError {
+  my $self = shift;
+  return($self->_Error);
+}
+sub SetError {
+  my $self = shift;
+  my $error = shift;
+  $self->_Error($error);
+  return($error);
+}
+sub ClearError {
+  my $self = shift;
+  $self->_Error(undef);
+}
+
+sub PrintError {
+  my $self = shift;
+  my $error = $self->_Error;
+  if(defined($error)) {
+    return(0);
+  }
+  $self->PrintLine('Error: ', $error);
+  $self->ClearError;
+  return(1);
+}
 
 sub DebugLevel {
   my $self = shift;
@@ -145,11 +182,11 @@ sub Error {
   my $self = shift;
   $self->PrintLine(@_);
 }
-sub FatalError {
-  my $self = shift;
-  $self->PrintLine(@_);
-  exit(1);
-}
+#sub FatalError {
+#  my $self = shift;
+#  $self->PrintLine(@_);
+#  exit(1);
+#}
 sub PrintLine {
   my $self = shift;
   if(defined($self->{'PrintLine'})) {
@@ -186,5 +223,14 @@ sub ScriptPath {
   my $self = shift;
   return(File::Spec::Functions::rel2abs($0));
 }
+
+sub FatalError {
+  my $self = shift;
+  my $error = shift;
+  $self->SetError($error);
+  $self->PrintError;
+  exit(1);
+}
+
 
 1;

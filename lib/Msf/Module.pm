@@ -59,10 +59,6 @@ sub Type     { my $obj = shift; return defined($obj->{'Info'}->{'Type'}) ? $obj-
 sub Size     { my $obj = shift; return defined($obj->{'Info'}->{'Size'}) ? $obj->{'Info'}->{'Size'} : undef }
 
 
-
-
-
-
 sub Validate {
   my $self = shift;
   my $userOpts = $self->{'Info'}->{'UserOpts'};
@@ -74,29 +70,34 @@ sub Validate {
     my $value = $self->GetVar($key);
 
     if(!defined($value)) {
-      $self->FatalError("Missing required option: $key");
+      $self->SetError("Missing required option: $key");
+      return;
     }
     elsif(uc($type) eq 'ADDR') {
       my $addr = gethostbyname($value);
       if(!$addr) {
-        $self->FatalError("Invalid address $value for $key");
+        $self->SetError("Invalid address $value for $key");
+        return;
       }
 #fixme Should we pass them the ip?
 #      $self->SetVar($addr);
     }
     elsif(uc($type) eq 'PORT') {
       if($value < 1 || $value > 65535) {
-        $self->FatalError("Invalid port $value for $key");
+        $self->SetError("Invalid port $value for $key");
+        return;
       }
     }
     elsif(uc($type) eq 'BOOL') {
       if($value !~ /^(y|n|t|f|0|1)$/i) {
-        $self->FatalError("Invalid boolean $value for $key");
+        $self->SetError("Invalid boolean $value for $key");
+        return;
       }
     }
     elsif(uc($type) eq 'PATH') {
       if(! -r $value) {
-        $self->FatalError("Invalid path $value for $key");
+        $self->SetError("Invalid path $value for $key");
+        return;
       }
     }
   }

@@ -78,13 +78,15 @@ sub Encode {
   my $encodedShell = $self->EncodePayload($rawshell, $badChars);
 
   if(!defined($encodedShell)) {
-    $self->FatalError("Error encoding payload"); #fixme
+    $self->SetError("Error encoding payload"); #fixme
+    return;
   }
   if(length($encodedShell) > $exploitSpace - $minNops) {
     $self->PrintDebugLine(1, "ExploitSpace: $exploitSpace");
     $self->PrintDebugLine(1, "EncodedLength: " . length($encodedShell)); 
     $self->PrintDebugLine(1, "MinNops: $minNops MaxNops: $maxNops");
-    $self->FatalError("Encoded payload too large for exploit");
+    $self->SetError("Encoded payload too large for exploit");
+    return;
   }
 
   my $emptySpace = $exploitSpace - length($encodedShell);
@@ -92,12 +94,14 @@ sub Encode {
 
   my $nops = $nop->Nops($nopSize);
   if(length($nops) != $nopSize) {
-    $self->FatalError("Error generating nops");
+    $self->SetError("Error generating nops");
+    return;
   }
 
   foreach (split('', $badChars)) {
     if(index($nops . $encodedShell, $_) != -1) {
-      $self->FatalError("BadChar in encoded data");
+      $self->SetError("BadChar in encoded data");
+      return;
     }
   }
 

@@ -103,7 +103,7 @@ sub DumpExploitSummary {
   $output .= "\n";
   $output .= "Available Options:\n";
 
-  print GetOptions(4, 'Exploit', $exploit->UserOpts);
+  print $self->DumpOptions(4, 'Exploit', $exploit);
 
   if ($exploit->Payload) {
     $output .= "\n";

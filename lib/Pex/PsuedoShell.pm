@@ -19,16 +19,18 @@ use strict;
 use Term::ReadLine;
 
 sub new {
-  my $term = Term::ReadLine->new($_[1]);
+  my $class = shift;
+  my $term = Term::ReadLine->new(shift);
   if($term->ReadLine =~ /Stub/) {
     print "Using " . $term->ReadLine . ", I suggest installing something better (ie Term::ReadLine::Gnu)\n";
   }
   return(bless(
     {
       __PACKAGE__.'term' => $term,
-      __PACKAGE__.'prompt' => $_[2],
+      __PACKAGE__.'prompt' => shift,
+      __PACKAGE__.'useEnv' => @_ ? shift : 1,
       __PACKAGE__.'env' => { },
-    }, shift)
+    }, $class)
   );
 }
 sub _term {
@@ -46,6 +48,11 @@ sub _env {
   my $self = shift;
   $self->{__PACKAGE__.'env'} = shift if(@_);
   return($self->{__PACKAGE__.'env'});
+}
+sub _useEnv {
+  my $self = shift;
+  $self->{__PACKAGE__.'useEnv'} = shift if(@_);
+  return($self->{__PACKAGE__.'useEnv'});
 }
 
 sub getEnv {
@@ -76,7 +83,7 @@ sub readCommand {
     $line =~ s/\s*$//g;
     $line =~ s/\$([^\s]+)/$self->_env->{$1}/eg;
     my ($command, @args) = $self->parseCommands($line);
-    if($command eq 'set') {
+    if($self->_useEnv && $command eq 'set') {
       if(@args == 1) {
         print "$args[0]: " . $self->_env->{$args[0]} . "\n";
       }

@@ -107,17 +107,17 @@ sub Summary {
 sub Options {
   if (defined($exploit->Payload) && ! $payload)
   {
-    $ui->FatalError('[*] You must specify a payload before viewing the available options.');
+    die("[*] You must specify a payload before viewing the available options.\n");
   }
-
   print "============\n= Options\n\n";
   print $ui->DumpOptions(2, 'Exploit', $exploit);
+
   print $ui->DumpOptions(2, 'Payload', $payload) if(defined($exploit->Payload));
 }
 
 sub Advanced {
   if (defined($exploit->Payload) && ! $payload) {
-    $ui->FatalError('[*] You must specify a payload before viewing the available options.');
+    die("[*] You must specify a payload before viewing the available options.\n");
   }
 
   print "============\n= Advanced Options\n\n";
@@ -127,7 +127,7 @@ sub Advanced {
 
 sub Payloads {
   if (!defined($exploit->Payload)) {
-    $ui->FatalError('[*] This exploit does not use payloads.');
+    die("[*] This exploit does not use payloads.\n");
   }
 
   my $match = $ui->MatchPayloads($exploit, $payloads);
@@ -140,7 +140,7 @@ sub Targets {
   my @targets = $exploit->Targets;
   if (! defined(@targets) || ! scalar(@targets))
   {
-    $ui->FatalError('[*] This exploit does not define any targets.');
+    die("[*] This exploit does not define any targets.\n");
   }
 
   print "============\n= Targets\n\n";
@@ -152,29 +152,33 @@ sub Targets {
 }
 
 sub Check {
-  # Both handle their own errors and will call FatalError on a problem
   $exploit->Validate; # verify that all required exploit options have been set
+  return if($exploit->PrintError);
   $exploit->Check;
+  return if($exploit->PrintError);
 }
 
 sub Exploit {
   # verify that a payload has been configured
   if (defined($exploit->Payload) && ! defined($payload))
   {
-    $ui->FatalError('[*] You must specify a payload for this module.');
+    die("[*] You must specify a payload for this module.\n");
   }
 
   # verify that all required exploit options have been set
   $exploit->Validate;
-  
-  # verify that all required payload options have been set  
-  defined($payload) && $payload->Validate;
+  return if($exploit->PrintError);  
+  # verify that all required payload options have been set 
+  if(defined($payload)) {
+    $payload->Validate;
+    return if($payload->PrintError);
+  }
 
   my @targets = $exploit->Targets;
   my $target = $ui->GetEnv('TARGET');
   if (defined($target) && ! defined($targets[$target]))
   {
-    $ui->FatalError('[*] Invalid target specified');
+    die("[*] Invalid target specified.\n");
   }
 
   # Important: Default the target to 0, maybe this should somehow
@@ -184,6 +188,7 @@ sub Exploit {
   if (defined($payload))
   {
     $exploit->SetEncodedPayload($ui->Encode($exploit, $payload));
+    return if($ui->PrintError);
   }
 
 
@@ -207,7 +212,7 @@ sub Exploit {
           print "[*] Creating link between child and parent process\n";
           
           socketpair($ui->GetEnv('HCSOCK'), $ui->GetEnv('HPSOCK'),  AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
-          || die "socketpair: $!";
+          || die "socketpair: $!\n";
       }
   }
   # End of shady handler area

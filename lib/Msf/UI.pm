@@ -207,10 +207,13 @@ sub Encode {
     if(!scalar(grep {$_ eq $arch} @{$encoderArch}) || !scalar(grep {$_ eq $arch} @{$nopArch})) {
       $self->PrintDebug(1, "Arch: $arch\nExploit: " . join(' ', @{$exploitArch}) .
         "\nEncoder: " . join(' ', @{$encoderArch}) . "\nNop: " . join(' ', @{$nopArch}) . "\n");
-      $self->FatalError('Exploit supports architecture(s) that the encoder and/or nop generator do not.');
+      $self->setError('Exploit supports architecture(s) that the encoder and/or nop generator do not.');
+      return;
     }
   }
-  return($encoder->Encode);
+  my $encoded = $encoder->Encode;
+  $self->SetError($encoded->GetError);
+  return($encoded);
 }
 
 sub MakeEncoder {
