@@ -839,7 +839,6 @@ sub SMBNegotiate {
     
     my @dialects =
     (
-        "METASPLOIT",
         "LANMAN1.0",
         "LM1.2X002",
     );
