@@ -180,10 +180,8 @@ piper_sleep:
 
 peek_stdout:                      ; PeekNamedPipe on stdout
   xor eax, eax
-  push eax                        ; make space for bytesAvail
-  mov ecx, esp
   push eax                        ; bytesLeftThisMessage
-  push ecx                        ; bytesAvail
+  push edi                        ; bytesAvail (use the buffer space)
   push eax                        ; bytesRead
   push eax                        ; bufferSize
   push eax                        ; buffer
@@ -197,7 +195,7 @@ peek_stdout:                      ; PeekNamedPipe on stdout
   test eax, eax
   jz exit_process
   xor eax, eax
-  cmp eax, [esp]                  ; numAvail == 0
+  cmp eax, [edi]                  ; numAvail == 0
   je recv_client
 
 read_stdout:                      ; read on pipe2
