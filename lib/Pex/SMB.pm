@@ -168,7 +168,7 @@ sub NBName {
 
 sub NBRedir {
     my $self = shift();
-    return ("CA" x 16)."AA";
+    return ("CA" x 16);
 }
 
 # return a 28 + strlen(data) + (odd(data)?0:1) long string
@@ -217,7 +217,8 @@ sub SMBRecv {
     }
     
     my $end = $sock->Recv($len);
-    if (! $end || length($end) != $len)) {
+    
+    if (! $end || length($end) != $len) {
         $self->SetError('Incomplete body read');
     }
     return($head.$end);
@@ -230,7 +231,17 @@ sub SMBSessionRequest {
     
     my ($rem, $loc) = ($self->NBName($name), $self->NBRedir);
     
-    my $req = "\x81\x00\x00\x44\x20".$rem."\x00\x20".$loc."\x00";
+    my $req =  
+        pack('CCnCZ*CZ*', 
+         0x81, # Session Request
+         0x00, # Flags
+         0x44, # Total length
+         0x20,
+         $rem, # Remote name
+         0x20,
+         $loc  # Redirector
+        );
+        
     $sock->Send($req);
     
     my $res = $self->SMBRecv();
@@ -267,27 +278,44 @@ sub SMBNegotiateNTLM {
 sub SMBNegotiateClear {
     my $self = shift;
     my $sock = $self->Socket;
+    
+    my $neg =
+        pack('Cv',
+            0x00,   # Word count
+            0x66,   # Byte count
+            ).
+        "\x02". "PC NETWORK PROGRAM 1.0"."\x00".
+        "\x02". "MICROSOFT NETWORKS 1.03"."\x00".
+        "\x02". "MICROSOFT NETWORKS 3.0"."\x00".
+        "\x02". "LANMAN1.0"."\x00".
+        "\x02". "LM1.2X002"."\x00".
+        "\x02". "Samba"."\x00";
+    
+    my $smb =
+        "\xffSMB".
+        pack('CCCnCnnNNnnnnn',
+            0x72,   # Negotiate protocol
+            0x00,   # Error class
+            0x00,   # Reserved
+            0x00,   # Error code
+            0x18,   # Flags1
+            0x2001, # Flags2
+            0x00,   # PID High
+            0x00,   # Signature
+            0x00,   # Signature
+            0x00,   # Reserved
+            0x00,   # Tree ID
+            $$,     # Process ID
+            0x00,   # User ID
+            $self->SMBMultiplexID
+            ).$neg;
+
     my $req =
-        "\x00\x00".
-        "\x00\x89\xFF\x53\x4D\x42\x72\x00".
-        "\x00\x00\x00\x18\x01\x20\x00\x00".
-        "\x00\x00\x00\x00\x00\x00\x00\x00".
-        "\x00\x00\x00\x00\x00\x28\x00\x00".
-        $self->SMBMultiplexID.
-        "\x00\x66\x00\x02\x50\x43".
-        "\x20\x4E\x45\x54\x57\x4F\x52\x4B".
-        "\x20\x50\x52\x4F\x47\x52\x41\x4D".
-        "\x20\x31\x2E\x30\x00\x02\x4D\x49".
-        "\x43\x52\x4F\x53\x4F\x46\x54\x20".
-        "\x4E\x45\x54\x57\x4F\x52\x4B\x53".
-        "\x20\x31\x2E\x30\x33\x00\x02\x4D".
-        "\x49\x43\x52\x4F\x53\x4F\x46\x54".
-        "\x20\x4E\x45\x54\x57\x4F\x52\x4B".
-        "\x53\x20\x33\x2e\x30\x00\x02\x4c".
-        "\x41\x4e\x4d\x41\x4e\x31\x2e\x30".
-        "\x00\x02\x4c\x4d\x31\x2e\x32\x58".
-        "\x30\x30\x32\x00\x02\x53\x61\x6d".
-        "\x62\x61\x00";
+        pack('CCn', 
+         0x00, # Session Message
+         0x00, # Flags
+         0x89, # Total length
+        ).$smb;
 	 
     $sock->Send($req);
     my $res = $self->SMBRecv();
@@ -296,7 +324,7 @@ sub SMBNegotiateClear {
         $self->SetError('Negotiate failed');
         return;
     }
-    return $resl
+    return $res;
 }
 
 
