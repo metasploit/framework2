@@ -1,9 +1,19 @@
+
 ##
-# This file is part of the Metasploit Framework and may be redistributed according
-# to the licenses defined in the Authors fields below. In the case of a an Unknown
-# license, this file defaults to using the same license as the core Framework. The
-# latest version of the Framework can always be obtained from http://metasploit.com
+# This file is part of the Metasploit Framework and may be redistributed
+# according to the licenses defined in the Authors fields below. In the
+# case of an Unknown or missing license, this file defaults to the same
+# license as the core Framework (dual GPLv2 and Artistic). The latest
+# version of the Framework can always be obtained from metasploit.com.
 ##
+
+# This file is part of the Metasploit Framework and may be redistributed
+# according to the licenses defined in the Authors fields below. In the
+# case of an Unknown or missing license, this file defaults to the same
+# license as the core Framework (dual GPLv2 and Artistic). The latest
+# version of the Framework can always be obtained from metasploit.com.
+##
+
 
 package Msf::Payload::linx86_reverse_ie;
 use strict;
