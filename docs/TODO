@@ -7,8 +7,6 @@ Pre-Release Tasks
 
  - Configure mailing list, public CVS, bugzilla, etc. Currently waiting on Savannah approval...
 
- - Reimplement the logging routines in msfconsole, determine how/if macros should be defined
- 
  - Add documentation describing how the shared config file relates to msfcli and msfconsole
 
  - Finish rewriting the configuration and logging system in msfconsole
