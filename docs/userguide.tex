@@ -1,6 +1,16 @@
+%%
+% This file is part of the Metasploit Framework and may be redistributed
+% according to the licenses defined in the Authors field below. In the
+% case of an unknown or missing license, this file defaults to the same
+% license as the core Framework (dual GPLv2 and Artistic). The latest
+% version of the Framework can always be obtained from metasploit.com.
+%%
+
 %
-% Metasploit Framework User Guide
+%   Title: Metasploit Framework User Guide
+% Version: $Revision$
 %
+
 \documentclass{report}
 \usepackage{graphicx}
 \usepackage{color}
@@ -14,13 +24,16 @@
 
 \begin{titlepage}
     \begin{center}
-        \ \\[10mm]
-		\includegraphics{images/logo.png}		
-		
-        \url{http://www.metasploit.com/} 
-		\ \\[50mm]
+        		
+%\includegraphics[scale=0.6]{images/logo.png}	
 
-        \huge{Metasploit Framework User Guide} \\[120mm]
+        \huge{Metasploit Framework User Guide}
+		\ \\[10mm]
+		\large{Version 2.3}
+		\\[120mm]
+		
+        \small{\url{http://www.metasploit.com/}}
+
         \rule{10cm}{1pt} \\[4mm]
         \renewcommand{\arraystretch}{0.5}
     \end{center}
@@ -75,7 +88,7 @@ To perform a system-wide installation, we recommend that you copy the entire
 Framework directory into a globally accessible location (/usr/local/msf) and
 then create symbolic links from the msf* applications to a directory in the
 system path (/usr/local/bin). User-specific modules can be placed into
-\$HOME/.msf/<TYPE> directory, where TYPE is one of exploits, payloads, nops, or
+\$HOME/.msf/\verb#<#TYPE\verb#># directory, where TYPE is one of exploits, payloads, nops, or
 encoders. 
 
     \section{Installation on Windows}
@@ -94,15 +107,11 @@ require jumping through hoops to solve.
     \label{INSTALL-CAVEAT}
 \par
 While we have tried to support as many platforms as possible, there are some
-compatibility bugs that have cropped up. If you plan on accessing the msfweb
-interface from a MacOS X system, be aware that Internet Explorer will experience
-problems at the last stage of the exploit process. This problem results from IE
-not being able to display incremental output from HTTP 1.0 servers. The raw
-socket support is currently non-functional in Cygwin, AIX, HP-UX, and possibly
-Solaris. This will affect your ability to spoof UDP-based attacks using the
-UdpSourceIp environment variable. Windows users may encounter problems when
-using the Win32 installer on a system that already has an older version of
-Cygwin installed. 
+compatibility bugs that have cropped up. The raw socket support is currently
+non-functional in Cygwin, AIX, HP-UX, and possibly Solaris. This will affect
+your ability to spoof UDP-based attacks using the \texttt{UdpSourceIp}
+environment variable. Windows users may encounter problems when using the Win32
+installer on a system that already has an older version of Cygwin installed. 
 
     \section{Supported Operating Systems}
     \label{INSTALL-SUPPORT}
@@ -129,25 +138,27 @@ The following platforms are known to be problematic:
 We have received numerous reports of the Framework working just fine on Solaris,
 AIX, and even the Sharp Zaurus (Linux-based). These systems often require an
 updated version of Perl in conjunction with the GNU utilities to function
-correctly. 
+correctly.
+
 
     \section{Updating the Framework}
     \label{INSTALL-UPDATE}
 \par
-Starting with version 2.2, the Framework includes the msfupdate online update
+Starting with version 2.2, the Framework includes the \texttt{msfupdate} online update
 utility. This script can be used to download and install the latest version of
 the Framework from the metasploit.com web site. It performs per-file updates by
 comparing local file checksums with those available from the web site. This
 process occurs across a validated SSL connection, assuming that the Net::SSLeay
 module has been installed. This is not completely fail-safe and still depends on
-the security of the metasploit.com web server. To learn more about the msfupdate
-tool, simply execute it with the -h argument. 
+the security of the metasploit.com web server. To learn more about the
+\texttt{msfupdate} tool, simply execute it with the -h argument. 
 
 \par
 If you would prefer to not use the online update system, you can still download
-updated modules from the metasploit.com web site. The current stable snapshot is
-available from the downloads section of the metasploit.com web site. 
+updated modules and the current stable snapshot package from the metasploit.com
+web site. 
 \pagebreak
+
 
 \chapter{Getting Started}
 
@@ -156,26 +167,29 @@ available from the downloads section of the metasploit.com web site.
 \par
 After you have installed the Framework, you should verify that everything is
 working correctly.  The quickest way to do this is to execute the
-msfconsole user interface. This interface should display an ASCII Metasploit logo, print
-the current version, number of payloads, number of exploits, and drop to a 'msf'
-prompt. From this prompt, type \texttt{help} to get a list of valid commands. You are
-currently in the 'main' mode; this allows you to list exploits, list payloads,
-and configure global options.  To list all available exploits, type \texttt{show
-exploits}. To obtain more information about a given exploit, type \texttt{info
-module\_name}. 
+\texttt{msfconsole} user interface. This interface should display an ASCII Metasploit
+logo, print the current version, number of payloads, number of exploits, and
+drop to a 'msf' prompt. From this prompt, type \texttt{help} to get a list of
+valid commands. You are currently in the 'main' mode; this allows you to list
+exploits, list payloads, and configure global options.  To list all available
+exploits, type \texttt{show exploits}. To obtain more information about a given
+exploit, type \texttt{info module\_name}. 
 
 
     \subsection{Console Efficiency}
     \label{CONSOLE-EFF}
 \par
-The console has been designed with efficiency in mind and can be used as a
-standard shell in many situations. If you enter an unknown command, the console
-will scan the system path to determine if you typed a external command. If it
-finds a match, that command will be executed with the supplied arguments. This
-allows you to use your standard set of tools without having to leave the
-console. Tab completion defaults to file-name matching when the command entered
-is not an internal console command. This allows you to navigate the file system
-normally, similar to using a bash shell.  
+The \texttt{msfconsole} interface was designed to be flexible and fast. If you
+enter a command that is not recognized by the console, it will scan the system
+path to determine if you typed a system command. If it finds a match, that
+command will be executed with the supplied arguments. This allows you to use
+your standard set of tools without having to leave the console. We highly
+recommend that you enable tab completion support, this is included by default in
+the Windows package, but may require software installation for other operating
+systems. For more information on tab completion, please refer to section
+\ref{REF-TAB}.
+
+
 
     \subsection{Selecting an Exploit}
     \label{CONSOLE-SEL}
@@ -584,6 +598,17 @@ This section covers some of the advanced features that can be found in this
 release. These features can be used in any compatible exploit and highlight the
 strength of developing attack code using an exploit framework. 
 
+\section{The Meterpreter}
+\par
+The Meterpreter is an advanced multi-function payload that can be dynamically
+extended at run-time. In normal terms, this means that it provides you with a
+basic shell and allows you to add new features to it as needed. Please refer to
+the Meterpreter documentation for an in-depth description of how it works and
+what you can do with it. The Meterpreter manual can be found in the "docs"
+subdirectory of the Framework as well as from the following URL:
+\url{http://metasploit.com/projects/Framework/docs/meterpreter.pdf}
+
+
 \section{InlineEgg Python Payloads}
 \par
 The InlineEgg library is a Python class for dynamically generating small
@@ -618,9 +643,7 @@ the network. An example InlineEgg script is included in the payloads/external
 subdirectory, called \texttt{win32\_stg\_winexec.py}. For more information about
 InlineEgg, please see Gera's web site, located at: 
 
-\begin{verbatim}
-http://community.corest.com/~gera/ProgrammingPearls/InlineEgg.html
-\end{verbatim}
+\url{http://community.corest.com/~gera/ProgrammingPearls/InlineEgg.html}
 
 
 \section{Impurity ELF Injection}
@@ -638,9 +661,8 @@ application in the data subdirectory allows you to list, access, read, write,
 and open file handles in the exploited process. The original mailing list post
 is archived online at:   
 
-\begin{verbatim}
-http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html
-\end{verbatim}
+\url{http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html}
+
 
 \section{Chainable Proxies}
 \par
@@ -760,5 +782,206 @@ submit bugs, suggest new features, and discuss the Framework with other users.
 \par
 If you would like to get involved in the development of the next version of the Framework, please contact the developers. They can be reached at: 
 msfdev [at] metasploit.com.
+
+\pagebreak
+\appendix
+
+\pagebreak
+\chapter{Security}
+
+\par
+We recommend that you use a robust, secure terminal emulator when
+utilizing the command-line interfaces. 
+
+\par
+We do not recommend that the msfweb interface be used on untrusted
+networks. Actually, we don't recommend that you use msfweb at all, it is
+more of a proof-of-concept than a real tool.
+
+\par
+We do not recommend that you install msfpayload.cgi on a web server that
+is exposed to an untrusted network. It is possible to configure it in such a
+way that it does not open any vulnerabilities, but we leave this as an
+exercise to the user (Hint: symlink to cgi-bin and remove potentially
+hazardous payloads).
+
+
+	\section{Console Interfaces}
+\par
+The console does not perform terminal escape sequence filtering, this
+could allow a hostile network service to do Bad Things (TM) to your terminal
+emulator when the exploit or check commands are used. We suggest that you
+use a terminal emulator which limits the functionality available through
+hostile escape sequences. Please see the Terminal Emulator Security Issues paper
+below for more information on this topic:
+
+\url{http://www.digitaldefense.net/labs/papers/Termulation.txt}
+
+
+	\section{Web Interface}
+\par
+The msfweb interface does not adequately filter certain arguments,
+allowing a hostile web site operator to perform a cross-site scripting
+attack on the msfweb user.
+
+\par
+The msfweb interface does not provide any access control functionality. If
+the service is configured to listen on a different interface (default is
+loopback), a malicious attacker could abuse this to exploit remote systems
+and potentially access local files. The local file access attack can be
+accomplished by malicious arguments to the payloads which use a local file
+as input and then exploiting a (fake) service to obtain the file contents.
+	
+	
+	\section{Payload CGI}
+\par
+The msfpayload.cgi script does not adequately filter certain arguments,
+allowing a hostile web site operator to perform a cross-site scripting
+attack against users of the web site hosting this script.
+
+\par
+The msfpayload.cgi script can be used to obtain information about files on
+the system on which it is installed. This can be accomplished through the
+user of certain payloads which accept a local file path as input.
+
+
+\pagebreak
+\chapter{General Tips}
+
+
+	\section{Tab Completion}
+	\label{REF-TAB}
+\par
+To enable tab-completion on standard Unix systems, simply install the
+Term::ReadLine::Gnu perl module. This module can be found at
+\url{http://search.cpan.org} as well as the "extras" subdirectory of this
+package. To install this module:
+
+\begin{verbatim}
+# cd extras
+# tar -zxf Term-ReadLine-Gnu-1.14.tar.gz
+# cd Term-ReadLine-Gnu-1.14
+# perl Makefile.PL && make && make install
+# cd .. && rm -rf Term-ReadLine-Gnu-1.14
+\end{verbatim}
+
+\par
+If you are using Mac OS X, you will need to install the GNU readline package to
+enable tab completion. 
+
+
+	\section{Secure Socket Layer}
+	\label{REF-SSL}
+\par
+To enable SSL support, simply install the Net::SSLeay perl module,
+This module can be found at \url{http://search.cpan.org} as well as the
+"extras" subdirectory of this package. To install this module:
+
+\begin{verbatim}
+# cd extras
+# tar -zxf Net_SSLeay.pm-1.23.tar.gz
+# cd Net_SSLeay.pm-1.23
+# perl Makefile.PL && make && make install
+# cd .. && rm -rf Net_SSLeay.pm-1.23
+\end{verbatim}
+
+\par
+To specify SSL mode for any given exploit, just set the "SSL" option
+to any non-false value (1, True, Yes, etc).
+
+
+\pagebreak
+\chapter{Cygwin}
+
+\par
+This chapter provides a brief description of how to install the Metasploit
+Framework in the Cygwin environment. Normal users should use pre-configured
+Win32 installer from the metasploit.com web site. 
+
+	\section{Installation}
+\par
+Cygwin is freely available from \url{http://www.cygin.com}. The front page of
+this site contains a link to a Setup.exe for the latest version. Simply
+download this file and execute it locally. When the installer starts, it
+will ask you whether you want to install from the Internet or use a local
+directory. Select the option to install from the Internet and specify the
+server to use, the directory to install it under, and where to put the
+temporary files.
+
+\par
+To support tab completion and SSL sockets, make sure you have the following
+components selected:
+
+\begin{itemize}
+\item gcc
+\item make
+\item rebase
+\item libreadline
+\item openssl-devel
+\end{itemize}
+
+\par
+InlineEgg payloads require the python interpreter to function.
+
+
+
+	\section{Configuration}
+\par
+ow that Cygwin is installed, you should install the perl modules in the extras
+subdirectory of this package. This can usually be accomplished by extracting
+each package via tar -zxf [file], changing into the directory, typing
+perl Makefile.PL, make, and make install. Tab completion makes the msfconsole
+interface extremely efficient.
+
+\par
+If you have Visual Studio installed, you may need to "unset LIBS" before trying
+to compile anything, the double-quote in the path will break certain Makefiles.
+
+
+	\section{Rebasing}
+\par
+Once you have compiled and installed all required modules, you MUST use the
+"rebase" utility before you can use the framework. If you try to load a shared
+library (compiled perl module) into your application before rebasing it, it may
+puke and die with an error like the following:
+
+\begin{verbatim}
+C:\cygwin\bin\cygperl.exe: *** unable to remap [...]
+\end{verbatim}
+
+\par
+You can obtain the latest version of it from
+\url{http://www.tishler.net/jason/software/rebase/}.
+
+
+
+\par
+The "rebaseall" application will automatically rebase the system libraries, you
+should run this at least once, especially if you plan on using InlineEgg payloads.
+To rebase the Net::SSLeay module, perform the following steps:
+
+\begin{verbatim}
+# 1: Locate the DLL file inside the perl tree
+$ find /lib/perl5 -name 'SSLeay.dll'
+
+# 2: Change the permission of the DLL to 755
+$ chmod 755 /lib/perl5/path/to/SSLeay.dll
+
+# 3: Run the rebase utility on the DLL
+$ rebase -d -b 0x4d455441 /lib/perl5/path/to/SSLeay.dll
+\end{verbatim}
+
+
+	\section{Tips}
+\par
+You can access your windows drives from the Cygwin shell through the /cygdrive
+directory. This directory is not normally visible. If you install the framework
+in C:\verb#\#Framework, you can make a link to it from inside your Cygwin home
+directory with the following command: 
+
+\begin{verbatim}
+$ ln -sf /cydrive/c/Framework framework
+\end{verbatim}
+
 
 \end{document}
