@@ -18,9 +18,9 @@
 ; NULLs are fair game.
 
 BITS 32
-global _start
+global main
 
-_start:
+main:
   push	byte 0x3b
   pop	eax
   cdq

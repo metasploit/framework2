@@ -1,7 +1,7 @@
 NASM=nasm
 STAGERS=stager_sock_bind stager_sock_find stager_sock_reverse
 STAGES=
-SINGLE=
+SINGLE=single_exec
 OBJS=${STAGERS} ${STAGES} ${SINGLE}
 
 include ../../Makefile.incl
