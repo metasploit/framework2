@@ -147,4 +147,17 @@ sub CharsInBuffer {
     return(0);
 }
 
+sub EnglishText {
+  my $size = shift;
+  my $string;
+  my $start = 33;
+  my $stop = 126;
+
+  for(my $i = 0; $i < $size; $i++) {
+    $string .= chr(int(rand($stop - $start)) + $start);
+  }
+
+  return($string);
+}
+
 1;
