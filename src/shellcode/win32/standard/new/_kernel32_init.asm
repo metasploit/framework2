@@ -1,6 +1,6 @@
 ;      Title:  Win32 kernel32.dll/GetProcAddress/LoadLibraryA
 ;  Platforms:  Windows NT 4.0, Windows 2000, Windows XP, Windows 2003
-;    Authors:  hdm, spoonm, skape, vlad, dino
+;    Authors:  hdm, spoonm, skape, vlad902, dino
 
 [BITS 32]
 
@@ -25,7 +25,7 @@ _start:
 
   ; stealing code is what we do well...
   ; Orignally written by skape (mmiler@hick.org)
-  ; Modified and optimized by vlad902 (vlad902@sig11.zemos.net)
+  ; Modified and optimized by vlad902 (vlad902@gmail.com)
   ; all based on dino code...
 
   ; in     - hash of function name
