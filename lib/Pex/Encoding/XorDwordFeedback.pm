@@ -37,22 +37,23 @@ sub Encode {
   my $pack = $self->_PackType;
   my $res;
 
-#  printf("New xor key 0x%08x $xor\n", $xor);
-
+#  printf("New xor key 0x%08x $xor - $pack\n", $xor);
+                                   
+#  print Pex::Text::BufferC($buffer);
+                                   
   for(my $c = 0; $c < length($buffer); $c += 4) {
     my $chunk = substr($buffer, $c, 4);
     my $spacing = 4 - length($chunk);
     $chunk .= "\x00" x $spacing;
     my $clean = unpack('V', $chunk);
-
-    $chunk = $clean ^ $xor;
-
+    $chunk = $clean ^ $xor;         
+                          
     # Owww, my head hurts
-    $xor = unpack($pack, pack('V', Pex::Utils::DwordAdd(
-      unpack($pack, pack('V', $xor)),
+    $xor = unpack($pack, pack('V', Pex::Utils::DwordAdd(                
+      unpack($pack, pack('V', $xor)),       
       unpack($pack, pack('V', $clean))
     )));
-
+       
 #    printf("New xor key 0x%08x $xor\n", $xor);
     $res .= substr(pack('V', $chunk), 0, 4 - $spacing);
   }
