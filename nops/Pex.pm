@@ -6,7 +6,7 @@ use Pex::Utils;
 my $info = {
   'Name'    => 'Pex Nop Generator',
   'Version' => '1.0',
-  'Author'  => 'spoonm <spoonm[at]ghettohackers.net> [Artistic License]',
+  'Author'  => 'spoonm <ninjatools [at] hush.com> [Artistic License]',
   'Arch'    => [ 'x86' ],
   'Desc'    =>  'Pex Nop Generator',
   'Refs'    => [ ],

@@ -4,7 +4,7 @@ use base 'Msf::Encoder';
 
 my $info = {
   'Name'  => 'None Encoder',
-  'Version'  => '1.0',
+  'Version'  => '$Revision$',
   'Author'  => 'spoonm <ninjatools [at] hush.com> [Artistic License]',
   'Arch'  => [ 'x86' ],
   'OS'    => [ ],

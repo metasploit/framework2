@@ -5,9 +5,9 @@ use base 'Msf::Payload';
 my $info =
 {
     Name         => 'Empty',
-    Version      => '1.0',
+    Version      => '$Revision$',
     Description  => 'Empty payload (for testing)',
-    Author       => 'spooney mc spoon spoon',
+    Author       => 'spoonm <ninjatools [at] hush.com>',
     Priv         => 0,
     Multistage   => 0,
     Type         => '',
