@@ -50,6 +50,7 @@ sub send {
 sub recv      { }
 sub blocking  { }
 sub autoflush { }
+sub shutdown  { }
 
 sub handle {
     my $self = shift;

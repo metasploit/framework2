@@ -105,8 +105,8 @@ sub Sections {
 
 sub ImageBase {
     my $self = shift;
-    $OPT_IMAGE_HDR{"ImageBase"} = hex(shift()) if @_;
-    return $OPT_IMAGE_HDR{"ImageBase"};
+    $OPT_IMAGE_HDR{'ImageBase'} = hex(shift()) if @_;
+    return $OPT_IMAGE_HDR{'ImageBase'};
 }
 
 sub LoadImage {
@@ -128,95 +128,95 @@ sub LoadImage {
     my $peo = $self->FindPEOffset(\$data);
     if (! $peo)
     {
-        $self->LastError("Could not find PE header");
+        $self->LastError('Could not find PE header');
         return(undef);
     }
     
-    $IMAGE_HDR{"MachineID"}               = unpack("v", substr($data, $peo + 4));
-    $IMAGE_HDR{"NumberOfSections"}        = unpack("v", substr($data, $peo + 6));
-    $IMAGE_HDR{"TimeDateStamp"}           = unpack("V", substr($data, $peo + 8));
-    $IMAGE_HDR{"PointerToSymbolTable"}    = unpack("V", substr($data, $peo + 12));
-    $IMAGE_HDR{"NumberOfSymbols"}         = unpack("V", substr($data, $peo + 16));
-    $IMAGE_HDR{"SizeOfOptionalHeader"}    = unpack("v", substr($data, $peo + 20));
-    $IMAGE_HDR{"Characteristics"}         = unpack("v", substr($data, $peo + 22));
+    $IMAGE_HDR{'MachineID'}               = unpack('v', substr($data, $peo + 4));
+    $IMAGE_HDR{'NumberOfSections'}        = unpack('v', substr($data, $peo + 6));
+    $IMAGE_HDR{'TimeDateStamp'}           = unpack('V', substr($data, $peo + 8));
+    $IMAGE_HDR{'PointerToSymbolTable'}    = unpack('V', substr($data, $peo + 12));
+    $IMAGE_HDR{'NumberOfSymbols'}         = unpack('V', substr($data, $peo + 16));
+    $IMAGE_HDR{'SizeOfOptionalHeader'}    = unpack('v', substr($data, $peo + 20));
+    $IMAGE_HDR{'Characteristics'}         = unpack('v', substr($data, $peo + 22));
 
-    if ($IMAGE_HDR{"SizeOfOptionalHeader"} > 0)
+    if ($IMAGE_HDR{'SizeOfOptionalHeader'} > 0)
     {
-        my $opthdr = substr($data, $peo + 24, $IMAGE_HDR{"SizeOfOptionalHeader"});
+        my $opthdr = substr($data, $peo + 24, $IMAGE_HDR{'SizeOfOptionalHeader'});
 
-        $OPT_IMAGE_HDR{"Magic"}               = unpack("v", substr($opthdr, 0));
-        $OPT_IMAGE_HDR{"MajorLinker"}         = unpack("C", substr($opthdr, 2));
-        $OPT_IMAGE_HDR{"MinorLinker"}         = unpack("C", substr($opthdr, 3));
-        $OPT_IMAGE_HDR{"SizeOfCode"}          = unpack("V", substr($opthdr, 4));
-        $OPT_IMAGE_HDR{"SizeOfInitialized"}   = unpack("V", substr($opthdr, 8));
-        $OPT_IMAGE_HDR{"SizeOfUninitialized"} = unpack("V", substr($opthdr, 12));
+        $OPT_IMAGE_HDR{'Magic'}               = unpack('v', substr($opthdr, 0));
+        $OPT_IMAGE_HDR{'MajorLinker'}         = unpack('C', substr($opthdr, 2));
+        $OPT_IMAGE_HDR{'MinorLinker'}         = unpack('C', substr($opthdr, 3));
+        $OPT_IMAGE_HDR{'SizeOfCode'}          = unpack('V', substr($opthdr, 4));
+        $OPT_IMAGE_HDR{'SizeOfInitialized'}   = unpack('V', substr($opthdr, 8));
+        $OPT_IMAGE_HDR{'SizeOfUninitialized'} = unpack('V', substr($opthdr, 12));
 
-        $OPT_IMAGE_HDR{"EntryPoint"}          = unpack("V", substr($opthdr, 16));
-        $OPT_IMAGE_HDR{"BaseOfCode"}          = unpack("V", substr($opthdr, 20));
-        $OPT_IMAGE_HDR{"BaseOfData"}          = unpack("V", substr($opthdr, 24));
+        $OPT_IMAGE_HDR{'EntryPoint'}          = unpack('V', substr($opthdr, 16));
+        $OPT_IMAGE_HDR{'BaseOfCode'}          = unpack('V', substr($opthdr, 20));
+        $OPT_IMAGE_HDR{'BaseOfData'}          = unpack('V', substr($opthdr, 24));
 
-        $OPT_IMAGE_HDR{"ImageBase"}           = unpack("V", substr($opthdr, 28));
-        $OPT_IMAGE_HDR{"SectionAlign"}        = unpack("V", substr($opthdr, 32));
-        $OPT_IMAGE_HDR{"FileAlign"}           = unpack("V", substr($opthdr, 36));
+        $OPT_IMAGE_HDR{'ImageBase'}           = unpack('V', substr($opthdr, 28));
+        $OPT_IMAGE_HDR{'SectionAlign'}        = unpack('V', substr($opthdr, 32));
+        $OPT_IMAGE_HDR{'FileAlign'}           = unpack('V', substr($opthdr, 36));
 
-        $OPT_IMAGE_HDR{"MajorOS"}             = unpack("v", substr($opthdr, 38));
-        $OPT_IMAGE_HDR{"MinorOS"}             = unpack("v", substr($opthdr, 40));
-        $OPT_IMAGE_HDR{"MajorImage"}          = unpack("v", substr($opthdr, 42));
-        $OPT_IMAGE_HDR{"MinorImage"}          = unpack("v", substr($opthdr, 44));
-        $OPT_IMAGE_HDR{"MajorSub"}            = unpack("v", substr($opthdr, 46));
-        $OPT_IMAGE_HDR{"MinorSub"}            = unpack("v", substr($opthdr, 48));
+        $OPT_IMAGE_HDR{'MajorOS'}             = unpack('v', substr($opthdr, 38));
+        $OPT_IMAGE_HDR{'MinorOS'}             = unpack('v', substr($opthdr, 40));
+        $OPT_IMAGE_HDR{'MajorImage'}          = unpack('v', substr($opthdr, 42));
+        $OPT_IMAGE_HDR{'MinorImage'}          = unpack('v', substr($opthdr, 44));
+        $OPT_IMAGE_HDR{'MajorSub'}            = unpack('v', substr($opthdr, 46));
+        $OPT_IMAGE_HDR{'MinorSub'}            = unpack('v', substr($opthdr, 48));
 
-        $OPT_IMAGE_HDR{"Reserved"}            = unpack("V", substr($opthdr, 52));
-        $OPT_IMAGE_HDR{"SizeOfImage"}         = unpack("V", substr($opthdr, 56));
-        $OPT_IMAGE_HDR{"SizeOfHeaders"}       = unpack("V", substr($opthdr, 60));
-        $OPT_IMAGE_HDR{"Checksum"}            = unpack("V", substr($opthdr, 64));
-        $OPT_IMAGE_HDR{"Subsystem"}           = unpack("v", substr($opthdr, 68));
-        $OPT_IMAGE_HDR{"DllCharacteristics"}  = unpack("v", substr($opthdr, 70));
-        $OPT_IMAGE_HDR{"SizeOfStackReserve"}  = unpack("V", substr($opthdr, 72));
-        $OPT_IMAGE_HDR{"SizeOfStackCommit"}   = unpack("V", substr($opthdr, 76));
-        $OPT_IMAGE_HDR{"SizeOfHeapReserve"}   = unpack("V", substr($opthdr, 80));
-        $OPT_IMAGE_HDR{"SizeOfHeapCommit"}    = unpack("V", substr($opthdr, 84));
-        $OPT_IMAGE_HDR{"LoaderFlags"}         = unpack("V", substr($opthdr, 88));
-        $OPT_IMAGE_HDR{"NumberOfRvaAndSizes"} = unpack("V", substr($opthdr, 92));
+        $OPT_IMAGE_HDR{'Reserved'}            = unpack('V', substr($opthdr, 52));
+        $OPT_IMAGE_HDR{'SizeOfImage'}         = unpack('V', substr($opthdr, 56));
+        $OPT_IMAGE_HDR{'SizeOfHeaders'}       = unpack('V', substr($opthdr, 60));
+        $OPT_IMAGE_HDR{'Checksum'}            = unpack('V', substr($opthdr, 64));
+        $OPT_IMAGE_HDR{'Subsystem'}           = unpack('v', substr($opthdr, 68));
+        $OPT_IMAGE_HDR{'DllCharacteristics'}  = unpack('v', substr($opthdr, 70));
+        $OPT_IMAGE_HDR{'SizeOfStackReserve'}  = unpack('V', substr($opthdr, 72));
+        $OPT_IMAGE_HDR{'SizeOfStackCommit'}   = unpack('V', substr($opthdr, 76));
+        $OPT_IMAGE_HDR{'SizeOfHeapReserve'}   = unpack('V', substr($opthdr, 80));
+        $OPT_IMAGE_HDR{'SizeOfHeapCommit'}    = unpack('V', substr($opthdr, 84));
+        $OPT_IMAGE_HDR{'LoaderFlags'}         = unpack('V', substr($opthdr, 88));
+        $OPT_IMAGE_HDR{'NumberOfRvaAndSizes'} = unpack('V', substr($opthdr, 92));
 
         my @RVAMAP =
         (
-            "export",
-            "import",
-            "resource",
-            "exception",
-            "certificate",
-            "basereloc",
-            "debug",
-            "archspec",
-            "globalptr",
-            "tls",
-            "load_config",
-            "boundimport",
-            "importaddress",
-            "delayimport",
-            "comruntime",
-            "none"
+            'export',
+            'import',
+            'resource',
+            'exception',
+            'certificate',
+            'basereloc',
+            'debug',
+            'archspec',
+            'globalptr',
+            'tls',
+            'load_config',
+            'boundimport',
+            'importaddress',
+            'delayimport',
+            'comruntime',
+            'none'
         );
 
         # parse the rva data
-        my $rva_data = substr($opthdr, 96, $OPT_IMAGE_HDR{"NumberOfRvaAndSizes"} * 8 );
-        for (my $x = 0; $x < $OPT_IMAGE_HDR{"NumberOfRvaAndSizes"}; $x++)
+        my $rva_data = substr($opthdr, 96, $OPT_IMAGE_HDR{'NumberOfRvaAndSizes'} * 8 );
+        for (my $x = 0; $x < $OPT_IMAGE_HDR{'NumberOfRvaAndSizes'}; $x++)
         {
             if (! $RVAMAP[$x]) { $RVAMAP[$x] = "unknown_$x" }
             $RVA{ $RVAMAP[$x] } =
                         [
-                            unpack("V", substr($rva_data, ($x * 8))),
-                            unpack("V", substr($rva_data, ($x * 8) + 4)),
+                            unpack('V', substr($rva_data, ($x * 8))),
+                            unpack('V', substr($rva_data, ($x * 8) + 4)),
                         ];
         }
     }
     
     # parse the section headers
-    my $sec_begn = $peo + 24 + $IMAGE_HDR{"SizeOfOptionalHeader"};
+    my $sec_begn = $peo + 24 + $IMAGE_HDR{'SizeOfOptionalHeader'};
     my $sec_data = substr($data, $sec_begn);
     
-    for (my $x = 0; $x < $IMAGE_HDR{"NumberOfSections"}; $x++)
+    for (my $x = 0; $x < $IMAGE_HDR{'NumberOfSections'}; $x++)
     {
         my $sec_head = $sec_begn + ($x * 40);
         my $sec_name = substr($data, $sec_head, 8);
@@ -224,10 +224,10 @@ sub LoadImage {
 
         $SECTIONS{$sec_name} =
                     [
-                       unpack("V", substr($data, $sec_head +  8)),
-                       unpack("V", substr($data, $sec_head +  12)),
-                       unpack("V", substr($data, $sec_head +  16)),
-                       unpack("V", substr($data, $sec_head +  20)), 
+                       unpack('V', substr($data, $sec_head +  8)),
+                       unpack('V', substr($data, $sec_head +  12)),
+                       unpack('V', substr($data, $sec_head +  16)),
+                       unpack('V', substr($data, $sec_head +  20)), 
                     ];
                     
         # delta to virtual from file offset inside this section
@@ -251,7 +251,7 @@ sub OffsetToVirtual {
 
     # if this image has no optional header and defined image base,
     # just return zero since we can't calculate the virtual
-    if (! $OPT_IMAGE_HDR{"ImageBase"})
+    if (! $OPT_IMAGE_HDR{'ImageBase'})
     {
         return(0);
     }
@@ -260,19 +260,19 @@ sub OffsetToVirtual {
     {
         if ($offset >= $SECTIONS{$_}->[3] && $offset < ($SECTIONS{$_}->[3] + $SECTIONS{$_}->[2]))
         {
-            return($OPT_IMAGE_HDR{"ImageBase"} + $offset + $SECTIONS{$_}->[4]);
+            return($OPT_IMAGE_HDR{'ImageBase'} + $offset + $SECTIONS{$_}->[4]);
         }
     }   
         
     # not in any given section, return the offset + ImageBase    
-    return($OPT_IMAGE_HDR{"ImageBase"} + $offset);
+    return($OPT_IMAGE_HDR{'ImageBase'} + $offset);
 }
 
 sub VirtualToOffset {
     my ($self, $virtual) = @_;
     if (! $virtual) { return(0) }
     
-    $virtual -= $OPT_IMAGE_HDR{"ImageBase"};
+    $virtual -= $OPT_IMAGE_HDR{'ImageBase'};
     
     foreach (keys(%SECTIONS)) 
     {
@@ -286,8 +286,8 @@ sub VirtualToOffset {
 
 sub FindPEOffset {
     my ($self, $data_ref) = @_;
-    my $peo = unpack("V", substr(${$data_ref}, 0x3c, 4));
-    if (substr(${$data_ref}, 0, 2) ne "MZ"  || substr(${$data_ref}, $peo, 2) ne "PE") { return undef } 
+    my $peo = unpack('V', substr(${$data_ref}, 0x3c, 4));
+    if (substr(${$data_ref}, 0, 2) ne 'MZ'  || substr(${$data_ref}, $peo, 2) ne 'PE') { return undef } 
     return($peo);
 }
 

@@ -25,6 +25,7 @@ use Pex::Text;
 # randomizing them by default by using nop-equivalents.
 #
 
+# XXX - This really should get moved elsewhere some day...
 # Nops(length, { opts });
 sub Nops {
   my $defaultOpts = {
@@ -174,7 +175,7 @@ sub RorHash
 
 
 #
-# Rotate a 32-bit value to the right by $cnt bits
+# Rotate a 32-bit value to the right by $cnt bits (stupidly)
 #
 
 sub Ror
@@ -186,7 +187,7 @@ sub Ror
 }
 
 #
-# Rotate a 32-bit value to the left by $cnt bits
+# Rotate a 32-bit value to the left by $cnt bits (stupidly)
 #
 
 sub Rol
