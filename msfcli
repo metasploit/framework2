@@ -48,6 +48,11 @@ my $payloadsIndex = $ui->LoadPayloads;
 my $encoders = $ui->LoadEncoders;
 my $nops     = $ui->LoadNops;
 
+$ui->SetTempEnv('_Exploits', $exploitsIndex);
+$ui->SetTempEnv('_Payloads', $payloadsIndex);
+$ui->SetTempEnv('_Encoders', $encoders);
+$ui->SetTempEnv('_Nops', $nops);
+
 # A quick note:
 # The Load methods return a hash of instantiated objects
 # We should instantiate new objects when we are going to use them
@@ -86,10 +91,6 @@ if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
 }
 
 # Mmmmm, candy
-$ui->SetTempEnv('_Exploits', $exploits);
-$ui->SetTempEnv('_Payloads', $payloads);
-$ui->SetTempEnv('_Encoders', $encoders);
-$ui->SetTempEnv('_Nops', $nops);
 
 $ui->SetTempEnv('_Exploit', $exploit);
 $ui->SetTempEnv('_PayloadName', $payloadName);
