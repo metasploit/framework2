@@ -235,7 +235,7 @@ sub _BuildFPUs {
 
 # This is a *really* bad method of doing this, temporary
 sub _OutcomeTest {
-  use Digest::MD5;
+  use Digest::Perl::MD5;
   my $class = shift;
   my $times = shift;
   my $outcomes = { };
@@ -252,7 +252,7 @@ sub _OutcomeTest {
     $delta->AddData($decoder);
     my $decoder = $delta->Build;
 
-    $outcomes->{Digest::MD5::md5($decoder)}++;
+    $outcomes->{Digest::Perl::MD5::md5($decoder)}++;
   }
   return(scalar(keys(%{$outcomes})));
 }
