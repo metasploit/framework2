@@ -41,7 +41,7 @@ wsa_startup:
   WSA_CALL_WSASTART
 
 make_socket:
-  ; call WSASocketA, get a tcp socket (screw the stack)
+  ; call WSASocketA, get a tcp socket
   WSA_CALL_SOCKET 'tcp'
   ; we got the socket in edi
 
