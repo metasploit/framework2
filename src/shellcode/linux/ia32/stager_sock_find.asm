@@ -31,7 +31,6 @@ initialize_stack:
 	push esi
 	push ebx
 	mov  ecx, esp
-;	shr  ebx, 0x8
 	xchg bh, bl
 
 findtag:
