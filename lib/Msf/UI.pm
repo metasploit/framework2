@@ -363,6 +363,7 @@ sub Encode {
 
     if(length($nops) != $nopSize) {
       $self->PrintDebugLine(2, "$nopName failed, error generating nops");
+      $self->PrintDebugLine(5, 'length: ' . length($nops) . 'wanted: ' . $nopSize);
       next;
     }
 
