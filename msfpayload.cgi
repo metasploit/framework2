@@ -102,6 +102,7 @@ if (! $action)
     PrintRow("Authors",         join(" ", $p->Authors));
     PrintRow("Architecture",    join(" ", @{$p->Arch}));
     PrintRow("Privileged",      ($p->Priv ? "Yes" : "No"));
+    PrintRow("Multistage",      ($p->Multistage ? "Yes" : "No"));
     PrintRow("Supported OS",    join(" ", @{$p->OS()}));
     PrintRow("Handler Type",    $p->Type);
     PrintRow("Total Size",      $p->Size);
@@ -159,6 +160,13 @@ if ($action eq "BUILD")
             {
                 $badchars_bin .= chr(hex($hc));
                 $badchars_str .= sprintf("\\x%.2x", hex($hc));
+            } else {
+                # it isn't hex char... maybe just plain char?
+                foreach (split(//, $hc))
+                {
+                    $badchars_bin .= $_;
+                    $badchars_str .= sprintf("\\x%.2x", ord($_));  
+                }              
             }
         }
         $ui->SetTempEnv('BadChars', $badchars_bin);
@@ -184,6 +192,12 @@ if ($action eq "BUILD")
     $optstr .= " Size=" . length($r);
 
     my ($sC, $sP) = (Pex::Utils::BufferC($r), Pex::Utils::BufferPerl($r));
+    
+    if ($p->Multistage)
+    {
+        print "<b>Warning:</b> Multistage payloads only return first stage<br><br>\n";
+    }
+    
     print "<pre>\n";
     
     print "/* $sel - $ctitle [$optstr ] http://metasploit.com */\n";

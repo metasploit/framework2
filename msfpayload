@@ -83,6 +83,7 @@ if (! $action || $action =~ /^S/)
     print "     Authors: " . join(" ", @{$p->Authors}) . "\n";
     print "Architecture: " . join(" ", @{$p->Arch}) . "\n";
     print "  Privileged: " . ($p->Priv ? "Yes" : "No") . "\n";
+    print "  Multistage: " . ($p->Multistage ? "Yes" : "No") . "\n";
     print "Supported OS: " . join(" ", @{$p->OS()}) . "\n";
     print "Handler Type: " . $p->Type . "\n";
     print "  Total Size: " . $p->Size . "\n\n";
@@ -109,6 +110,11 @@ if (! $s)
 }
 
 if ($action =~ /^R/) { print $s->RawPayload; exit; }
+
+if ($p->Multistage)
+{
+    print STDERR "Warning: Multistage payloads only return first stage\n\n";
+}
 
 my $r = $action =~ /^C/ ? Pex::Utils::BufferC($s->RawPayload) : Pex::Utils::BufferPerl($s->RawPayload);
 

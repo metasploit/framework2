@@ -163,6 +163,7 @@ sub DumpPayloadSummary {
     $output .= "    Version: ".  $p->Version . "\n";
     $output .= "     OS/CPU: " . join(", ", @{$p->OS}) . "/" . join(", ", @{$p->Arch}) . "\n"; 
     $output .= "Needs Admin: " . ($p->Priv ? "Yes" : "No") . "\n";
+    $output .= " Multistage: " . ($p->Multistage ? "Yes" : "No") . "\n";
     $output .= " Total Size: " . $p->Size . "\n";
     $output .= "\n";
     
