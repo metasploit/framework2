@@ -215,7 +215,7 @@ sub _RecvGobble {
   my ($ready) = $selector->can_read($timeout);
 
   if(!$ready) {
-    # $self->SetError("Timeout $timeout reached."); # there could be data from buffer anyway
+    $self->SetError("Timeout $timeout reached."); # there could be data from buffer anyway
     return($data);
   }
 

@@ -45,10 +45,21 @@ sub new {
   return($self);
 }
 
+sub SSLFd {
+  my $self = shift;
+  $self->{'SSLFd'} = shift if(@_);
+  return($self->{'SSLFd'});
+}
+sub SSLCtx {
+  my $self = shift;
+  $self->{'SSLCtx'} = shift if(@_);
+  return($self->{'SSLCtx'});
+}
+
 sub Close {
   my $self = shift;
-  Net::SSLeay::Free($self->{'SSLFd'});
-  Net::SSLeay::CTX_free($self->{'SSLCtx'});
+  Net::SSLeay::Free($self->SSLFd);
+  Net::SSLeay::CTX_free($self->SSLCtx);
   $self->SUPER::Close;
 }
 
@@ -58,24 +69,26 @@ sub _MakeSocket {
 
   my $sock = $self->Socket;
 
-  print "-$sock -\n";
+  $sock->blocking(1);
 
   # Create SSL Context
-  $self->{'SSLCtx'} = Net::SSLeay::CTX_new();
+  $self->SSLCtx(Net::SSLeay::CTX_new());
   # Configure session for maximum interoperability
-  Net::SSLeay::CTX_set_options($self->{'SSLCtx'}, &Net::SSLeay::OP_ALL);
+  Net::SSLeay::CTX_set_options($self->SSLCtx, &Net::SSLeay::OP_ALL);
   # Create the SSL file descriptor
-  $self->{'SSLFd'}  = Net::SSLeay::new($self->{'SSLCtx'});
+  $self->SSLFd(Net::SSLeay::new($self->SSLCtx));
   # Bind the SSL descriptor to the socket
-  Net::SSLeay::set_fd($self->{'SSLFd'}, $sock->fileno);        
+  Net::SSLeay::set_fd($self->SSLFd, $sock->fileno);        
   # Negotiate connection
-  my $sslConn = Net::SSLeay::connect($self->{'SSLFd'});
+  my $sslConn = Net::SSLeay::connect($self->SSLFd);
 
   if($sslConn <= 0) {
     $self->SetError('Error setting up ssl: ' . Net::SSLeay::print_errs());
     $sock->close;
     return;
   }
+
+  $sock->blocking(0);
 
   return($sock->fileno);
 }
@@ -92,7 +105,7 @@ sub _RecvSSL {
     my $data = Net::SSLeay::read($self->{'SSLFd'});
     if(!length($data)) {
       if(!--$sslEmptyRead) {
-        $self->SetError(Net::SSLeay::ERR_get_error());
+        $self->SetError(Net::SSLeay::print_errs());
         return;
       }
       select(undef, undef, undef, .1);
@@ -101,6 +114,12 @@ sub _RecvSSL {
       return($data);
     }
   }
+}
+
+sub _DoSend {
+  my $self = shift;
+  my $data = shift;
+  return(Net::SSLeay::ssl_write_all($self->{'SSLFd'}, $data));
 }
 
 sub _DoRecv {
@@ -112,10 +131,13 @@ sub _DoRecv {
 
 sub _UnitTest {
   my $class = shift;
-  my $sock = __PACKAGE__->new('PeerAddr' => 'metasploit.com', 'PeerPort' => '443');
+  print STDOUT "Connecting to ssl google.com:443\n";
+  my $sock = __PACKAGE__->new('PeerAddr' => 'google.com', 'PeerPort', 443);
   if(!$sock || $sock->IsError) {
     print STDOUT "Error creating socket: $!\n";
+    return;
   }
+  $class->_UnitTestGoogle($sock);
 }
 
 1;

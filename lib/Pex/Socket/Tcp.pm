@@ -187,6 +187,21 @@ sub _UnitTest {
     print STDOUT "Error creating socket: $!\n";
     return;
   }
+  $class->_UnitTestGoogle($sock);
+}
+
+sub _UnitTestGoogle {
+  my $class = shift;
+  my $sock = shift;
+
+  print STDOUT "Trying a Recv timeout.\n";
+
+  my $data = $sock->Recv(-1, 2);
+  if(!length($data) || $sock->IsError) {
+    print STDOUT "Error in Recv: " . $sock->GetError . "\n";
+  }
+ 
+  $sock->ClearError;
 
   $sock->Send("GET / HTTP/1.0\r\n\r\n");
 
