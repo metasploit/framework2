@@ -27,17 +27,24 @@ sub Nops {
   my $length = shift;
   my $arch = @_ ? shift : 'x86'; # default to x86
   my $random = @_ ? shift : 1;   # default to random
+  my $badchars = @_ ? shift : '';
 
   # Stole from ADMutate, thanks k2
   my @nops;
   my $nops =
   {
+  
     "x86" => "\x90\x96\x97\x95\x93\x91\x99\x4d\x48\x47\x4f\x40\x41\x37\x3f\x97".
              "\x46\x4e\xf8\x92\xfc\x98\x27\x2f\x9f\xf9\x4a\x44\x42\x43\x49\x4b".
              "\xf5\x45\x4c",
   };
 
   return undef if ! exists($nops->{$arch});
+  if(length($badchars)) {
+    my $foo = '[' . quotemeta($badchars) . ']';
+    $nops->{'x86'} =~ s/$foo//g;
+  }
+
   @nops = split('', $nops->{$arch});
   
   return ($nops[0] x $length) if (! $random);

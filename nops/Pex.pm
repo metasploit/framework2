@@ -34,7 +34,7 @@ sub Nops {
     $random = 0;
   }
 
-  return(Pex::Utils::Nops($length, 'x86', $random));
+  return(Pex::Utils::Nops($length, 'x86', $random, $exploit->PayloadBadChars));
 }
 
 1;
