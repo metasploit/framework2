@@ -20,16 +20,6 @@ sub new {
   return($self);
 }
 
-sub Protocol
-{
-  my $self = shift;
-  my $proto = $self->_Info->{'Protocol'};
-
-  $proto = 'tcp' if not defined($proto);
-
-  return $proto;
-}
-
 sub SetupHandler {
   my $self = shift;
   $self->PrintLine('[*] Starting Bind Handler.');
@@ -43,7 +33,7 @@ sub CheckHandler {
   my $sock = IO::Socket::INET->new(
     'PeerHost'  => $host,
     'PeerPort'  => $port,
-    'Proto'     => $self->Protocol,
+    'Proto'     => 'tcp',
     'Timeout'   => 10,
   );
   
