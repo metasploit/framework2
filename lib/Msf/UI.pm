@@ -61,7 +61,7 @@ sub LoadPayloads {
     my $res = $self->LoadModules($dir, 'Msf::Payload::');
     foreach my $pay (keys (%{ $res }))
     {
-        if (! $res->{$pay}->{'Info'}->{'Size'})
+        if (! $res->{$pay}->Size)
         {
             # XXX- should this default to on?
             $self->PrintLine("[*] Could not load module $pay");
