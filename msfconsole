@@ -836,8 +836,8 @@ sub RestoreTemp {
 sub FillTemp {
   $ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
   $ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
-  $ui->SetTempEnv('_Encoders', $encoders);
-  $ui->SetTempEnv('_Nops', $nops);
+  $ui->SetTempEnv('_Encoders', $encodersIndex);
+  $ui->SetTempEnv('_Nops', $nopsIndex);
 
   $ui->SetTempEnv('_Exploits', $exploits);
   $ui->SetTempEnv('_Payloads', $payloads);
