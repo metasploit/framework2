@@ -283,7 +283,7 @@ sub DisplayPayloads {
             print "<table width='100%' cellpadding=4 cellspacing=0 border=0>\n";
             foreach my $pay (sort(keys(%{$ost->{$arch}->{$proc}}))) {
                 print "<tr>\n";
-                print "<td width=20 align='left'>".sprintf("%.4d", $payloads->{$pay}->Size)." bytes </td>";
+                print "<td align='left'>".sprintf("%.4d", $payloads->{$pay}->Size)." bytes </td>";
                 print "<td align='left'><a href='".$ENV{'SCRIPT_NAME'}."?PAYLOAD=$pay'>$pay</a> - ";
                 print $payloads->{$pay}->Description."</td>";
                 print "</tr>\n";
