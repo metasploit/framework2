@@ -17,38 +17,29 @@
 package Pex::Socket::Tcp;
 use strict;
 use base 'Pex::Socket::Socket';
-use IO::Socket;
-use IO::Select;
 
-sub SetOptions {
+sub new {
+  my $class = shift;
+  my $self = bless({ }, $class);
+
+  my $hash = { @_ };
+  return($self->_newSSL(@_));
+  $self->SetOptions($hash);
+
+  return if(!$self->_MakeSocket);
+  return($self)
+}
+
+sub _newSSL {
   my $self = shift;
-  my $hash = shift;
-
-  if(exists($hash->{'SSL'})) {
-    my $use = $hash->{'SSL'};
-    if($SSL_SUPPORT == 0 && $use) {
-      $self->SetError('UseSSL option is set, but Net::SSLeay has not been installed.');
-      return;
-    }
-    $self->UseSSL($use);
-  }
-  
-  if(exists($hash->{'Timeout'})) {
-    $self->SetTimeout($hash->{'Timeout'});
-  }
-  
-  if(exists($hash->{'SpoofIP'})) {
-    $self->SetSpoofIP($hash->{'SpoofIP'});
-  }  
-  
-  return;
+  return(Pex::Socket::SSLTcp(@_));
 }
 
 
 sub Proxies {
   my $self = shift;
   $self->{'Proxies'} = shift if(@_);
-  $self->{'Proxies'} = [ ] if(ref($self->{'Proxies'} ne 'ARRAY');
+  $self->{'Proxies'} = [ ] if(ref($self->{'Proxies'} ne 'ARRAY'));
   return($self->{'Proxies'});
 }
 
