@@ -102,7 +102,7 @@ Usage() if $action !~ /^C|^P|^R/;
 my $s = $ui->Encode;
 if (! $s)
 {
-    print "Error: " . $p->Error() . "\n";
+    print "Error: " . $ui->Error() . "\n";
     exit(0);
 }
 
