@@ -282,6 +282,7 @@ sub Encode {
     }
     if(!Pex::Utils::CheckKeys($exploit->EncoderKeys, $encoder->Keys, $exploit->EncoderKeysType)) {
       $self->PrintDebugLine(2, "$encoderName failed Keys check");
+      next;
     }
     
     my $rawShell = $exploit->PayloadPrepend . $payload->Build . $exploit->PayloadAppend;
