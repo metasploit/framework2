@@ -197,7 +197,7 @@ sub Encode {
   }
 
   foreach my $encoderName (@encoders) {
-    $self->PrintDebugLine(1, "Tring $encoderName");
+    $self->PrintDebugLine(1, "Trying encoder $encoderName");
     my $encoder = $self->MakeEncoder($encoderName);
     if(!$encoder) {
       $self->PrintDebugLine(1, "Failed to make encoder $encoderName");

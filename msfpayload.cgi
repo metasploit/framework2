@@ -24,19 +24,34 @@ use POSIX;
 use Pex;
 use CGI qw/:standard/;
 
+open (STDERR, ">/dev/null");
+
 my $query = new CGI; 
 print $query->header();
 
 my $ui = Msf::TextUI->new($RealBin);
+$ui->SetTempEnv('_MsfPayload', 1);
 
-my $payloadsIndex = $ui->LoadPayloads;
-my $payloads = { };
 my $opt = { };
-
+my $exploits = { };
+my $payloads = { };
+my $exploitsIndex = $ui->LoadExploits;
+my $payloadsIndex = $ui->LoadPayloads;
+my $encoders = $ui->LoadEncoders;
+my $nops     = $ui->LoadNops;
 
 foreach my $key (keys(%{$payloadsIndex})) {
     $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
 }
+
+foreach my $key (keys(%{$exploitsIndex})) {
+    $exploits->{$exploitsIndex->{$key}->Name} = $exploitsIndex->{$key};
+}
+
+$ui->SetTempEnv('_Exploits', $exploitsIndex);
+$ui->SetTempEnv('_Payloads', $payloadsIndex);
+$ui->SetTempEnv('_Encoders', $encoders);
+$ui->SetTempEnv('_Nops', $nops);
 
 my @params = defined($query->param) ? $query->param : ( );
 
@@ -60,6 +75,18 @@ if (! exists($opt->{'PAYLOAD'}) || ! exists($payloads->{$opt->{'PAYLOAD'}}))
 my $sel = $opt->{'PAYLOAD'};
 my $p = $payloads->{$sel};
 my $popts = $p->UserOpts;
+
+if (! $p)
+{
+    DisplayHeader("Payload Error");
+    print "Invalid payload selected.\n";
+    DisplayFooter();
+    exit(0);
+}
+
+$ui->SetTempEnv('_Exploit', $exploits->{'Tester'});
+$ui->SetTempEnv('_PayloadName', $sel);
+$ui->SetTempEnv('_Payload', $p);
 
 if (! $action)
 {   
@@ -100,7 +127,7 @@ if (! $action)
     
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     PrintRow("Encode Payload", "<input type='checkbox' name='ENCODE' CHECKED'>");
-    PrintRow("Bad Characters", "<input type='text' name='BADCHARS' value='0x00'>");
+    PrintRow("Bad Characters", "<input type='text' name='BadChars' value='0x00'>");
     print "</table><br>\n";
     print "<center><input type='submit' value='Generate Shellcode'><br></center>\n";
     print $query->end_form;
@@ -123,21 +150,22 @@ if ($action eq "BUILD")
     }
 
 
-    my $s = $p->Build($opt);
+    my $s = $p->Encode;
     if (! $s)
     {
-        print "<b>Error</b>: Shellcode build error: " . $p->Error() . "<br>\n";
+        print "<b>Error</b>: Shellcode build error: " . $ui->Error() . "<br>\n";
         DisplayFooter();
         exit(0);
     }
+    my $r = $s->RawPayload;
 
     my $ctitle = "Raw Shellcode";
     
-    if (defined($opt->{'BADCHARS'}) && defined($opt->{'ENCODE'}))
+    if (defined($opt->{'BadChars'}) && defined($opt->{'ENCODE'}))
     {
         $ctitle = "Encoded Shellcode [";
         my $badchars;
-        foreach my $hc (split(/\s+/, $opt->{'BADCHARS'}))
+        foreach my $hc (split(/\s+/, $opt->{'BadChars'}))
         {
             if ($hc =~ m/^0x(.|..)/) 
             {
@@ -147,29 +175,19 @@ if ($action eq "BUILD")
         }
         $ctitle .= "]";
         
-        my $e = Pex::Encoder::Encode($s, $badchars);
-        if (! $e)
-        {
-            print "<b>Error</b>: The encoder was not able to encode this payload<br>\n";
-            DisplayFooter();
-            exit(0);
-        }
-        $s = $e;
+        $r = $s->EncodedPayload;
     }
 
-    $optstr .= " Size=" . length($s);
+    $optstr .= " Size=" . length($r);
 
-    my ($sC, $sP) = (Pex::Utils::BufferC($s), Pex::Utils::BufferPerl($s));
+    my ($sC, $sP) = (Pex::Utils::BufferC($r), Pex::Utils::BufferPerl($r));
     print "<pre>\n";
     
-    print "/* $sel - $ctitle [$optstr ] http://metasploit.com /*\n";
+    print "/* $sel - $ctitle [$optstr ] http://metasploit.com */\n";
     print "unsigned char scode[] =\n$sC\n\n\n";
     
     print "# $sel - $ctitle [$optstr ] http://metasploit.com\n";
     print "my \$shellcode =\n$sP\n\n\n";
-
-
-
 
     DisplayFooter();
     exit(0);
