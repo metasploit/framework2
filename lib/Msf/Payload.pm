@@ -62,4 +62,58 @@ sub Generate {
   return;
 }
 
+#
+# Substitutes variable offsets (if defined) with values from the environment.
+#
+sub SubstituteVariables # (self, hash, payload)
+{
+	my $self = shift;
+	my $hash = shift;
+	my $payload = shift;
+	my $opts = $hash->{'Offsets'};
+
+	# If there are offsets...
+	if (defined($opts))
+	{
+		# Enumerate through all of the options
+		foreach my $opt (keys(%{ $opts }))
+		{
+			my ($offset, $pack) = @{ $hash->{'Offsets'}->{$opt} };
+			my $type = $opts->{$opt}->[1];
+			my $value;
+				
+			$self->PrintDebugLine(3, "Payload: searching for opt=$opt type=$type");
+	
+			# If there is a corresponding environment variable for the option...
+			if ((defined($value = $self->GetVar($opt))) or
+			    (defined($value = $self->GetLocal($opt))))
+			{
+				$self->PrintDebugLine(3, "Payload: replacing opt=$opt type=$type value=$value");
+	
+				if ($type eq 'ADDR')
+				{
+					$value = gethostbyname($value)
+				}
+				elsif ($type eq 'RAW')
+				{
+					# Just use whatever we were given
+				}
+				else
+				{
+					$value = pack($pack, $value);
+				}
+				
+				# Replace with the value at the supplied offset for this variable
+				substr($payload, $offset, length($value), $value);
+			}
+			else
+			{
+				$self->PrintDebugLine(3, "Payload: not replacing opt=$opt type=$type");	
+			}
+		}
+	}
+
+	return $payload;
+}
+
 1;
