@@ -129,7 +129,7 @@ sub NinjaSetupHandler {
   $sock->autoflush(1);
   $self->NinjaSock($sock);
   $self->NinjaSelector(IO::Select->new($sock));
-  $self->PrintLine('[*] Starting SocketNinja Handler.');
+  $self->PrintLine('[*] Starting socketNinja Handler.');
 }
 
 sub NinjaCheckHandler {
@@ -142,7 +142,7 @@ sub NinjaCheckHandler {
     return if(!length($data));
 
     if($data =~ /Added server/) {
-      $self->PrintLine('[*] Socket Ninja has new connection.');
+      $self->PrintLine('[*] socketNinja has new connection.');
       return(1);
     }
   }
@@ -162,7 +162,7 @@ sub NinjaShutdownHandler {
   if($self->NinjaSock) {
     $self->NinjaSock->shutdown(2);
   }
-  $self->PrintLine('[*] Exiting SocketNinja Handler.');
+  $self->PrintLine('[*] Exiting socketNinja Handler.');
 }
 
 1;
