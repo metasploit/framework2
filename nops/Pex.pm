@@ -13,7 +13,8 @@ my $info = {
 };
 
 my $advanced = {
-  'Random' => [0, 'Use random nop equivalent instructions, otherwise default to 0x90'],
+  'RandomNops' => [0, 'Use random nop equivalent instructions, otherwise default to 0x90'],
+
 };
 
 sub new {
@@ -25,7 +26,7 @@ sub Nops {
   my $self = shift;
   my $length = shift;
 
-  return(Pex::Utils::Nops($length, 'x86', $self->GetLocal('Random')));
+  return(Pex::Utils::Nops($length, 'x86', $self->GetLocal('RandomNops')));
 }
 
 1;
