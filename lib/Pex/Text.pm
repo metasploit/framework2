@@ -146,6 +146,34 @@ sub AlphaNumText {
   return($data);
 }
 
+# inverse a string of chars, include all the bytes it doesn't include...
+# inverse of 0x00 .. 0x80 = 0x81 .. 0xff, etc
+sub InverseChars {
+  my $badChars = shift;
+  my $chars;
+  foreach my $c (0x00 .. 0xff) {
+    $c = chr($c);
+    if(index($badChars, $c) == -1) {
+      $chars .= $c;
+    }
+  }
+  return($chars);
+}
+
+# size, BadCharsString...
+sub RandomChars {
+  my $size = shift;
+  my $badChars = shift;
+  my @chars = split('', InverseChars($badChars));
+  my $data;
+
+  while($size--) {
+    $data .= $chars[int(rand(@chars))];
+  }
+
+  return($data);
+}
+
 sub RandomData {
   my $size = shift;
   my $string;
