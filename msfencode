@@ -28,6 +28,8 @@ use Msf::ColPrint;
 use Pex;
 use Pex::Text;
 
+no utf8;
+
 Msf::UI::ActiveStateSucks();
 my $ui = Msf::TextUI->new($RealBin);
 

@@ -25,10 +25,11 @@ use IO::Socket;
 use POSIX;
 use Getopt::Std;
 
-
 use Pex::PsuedoShell;
 use Msf::TextUI;
 use Pex;
+
+no utf8;
 
 Msf::UI::ActiveStateSucks();
 

@@ -27,6 +27,8 @@ use POSIX;
 use IO::Socket;
 use Getopt::Std;
 
+no utf8;
+
 Msf::UI::ActiveStateSucks();
 
 my $ui = Msf::WebUI->new($RealBin);

@@ -26,6 +26,7 @@ use POSIX;
 use Msf::TextUI;
 use Pex;
 
+no utf8;
 
 Msf::UI::ActiveStateSucks();
 

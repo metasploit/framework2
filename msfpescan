@@ -25,6 +25,8 @@ use Pex::PEInfo;
 use Pex;
 use Pex::Nasm::Ndisasm;
 
+no utf8;
+
 my $VERSION = '$Revision$';
 
 my %opts = ();

@@ -13,6 +13,8 @@ use IO::Socket;
 use IO::Select;
 use POSIX;
 
+no utf8;
+
 my $VERSION = '$Revision$';
 my ($REV)   = $VERSION =~ m/\$Revisio.:\s+([^\$]+)/;
 my $UPDATE_HOST = "metasploit.com";

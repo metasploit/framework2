@@ -36,6 +36,8 @@ use lib "$RealBin/lib";
 use Pex::PEInfo;
 use Pex;
 
+no utf8;
+
 my %opts;
 getopts('h', \%opts);
 

@@ -24,6 +24,8 @@ use POSIX;
 use Pex;
 use CGI qw/:standard/;
 
+no utf8;
+
 chdir($RealBin);
 
 Msf::UI::ActiveStateSucks();
