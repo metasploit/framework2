@@ -20,7 +20,7 @@ sub new {
 
 sub EncodePayload {
   my $self = shift;
-  my $rwashell = shift;
+  my $rawshell = shift;
   my $badChars = shift;
   return(Pex::Encoder::Encode($rawshell, $badChars));
 }
