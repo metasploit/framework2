@@ -1697,14 +1697,22 @@ qq[
 		
 
 		unlink($cache_file);
-		if (! open (CACHE, ">$cache_file")) {
+		if (! open (CACHE, ">>$cache_file")) {
 			print STDERR "Could not open cache file: $!\n";
 			$eout->close;
 			$pout->close;
 			exit(0);
 		}
 
-		my $cache = IO::Handle->new_from_fd(fileno(CACHE), "a+");
+		my $cache = IO::Handle->new_from_fd(fileno(CACHE), ">");
+		
+		if (not defined($cache)) {
+			print STDERR "Could not open cache file: $!\n";
+			$eout->close;
+			$pout->close;
+			exit(0);
+		}
+
 		$cache->blocking(0);
 		$cache->autoflush(1);
 		
@@ -1721,7 +1729,7 @@ qq[
 
 			my @rdy = $sel->can_read(0.25);
 			foreach my $fd (@rdy) {
-				
+
 				# Output from the shell
 				if ($fd eq $eout) {
 					my ($data, $buff);
@@ -1734,7 +1742,7 @@ qq[
 				if ($fd eq $pout) {
 					my $data = $pout->getline;
 					chomp ($data);
-					
+				
 					if ($data eq 'SHUTDOWN') {
 						$keepRunning = 0;
 						next;
