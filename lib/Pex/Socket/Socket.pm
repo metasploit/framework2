@@ -202,8 +202,8 @@ sub _DoSend {
   eval {
     $bytes = $self->Socket->send(@_);
   };
-  
-  return if(defined($@));
+
+  return if(length($@));
   return($bytes);
 }
 
