@@ -46,7 +46,7 @@ sub Nops {
   $self->_BadRegs($badRegs);
   $self->_BadChars($badChars);
 
-  return($self->_GenerateSlide($length));
+  return($self->_GenerateSled($length));
 }
 
 sub _BadRegs {

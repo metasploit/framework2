@@ -148,7 +148,7 @@ my $table = [
 # there is kinda a bug maybe to be fixed... last 2 bytes are always single
 # byte nops, and they don't have to be... it's the way the pos stuff is done
 
-sub _GenerateSlide {
+sub _GenerateSled {
   my $self = shift;
   my $len = shift;
 
