@@ -93,9 +93,9 @@ sub DisplayFooter {
 sub DisplayPayloads {
     print $query->start_form;
     print "Select a payload";
-    foreach my $p (keys(%{$plugins}))
+    foreach my $p (keys(%{$payloads}))
     {
-        print "<input type='radio' name='PAYLOAD' value='$p'>".$plugins->{$p}->Name."<br>\n";
+        print "<input type='radio' name='PAYLOAD' value='$p'>".$payloads->{$p}->Name."<br>\n";
     }
     print "<input type='submit' value='Select Payload'><br>\n";
     print $query->end_form;
