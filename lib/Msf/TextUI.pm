@@ -6,6 +6,11 @@ use Msf::ColPrint;
 sub new {
   my $class = shift;
   my $self = $class->SUPER::new(@_);
+  
+  # configure STDERR/STDERR for text display
+  select(STDERR); $|++;
+  select(STDOUT); $|++;
+  
   return($self);
 }
 
@@ -137,6 +142,7 @@ sub DumpPayloadSummary {
     $output .= "    Version: ".  $p->Version . "\n";
     $output .= "     OS/CPU: " . join(", ", @{$p->OS}) . "/" . join(", ", @{$p->Arch}) . "\n"; 
     $output .= "Needs Admin: " . ($p->Priv ? "Yes" : "No") . "\n";
+    $output .= " Total Size: " . $p->Size . "\n";
     $output .= "\n";
     
     $output .= "Provided By:\n";

@@ -1,5 +1,8 @@
 package Msf::Base;
 use strict;
+
+use FindBin qw {$Bin $RealBin $Script $RealScript};
+
 #fixme Temporary hack
 use Msf::Encoder;
 use Msf::Nop;
@@ -50,11 +53,19 @@ sub GetEnv {
       return($env->{$key});
     }
   }
-#fixme more than two envs...
+# fixme more than two envs...
   return($self->MergeHash($envs[0], $envs[1]));
 }
 
-#fixme SetEnv...
+# fixme SetEnv...
+# the cli wont work until this does, setting Temp
+sub SetEnv {
+  my $self = shift;
+  my $key = shift;
+  my $val = shift;
+  return $self->SetTempEnv($key, $val);
+}
+
 
 sub GetGlobalEnv {
   my $self = shift;
@@ -251,7 +262,12 @@ sub SelfName {
 
 sub ScriptPath {
   my $self = shift;
-  return(File::Spec::Functions::rel2abs($0));
+  return "$Bin/$Script";
+}
+
+sub ScriptBase {
+  my $Self = shift;
+  return $Bin;
 }
 
 sub FatalError {

@@ -14,7 +14,7 @@ my $info =
     Keys         => '', 
     Multistage   => 0,
     Type         => 'reverse_shell',
-    Size         => '',
+    Size         => 0,
     UserOpts     =>
         {
             'LHOST' => [1, 'ADDR', 'Local address to receive connection'],
@@ -24,7 +24,8 @@ my $info =
 
 sub new {
     my $class = shift;
-    my $self = $class->SUPER::new({'Info' => $info, 'Filename' => 'external/linx86reverse_ie.py'}, @_);
+    my $self = $class->SUPER::new({'Info' => $info}, @_);
+    $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86reverse_ie.py';
     $self->{'Info'}->{'Size'} = $self->_GenSize;
     return($self);
 }

@@ -95,52 +95,6 @@ sub LoadModules {
     return($res);
 }
 
-sub LoadPayloads_old
-{
-    my $self = shift;
-    my $dir = @_ ? shift : $self->_BaseDir . '/payloads';
-    my $int = $dir . '/internal';
-    my $ext = $dir . '/external';
-    my $res = {};
-    
-    return $res if ! -d $dir;
-    
-    # Load internal payloads first
-    if (opendir(PAY, $int))
-    {
-        while (defined(my $entry = readdir(PAY)))
-        {
-            my $path = "$int/$entry";
-            next if ! -f $path;
-
-            my $pay = Pex::Payload->new($path, "i");
-            $res->{$pay->Name()} = $pay if $pay;
-        }
-        closedir(PAY);
-    }
-    
-    # Now load all external payloads
-    if (opendir(PAY, $ext))
-    {
-        while (defined(my $entry = readdir(PAY)))
-        {
-            my $path = "$ext/$entry";
-            if (! $^O eq "MSWin32")
-            {
-                next if ! -x $path;
-            } else {
-                next if ! -f $path;
-            }
-            
-            my $pay = Pex::Payload->new($path, "e");
-            $res->{$pay->Name()} = $pay if $pay;
-        }
-        closedir(PAY);
-    }    
-    
-    return($res);
-}
-
 sub MatchPayloads {
   my $self = shift;
   my $exploit = shift;

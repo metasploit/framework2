@@ -14,7 +14,7 @@ my $info =
     Keys         => '', 
     Multistage   => 0,
     Type         => 'bind_shell',
-    Size         => '',
+    Size         => 0,
     UserOpts     =>
         {
             'LPORT' => [1, 'PORT', 'Listening port for bind shell'],
@@ -23,7 +23,8 @@ my $info =
 
 sub new {
     my $class = shift;
-    my $self = $class->SUPER::new({'Info' => $info, 'Filename' => 'external/linx86bind_ie.py'}, @_);
+    my $self = $class->SUPER::new({'Info' => $info}, @_);
+    $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86bind_ie.py';
     $self->{'Info'}->{'Size'} = $self->_GenSize;
     return($self);
 }

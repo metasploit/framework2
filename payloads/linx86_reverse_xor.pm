@@ -14,7 +14,7 @@ my $info =
     Keys         => '', 
     Multistage   => 0,
     Type         => 'reverse_shell_xor',
-    Size         => '',
+    Size         => 0,
     UserOpts     =>
         {
             'LHOST' => [1, 'ADDR', 'Local address to receive connection'],
@@ -25,7 +25,8 @@ my $info =
 
 sub new {
     my $class = shift;
-    my $self = $class->SUPER::new({'Info' => $info, 'Filename' => 'external/linx86reverse_xor.py'}, @_);
+    my $self = $class->SUPER::new({'Info' => $info}, @_);
+    $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86reverse_xor.py';
     $self->{'Info'}->{'Size'} = $self->_GenSize;
     return($self);
 }
@@ -36,3 +37,4 @@ sub _GenSize
     my $bin = $self->Generate({LHOST => '127.0.0.1', 'LPORT' => '4444', 'XKEY' => '55'});
     return length($bin);
 }
+

@@ -42,8 +42,11 @@ sub Generate {
   foreach (keys(%{$opts})) {
     $args .= $_ . '=' . $opts->{$_} . ' ';
   }
+  
+  # print "External: $prog $args\n";
 
-  if(! -e $prog) {
+  if(! -e $prog) 
+  {
     $self->SetError("Program $prog does not exist");
     return;
   }
