@@ -30,9 +30,9 @@ main:
 	st	%o0, [ %sp - 0x08 ]
 
 	set	0xff027a68, %l0
-	xor	%l1, %l1, %l1
+# XXX: Possible to somehow use "std" here? (use g1/i7 instead of l0?)
 	st	%l0, [ %sp - 0x10 ]
-	st	%l1, [ %sp - 0x0c ]
+	st	%g0, [ %sp - 0x0c ]
 	sub	%sp, 16, %o1
 	mov	0x10, %o2
 	mov	0x68, %g1
