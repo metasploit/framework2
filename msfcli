@@ -58,10 +58,8 @@ foreach my $key (sort(keys(%{$exploitsIndex}))) {
     $exploits->{$exploitsIndex->{$key}->SelfEndName}=$exploitsIndex->{$key};
 }
 
-# Generate payloads index
-# Payloads are now indexed by Name instead of package name
 foreach my $key (keys(%{$payloadsIndex})) {
-  $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
+  $payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
 }
 
 if(!defined($mod)) {
