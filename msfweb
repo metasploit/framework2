@@ -65,8 +65,8 @@ my %config	=
 	'Reload'	=> 0,
 	'Theme'		=> 'default',
 	'ThemeDir'	=> "$RealBin/data/msfweb/themes",
-	'CacheDir'	=> "$RealBin/data/msfweb/cache",
 	'IconDir'	=> "$RealBin/data/msfweb/icons",
+	'CacheDir'	=> $ui->_DotMsfDir. "/msfweb",	
 	'Defanged'	=> 0,
 );
 
@@ -132,8 +132,17 @@ if (exists($args{'D'})) {
 my $bindstr = $config{'BindAddr'}. ':' .$config{'BindPort'};
 print STDERR "+----=[ Metasploit Framework Web Interface ($bindstr)\n\n";
 
+# Create the .msf directory if it does not exist
+if (! -d $ui->_DotMsfDir) {
+	mkdir($ui->_DotMsfDir, 0700);
+};
 
-# Verify the cache directory exists and is writable
+# Create the cache directory if it does not exist
+if (! -d $config{'CacheDir'}) {
+	mkdir($config{'CacheDir'}, 0700);
+}
+
+# Check to see if we can write files to the cache directory
 if (! -d $config{'CacheDir'} || ! open(T, ">>".$config{'CacheDir'}.'/.test') ) {
 	print STDERR "ERROR: the specified cache directory is not accessible: $!\n";
 	exit(1);
