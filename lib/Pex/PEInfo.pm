@@ -332,13 +332,17 @@ sub LoadImage {
         my $sec_name = substr($data, $sec_head, 8);
         $sec_name =~ s/\x00//g;
 
-        $SECTIONS{$sec_name} =
-                    [
-                       unpack('VVVV', substr($data, $sec_head + 8,  16)), 
-                    ];
-                    
-        # delta to virtual from file offset inside this section
-        $SECTIONS{$sec_name}->[4] = $SECTIONS{$sec_name}->[1] - $SECTIONS{$sec_name}->[3];
+		  $SECTIONS{$sec_name} = {};
+		  $SECTIONS{$sec_name}->{'VirtualSize'}            = unpack("V", substr($data, $sec_head +  8, 4));
+		  $SECTIONS{$sec_name}->{'VirtualAddress'}         = unpack("V", substr($data, $sec_head + 12, 4));
+		  $SECTIONS{$sec_name}->{'SizeOfRawData'}          = unpack("V", substr($data, $sec_head + 16, 4));
+		  $SECTIONS{$sec_name}->{'PointerToRawData'}       = unpack("V", substr($data, $sec_head + 20, 4));
+		  $SECTIONS{$sec_name}->{'PointerToRelocations'}   = unpack("V", substr($data, $sec_head + 24, 4));
+		  $SECTIONS{$sec_name}->{'PointerToLinenumbers'}   = unpack("V", substr($data, $sec_head + 28, 4));
+		  $SECTIONS{$sec_name}->{'NumberOfRelocations'}    = unpack("v", substr($data, $sec_head + 32, 2));
+		  $SECTIONS{$sec_name}->{'NumberOfLinenumbers'}    = unpack("v", substr($data, $sec_head + 34, 2));
+		  $SECTIONS{$sec_name}->{'Characteristics'}        = unpack("V", substr($data, $sec_head + 36, 4));
+        $SECTIONS{$sec_name}->{'PhysToVirtDisplacement'} = $SECTIONS{$sec_name}->{'VirtualAddress'} - $SECTIONS{$sec_name}->{'PointerToRawData'};
     }  
 
     $self->{'IMG_HDR'}      = \%IMAGE_HDR;
@@ -823,10 +827,12 @@ sub OffsetToRVA {
     my ($self, $offset) = @_;
     return 0 if ! defined($offset);
     foreach (keys %{ $self->{'SECTIONS'} })  {
-        my @section = @{ $self->{'SECTIONS'}->{$_} };
-        if ( $offset >= $section[3] && $offset < ($section[2] + $section[3]) ) {
-            return $offset + $section[4];
-        }
+        my $section = $self->{'SECTIONS'}->{$_};
+		  if (($offset >= $section->{'PointerToRawData'}) and
+		      ($offset < $section->{'PointerToRawData'} + $section->{'SizeOfRawData'}))
+			{
+				return $offset + $section->{'PhysToVirtDisplacement'};
+			}
     }   
 }
 
@@ -834,10 +840,12 @@ sub RVAToOffset {
     my ($self, $virtual) = @_;
     return 0 if ! defined($virtual);
     foreach (keys %{ $self->{'SECTIONS'} }) {
-        my @section = @{ $self->{'SECTIONS'}->{$_} };
-        if ($virtual >= $section[1] && $virtual <= ($section[0] + $section[1])) {
-            return $virtual - $section[4];
-        }
+		  my $section = $self->{'SECTIONS'}->{$_};
+		  if (($virtual >= $section->{'VirtualAddress'}) and
+		 	   ($virtual < $section->{'VirtualAddress'} + $section->{'VirtualSize'}))
+			{
+				return $virtual - $section->{'PhysToVirtDisplacement'};
+			}
     }
 }
 
