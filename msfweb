@@ -78,11 +78,12 @@ my %config	=
 	'ThemeDir'	=> "$RealBin/data/msfweb/themes",
 	'CacheDir'	=> "$RealBin/data/msfweb/cache",
 	'IconDir'	=> "$RealBin/data/msfweb/icons",
+	'Defanged'	=> 0,
 );
 
 
 # Process the command line options
-getopts("a:l:v:p:t:T:C:r:h", \%args);
+getopts("a:l:v:p:t:T:C:r:hD", \%args);
 
 # Show the help output
 if ($args{'h'}) { Usage() }
@@ -134,6 +135,10 @@ if (exists($args{'r'})) {
 	$config{'Reload'}++;
 }
 
+# Check for 'defanged' option
+if (exists($args{'D'})) {
+	$config{'Defanged'}++;
+}
 
 my $bindstr = $config{'BindAddr'}. ':' .$config{'BindPort'};
 print STDERR "+----=[ Metasploit Framework Web Interface ($bindstr)\n\n";
@@ -162,6 +167,10 @@ if (! -r  $config{'IconDir'} .'/win32.gif') {
 	exit(1);
 }
 $ui->SetTempEnv('_IconDir', $config{'IconDir'});
+
+
+# Set defanged mode if needed...
+$ui->SetTempEnv('_Defanged', $config{'Defanged'});
 
 
 # Create the inital list of modules
@@ -424,8 +433,8 @@ sub ProcessWebRequest {
 		}						
 
         $res .= "<table width='100%' cellspacing=0 border=0 cellpadding=0>\n";
-		$res .= "<tr><td id='moduleIcons' align='center'>$icons</td>";
-		$res .= "<td id='moduleName'><div class='textBold'>$mname</div></td></tr>\n";
+		$res .= "<tr><td class='moduleIcons' align='center'>$icons</td>";
+		$res .= "<td class='moduleName'><div class='textBold'>$mname</div></td></tr>\n";
 		$res .= "</table><br>\n";
     }
 
@@ -530,7 +539,7 @@ sub HTML_Footer {
 </table>
 
 <div align='center' class='copy'>
-	<br>copyright &copy 2003-2005 metasploit.com<br><br>
+	<br>copyright &copy; 2003-2005 metasploit.com<br><br>
 </div>
 </body>
 </html>
@@ -935,7 +944,7 @@ sub ModuleList
 
 
 	$mList .= qq[ 
-<table id='moduleList' width='100%' cellspacing=0 border=0>
+<table class='moduleList' width='100%' cellspacing=0 border=0>
 
 ];
 
@@ -949,12 +958,12 @@ sub ModuleList
 			$icons  .= "<img src='/RESOURCE?ICON=". $_ ."' border=0 class='iconset' alt='".$_."'> ";
 		}
 		$mList .= "<tr>";
-		$mList .= "<td id='moduleIcons' align='center'>$icons</td>";
-		$mList .= "<td id='moduleName'><a href='/". uc($mtype) ."?MODE=SELECT&amp;MODULE=".URLEncode($ename)."'>";
+		$mList .= "<td class='moduleIcons' align='center'>$icons</td>";
+		$mList .= "<td class='moduleName'><a href='/". uc($mtype) ."?MODE=SELECT&amp;MODULE=".URLEncode($ename)."'>";
 		$mList .= $mod->Name ."</a></td>";
 		$mList .= "</tr>\n";
 		
-		$mList .= "<tr><td id='moduleSpacer' colspan=2></tr>\n";
+		$mList .= "<tr><td class='moduleSpacer' colspan=2></tr>\n";
 		
 	}
 	
@@ -1551,8 +1560,17 @@ sub ExploitExec
         $res .= "</form>\n";
         $res .= "<hr><br><br>\n";
         $res .= "<br><div class='textBold'>Check Results:</div>";
-		$res .= "<div class='textNormal'>" . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br>\n";
-        $res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
+
+		if ($ui->GetTempEnv('_Defanged')) {
+				$res .= "<br><div class='textBold'>This server has been started in 'Defanged' mode. ";
+				$res .= "Check and Exploit options are not available...</div>\n";
+				return $res;
+		} 
+		else {
+			$res .= "<div class='textNormal'>" . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br>\n";
+        	$res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
+		}
+		
         return $res;
     }
     $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";
@@ -1562,6 +1580,11 @@ sub ExploitExec
         return $res;
     }
     
+	if ($ui->GetTempEnv('_Defanged')) {
+			$res .= "<br><div class='textBold'>This server has been started in 'Defanged' mode. ";
+			$res .= "Check and Exploit options are not available...</div>\n";
+			return $res;
+	} 
   
     # We hijack the socket from the web service
     my $bout = $state->{'client'};

@@ -181,25 +181,25 @@ select {
 	border: 1px solid white;
 }
 
-#moduleList
+.moduleList
 {
 	white-space: nowrap;
 }
 
-#moduleIcons
+.moduleIcons
 {
 	border-top: 1px solid #aaaaaa;
 	border-left: 1em solid #aaaaaa;
 	padding: 0.5em 0em 0em 0.25em;
 }
 		
-#moduleName
+.moduleName
 {
 	border-top: 1px solid #aaaaaa;
 	padding: 0.5em 0.5em 0em 0em;
 }
 
-#moduleSpacer 
+.moduleSpacer 
 {
 	padding: 10px 0px 0px 0px;
 	margin: 0;
