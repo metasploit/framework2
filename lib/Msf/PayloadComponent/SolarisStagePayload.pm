@@ -11,6 +11,12 @@ sub import {
   }
 }
 
+sub SolarisStagePayload {
+  my $self = shift;
+  return($self->_Info->{'SolarisStagePayload'});
+  
+}
+
 sub HandleConnection {
   my $self = shift;
   $self->SUPER::HandleConnection;
@@ -18,10 +24,7 @@ sub HandleConnection {
   my $blocking = $sock->blocking;
   $sock->blocking(1);
 
-  $self->_Info->{'SolarisPayload'} = $self->_Info->{'SolarisStagePayload'};
-  $self->InitSol;
-
-  my $payload = $self->Build;
+  my $payload = $self->BuildSolaris($self->SolarisStagePayload);
 
   $self->PrintLine('[*] Sending Stage (' . length($payload) . ' bytes)');
   $sock->send($payload);

