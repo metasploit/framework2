@@ -48,15 +48,14 @@ my $VERSION = $ui->Version;
 $ui->SetGlobalEnv('_Console', 'Msf::PayloadComponent::WebConsole');
 
 my @sections = qw{ EXPLOITS PAYLOADS SESSIONS ADMIN LOGS };
-my $exploits = { };
-my $payloads = { };
-my $encoders = { };
-my $nops     = { };
+
 
 my $exploitsIndex;
 my $payloadsIndex;
 my $encodersIndex;
-
+my $nopsIndex;
+my $exploits	= { };
+my $payloads	= { };
 my $moduleKeys	= { };
 my $moduleArch	= { };
 my $moduleOS	= { };
@@ -244,7 +243,7 @@ sub ProcessWebRequest {
 		}						
 
         $res .= "<table width=100% bgcolor='black'>\n";
-		$res .= "<tr><td class='textBold'>Module: $mname</td></tr>\n";
+		$res .= "<tr><td class='textBoldWhite'>Module: $mname</td></tr>\n";
 		$res .= "</table><br/>\n";
     }
 
@@ -324,11 +323,8 @@ sub HTML_Header {
 	my $width = int( 100 / scalar(@sections) ) .'%';
 	foreach my $section (@sections) {
 		$lastTab = ($lastTab eq 'tabLight') ? 'tabDark' : 'tabLight';
-		$currTab = ($section eq $req->{'base'}) ? 'tabActive' : $lastTab;
-		
-		$header .= qq[
-                <td class='$currTab' width='$width' align='center'> <a href='/$section'>$section</a> </td>		
-		];
+		$currTab = ($section eq $req->{'base'}) ? 'tabActive' : $lastTab;		
+		$header .= qq[ <td class='$currTab' width='$width' align='center'> <a href='/$section'>$section</a> </td> ];
 	}
 	$header .= qq[
         </tr>
@@ -372,7 +368,8 @@ sub StateToURL {
 	
     foreach (keys(%{$state})) {
         next if $_ eq "client";
-        
+        next if $_ eq "parent";
+		
         my $value = $_ eq "MODE" ? $mode : $state->{$_};
         $res .= $_ . "=" . URLEncode($value) . "&";
     }
@@ -683,6 +680,23 @@ sub PayloadEncoders {
 	return %res;
 }
 
+sub PayloadNops {
+	my $payloadArch	= shift;
+	my $payloadOS	= shift;
+	my %res;
+	
+	foreach my $nopName (keys %{ $nopsIndex }) {
+		my $nop		= $nopsIndex->{$nopName};		
+		my $nopArch	= $nop->Arch;
+		my $nopOS	= $nop->OS;
+
+		next if ! $ui->ListCheck($payloadArch,	$nopArch);
+		next if ! $ui->ListCheck($payloadOS,	$nopOS);
+		$res{ $nopName } = $nop;
+	}
+	return %res;
+}
+
 sub PayloadOptions
 {
     my ($state) = @_;
@@ -714,13 +728,14 @@ sub PayloadOptions
 
         my $dflt = $popts->{$popt}->[3];
         my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
-        
+        my $colc = $popts->{$popt}->[0] ? "textBold" : "textBoldGrey";
+		
         $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
         
-        $res .= "<tr><td class='textBold'>$popt</td>".
-                "<td class='textBold'>$reqd</td>".
-				"<td class='textBold'>". $popts->{$popt}->[1] ."</td>".
-                "<td class='textBold'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+        $res .= "<tr><td class='$colc'>$popt</td>".
+                "<td class='$colc'>$reqd</td>".
+				"<td class='$colc'>". $popts->{$popt}->[1] ."</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
                 "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
 	
@@ -745,7 +760,7 @@ sub PayloadOptions
 		my %encoderList = PayloadEncoders($p->Arch, $p->OS);
 		
 		$res .= "<tr><td colspan=6 class='textBold'>";
-		$res .= "Preferred Encoder:<br\> ";
+		$res .= "Selected Encoder:<br\> ";
 		$res .= "<select name='ENCODER' size=1>\n";
 		$res .= "<option value='default'> Default Encoder\n";
 		foreach my $encoderName (keys %encoderList) {
@@ -803,7 +818,7 @@ sub PayloadGenerate
 	my %encoderList	= PayloadEncoders($payloadArch, $payloadOS);
 	my $encoderOpt	= $state->{'ENCODER'};
 	
-	if ($encoderOpt ne 'default' && ! exists($encoderList{$encoderOpt})) {
+	if (scalar(@{ $p->Arch }) && $encoderOpt ne 'default' && ! exists($encoderList{$encoderOpt})) {
 		return "<div class='textBold'>Invalid encoder specified!</div>";
 	}
 	
@@ -969,6 +984,8 @@ sub ExploitOptions
     $res .= "<form action='$burl' method='GET'>\n";
     foreach (keys(%{$state})) {
         next if $_ eq 'client';
+		next if $_ eq 'parent';
+		
         if ($_ ne "MODE") {
             $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
         } else {
@@ -982,15 +999,16 @@ sub ExploitOptions
     foreach my $mopt (sort(keys(%{$mopts}))) {
         my $dflt = $mopts->{$mopt}->[3];
         my $reqd = $mopts->{$mopt}->[0] ? "Required" : "Optional";
+		my $colc = $mopts->{$mopt}->[0] ? "textBold" : "textBoldGrey";
 		
 		if (exists($x->AutoOpts->{$mopt})) {
 			$dflt = $x->AutoOpts->{$mopt};
 		}
 		
-        $res .= "<tr><td class='textBold'>$mopt</td>".
-                "<td class='textBold'>$reqd</td>".
-				"<td class='textBold'>". $mopts->{$mopt}->[1] ."</td>".
-                "<td class='textBold'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
+        $res .= "<tr><td class='$colc'>$mopt</td>".
+                "<td class='$colc'>$reqd</td>".
+				"<td class='$colc'>". $mopts->{$mopt}->[1] ."</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
                 "<td class='textNormal'>".$mopts->{$mopt}->[2]."</td></tr>\n";
     }
     
@@ -998,23 +1016,58 @@ sub ExploitOptions
 
         my $dflt = $popts->{$popt}->[3];
         my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
-        
+        my $colc = $popts->{$popt}->[0] ? "textBold" : "textBoldGrey";
+		
         $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
  
  		if (exists($x->AutoOpts->{$popt})) {
 			$dflt = $x->AutoOpts->{$popt};
 		}
 		       
-        $res .= "<tr><td class='textBold'>$popt</td>".
-                "<td class='textBold'>$reqd</td>".
-				"<td class='textBold'>". $popts->{$popt}->[1] ."</td>".
-                "<td class='textBold'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+        $res .= "<tr><td class='$colc'>$popt</td>".
+                "<td class='$colc'>$reqd</td>".
+				"<td class='$colc'>". $popts->{$popt}->[1] ."</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
                 "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
     
-    $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
-    $res .= "<tr><td colspan=6><input type='submit' name='ExploitAction' value='Vulnerability Check'></td></tr>\n";
-    $res .= "<tr><td colspan=6><input type='submit' name='ExploitAction' value='Launch Exploit'></td></tr>\n";
+	if ($p && scalar @{$p->Arch}) {
+
+    	$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+		my %encoderList = PayloadEncoders($p->Arch, $p->OS);
+
+		$res .= "<tr>\n";
+		$res .= "<td colspan=3 class='textBold'>";
+		$res .= "Preferred Encoder:<br\> ";
+		$res .= "<select name='ENCODER' size=1>\n";
+		$res .= "<option value='default'> Default Encoder\n";
+		foreach my $encoderName (keys %encoderList) {
+			$res .= "<option> $encoderName\n";
+		}	
+		$res .= "</select>\n";
+		$res .= "</td>\n";	
+
+
+		my %nopList = PayloadNops($p->Arch, $p->OS);
+		$res .= "<td colspan=3 class='textBold'>";
+		$res .= "Nop Generator:<br\> ";
+		$res .= "<select name='NOP' size=1>\n";
+		$res .= "<option value='default'> Default Generator\n";
+		foreach my $nopName (keys %nopList) {
+			$res .= "<option> $nopName\n";
+		}	
+		$res .= "</select>\n";
+		$res .= "</td>";
+		$res .= "</tr>\n";		
+
+    	$res .= "<td colspan=3>&nbsp;</td></tr>\n";	
+	}
+		
+    $res .= "<tr>";
+	$res .= "<td colspan=3 align='right'> <input type='submit' name='ExploitAction' value='Check'> </td>";
+    $res .= "<td colspan=3 align='left'> <input type='submit' name='ExploitAction' value='Exploit'> </td>";
+	$res .= "</tr>\n";
+	
     $res .= "</form>\n";
     $res .= "</table>\n";
     return $res;
@@ -1043,6 +1096,14 @@ sub ExploitExec
     my $payloadName = $ui->GetEnv('PAYLOAD');
     my $payload = $validPayloads->{$payloadName};
 
+	if ($state->{'NOP'} && $state->{'NOP'} ne 'default') {
+		$ui->SetTempEnv('Nop', $state->{'NOP'});
+	}
+	
+	if ($state->{'ENCODER'} && $state->{'ENCODER'} ne 'default') {
+		$ui->SetTempEnv('Encoder', $state->{'ENCODER'});
+	}
+
     # Mmmmm, candy
     $ui->SetTempEnv('_Exploits', $exploits);
     $ui->SetTempEnv('_Payloads', $payloads);
@@ -1050,7 +1111,7 @@ sub ExploitExec
     $ui->SetTempEnv('_PayloadName', $payloadName);
     $ui->SetTempEnv('_Payload', $payload);
     $ui->SetTempEnv('_ValidPayloads', $validPayloads);
-    $exploit->ApplyAutoOpts;
+    $ui->SetTempEnv('_UI', $ui);
    
     
     if ($state->{"ExploitAction"} eq "Vulnerability Check") {
@@ -1078,10 +1139,13 @@ sub ExploitExec
         return $res;
     }
     
-    
+  
     # We hijack the socket from the web service
-    my $Browser = $state->{'client'};
+    my $bout = $state->{'client'};
+	my $pout = $state->{'parent'};
 
+	print STDERR "WTF ($bout, $pout)\n";
+		
 	# Use chunked transfer mode to return partial responses
 	my $out = "HTTP/1.1 200 OK\r\n".
 	          "Connection: close\r\n".
@@ -1089,7 +1153,7 @@ sub ExploitExec
 			  "Content-Type: text/html\r\n".
 			  "Transfer-Encoding: chunked\r\n\r\n";
 	
-    $Browser->Send($out);
+    $bout->Send($out);
 	
 	$out = HTML_Header().
            "<div class='moduleOutput'>\n".
@@ -1111,26 +1175,24 @@ qq[
 		"<hr size=1 width='80%'><br\>".	
 		"<div align='left' class='moduleOutput' bgcolor='#dddddd'>\n".
 		"<blockquote><blockquote>\n\n";
-	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
+	$bout->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
 	
 	# Ask the parent for a session ID
-	$state->{'parent'}->printflush("SESSION\n");
-	my $raw = $state->{'parent'}->getline;
+	$pout->printflush("SESSION\n");
+	my $raw = $pout->getline;
+	
 	
 	if (! $raw || $raw !~ /SID ([0-9]{0,16})/ ) {
-		$out = "<div class='textBold'>msfweb: unable to obtain session...</div>";
-		$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
+		$out = "[*] <div class='textBold'>msfweb: unable to obtain session...</div>";
+		$bout->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 		exit(0);
 	}
 	
 	my ($sid) = $raw =~ m/SID ([0-9]{0,16})/g;
 
-	# debugging
-	$out = "[*] msfweb starting with session $sid<br/>\n";
-	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
-	# Setup a false stdio for the child process
+	# Configure stdio for the child process
 	my ($einp, $eout, $einp_sock, $eout_sock);
 	
 	socketpair($einp_sock, $eout_sock, AF_UNIX, SOCK_STREAM, PF_UNSPEC);
@@ -1141,9 +1203,9 @@ qq[
 	# Configure the environment...
 	$ui->SetTempEnv('_PipeInput',  $einp);
 	$ui->SetTempEnv('_PipeOutput', $einp);
-	$ui->SetTempEnv('_GhettoIPC',  $state->{'parent'});
+	$ui->SetTempEnv('_GhettoIPC',  $pout);
 	$ui->SetTempEnv('_SessionID',  $sid);
-    $ui->SetTempEnv('_BrowserSocket', $Browser);	
+    $ui->SetTempEnv('_BrowserSocket', $bout);	
 	
 	# Save the parent pid
 	my $top = $$;
@@ -1153,9 +1215,7 @@ qq[
 	
 	# The main process will keep our IPC open as long as we stay alive
 	if ($epid) {
-
-		my $pout = $state->{'parent'};
-				
+	
 		# Wait for the go-ahead message from the parent
 		my $ok = $pout->getline;
 		exit if ! $ok;
@@ -1189,7 +1249,7 @@ qq[
 				if ($fd eq $eout) {
 					my ($data, $buff);
 					while ($eout->read($buff, 1024)) { $data .= $buff }
-					$pout->printflush("PUT $sid ".unpack("H*", $data)."\n");
+					$pout->printflush("PUT $sid ". unpack("H*", $data)."\n");
 				}
 				
 				# Request from the server
@@ -1206,7 +1266,6 @@ qq[
 					
 					if ($data =~ m/CMD\s+(.*)/) {
 						my $bytes = pack("H*", $1);
-						print STDERR "Writing command $1 to shell\n";
 						$eout->printflush($bytes);	
 						next;
 					}
@@ -1223,13 +1282,14 @@ qq[
     $ui->Exploit();
 	
 	if (! $ui->GetTempEnv('_ShellServer')) {
-		$state->{'parent'}->printflush("SHUTDOWN $sid\n");
+		$pout->printflush("SHUTDOWN $sid\n");
 		print STDERR "Shutting down the shell server process...\n";
 	}	
 
 	print STDERR "Exiting exploit loop\n";
     exit(0);
 }
+
 
 # Primitive HTTP request parser
 sub HTTPRequest {
@@ -1378,7 +1438,7 @@ sub LoadAllModules {
 	$exploitsIndex	= $ui->LoadExploits;
 	$payloadsIndex	= $ui->LoadPayloads;
 	$encodersIndex	= $ui->LoadEncoders;
-	$nops			= $ui->LoadNops;
+	$nopsIndex		= $ui->LoadNops;
 
 	$moduleKeys		= {};
 	$moduleOS		= {};
@@ -1419,28 +1479,11 @@ sub LoadAllModules {
 		}				
 	}
 
-	foreach my $key (keys(%{$encodersIndex})) {
-		my $encoder = $encodersIndex->{$key};
-		
-		$encoders->{$encoder->SelfEndName} = $encoder;
-		$modules->{'encoders'}->{$encoder->SelfEndName} = $encoder;
-		
-		foreach my $kname ( @{ $encoder->OS } ) {
-			push @{ $moduleOS->{'encoders'}->{$kname} }, $encoder->SelfEndName;
-		}
-		
-		foreach my $kname ( @{ $encoder->Arch } ) {
-			push @{ $moduleArch->{'encoders'}->{$kname} }, $encoder->SelfEndName;
-		}				
-	}
-		
-
 	$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
 	$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
 	$ui->SetTempEnv('_Encoders', $encodersIndex);
-	$ui->SetTempEnv('_Nops', $nops);
-	
-	
+	$ui->SetTempEnv('_Nops', $nopsIndex);
+	$ui->SetTempEnv('_UI', $ui);
 }
 
 

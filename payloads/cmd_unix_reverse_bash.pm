@@ -21,7 +21,6 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Use bash and /dev/tcp to simulate reverse shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
-  'Arch'         => [  ],
   'Priv'         => 0,
   'OS'           => [ 'solaris', 'linux', 'bsd' ],
   'Keys'         => ['+cmd_bash'],

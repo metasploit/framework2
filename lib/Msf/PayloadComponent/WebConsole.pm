@@ -20,14 +20,7 @@ use IO::Select;
 use base 'Msf::PayloadComponent::TextConsole';
 use FindBin qw{$RealBin};
 
-sub LoadConsole {
-	my $self = shift;
-	
-	print STDERR "LOADCONSOLE:!!!\n";
-	$self->SUPER::LoadConsole(@_);s
-}
-
-sub _HandleConsole {
+sub _LoadConsole {
   my $self = shift;
   my $out;
 	
@@ -69,9 +62,7 @@ sub _HandleConsole {
   # Kick off the shell server  
   $gIPC->printflush("NEW $sid $$\n");
 
-  # Call upwards to TextConsole's _HandleConsole	
-  $self->SUPER::_HandleConsole;
-  print STDERR "Exiting from _HandleConsole...\n";
+  print STDERR "Returning from _LoadConsole...\n";
   return;
 }
 

@@ -118,6 +118,7 @@ $ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
 $ui->SetTempEnv('_Encoders', $encoders);
 $ui->SetTempEnv('_Nops', $nops);
 
+
 my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
 my $payloadName = $ui->GetEnv('PAYLOAD');
 my $payload = $validPayloads->{$payloadName};

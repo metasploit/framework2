@@ -21,7 +21,6 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell with no spaces or slashes',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
-  'Arch'         => [  ],
   'Priv'         => 0,
   'OS'           => [ 'solaris', 'linux', 'bsd', 'hpux' ],
   'Keys'         => ['+cmd_nospaceslash'],

@@ -21,7 +21,6 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
   'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
-  'Arch'         => [  ],
   'Priv'         => 0,
   'OS'           => [ 'solaris', 'linux', 'bsd', 'hpux', 'irix', 'aix' ],
 };

@@ -21,9 +21,7 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Run a specific command on the remote system',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
-  'Arch'         => [  ],
   'Priv'         => 0,
-  'OS'           => [ ], 
   'UserOpts'     =>
     {
       'CMD' => [1, 'DATA', 'The command to execute'],

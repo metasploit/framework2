@@ -880,6 +880,8 @@ sub FillTemp {
 
   my $exploit = $state->{'Exploit'}->{'Exploit'};
   $ui->SetTempEnv('_Exploit', $exploit);
+  
+  $ui->SetTempEnv('_UI', $ui);
 
   # XXX added by spoon, maybe this should be looked at...
   # applying the AutoOpts settings to the local temp env we have setup,

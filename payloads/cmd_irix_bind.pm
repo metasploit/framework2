@@ -21,7 +21,6 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Use inetd to create a persistent bindshell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
-  'Arch'         => [  ],
   'Priv'         => 0,
   'OS'           => [ 'irix' ],
   'Size'         => '',

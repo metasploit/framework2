@@ -130,3 +130,15 @@ A.nav {
 	color:			black;
 	font-weight: 	bold;
 }
+
+.textBoldGrey {
+	font-size:		10pt;
+	color:			grey;
+	font-weight: 	bold;
+}
+
+.textBoldWhite {
+	font-size:		10pt;
+	color:			white;
+	font-weight: 	bold;
+}
