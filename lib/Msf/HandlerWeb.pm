@@ -31,23 +31,28 @@ sub shell_proxy
     
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
-                LocalPort => 0,
                 Type => SOCK_STREAM,
                 ReuseAddr => 1,
                 Listen => 5
     );
-
-    # the findsock handler passes a non-socket as the shell
-    if ($args[0]->can("sockhost"))
+    
+    if (! $s)
     {
-        $b->send("[*] Processing connection: " . 
-                 $args[0]->sockhost . ":" . $args[0]->sockport . " -- " .
-                 $args[0]->peerhost . ":" . $args[0]->peerport . "\n");
+        $b->send("Socket error: $@<br>\n");
+    } else 
+    {
+        if ($args[0]->can("sockhost"))
+        {
+            $b->send("[*] Processing connection: " . 
+                     $args[0]->sockhost . ":" . $args[0]->sockport . " -- " .
+                     $args[0]->peerhost . ":" . $args[0]->peerport . "\n");
+        }
+
+        $b->send("[*] Proxy shell started on port ". $s->sockport ."\n");
+        $b->send("[*] Please click <a href='telnet://" . Pex::InternetIP() .":".$s->sockport."'>here</a>.<br>\n");
+        $b->send("<br></body></html>");
     }
     
-    $b->send("[*] Proxy shell started on port ". $s->sockport ."\n");
-    $b->send("[*] Please click <a href='telnet://" . Pex::InternetIP() .":".$s->sockport."'>here</a>.<br>\n");
-    $b->send("<br></body></html>");
     $b->shutdown(2);
     $b->close();
     
