@@ -1,0 +1,88 @@
+Metasploit Framework Environment Variables
+===========================================
+
+
+User-provided options are usually in UPPERCASE, with the exception of advanced
+options, which are usually Mixed-Case.
+
+Framework-level options are usually in Mixed-Case, internal variables are
+usually _prefixed with an underscore.
+
+
+[ General ]
+
+EnablePython - This variable defines whether the external payloads (written in
+               python and using InlineEgg) are enabled. These payloads are
+               disabled by default to reduce delay during module loading. If you
+               plan on developing or using payloads which use the InlineEgg
+               library, makes sure this variable is set. 
+
+DebugLevel   - This variable is used to control the verbosity of debugging
+               messages provided by the components of the Framework. Setting
+               this value to 0 will prevent debugging messages from being
+               displayed (default). The highest practical value is 5. 
+
+Logging      - This variable determines whether all actions and successful
+               exploit sessions should be logged. The actions logged include all
+               attempts to run either exploit() or check() functions within an
+               exploit module. The session logs contain the exact time each
+               command and response was sent over a successful exploit session.
+               The session logs can be viewed with the 'msflogdump' command.  
+
+LogDir       - This variable configures the directory used for session logs. It
+               defaults to the logs subdirectory inside of ~/.msf.
+
+AlternateExit - Prevents a buggy perl interpreter from causing the Framework to
+                segfault on exit. Set this value to '2' to avoid 'Segmentation
+                fault' messages on exit. 
+
+
+[ Sockets ]
+
+UdpSourceIp     - Force all UDP requests to use this source IP address (spoof)
+
+ForceSSL        - Force all TCP connections to use SSL
+
+ConnectTimeout  - Standard socket connect timeout
+
+RecvTimeout     - Timeout for Recv(-1) calls
+
+RecvTimeoutLoop - Timeout for the Recv(-1) loop after inital data
+
+Proxies         - This variable can be set to enable various proxy modes for TCP
+                  sockets. The syntax of the proxy string should be
+                  TYPE:HOST:PORT:<extra fields>, with each proxy seperated by a
+                  comma. The proxies will be used in the order specified.
+ 
+
+[ Encoders ]
+Encoder                 - Used to select a specific encoder (full path)
+EncoderDontFallThrough  - Do not continue of the specified Encoder module fails
+
+
+[ Nops ]
+Nop                 - Used to select a specific Nop module (full path)
+NopDontFallThrough  - Do not continue of the specifed Nop module fails
+RandomNops          - Randomize the x86 nop sled if possible  
+
+
+[ Socket Ninja ]
+NinjaHost        - Address of the socketNinja console
+NinjaPort        - Port of the socketNinja console
+NinjaDontKill    - Don't kill exploit after sN gets a connection (multi-own)
+
+
+[ Internal Variables ]
+
+These variables should never be set by the user or used within a module.
+
+_Exploits        - Used to store a hash of loaded exploits
+_Payloads        - Used to store a hash of loaded payloads
+_Nops            - Used to store a hash of loaded nops
+_Encoders        - Used to store a hash of loaded encoders
+_Exploit         - Used to store currently selected exploit
+_Payload         - Used to store currently selected payload
+_PayloadName     - Name of currently selected payload
+_BrowserSocket   - Used by msfweb to track the socket back to the browser
+_Console         - Used to redefine the Console class between UI's
+_PrintLineBuffer - Used internally in msfweb
