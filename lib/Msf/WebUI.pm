@@ -47,7 +47,7 @@ sub PrintLine {
     # If we are exploit mode, write output to browser
     if (my $s = $self->GetEnv('BROWSER'))
     {
-        $s->send("$msg <br>\n");
+        $s->send("$msg\n");
         return;
     }
     
