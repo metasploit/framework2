@@ -60,10 +60,12 @@ sub Nops {
 
     
     if (! $random) {
+        return($sparc[0] x ($length / 4));
         return(pack('N',$sparc[0]) x ($length / 4));
     }
     
     # no randomness yet :/
+    return($sparc[0] x ($length / 4));
     return(pack('N',$sparc[0]) x ($length / 4));
 }
 
