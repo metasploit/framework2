@@ -197,7 +197,7 @@ sub XorDecoderByte {
 
 
 #
-# These routines take a buffer and xor encode it with the given
+# These routines take a buffer and xor encodes it with the given
 # given key value. The data is aligned to keysize blocks
 # and padded with xor'd null values (to prevent pad ^ key problems)
 #

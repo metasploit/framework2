@@ -66,7 +66,7 @@ sub RorHash
 
 
 #
-# Shift a 32-bit value to the right by $cnt bits
+# Rotate a 32-bit value to the right by $cnt bits
 #
 
 sub Ror
@@ -78,7 +78,7 @@ sub Ror
 }
 
 #
-# Shift a 32-bit value to the left by $cnt bits
+# Rotate a 32-bit value to the left by $cnt bits
 #
 
 sub Rol
