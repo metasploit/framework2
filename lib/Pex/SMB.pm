@@ -14,7 +14,14 @@
 #
 
 package Pex::SMB;
+use Pex;
+use Pex::Struct;
 use strict;
+
+
+###############################
+# constants ripped from pysmb #
+###############################
 
 use constant {
 # Shared Device Type
@@ -131,6 +138,121 @@ use constant {
 
 };
 
+##############################
+## pre-generated structures ##
+##############################
+
+# NetBIOS Session Structure
+my $STSession = Pex::Struct->new
+([
+    'type'          => 'u_8',
+    'flags'         => 'u_8',
+    'requestLen'    => 'b_u_16',
+    'request'       => 'string'
+]);
+$STSession->SetSizeField( 'request' => 'requestLen' );
+$STSession->Set
+(
+    'type'  => 0,
+    'flags' => 0,
+);
+
+# SMB Packet Structure
+my $STSMB = Pex::Struct->new
+([
+    'smbmagic'      => 'b_u_32',
+    'command'       => 'u_8',
+    'error_class'   => 'u_8',
+    'reserved1'     => 'u_8',
+    'error_code'    => 'b_u_16',
+    'flags1'        => 'u_8',
+    'flags2'        => 'l_u_16',
+    'pid_high'      => 'b_u_16',
+    'signature1'    => 'b_u_32',
+    'signature2'    => 'b_u_32',
+    'reserved2'     => 'b_u_16',
+    'tree_id'       => 'b_u_16',
+    'process_id'    => 'b_u_16',
+    'user_id',      => 'b_u_16',
+    'multiplex_id'  => 'b_u_16',
+    'request'       => 'string',
+]);
+$STSMB->Set
+(
+    'smbmagic'      => 0xff534d42, # \xffSMB
+    'command'       => 0,
+    'error_class'   => 0,
+    'reserved1'     => 0,
+    'error_code'    => 0,
+    'flags1'        => 0,
+    'flags2'        => 0,
+    'pid_high'      => 0,
+    'signature1'    => 0,
+    'signature2'    => 0,
+    'reserved2'     => 0,
+    'tree_id'       => 0,
+    'process_id'    => $$,
+    'user_id'       => 0,
+    'multiplex_id'  => 0,
+);
+
+# Protocol Negotiation Header
+my $STNetbios = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'byte_count'    => 'l_u_16',
+    'data'          => 'string',
+]);
+$STNetbios->SetSizeField( 'data' => 'byte_count' );
+$STNetbios->Set
+(
+    'word_count'    => 0,
+    'byte_count'    => 0,
+);
+
+# Protocol Negotiation Response
+my $STNegRes = Pex::Struct->new
+([
+    'word_count'    => 'u_8',
+    'dialect'       => 'l_u_16',
+    'sec_mode'      => 'l_u_16',
+    'max_buff'      => 'l_u_16',
+    'max_mpx'       => 'l_u_16',
+    'max_vcs'       => 'l_u_16',
+    'raw_mode'      => 'l_u_16',
+    'sess_key'      => 'l_u_32',
+    'dos_time'      => 'l_u_16',
+    'dos_date'      => 'l_u_16',
+    'time_zone'     => 'l_u_16',
+    'key_len'       => 'l_u_16',
+    'reserved'      => 'l_u_16',
+    'bcc_len'       => 'l_u_16',
+    'enc_key'       => 'string'
+    
+]);
+$STNegRes->SetSizeField( 'enc_key' => 'key_len' );
+$STNegRes->Set
+(
+    'word_count'    => 0,
+    'dialect'       => 0,
+    'sec_mode'      => 0,
+    'max_buff'      => 0,
+    'max_mpx'       => 0,
+    'max_vcs'       => 0,
+    'raw_mode'      => 0,
+    'sess_key'      => 0,
+    'dos_time'      => 0,
+    'dos_date'      => 0,
+    'time_zone'     => 0,
+    'key_len'       => 0,
+    'reserved'      => 0,
+    'bcc_len'       => 0,
+);
+
+#################################
+# actual class code starts here #
+#################################
+
 sub new {
     my $cls = shift();
     my $arg = shift() || { };
@@ -159,10 +281,10 @@ sub NBName {
     my $res;
     
     for (0 .. 15) {
-        if ($_ > length($name)) {
+        if ($_ >= length($name)) {
             $res .= "CA";
         } else {
-            my $o = ord(substr($name, $_));
+            my $o = ord(uc(substr($name, $_)));
             $res .= pack('CC', ($o / 16) + 0x41, ($o % 16) + 0x41);
         }
     }
@@ -171,7 +293,7 @@ sub NBName {
 
 sub NBRedir {
     my $self = shift();
-    return ("CA" x 16);
+    return ("CA" x 15)."AA";
 }
 
 # return a 28 + strlen(data) + (odd(data)?0:1) long string
@@ -199,7 +321,7 @@ sub SMBUnicode {
 sub SMBMultiplexID {
     my $self = shift;
     if (! exists($self->{'MultiplexID'})) {
-        $self->{'MultiplexID'} = pack('n', rand() * 0xffff);
+        $self->{'MultiplexID'} = rand() * 0xffff;
     }
     return $self->{'MultiplexID'};
 }
@@ -215,8 +337,10 @@ sub SMBRecv {
     }
     
     my $len = unpack('n', substr($head, 2, 2));
+    
+    # Return just the header for empty responses
     if ($len == 0) {
-        return '';
+        return $head;
     }
     
     my $end = $sock->Recv($len);
@@ -231,21 +355,14 @@ sub SMBSessionRequest {
     my $self = shift;
     my $name = shift;
     my $sock = $self->Socket;
+      
+    my $data = "\x20".$self->NBName($name)."\x00".
+               "\x20".$self->NBRedir."\x00";
+    my $ask = $STSession->copy;
+
+    $ask->Set('type' => 0x81, 'request' => $data);  
     
-    my ($rem, $loc) = ($self->NBName($name), $self->NBRedir);
-    
-    my $req =  
-        pack('CCnCZ*CZ*', 
-         0x81, # Session Request
-         0x00, # Flags
-         0x44, # Total length
-         0x20,
-         $rem, # Remote name
-         0x20,
-         $loc  # Redirector
-        );
-        
-    $sock->Send($req);
+    $sock->Send($ask->Fetch);
     
     my $res = $self->SMBRecv();
     
@@ -254,12 +371,21 @@ sub SMBSessionRequest {
         return;
     }
     
-    if (ord($res) != 0x82) {
-        $self->SetError('Session request returned an invalid response');
+    my $smb_res = $STSession->copy;
+    $smb_res->Fill($res);
+
+    # Handle negative session request responses
+    if ($smb_res->Get('type') == 0x83) {
+        $self->SetError('Session denied with code '.ord($smb_res->Get('request')));
+        return;
+    }
+   
+    if ($smb_res->Get('type') != 0x82) {
+        $self->SetError('Session returned unknown response: '.$smb_res->Get('type'));
         return; 
     }
     
-    return $res;
+    return $smb_res;
 }
 
 sub SMBNegotiate {
@@ -281,53 +407,69 @@ sub SMBNegotiateNTLM {
 sub SMBNegotiateClear {
     my $self = shift;
     my $sock = $self->Socket;
+ 
+    my $ses = $STSession->copy;
+    my $smb = $STSMB->copy;
+    my $neg = $STNetbios->copy;
     
-    my $neg =
-        pack('Cv',
-            0x00,   # Word count
-            0x66,   # Byte count
-            ).
-        "\x02". "PC NETWORK PROGRAM 1.0"."\x00".
-        "\x02". "MICROSOFT NETWORKS 1.03"."\x00".
-        "\x02". "MICROSOFT NETWORKS 3.0"."\x00".
-        "\x02". "LANMAN1.0"."\x00".
-        "\x02". "LM1.2X002"."\x00".
-        "\x02". "Samba"."\x00";
+    my @dialects =
+    (
+        "PC NETWORK PROGRAM 1.0",
+        "MICROSOFT NETWORKS 1.03",
+        "LANMAN1.0",
+        "LM1.2X002",
+        "Samba"
+    );
     
-    my $smb =
-        "\xffSMB".
-        pack('CCCnCnnNNnnnnn',
-            0x72,   # Negotiate protocol
-            0x00,   # Error class
-            0x00,   # Reserved
-            0x00,   # Error code
-            0x18,   # Flags1
-            0x2001, # Flags2
-            0x00,   # PID High
-            0x00,   # Signature
-            0x00,   # Signature
-            0x00,   # Reserved
-            0x00,   # Tree ID
-            $$,     # Process ID
-            0x00,   # User ID
-            $self->SMBMultiplexID
-            ).$neg;
+    my $offer;
+    foreach (@dialects) { $offer.= "\x02".$_."\x00" }
 
-    my $req =
-        pack('CCn', 
-         0x00, # Session Message
-         0x00, # Flags
-         0x89, # Total length
-        ).$smb;
-	 
-    $sock->Send($req);
+    $neg->Set ('data' => $offer);
+    
+    $smb->Set
+    (
+        'command'       => SMB_COM_NEGOTIATE,
+        'flags1'        => 0x18,
+        'flags2'        => 0x2001,
+        'multiplex_id'  => $self->SMBMultiplexID,
+        'request'       => $neg->Fetch
+    );
+    
+    $ses->Set('type' => 0, 'flags' => 0, 'request' => $smb->Fetch);
+    $sock->Send($ses->Fetch);
     my $res = $self->SMBRecv();
     
-    if (! $res || length($res) < 10 || ord(substr($res, 9)) != 0) {
-        $self->SetError('Negotiate failed');
+    if (! $res) {
+        $self->SetError('Negotiate failed due to null response');
         return;
     }
-    return $res;
+    
+    my $ses_res = $STSession->copy;
+    $ses_res->Fill($res);
+
+    my $smb_res = $STSMB->copy;
+    $smb_res->Fill($ses_res->Get('request'));
+    
+    if ($smb_res->Get('error_class') != 0) {
+        $self->SetError('Negotiate returned NT status '.$smb_res->Get('error_class'));
+        return;
+    }
+
+    if ($smb_res->Get('command') != SMB_COM_NEGOTIATE) {
+        $self->SetError('Negotiate returned command '.$smb_res->Get('command'));
+        return;
+    }
+
+    my $neg_res = $STNegRes->copy;
+    $neg_res->Fill($smb_res->Get('request'));
+    
+    # XXX - This shit doesnt work because there is no size field for request...
+    print Pex::Utils::BufferPerl($smb_res->Get('request'))."\n";
+
+    print Pex::Utils::BufferPerl($neg_res->Get('enc_key'))."\n";
+
+
+    return $smb_res;
 }
 
 
