@@ -54,14 +54,20 @@ sub EncodePayload {
         "\x12\xbf\xff\xfc".   # /* bnz   dec_loop */
         "\x9e\x03\xe0\x04";   # /* add   %o7,4,%o7 */
     
+    # Change the endian-ness of the key
+    $xor_key = unpack('V', pack('N', $xor_key));
+ 
     # Extract
     my $hiData = unpack('N', substr($encoder, 12, 4));
-    my $loData = unpack('N', substr($encoder, 26, 4));
+    my $loData = unpack('N', substr($encoder, 16, 4));
 	
+    printf("key: 0x%.8x hi: 0x%.8x lo: 0x%.8x\n", $xor_key, $hiData, $loData);
+    
     # Patch
     $hiData = (($hiData >> 22) << 22) + ($xor_key >> 10);
     $loData = (($loData >> 10) << 10) + (($xor_key << 22) >> 22);
-    
+    printf("key: 0x%.8x hi: 0x%.8x lo: 0x%.8x\n", $xor_key, $hiData, $loData);
+     
     # Replace
     substr($encoder, 12, 4, pack('N', $hiData));
     substr($encoder, 16, 4, pack('N', $loData));
