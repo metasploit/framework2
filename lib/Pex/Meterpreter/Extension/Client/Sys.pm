@@ -64,41 +64,44 @@ my @handlers =
 		handler     => \&rev2self,
 	},
 
-	{
-		identifier  => "Registry",
-		description => "Registry",
-		handler     => undef,
-	},
-	{
-		identifier  => "reg_createkey",
-		description => "Creates a registry key.",
-		handler     => \&regCreateKey,
-	},
-	{
-		identifier  => "reg_deletekey",
-		description => "Deletes a registry key.",
-		handler     => \&regDeleteKey,
-	},
-	{
-		identifier  => "reg_setvalue",
-		description => "Sets a registry value.",
-		handler     => \&regSetValue,
-	},
-	{
-		identifier  => "reg_getvalue",
-		description => "Gets a registry value.",
-		handler     => \&regGetValue,
-	},
-	{
-		identifier  => "reg_enumkey",
-		description => "Enumerates registry keys at a given key.",
-		handler     => \&regEnumKey,
-	},
-	{
-		identifier  => "reg_enumvalue",
-		description => "Enumerates registry values at a given key.",
-		handler     => \&regEnumValue,
-	},
+# These commands were implemented in the server half of the extension but the
+# code was lost during hardware failure.  Will eventually re-code.
+#
+#	{
+#		identifier  => "Registry",
+#		description => "Registry",
+#		handler     => undef,
+#	},
+#	{
+#		identifier  => "reg_createkey",
+#		description => "Creates a registry key.",
+#		handler     => \&regCreateKey,
+#	},
+#	{
+#		identifier  => "reg_deletekey",
+#		description => "Deletes a registry key.",
+#		handler     => \&regDeleteKey,
+#	},
+#	{
+#		identifier  => "reg_setvalue",
+#		description => "Sets a registry value.",
+#		handler     => \&regSetValue,
+#	},
+#	{
+#		identifier  => "reg_getvalue",
+#		description => "Gets a registry value.",
+#		handler     => \&regGetValue,
+#	},
+#	{
+#		identifier  => "reg_enumkey",
+#		description => "Enumerates registry keys at a given key.",
+#		handler     => \&regEnumKey,
+#	},
+#	{
+#		identifier  => "reg_enumvalue",
+#		description => "Enumerates registry values at a given key.",
+#		handler     => \&regEnumValue,
+#	},
 );
 
 #
