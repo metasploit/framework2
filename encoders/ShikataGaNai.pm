@@ -31,7 +31,7 @@ sub new {
 
 sub EncodePayload {
   my $self = shift;
-  return($self->_EncodeNormal(@_)) if(!$self->GetLocal('DebugEnd'));
+  return($self->_EncodeNormal(@_)) if($self->GetLocal('DebugEnd'));
   return($self->_EncodeSelfEnd(@_));
 }
 sub _BuildDelta {
