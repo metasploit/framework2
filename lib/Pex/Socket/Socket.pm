@@ -369,6 +369,8 @@ sub RecvLineMulti {
         return $data;	  
 	  }
 	}
+    last if($self->GetError);
+    last if($self->SocketError(1));	
   }
   
   # timeout reading the entire multi-line response 
@@ -376,4 +378,6 @@ sub RecvLineMulti {
   
   return;
 }
+
 1;
+
