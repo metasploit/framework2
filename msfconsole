@@ -53,7 +53,6 @@ my $state = {'Mode' => 'Main'};
 # this is also good if they add/remove a module the directories 
 Load();
 
-
 my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
 $console->tabCompletion(\&xTabCompletion);
 
@@ -433,8 +432,7 @@ sub mShow
         print "\nMetasploit Framework Configuration\n";
         print   "====================================\n\n";
         
-        foreach my $v (sort(keys(%{$c})))
-        {
+        foreach my $v (sort(keys(%{$c}))) {
             print "  $v" . (" " x (30-length($v))) . $c->{$v} ."\n";
         }
         print "\n";
