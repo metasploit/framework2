@@ -38,6 +38,18 @@ sub EncodePayload {
     my $payload  = shift;
     my $badchars = shift;
 
+    # Check for a null dword in the payload first, this will break the decoder
+    my $check = $payload;
+    while (length($check)) {
+    	my $word = substr($check, 0, 4, '');
+        if ($word eq pack('N', 0)) {
+        	$self->PrintLine("[*] Sparc decoder is not able to handle null dwords in the payload");
+        	return;
+        }  
+    }
+
+    # Append a null to the payload, this becomes the end tag
+    $payload .= pack('N', 0);
 
     my $xor_key = Pex::Encoding::XorDwordFeedbackN->KeyScan($payload, $badchars);
     if(!$xor_key) {
@@ -45,19 +57,6 @@ sub EncodePayload {
         return;                                            
     }
 
-    # Check for a null dword in the payload first, this will break the decoder
-    my $check = $payload;
-    while (length($check)) {
-    	my $word = substr($check, 0, 4);
-        if ($word eq pack('N', 0)) {
-        	$self->PrintLine("[*] Sparc decoder is not able to handle null dwords in the payload");
-        	return;
-        }  
-        $check = substr($check, 4);
-    }
-
-    # Append a null to the payload, this becomes the end tag
-    $payload .= pack('N', 0);
     my $xor_data = Pex::Encoding::XorDwordFeedbackN->Encode($xor_key, $payload);
 
     # Flip the key endian-ness
