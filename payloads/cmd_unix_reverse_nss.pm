@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'cmd_unix_reverse_nss;',
+  'Name'         => 'cmd_unix_reverse_nss',
   'Version'      => '$Revision$',
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell with no spaces or slashes',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
