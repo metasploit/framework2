@@ -57,6 +57,7 @@ sub UserOpts    { my $self = shift; return $self->_Info->{'UserOpts'}; }
 sub Refs        { my $self = shift; return $self->_Info->{'Refs'}; }
 sub Description { my $self = shift; return $self->_Info->{'Description'}; }
 
+
 #fixme
 # Used?
 sub AutoOpts    { my $self = shift; return $self->_Info->{'AutoOpts'}; }
@@ -66,7 +67,6 @@ sub Payload     { my $self = shift; return $self->_Info->{'Payload'}; }
 
 # Payload Specific (move to Msf::Payload?)
 sub Type        { my $self = shift; return $self->_Info->{'Type'}; }
-sub Size        { my $self = shift; return $self->_Info->{'Size'}; }
 
 sub Validate {
   my $self = shift;
@@ -155,9 +155,9 @@ sub SetVar {
   return($self->SetTempEnv($key, $val)) if(defined($self->GetTempEnv($key)));
   return($self->SetGlobalEnv($key, $val)) if(defined($self->GetGlobalEnv($key)));
   return($self->SetGlobalEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetGlobalEnv($self->SelfName . '::' . $key)));
-  return($self->SetAdvanced($key, $val)) if(defined($self->GetAdvanced($key)));
+  return($self->SetAdvancedValue($key, $val)) if(defined($self->GetAdvanced($key)));
   # Even thought it was is in UserOpts, we just mask it in Advanced
-  return($self->SetAdvanced($key, $val)) if(defined($self->GetUserOptsDefault($key)));
+  return($self->SetAdvancedValue($key, $val)) if(defined($self->GetUserOptsDefault($key)));
   return;
 }
 
@@ -185,9 +185,9 @@ sub SetLocal {
 
   return($self->SetTempEnv($key, $val)) if(defined($self->GetTempEnv($key)));
   return($self->SetGlobalEnv($self->SelfName . '::' . $key, $val)) if(defined($self->GetGlobalEnv($self->SelfName . '::' . $key)));
-  return($self->SetAdvanced($key, $val)) if(defined($self->GetAdvanced($key)));
+  return($self->SetAdvancedValue($key, $val)) if(defined($self->GetAdvanced($key)));
   # Even thought it was is in UserOpts, we just mask it in Advanced
-  return($self->SetAdvanced($key, $val)) if(defined($self->GetUserOptsDefault($key)));
+  return($self->SetAdvancedValue($key, $val)) if(defined($self->GetUserOptsDefault($key)));
   return;
 }
 
@@ -220,6 +220,14 @@ sub SetAdvanced {
   my $key = shift;
   my $val = shift;
   return($self->_Advanced->{$key} = $val);
+}
+
+sub SetAdvancedValue {
+  my $self = shift;
+  my $key = shift;
+  my $val = shift;
+  $self->_Advanced->{$key} = [undef, undef] if(!defined($self->_Advanced->{$key}));
+  return($self->_Advanced->{$key}->[0] = $val);
 }
 
 # UserOpts hash
