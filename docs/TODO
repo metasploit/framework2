@@ -11,8 +11,6 @@ Pre-Release Tasks
 
  - Finish rewriting the configuration and logging system in msfconsole
 
- - Rewrite msfweb to work with new architecture
- 
  - Change the ExternalPayload module so that it does safe argument handling
 
 Post-Release Tasks
