@@ -9,7 +9,7 @@ my $info =
 {
   'Name'         => 'winreverse_stg_ie',
   'Version'  => '$Revision$',
-  'Description'  => 'Listen for connection and spawn a shell',
+  'Description'  => 'Listen for connection, send addres of GP/LL across, then read InlineEgg payload',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
   'UserOpts'	   =>
     {
