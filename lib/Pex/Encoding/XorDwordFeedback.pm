@@ -53,7 +53,6 @@ sub Encode {
       unpack($pack, pack('V', $clean))
     )));
 
-    $xor = Pex::Utils::DwordAdd($xor, $clean);
 #    printf("New xor key 0x%08x $xor\n", $xor);
     $res .= substr(pack('V', $chunk), 0, 4 - $spacing);
   }
