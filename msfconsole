@@ -78,37 +78,37 @@ my %virtualCmds = ();
 # global command tables
 my %globalCmds =
 (
-    'version'   => [\&gVersion,              'Show console version'],
-    'help'      => [\&gHelp,                 'Show the main console help'],
-    '?'         => [\&gHelp,                 'Show the main console help'],
-    'quit'      => [\&gExit,                 'Exit the console'],
-    'exit'      => [\&gExit,                 'Exit the console'],
-    'use'       => [sub{gUse(@_);},          'Select an exploit by name'],
-    'info'      => [sub{gInfo(@_);},         'Display detailed exploit or payload information'],
-    'cd'        => [\&gChdir,                'Change working directory'],
-    'save'      => [\&gSave,                 'Save configuration to disk'],
-    'setg'      => [\&gSet,                  'Set a global environment variable'],
-    'unsetg'    => [\&gUnset,                'Remove a global environment variable'],
-    'reload'    => [sub{Load();},            'Reload exploits and payloads'],
+    'version'   => [\&gVersion,              "Show console version"],
+    'help'      => [\&gHelp,                 "Show the main console help"],
+    '?'         => [\&gHelp,                 "Show the main console help"],
+    'quit'      => [\&gExit,                 "Exit the console"],
+    'exit'      => [\&gExit,                 "Exit the console"],
+    'use'       => [sub{gUse(@_);},  "Select an exploit by name"],
+    'info'      => [sub{gInfo(@_);}, "Display detailed exploit or payload information"],
+    'cd'        => [\&gChdir,                "Change working directory"],
+    'save'      => [\&gSave,                 "Save configuration to disk"],
+    'setg'      => [\&gSet,                  "Set a global environment variable"],
+    'unsetg'    => [\&gUnset,                "Remove a global environment variable"],
+    'reload'    => [sub{Load();},            "Reload exploits and payloads"],
 );
 
 
 # main mode commands
 my %mainCmds =
 (
-    'show'      => [sub{Load(); mShow(@_);},   'Show available exploits and payloads'],
+    'show'      => [sub{Load(); mShow(@_);},   "Show available exploits and payloads"],
 );
 
 # exploit mode commands
 my %exploitCmds = 
 (
-    'set'       => [\&eSet,                         'Set a temporary environment variable'],
-    'unset'     => [\&eUnset,                       'Remove a temporary environment variable'],
-    'back'      => [\&eBack,                        'Drop back to the main menu'],
-    'show'      => [sub{ eShow(@_);},        'Show options, advanced, payloads, or targets'],
-    'check'     => [sub{eCheck(@_);},       'Perform vulnerability check'],
-    'exploit'   => [sub {eExploit(@_);},     'Launch the actual exploit'],
-    'rexploit'  => [sub{Load(); eExploit(@_);},     'Reload and exploit, for us tester types'],
+    'set'       => [\&eSet,                         "Set a temporary environment variable"],
+    'unset'     => [\&eUnset,                       "Remove a temporary environment variable"],
+    'back'      => [\&eBack,                        "Drop back to the main menu"],
+    'show'      => [sub{ eShow(@_);},        "Show options, advanced, payloads, or targets"],
+    'check'     => [sub{eCheck(@_);},       "Perform vulnerability check"],
+    'exploit'   => [sub {eExploit(@_);},     "Launch the actual exploit"],
+    'rexploit'  => [sub{Load(); eExploit(@_);},     "Reload and exploit, for us tester types"],
 );
 
 
@@ -119,7 +119,7 @@ if (! defined($opts{'q'})) {
     Msf::TextUI::PrintAsciiLogo();
 
     # print initialization message
-    printf('\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n', 
+    printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n", 
            $FRAMEVERSION, 
            scalar(keys(%{$exploits})),
            scalar(keys(%{$payloads}))
@@ -134,7 +134,7 @@ while (1)
     SetupCmds();
     last if(!ProcessCmd($console->readCommand()));
 }
-print '\n';
+print "\n";
 
 sub SetupCmds {
   %virtualCmds = %globalCmds;
@@ -164,11 +164,11 @@ sub ProcessCmd {
 
 sub ProcessScript {
   my $file = shift;
-  open(INFILE, "<$file') or die('Cannot open script: $file: $!\n");
+  open(INFILE, "<$file") or die("Cannot open script: $file: $!\n");
   local $/;
   my $data = <INFILE>;
   close(INFILE);
-  foreach my $line (split('\n', $data)) {
+  foreach my $line (split("\n", $data)) {
     ProcessCmd(Pex::PsuedoShell->parseCommands($line));
   }
 }
@@ -221,7 +221,7 @@ sub gSave {
     my $cmd = shift;
     $ui->SaveTempEnv($state->{'Exploit'}->{'Name'}) if($state->{'Mode'} eq 'Exploit');
     $ui->SaveConfig;
-    print 'Saved configuration to: ' . $ui->ConfigFile . '\n';
+    print "Saved configuration to: " . $ui->ConfigFile . "\n";
 }
 
 sub gVersion { print "msfconsole version $VERSION\n" }
@@ -229,7 +229,7 @@ sub gVersion { print "msfconsole version $VERSION\n" }
 sub gSet {
     my $cmd = shift;
     if(@_ == 1) {
-        print "$_[0]: " . $ui->GetGlobalEnv($_[0]) . '\n';
+        print "$_[0]: " . $ui->GetGlobalEnv($_[0]) . "\n";
     }
     elsif(@_ == 2) {
         print "$_[0] -> $_[1]\n";
@@ -237,7 +237,7 @@ sub gSet {
     }
     else {
         foreach (sort(keys(%{$ui->GetGlobalEnv}))) {
-            print "$_: " . $ui->GetGlobalEnv($_) . '\n';
+            print "$_: " . $ui->GetGlobalEnv($_) . "\n";
         }
     }
 }
@@ -258,7 +258,7 @@ sub gUnset
 sub eSet {
     my $cmd = shift;
     if(@_ == 1) {
-        print "$_[0]: " . $ui->GetTempEnv($_[0]) . '\n';
+        print "$_[0]: " . $ui->GetTempEnv($_[0]) . "\n";
     }
     elsif(@_ == 2) {
         print "$_[0] -> $_[1]\n";
@@ -266,7 +266,7 @@ sub eSet {
     }
     else {
         foreach (sort(keys(%{$ui->GetTempEnv}))) {
-            print "$_: " . $ui->GetTempEnv($_) . '\n';
+            print "$_: " . $ui->GetTempEnv($_) . "\n";
         }
     }
     
@@ -314,9 +314,9 @@ sub gUnknown
     
     if (! xCheckSystemCommand($cmd)) 
     {
-        xMsg($cmd, 'command not found');
+        xMsg($cmd, "command not found");
     } else {
-        system("$cmd '. join(" ', @args));
+        system("$cmd ". join(" ", @args));
     }
 }
 
@@ -325,13 +325,13 @@ sub gHelp
     my ($cmd, @args) = @_;
     
     my $col = Msf::ColPrint->new(8, 6);
-    print '\nMetasploit Framework ' . $state->{'Mode'}  . ' Console Help\n';
-    print   '======================================\n\n';
+    print "\nMetasploit Framework " . $state->{'Mode'}  . " Console Help\n";
+    print   "======================================\n\n";
     foreach my $cmd (sort(keys(%virtualCmds)))
     {
         $col->AddRow($cmd, $virtualCmds{$cmd}->[1]);
     }
-    print $col->GetOutput . '\n';
+    print $col->GetOutput . "\n";
 }
 
 sub gUse 
@@ -339,7 +339,7 @@ sub gUse
     my ($cmd, @args) = @_;
     if (! exists($exploits->{$args[0]}))
     {
-        xMsg('use", "please specify a valid exploit name');
+        xMsg("use", "please specify a valid exploit name");
         return;
     }
     
@@ -358,7 +358,7 @@ sub gUse
     $ui->LoadTempEnv($args[0]);
 
     if(defined($exploit->UseMessage)) {
-      print $exploit->UseMessage . '\n';
+      print $exploit->UseMessage . "\n";
     }
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
@@ -375,7 +375,7 @@ sub eBack
     $ui->SaveTempEnv($state->{'Exploit'}->{'Name'});
     $ui->UnsetTempEnv;
     $state->{'Mode'} = 'Main';
-    $console->_prompt('msf > ');
+    $console->_prompt("msf > ");
 }
 
 sub gChdir
@@ -390,9 +390,9 @@ sub gChdir
     
     if (chdir($args[0]))
     {
-        xMsg('chdir", 'changed to directory $args[0]");
+        xMsg("chdir", "changed to directory $args[0]");
     } else {
-        xMsg('chdir", 'failed to change directory $!");
+        xMsg("chdir", "failed to change directory $!");
     }
 }
 
@@ -412,28 +412,28 @@ sub gInfo {
   }
     
   if(!defined($module) || ($type ? $type !~ /^(encoder|exploit|payload|nop)$/ : 0)) {
-    xMsg('info", "usage: info [type] <module name>');
+    xMsg("info", "usage: info [type] <module name>");
     return;
   }
 
   if($exploits->{$module} && ($type ? $type eq 'exploit' : 1)) {
-    print '\n' . $ui->DumpExploitSummary($exploits->{$module});
+    print "\n" . $ui->DumpExploitSummary($exploits->{$module});
   }
   elsif($payloads->{$module} && ($type ? $type eq 'payload' : 1)) {
-    print '\n' . $ui->DumpPayloadSummary($payloads->{$module});
+    print "\n" . $ui->DumpPayloadSummary($payloads->{$module});
   }
 
   # Kinda a hack, we rebuild the keys for exploits and payloads, but
   # not for nops or encoders...
   elsif($encoders->{$module} && ($type ? $type eq 'encoder' : 1)) {
-    print '\n' . $ui->DumpEncoderSummary($encoders->{$module});
+    print "\n" . $ui->DumpEncoderSummary($encoders->{$module});
   }
   elsif($nops->{$module} && ($type ? $type eq 'nop' : 1)) {
-    print '\n' . $ui->DumpNopSummary($nops->{$module});
+    print "\n" . $ui->DumpNopSummary($nops->{$module});
   }
   
   else {
-    xMsg('info", "invalid module name');
+    xMsg("info", "invalid module name");
   }
 }
 
@@ -442,55 +442,55 @@ sub mShow
     my ($cmd, @args) = @_;
     my $c = $state->{'CONF'};
     
-    if (lc($args[0]) eq 'exploits')
+    if (lc($args[0]) eq "exploits")
     {
-        print '\nMetasploit Framework Loaded Exploits\n';
-        print   '====================================\n\n';
+        print "\nMetasploit Framework Loaded Exploits\n";
+        print   "====================================\n\n";
         
-        print $ui->DumpExploits(2, $exploits) . '\n';
+        print $ui->DumpExploits(2, $exploits) . "\n";
         return;
     }
     
-    if (lc($args[0]) eq 'payloads')
+    if (lc($args[0]) eq "payloads")
     {
-        print '\nMetasploit Framework Loaded Payloads\n';
-        print   '====================================\n\n';
+        print "\nMetasploit Framework Loaded Payloads\n";
+        print   "====================================\n\n";
         
-        print $ui->DumpPayloads(2, $payloads) . '\n';
+        print $ui->DumpPayloads(2, $payloads) . "\n";
         return;
     }
 
-    if (lc($args[0]) eq 'encoders')
+    if (lc($args[0]) eq "encoders")
     {
-        print '\nMetasploit Framework Loaded Encoders\n';
-        print   '====================================\n\n';
+        print "\nMetasploit Framework Loaded Encoders\n";
+        print   "====================================\n\n";
         
-        print $ui->DumpEncoders(2, $encoders) . '\n';
+        print $ui->DumpEncoders(2, $encoders) . "\n";
         return;
     }
 
-    if (lc($args[0]) eq 'nops')
+    if (lc($args[0]) eq "nops")
     {
-        print '\nMetasploit Framework Loaded Nop Engines\n';
-        print   '=======================================\n\n';
+        print "\nMetasploit Framework Loaded Nop Engines\n";
+        print   "=======================================\n\n";
         
-        print $ui->DumpNops(2, $nops) . '\n';
+        print $ui->DumpNops(2, $nops) . "\n";
         return;
     }
 
-    if (lc($args[0]) eq 'config')
+    if (lc($args[0]) eq "config")
     {
-        print '\nMetasploit Framework Configuration\n';
-        print   '====================================\n\n';
+        print "\nMetasploit Framework Configuration\n";
+        print   "====================================\n\n";
         
         foreach my $v (sort(keys(%{$c}))) {
-            print "  $v' . (" ' x (30-length($v))) . $c->{$v} .'\n';
+            print "  $v" . (" " x (30-length($v))) . $c->{$v} ."\n";
         }
-        print '\n';
+        print "\n";
         return;
     }
 
-    xMsg('show", "requires an option: 'exploits', 'payloads', 'encoders', or 'nops'');
+    xMsg("show", "requires an option: 'exploits', 'payloads', 'encoders', or 'nops'");
 }
 
 
@@ -502,7 +502,7 @@ sub eShow
     if (lc($args[0]) eq 'targets')  { eTargets();  return }
     if (lc($args[0]) eq 'payloads') { ePayloads(); return }
 
-    xMsg('show", "specify 'targets', 'payloads', 'options', or 'advanced'');
+    xMsg("show", "specify 'targets', 'payloads', 'options', or 'advanced'");
 
 }
 
@@ -661,9 +661,9 @@ sub xAskYN {
 
 sub xCreateSetList
 {
-    if ($state->{'Mode"} eq "Main') { return keys(%{$ui->GetGlobalEnv}) } 
+    if ($state->{"Mode"} eq "Main") { return keys(%{$ui->GetGlobalEnv}) } 
     
-    if ($state->{'Mode"} eq "Exploit') 
+    if ($state->{"Mode"} eq "Exploit") 
     {
         my %options = ();
         
@@ -681,8 +681,8 @@ sub xCreateSetList
             foreach (keys(%{$p->Advanced})) { $options{$_}++ }
         }
          
-        if ($x->Payload) { $options{'PAYLOAD'}++ }
-        if ($x->TargetsList) { $options{'TARGET'}++  }
+        if ($x->Payload) { $options{"PAYLOAD"}++ }
+        if ($x->TargetsList) { $options{"TARGET"}++  }
 
         foreach my $e (keys(%{ $ui->GetEnv })) {
             $options{$e}++;
@@ -698,9 +698,9 @@ sub xCreateSetList
 
 sub xCreateSetValueList
 {
-    if ($state->{'Mode"} eq "Main') { return ' ' } 
+    if ($state->{"Mode"} eq "Main") { return ' ' } 
     
-    if ($state->{'Mode"} eq "Exploit') 
+    if ($state->{"Mode"} eq "Exploit") 
     {
         my %results = ();
         
@@ -711,9 +711,9 @@ sub xCreateSetValueList
 
         if ($x->Payload && $p && exists($payloads->{$p})) { $p = $payloads->{$p} }
         
-        if (uc($n) eq 'PAYLOAD') { return keys(%{$v}) }
+        if (uc($n) eq "PAYLOAD") { return keys(%{$v}) }
         
-        if (uc($n) eq 'TARGET')
+        if (uc($n) eq "TARGET")
         {
             my $tidx = 0;
             foreach ($x->TargetsList) { $results{$tidx}++ ; $tidx++;}
@@ -742,10 +742,10 @@ sub xCreateSetValueList
         
         if ($dflt) { return ($dflt) }
         
-        if ($type eq 'ADDR') { return xGetAddressCache() }
-        if ($type eq 'BOOL") { return ("TRUE", "FALSE') }
-        if ($type eq 'FILE') { return undef }
-        if ($type eq 'PATH') { return undef }
+        if ($type eq "ADDR") { return xGetAddressCache() }
+        if ($type eq "BOOL") { return ("TRUE", "FALSE") }
+        if ($type eq "FILE") { return undef }
+        if ($type eq "PATH") { return undef }
         return ' ';
     }
 }
@@ -761,15 +761,15 @@ sub xTabCompletion
     # this handles command matching
     if ($start == 0) { $state->{'TabVals'} = [sort(keys(%virtualCmds))] }
     
-    if (lc($cmd) eq 'use') { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
+    if (lc($cmd) eq "use") { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
     
-    if (lc($cmd) eq 'show')
+    if (lc($cmd) eq "show")
     {
         if ($state->{'Mode'} eq 'Main') { $state->{'TabVals'} = ['exploits', 'payloads', 'encoders', 'nops'] }
         if ($state->{'Mode'} eq 'Exploit') { $state->{'TabVals'} = ['advanced', 'options', 'targets', 'payloads'] }
     }
     
-    if (lc($cmd) eq 'info')
+    if (lc($cmd) eq "info")
     {
         # display variables if no args are specified
         if (! $args[0] || (! $args[1] && ($args[0] && $text))) { 
@@ -783,16 +783,16 @@ sub xTabCompletion
         }
         if (! $args[1] || (! $args[2] && ($args[1] && $text)))
         {
-            if ($args[0] eq 'exploit') { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
-            if ($args[0] eq 'payload') { $state->{'TabVals'} = [sort(keys(%{$payloads}))] }
-            if ($args[0] eq 'encoder') { $state->{'TabVals'} = [sort(keys(%{$encoders}))] }
-            if ($args[0] eq 'nop'    ) { $state->{'TabVals'} = [sort(keys(%{$nops}))] }            
+            if ($args[0] eq "exploit") { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
+            if ($args[0] eq "payload") { $state->{'TabVals'} = [sort(keys(%{$payloads}))] }
+            if ($args[0] eq "encoder") { $state->{'TabVals'} = [sort(keys(%{$encoders}))] }
+            if ($args[0] eq "nop"    ) { $state->{'TabVals'} = [sort(keys(%{$nops}))] }            
         }
     }
         
     if (
-        ($state->{'Mode'} eq 'Main'    && lc($cmd) =~ /^(un|)setg$/) ||
-        ($state->{'Mode'} eq 'Exploit' && lc($cmd) =~ /^(un|)set$/)
+        ($state->{'Mode'} eq "Main"    && lc($cmd) =~ /^(un|)setg$/) ||
+        ($state->{'Mode'} eq "Exploit" && lc($cmd) =~ /^(un|)set$/)
        )
     {
         # display variables if no args are specified
