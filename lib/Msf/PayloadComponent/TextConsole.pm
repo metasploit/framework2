@@ -68,6 +68,11 @@ LOOPER:
         last LOOPER if (! length($data));
         $self->SendLog($data);
         $data = $self->SendFilter($data);
+        
+        if (! fileno($sockOut) || $sockOut->connected) {
+            last LOOPER;
+        }
+        
         $sockOut->send($data);
       }
       elsif($ready == $sockIn) {
@@ -76,10 +81,12 @@ LOOPER:
         last LOOPER if(!length($data));
         $data = $self->RecvFilter($data);
         $self->RecvLog($data);
+        
+        if (! fileno($consoleOut)) {
+            last LOOPER;
+        }
+        
         print $consoleOut $data;
-      }
-      else {
-        print "Well thats a bug.\n";
       }
     }
   }
