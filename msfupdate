@@ -193,7 +193,7 @@ print "\n";
 
 exit(0) if $opts{s};
 
-if (! keys(%{%upd})) {
+if (! keys(%{$upd})) {
     print "[*] No new updates are available\n";
     exit(0);
 }
