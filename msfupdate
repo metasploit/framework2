@@ -52,7 +52,7 @@ chdir($RealBin);
 
 my ($old_data, $now_data, $new_data);
 my ($old, $now, $new);
-my ($mod, $upx, $upd, $err);
+my ($mod, $upx, $upd);
 
 $now_data = ScanFiles('.');
 
@@ -102,8 +102,6 @@ $new = Hashit($new_data);
 $mod = Diff($old, $now);
 $upx = Diff($old, $new);
 $upd = Diff($now, $new);
-
-$err = { };
 
 if ($opts{m}) {
     if (! keys(%{$mod})) {
@@ -174,7 +172,7 @@ if ($opts{a}) {
 #   table. 
 # - Once we have identified an update, we try to download it.
 #   If an error occurs, either because the download fails or
-#   the md5 does no match, we place this into the $err table.
+#   the md5 does no match.
 #
 # - After all files have been processed, we rebuild the local
 #   .current file and get ready for the next update.
@@ -217,14 +215,10 @@ foreach my $entry (keys(%{$upd})) {
         next;
     } 
     my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current/$entry");
-    if ($upd->{$entry} ne md5_hex($data)) {
-        print "[*] Error downloading file $entry\n";
-        if ($data) {
-            $err->{$entry} = "Checksum Error";
-        }
-        else {
-            $err->{$entry} = "Download Error";
-        }
+    if ($new->{$entry} ne md5_hex($data)) {
+        print "$entry: ". $new->{$entry} ." != " .md5_hex($data)."\n";
+        my $errmsg = $data ? 'checksum mismatch' : 'download failed';
+        print "[*] Error updating $entry: $errmsg\n";
         next;
     }
     
@@ -241,12 +235,6 @@ print "[*] Regenerating local file database\n";
 $now_data = ScanFiles('.');
 WriteFile('.current', $now_data);
 
-if (keys(%{$err})) {
-    print "[*] The following errors were encountered:\n";
-    foreach (%{$err}) {
-        print "\t".$err->{$_}."\t$_\n";
-    }
-}
 
 
 sub Usage { 
