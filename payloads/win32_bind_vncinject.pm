@@ -22,8 +22,8 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and inject a VNC server into the remote process',
   'Authors'      => [
-                        'Matt Miller <mmiller [at] hick.org> [Unknown License]',
-                        'Jarkko Turkulainen <jt [at] klake.org> [Unknown License]',
+                        'Matt Miller <mmiller [at] hick.org>',
+                        'Jarkko Turkulainen <jt [at] klake.org>',
                     ],
   'UserOpts'     => { 
                         'VNCDLL'  => [1, 'PATH', 'The full path the VNC service dll', "$RealBin/data/vncdll.dll"],

@@ -23,7 +23,7 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and inject the meterpreter server into the remote process',
   'Authors'      => [
-                        'skape <mmiller [at] hick.org> [Unknown License]',
+                        'skape <mmiller [at] hick.org>',
                     ],
   'UserOpts'     => { 
                         'METDLL'  => [1, 'PATH', 'The full path the meterpreter server dll', "$RealBin/data/meterpreter/metsrv.dll"],

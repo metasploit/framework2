@@ -10,8 +10,8 @@ my $info =
     'Authors'      =>
       [
         'spoonm <ninjatools [at] hush.com>',
-        'skape <mmiller@hick.org>',
-        'vlad902 <vlad902@gmail.com>',
+        'skape <mmiller [at] hick.org>',
+        'vlad902 <vlad902 [at] gmail.com>',
       ],
     'Arch'         => [ 'x86' ],
     'Priv'         => 0,

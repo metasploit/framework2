@@ -20,8 +20,8 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [
-                        'Matt Miller <mmiller [at] hick.org> [Unknown License]',
-                        'Jarkko Turkulainen <jt [at] klake.org> [Unknown License]',
+                        'Matt Miller <mmiller [at] hick.org>',
+                        'Jarkko Turkulainen <jt [at] klake.org>',
                     ],
   'UserOpts'     =>
  	{ 

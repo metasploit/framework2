@@ -20,8 +20,8 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and inject DLL into process memory',
   'Authors'      => [
-                        'Matt Miller <mmiller [at] hick.org> [Unknown License]',
-                        'Jarkko Turkulainen <jt [at] klake.org> [Unknown License]',
+                        'Matt Miller <mmiller [at] hick.org>',
+                        'Jarkko Turkulainen <jt [at] klake.org>',
                     ],
   'UserOpts'     => 
 	{ 
