@@ -54,11 +54,13 @@ sub ParentHandler {
 
   while(!$self->StopHandling) {
     if($self->CheckHandler) {
-      if($self->SocketIn == $self->SocketOut) {
-        $self->PrintLine('[*] Got connection from ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport);
-      }
-      else {
-        $self->PrintLine('[*] Got connection IN: ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport . ' OUT: ' . $self->SocketOut->peerhost . ':' . $self->SocketOut->peerport);
+      if($self->SocketIn) { 
+        if($self->SocketIn == $self->SocketOut) {
+          $self->PrintLine('[*] Got connection from ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport);
+        }
+        else {
+          $self->PrintLine('[*] Got connection IN: ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport . ' OUT: ' . $self->SocketOut->peerhost . ':' . $self->SocketOut->peerport);
+        }
       }
       $self->KillChild;
       $self->HandleConnection;
