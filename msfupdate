@@ -92,7 +92,7 @@ if ($opts{u}) {
         }
     }
     
-    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.txt");
+    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/.current");
 }
 
 $now = Hashit($now_data);
