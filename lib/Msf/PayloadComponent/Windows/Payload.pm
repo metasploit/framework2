@@ -135,8 +135,6 @@ sub ReplaceVariable
 			my $func = ($self->GetVar('EXITFUNC')) ? $self->GetVar('EXITFUNC') : 'seh';
 			my $hash = exists($exitTypes->{$func}) ? $exitTypes->{$func} : $exitTypes->{'seh'};
 
-			printf "hash is %.8x\n", $hash;
-
 			substr($$payload, $offset, 4, pack('V', $hash));
 
 			$replaced = 1;
