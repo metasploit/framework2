@@ -36,7 +36,7 @@ sub new {
 
 sub Build {
   my $self = shift;
-  return($self->Generate($self->GetVar('LHOST'), $self->GetVar('LPORT')));
+  return($self->Generate());
 }
 
 sub Generate {
