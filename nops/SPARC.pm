@@ -29,6 +29,7 @@ sub new {
 }
 
 my $table = [
+# XXX: RDY/WRY, call, FPU shit?
   [ \&Inssethi, [ ], ],					# sethi
   [ \&Insarithmetic, [ 1, 0 ], ],			# add
   [ \&Insarithmetic, [ 1, 1 ], ],			# and
@@ -58,6 +59,9 @@ my $table = [
   [ \&Insarithmetic, [ 1, 28 ], ],			# subxcc
   [ \&Insarithmetic, [ 0, 30 ], ],			# udivcc
   [ \&Insarithmetic, [ 0, 31 ], ],			# sdivcc
+  [ \&Insarithmetic, [ 1, 32 ], ],			# taddcc
+  [ \&Insarithmetic, [ 1, 33 ], ],			# tsubcc
+  [ \&Insarithmetic, [ 1, 36 ], ],			# mulscc
   [ \&Insarithmetic, [ 2, 37 ], ],			# sll
   [ \&Insarithmetic, [ 2, 38 ], ],			# srl
   [ \&Insarithmetic, [ 2, 39 ], ],			# sra
@@ -122,8 +126,8 @@ sub Insbranch {
   return if(! $len);
   $len = 0x3fffff if($len >= 0x400000);
 
-  return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | $len)); 
-#  return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | int(rand($len - 1)) + 1)); 
+#  return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | $len)); 
+  return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | int(rand($len - 1)) + 1)); 
 }
 
 sub Nops {
@@ -167,7 +171,7 @@ sub Nops {
 
   if(! $random)
   {
-    return $nop x ($backup_length / 4);
+    $nop = $nop x ($backup_length / 4);
   }
 
   return $nop;
