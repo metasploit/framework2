@@ -86,7 +86,7 @@ sub Encode {
     # If you are using this with msf, this check will happen again inside of
     # the framework, but the check remains for standalone pex usage
     # sanity checking, this should never happen
-    if(BadCharCheck($encoded, $badChars)) {
+    if(Pex::Utils::CharsInBuffer($encoded, $badChars)) {
       print "Caught bad chars in @encoderName\n" if($debug);
     }
     else {
@@ -185,22 +185,8 @@ sub DWordXorDispatcher {
     
     my $xordat = XorDword($xorkey, $rawshell);
     my $encode = &{$encoder}($xorkey, length($xordat), $badChars, @extraArgs);
-
     my $shellcode = $encode . $xordat;
-
-
     return($shellcode);
-}
-
-sub BadCharCheck {
-  my $badChars = shift;
-  my $string = shift;
-  foreach (split('', $badChars)) {
-    if(index($string, $_) != -1) {
-      return(1, $_);
-    }
-  }
-  return(0);
 }
 
 
@@ -311,9 +297,9 @@ sub XorDecoderDwordAntiIds {
     
     if (lc($arch) eq "x86")
     {
-    
         # this xor decoder was written by spoonm <ninjatools [at] hush.com>
 	    my $smallVersion = 0;
+        
         # Pad to a 4 byte boundary, the xor data should already be padded
         # but just incase.
         my $loopCounter = int(($len - 1) / 4) + 1;
@@ -330,11 +316,11 @@ sub XorDecoderDwordAntiIds {
             # try sub len, then add len
             my $loopmode = "sub";
             my $lenops = "\x66\x81\xe9";
-            $xorlen = pack("S", $loopCounter);
+            $xorlen = pack("v", $loopCounter);
             
             if (Pex::Utils::CharsInBuffer($xorlen, $xbadc))
             {
-                $xorlen = pack("S", abs($loopCounter));
+                $xorlen = pack("v", abs($loopCounter));
                 $lenops = "\x66\x81\xc1";
                 $loopmode = "add";
             }
@@ -355,7 +341,7 @@ sub XorDecoderDwordAntiIds {
                 "\x5b".                     # pop    %ebx
                 "\x5b".                     # pop    %ebx
                 "\x5b".                     # pop    %ebx
-                "\x80\xc3\x1f".             # add    $0x1f,%bl
+                "\x80\xc3\x1f".             # add    $0x1f,%ebx
                 "\x31\xc9".                 # xor    %ecx,%ecx
                 $lenops . $xorlen.          # stick loop cnt into ecx
                 "\x81\x33" .$xorkey.        # xorl   $0x69696969,(%ebx)
@@ -366,8 +352,6 @@ sub XorDecoderDwordAntiIds {
                 "\xe2\xf4";                 # loop   a0000013 <_start+0x13>
                 return $decoder;
             }
-            
-            # Fuck!
         }
     }
 }
@@ -520,8 +504,8 @@ sub XorDecoderWord {
         my $div = $len / 2;
         if ($len - (int($div) * 2) > 0) { $div++ }
 
-        my $xorlen = pack("S", (0xffff - $div));
-        my $xorkey = pack("S", $xor);
+        my $xorlen = pack("v", (0xffff - $div));
+        my $xorkey = pack("v", $xor);
 
         my $decoder =
             "\xeb\x13".                     # jmp 8048095 <short_xor_end>
@@ -549,7 +533,7 @@ sub XorDecoderByte {
     # this xor decoder was written by hdm [at] metasploit.com
     if (lc($arch) eq "x86")
     {
-        $len = pack("S", 0xffff - $len);
+        $len = pack("v", 0xffff - $len);
 
         return
         "\xd9\xe1".                     # fabs
@@ -558,7 +542,7 @@ sub XorDecoderByte {
         "\x5b".                         # pop %ebx
         "\x5b".                         # pop %ebx
         "\x5b".                         # pop %ebx
-        "\x80\xeb\xe7".                 # sub $0xe7,%bl
+        "\x80\xeb\xe7".                 # sub $0xe7,%ebx
         # short_xor_beg:
         "\x31\xc9".                     # xor %ecx,%ecx
         "\x66\x81\xe9$len".             # sub $len,%cx
@@ -601,8 +585,7 @@ sub XorWord {
     {
 	    my $chunk = substr($buffer, $c);
         $chunk .= ("\x00" x (2 - length($chunk)));
-	    $chunk  = unpack("S", $chunk) ^ $xor;
-	    $res   .= pack("S", $chunk);
+	    $res   .= pack("v", unpack("v", $chunk) ^ $xor);
 	}
     return $res;
 }

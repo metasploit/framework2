@@ -132,19 +132,19 @@ sub LoadImage {
         return(undef);
     }
     
-    $IMAGE_HDR{"MachineID"}               = unpack("S", substr($data, $peo + 4));
-    $IMAGE_HDR{"NumberOfSections"}        = unpack("S", substr($data, $peo + 6));
+    $IMAGE_HDR{"MachineID"}               = unpack("v", substr($data, $peo + 4));
+    $IMAGE_HDR{"NumberOfSections"}        = unpack("v", substr($data, $peo + 6));
     $IMAGE_HDR{"TimeDateStamp"}           = unpack("V", substr($data, $peo + 8));
     $IMAGE_HDR{"PointerToSymbolTable"}    = unpack("V", substr($data, $peo + 12));
     $IMAGE_HDR{"NumberOfSymbols"}         = unpack("V", substr($data, $peo + 16));
-    $IMAGE_HDR{"SizeOfOptionalHeader"}    = unpack("S", substr($data, $peo + 20));
-    $IMAGE_HDR{"Characteristics"}         = unpack("S", substr($data, $peo + 22));
+    $IMAGE_HDR{"SizeOfOptionalHeader"}    = unpack("v", substr($data, $peo + 20));
+    $IMAGE_HDR{"Characteristics"}         = unpack("v", substr($data, $peo + 22));
 
     if ($IMAGE_HDR{"SizeOfOptionalHeader"} > 0)
     {
         my $opthdr = substr($data, $peo + 24, $IMAGE_HDR{"SizeOfOptionalHeader"});
 
-        $OPT_IMAGE_HDR{"Magic"}               = unpack("S", substr($opthdr, 0));
+        $OPT_IMAGE_HDR{"Magic"}               = unpack("v", substr($opthdr, 0));
         $OPT_IMAGE_HDR{"MajorLinker"}         = unpack("C", substr($opthdr, 2));
         $OPT_IMAGE_HDR{"MinorLinker"}         = unpack("C", substr($opthdr, 3));
         $OPT_IMAGE_HDR{"SizeOfCode"}          = unpack("V", substr($opthdr, 4));
@@ -159,19 +159,19 @@ sub LoadImage {
         $OPT_IMAGE_HDR{"SectionAlign"}        = unpack("V", substr($opthdr, 32));
         $OPT_IMAGE_HDR{"FileAlign"}           = unpack("V", substr($opthdr, 36));
 
-        $OPT_IMAGE_HDR{"MajorOS"}             = unpack("S", substr($opthdr, 38));
-        $OPT_IMAGE_HDR{"MinorOS"}             = unpack("S", substr($opthdr, 40));
-        $OPT_IMAGE_HDR{"MajorImage"}          = unpack("S", substr($opthdr, 42));
-        $OPT_IMAGE_HDR{"MinorImage"}          = unpack("S", substr($opthdr, 44));
-        $OPT_IMAGE_HDR{"MajorSub"}            = unpack("S", substr($opthdr, 46));
-        $OPT_IMAGE_HDR{"MinorSub"}            = unpack("S", substr($opthdr, 48));
+        $OPT_IMAGE_HDR{"MajorOS"}             = unpack("v", substr($opthdr, 38));
+        $OPT_IMAGE_HDR{"MinorOS"}             = unpack("v", substr($opthdr, 40));
+        $OPT_IMAGE_HDR{"MajorImage"}          = unpack("v", substr($opthdr, 42));
+        $OPT_IMAGE_HDR{"MinorImage"}          = unpack("v", substr($opthdr, 44));
+        $OPT_IMAGE_HDR{"MajorSub"}            = unpack("v", substr($opthdr, 46));
+        $OPT_IMAGE_HDR{"MinorSub"}            = unpack("v", substr($opthdr, 48));
 
         $OPT_IMAGE_HDR{"Reserved"}            = unpack("V", substr($opthdr, 52));
         $OPT_IMAGE_HDR{"SizeOfImage"}         = unpack("V", substr($opthdr, 56));
         $OPT_IMAGE_HDR{"SizeOfHeaders"}       = unpack("V", substr($opthdr, 60));
         $OPT_IMAGE_HDR{"Checksum"}            = unpack("V", substr($opthdr, 64));
-        $OPT_IMAGE_HDR{"Subsystem"}           = unpack("S", substr($opthdr, 68));
-        $OPT_IMAGE_HDR{"DllCharacteristics"}  = unpack("S", substr($opthdr, 70));
+        $OPT_IMAGE_HDR{"Subsystem"}           = unpack("v", substr($opthdr, 68));
+        $OPT_IMAGE_HDR{"DllCharacteristics"}  = unpack("v", substr($opthdr, 70));
         $OPT_IMAGE_HDR{"SizeOfStackReserve"}  = unpack("V", substr($opthdr, 72));
         $OPT_IMAGE_HDR{"SizeOfStackCommit"}   = unpack("V", substr($opthdr, 76));
         $OPT_IMAGE_HDR{"SizeOfHeapReserve"}   = unpack("V", substr($opthdr, 80));

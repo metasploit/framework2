@@ -9,7 +9,7 @@ Pre-Release Tasks
  
  - Nop generator needs a no-mod-regs option to avoid nops which modify regs needed by exploit
 
- - Verify that send() and Send() for UDP dont truncate
+ X Both send() and Send() truncate at 65k boundary for UDP
 
  - Fix /usr/bin/env errors for Solaris / perl 5.6
 
@@ -17,13 +17,9 @@ Pre-Release Tasks
  
  - The msfweb interface does not work correctly on Mac OS X
 
- - Change the add bl calls to add ebx in Encoder... lots of these
-
  - Multiple return values of Check, not just 0/1, we need 0 for plain not vuln, 1 for looks vuln, 2 for confirmed, -1 for cant exploit, -2 for cant tell
 
  - Make the OS explicit. Remove win32, make it win2000, winxp, etc, etc for exploits and payloads
-
- - The winadduser payload needs to be rewritten using new api
 
  - Determine the issue with the PREFORK code, it DOES work on some exploits
  
@@ -42,7 +38,7 @@ Post-Release Tasks
 ===================
  - Rewrite BSD bind payload (SIGSYS error after listen call) [LSD one is also broken]
 
- - Right now LoadTempEnv, will set the TempEnv to the actual stored hash, so you are modifing the stored hash also,
+ - Right now LoadTempEnv will set the TempEnv to the actual stored hash, so you are modifing the stored hash also,
    this is nice because you don't have to SaveTempEnv before you do a save, but it isn't really intended behavior.
    Load should "load" a copy, you should be able to make changes and ditch it without affecting the saved copy.  
    Maybe this should be changed, and LoadTempEnv should create a copy like SaveTempEnv does.
