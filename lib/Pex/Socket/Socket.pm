@@ -180,12 +180,16 @@ sub Send {
 
     last if($sent == length($data));
 
-    $data = substr($data, $sent);
-    if(!$sent && !--$failed) {
-      $self->SetError("Send retry limit reached.");
-      return(0);
+    if(!$sent) {
+      if(!--$failed) {
+        $self->SetError("Send retry limit reached.");
+        return(0);
+      }
+      select(undef, undef, undef, $delay); # sleep
     }
-    select(undef, undef, undef, $delay); # sleep
+    else {
+      $data = substr($data, $sent);
+    }
   }
   return(1);
 }
