@@ -1,7 +1,7 @@
 ;;
 ;
-;        Name: provider_udp_shell
-;        Type: Provider
+;        Name: stage_udp_shell
+;        Type: Stage
 ;   Qualities: None
 ;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
