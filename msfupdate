@@ -115,6 +115,11 @@ if ($opts{m}) {
     exit(0);
 }
 
+if (keys(%{$mod})) {
+
+}
+
+
 
 if ($new_data) {
 
@@ -173,7 +178,6 @@ sub ScanFiles {
 }
 
 
-
 sub DownloadFile {
     my $host = shift;
     my $path = shift;
@@ -195,6 +199,8 @@ sub DownloadFile {
     my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
+        # Reset the verified flag
+        $SSL_VERIFIED = 0;
 
         # Create SSL Context
         my $ctx = Net::SSLeay::CTX_new();
