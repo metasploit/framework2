@@ -11,6 +11,7 @@ package Msf::Encoder::QuackQuack;
 use strict;
 use base 'Msf::Encoder';
 use Pex::Encoder;
+use Pex::Encoding::XorDword;
 
 my $advanced = 
 {
@@ -38,8 +39,8 @@ sub EncodePayload {
     my $payload  = shift;
     my $badchars = shift;
 
-    my $xor_key   = Pex::Encoder::XorKeyScanDword($payload, $badchars);
-    my $xor_data  = Pex::Encoder::XorDword($xor_key, $payload);
+    my $xor_key   = Pex::Encoding::XorDword->KeyScan($payload, $badchars);
+    my $xor_data  = Pex::Encoding::XorDword->Encode($xor_key, $payload);
 
     my $encoder = pack("N*", 
         0x7c631a79,  # xor.      r3,r3,r3
