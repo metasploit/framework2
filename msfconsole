@@ -755,7 +755,7 @@ sub xTabCompletion
     }
     
     # revert to file completion for non-commands
-    if (! exists($virtualCmds{$cmd})) {
+    if (! scalar(@{$state->{'TabVals'}}) && ! exists($virtualCmds{$cmd})) {
         $state->{'TabVals'} = []; 
     }
     
