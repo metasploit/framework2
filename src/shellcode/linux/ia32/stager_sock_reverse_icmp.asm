@@ -15,8 +15,6 @@
 ;
 ;        Implementation of a Linux reverse ICMP stager.
 ;
-;        File descriptor in edi.
-;
 ;;
 BITS   32
 GLOBAL _start
