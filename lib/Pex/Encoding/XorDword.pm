@@ -18,6 +18,12 @@ use strict;
 use Pex::Encoder;
 use Pex::Text;
 
+sub new {
+  my $class = shift;
+  my $self = bless({ }, $class);
+  return($self);
+}
+
 #
 # These routines take a buffer and xor encodes it with the given key
 # value. The data is aligned to keysize blocks and padded with xor'd
@@ -27,7 +33,7 @@ use Pex::Text;
 # Dword Xor Encoding Routine
 # xor (which is the key) is passed as a perl number, unpack that shit with V yo
 sub Encode {
-  my $class = shift;
+  my $self = shift;
   my $xor = shift;
   my $buffer = shift;
 
@@ -44,9 +50,9 @@ sub Encode {
 }
 
 sub KeyScan {
-  my $class = shift;
+  my $self = shift;
 
-  my @bytes = @{$class->_KeyScanBytes(@_)};
+  my @bytes = @{$self->_KeyScanBytes(@_)};
   return if(@bytes != 4);
   return(unpack('V', pack('C4', @bytes)));
 }
@@ -54,15 +60,15 @@ sub KeyScan {
 
 # Straight up Xor Dword KeyScan yo
 sub _KeyScanBytes {
-  my $class = shift;
+  my $self = shift;
   my $data = shift;
   my $badChars = shift;
 
   my $badKeys;
 
-  $badKeys = $class->_FindBadKeys($data, $badChars);
+  $badKeys = $self->_FindBadKeys($data, $badChars);
 
-  my($keys, $r) = $class->_FindKey($badKeys, $badChars);
+  my($keys, $r) = $self->_FindKey($badKeys, $badChars);
   return if(!defined($keys) || @{$keys} != 4);
 
   return($keys);
@@ -81,7 +87,7 @@ sub _KeyScanBytes {
 # same key for the same payload like you would before. -spn
 
 sub _FindBadKeys {
-  my $class = shift;
+  my $self = shift;
   my $data = shift;
   my $badChars = shift;
 
@@ -110,7 +116,7 @@ sub _FindBadKeys {
 # keys that have already been checked).
 # will return undef if it can't find a key
 sub _FindKey {
-  my $class = shift;
+  my $self = shift;
   my $badKeys = shift;
   my $badChars = shift;
 
@@ -137,19 +143,20 @@ LOOP:
 
 
 sub _Check {
-  my $class = shift;
+  my $self = shift;
   my $key = shift;
   my $data = shift;
   my $badChars = shift;
-  return(Pex::Text::BadCharIndex($badChars, $class->Encode($key, $data)));
+  return(Pex::Text::BadCharIndex($badChars, $self->Encode($key, $data)));
 }
 
 sub _UnitTest {
-  my $class = shift;
+  my $self = shift;
+  my $self = $self->new;
 
   my $string = "\x00\x01\x02AABBCCDD";
   my $badChars = "\x00A";
-  my $key = $class->KeyScan($string, $badChars);
+  my $key = $self->KeyScan($string, $badChars);
   if(!defined($key)) {
     print "KeyScan failed!\n";
     return;
@@ -157,7 +164,7 @@ sub _UnitTest {
 
   printf("Found key 0x%08x\n", $key);
 
-  my $enc = $class->Encode($key, $string);
+  my $enc = $self->Encode($key, $string);
 
   if(!defined($enc)) {
     print "Encoder failed!\n";

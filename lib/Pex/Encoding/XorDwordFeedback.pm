@@ -28,7 +28,7 @@ use Pex::Utils;
 
 # Dword Xor Additive Feedback Encoding Routine
 # xor (which is the key) is passed as a perl number, unpack that shit with V yo
-  my $self = shift;
+
 sub Encode {
   my $class = shift;
   my $xor = shift;
