@@ -257,8 +257,7 @@ sub eSet {
     }
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
-    if ($ui->GetTempEnv('PAYLOAD'))
-    {
+    if ($ui->GetTempEnv('PAYLOAD')) s{
         $prompt .= '('.$ui->GetTempEnv('PAYLOAD').')';
     }
     $prompt .= ' > ';
@@ -311,14 +310,6 @@ sub gHelp
         $col->AddRow($cmd, $virtualCmds{$cmd}->[1]);
     }
     print $col->GetOutput . "\n";
-}
-
-
-sub gExec 
-{
-    my ($cmd, @args) = @_;
-    print "\nExecuting command: " . join(" ", @args) . "\n";
-    system(join(" ", @args));
 }
 
 sub gUse 
