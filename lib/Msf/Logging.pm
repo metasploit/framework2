@@ -7,7 +7,7 @@ sub new {
   my $self = bless({
     'Filename' => @_ ? shift : '',
   }, $class);
-  return if(!defined($self->CreateLogDir));
+  return if($self->GetEnv('Logging') && !defined($self->CreateLogDir));
   return($self);
 }
 
@@ -19,6 +19,7 @@ sub Filename {
 
 sub Print {
   my $self = shift;
+  return if(!$self->GetEnv('Logging'));
   if(ref($self)) {
     if(!$self->SessionPrint(@_)) {
       $self->SetError('[*] Error writing to log: ' . $self->Filename);
