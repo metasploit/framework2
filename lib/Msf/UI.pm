@@ -20,7 +20,7 @@ use strict;
 use base 'Msf::Base';
 use Msf::Config;
 use Pex::Encoder;
-use Pex::Utils;
+use Pex::Text;
 
 sub new {
   my $class = shift;
@@ -210,7 +210,7 @@ sub Encode {
   my $exploitSpace = $exploit->PayloadSpace || '';
   my $encodedPayload;
 
-  if(Pex::Utils::BadCharCheck($badChars, $prependEncoder)) {
+  if(Pex::Text::BadCharCheck($badChars, $prependEncoder)) {
     # This should never happen unless the exploit coder is dumb, but might as well check
     $self->SetError('Bad Characters in prependEncoder');
     return;
@@ -254,7 +254,7 @@ sub Encode {
       next;
     }
 
-    if(Pex::Utils::BadCharCheck($badChars, $encodedShell)) {
+    if(Pex::Text::BadCharCheck($badChars, $encodedShell)) {
       $self->PrintDebugLine(2, "$encoderName failed, bad chars in encoded payload");
       $self->PrintDebugLine(5, "encoded payload:");
       $self->PrintDebugLine(5, Pex::Text::BufferC($encodedShell));
@@ -322,7 +322,7 @@ sub Encode {
       next;
     }
 
-    if(Pex::Utils::BadCharCheck($badChars, $nops)) {
+    if(Pex::Text::BadCharCheck($badChars, $nops)) {
       $self->PrintDebugLine(2, "$nopName failed, bad chars in nops");
       next;
     }
