@@ -66,7 +66,9 @@ sub InitWin32 {
     delete($self->{'Info'}->{'Win32Payload'});
     
     $self->{'Info'}->{'UserOpts'}->{'EXITFUNC'} = [0, 'DATA', 'Exit technique: "process", "thread", "seh"', 'seh'];
-    $self->{'Info'}->{'UserOpts'}->{'PREFORK'}  = [0, 'BOOL', 'Execute payload in forked process'];
+    
+    ## disable until I finalize the esp/ebp stuff
+    # $self->{'Info'}->{'UserOpts'}->{'PREFORK'}  = [0, 'BOOL', 'Execute payload in forked process'];
 }
 
 sub Size {

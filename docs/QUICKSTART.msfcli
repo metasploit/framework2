@@ -96,7 +96,6 @@ Exploit and Payload Options
   --------    --------    -------    ------------------------------------------
   optional    EXITFUNC    seh        Exit technique: "process", "thread", "seh"
   required    LHOST                  Local address to receive connection
-  optional    PREFORK                Execute payload in forked process
   required    LPORT                  Local port to receive connection
                                                                                                                 
 
