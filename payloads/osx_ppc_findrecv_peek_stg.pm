@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::OSX::ppc::ShellStage';
 
 my $info =
 {
-	'Name'        => 'Mac OS X PPC Staged Find Recv Shell (MSG_PEEK)',
+	'Name'        => 'Mac OS X PPC Staged Find Recv Peek Shell',
 	'Version'     => '$Revision$',
 	'Description' => 'Search file descriptors for a tag and spawn a shell as a stage',
 };

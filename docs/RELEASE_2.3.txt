@@ -1,6 +1,6 @@
 The Metasploit Framework is an advanced open-source exploit
 development platform. The 2.3 release includes three user interfaces,
-44 exploits and 68 payloads.
+46 exploits and 68 payloads.
 
 The Framework will run on any modern operating system that has a working
 Perl interpreter. The Windows installer includes a slimmed-down version
@@ -38,12 +38,13 @@ Some highlights in this release:
     + Solaris dtspcd module ported from Sinan Eren's code
     + AIM 'goaway' module automatically targets based on browser
     + IRIX lpdsched popen() command execution module added
-    + IIS 4.0 ism.dll HTR Buffer Overflow module added
-    + Veritas Name Service Buffer Overflow module added
-    + IMAIL IMAPD 'delete' Buffer Overflow module added
-    + IIS w3who.dll ISAPI Buffer Overflow module added
+    + IIS 4.0 ism.dll HTR Buffer Overflow added
+    + Veritas Name Service Buffer Overflow added
+    + IMAIL IMAPD 'delete' Buffer Overflow added
+    + IIS w3who.dll ISAPI Buffer Overflow added
     + Samba trans2open() Overflow for Mac OS X added
-    + 4D WebSTAR FTP Buffer Overflow Mac OS X added
+    + 4D WebSTAR FTP Buffer Overflow for Mac OS X added
+    + Seattle Labs POP3 Buffer Overflow added
 
 
 This release is available from the Metasploit.com web site:

@@ -17,7 +17,7 @@ sub _Load {
 
 my $info =
 {
-  'Name'         => 'Unix /dev/tcp Piping Reverse Shell Command',
+  'Name'         => 'Unix /dev/tcp Piping Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Use bash and /dev/tcp to simulate reverse shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

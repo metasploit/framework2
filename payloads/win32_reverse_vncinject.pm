@@ -14,7 +14,7 @@ use FindBin qw{$RealBin};
 
 my $info =
 {
-	'Name'         => 'Windows Reverse VNC Server DLL Inject',
+	'Name'         => 'Windows Reverse VNC Server Inject',
 	'Version'      => '$Revision$',
 	'Description'  => 'Connect back and inject a VNC server into the remote process',
 };

@@ -17,7 +17,7 @@ sub _Load {
 
 my $info =
 {
-  'Name'         => 'Unix Telnet Piping Reverse Shell Command',
+  'Name'         => 'Unix Telnet Piping Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
   'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
