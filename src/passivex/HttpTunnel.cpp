@@ -1,3 +1,8 @@
+/*
+ * This file is part of the Metasploit Exploit Framework
+ * and is subject to the same licenses and copyrights as
+ * the rest of this package.
+ */
 #include "PassiveXLib.h"
 #include "HttpTunnel.h"
 
@@ -405,6 +410,8 @@ DWORD HttpTunnel::TransmitHttpRequest(
 
 	do
 	{
+		PROFILE_CHECKPOINT("InternetConnect ==>");
+
 		// Open a connection handle
 		if (!(ConnectHandle = InternetConnect(
 				InternetHandle,
@@ -419,6 +426,8 @@ DWORD HttpTunnel::TransmitHttpRequest(
 			Result = GetLastError();
 			break;
 		}
+		
+		PROFILE_CHECKPOINT("InternetConnect <==");
 
 		// If we were supplied a wait response timeout, set it
 		if (WaitResponseTimeout)
@@ -427,6 +436,8 @@ DWORD HttpTunnel::TransmitHttpRequest(
 					INTERNET_OPTION_RECEIVE_TIMEOUT,
 					&WaitResponseTimeout,
 					sizeof(WaitResponseTimeout));
+
+		PROFILE_CHECKPOINT("HttpOpenRequest ==>");
 
 		// Open a request handle
 		if (!(RequestHandle = HttpOpenRequest(
@@ -443,6 +454,9 @@ DWORD HttpTunnel::TransmitHttpRequest(
 			Result = GetLastError();
 			break;
 		}
+		
+		PROFILE_CHECKPOINT("HttpOpenRequest <==");
+		PROFILE_CHECKPOINT("HttpSendRequest ==>");
 
 		// Send and endthe request
 		if ((!HttpSendRequest(
@@ -456,13 +470,15 @@ DWORD HttpTunnel::TransmitHttpRequest(
 			break;
 		}
 
+		PROFILE_CHECKPOINT("HttpSendRequest <==");
+
 		// If we wont be waiting for a response, break out now and return
 		if (!WaitResponseTimeout)
 		{
 			Result = ERROR_SUCCESS;
 			break;
 		}
-
+		
 		// Keep looping until we've read the entire request or an error is
 		// encountered
 		while (1)
@@ -470,6 +486,8 @@ DWORD HttpTunnel::TransmitHttpRequest(
 			PUCHAR NewBuffer;
 
 			ReadBufferLength = sizeof(ReadBuffer);
+
+			PROFILE_CHECKPOINT("InternetReadFile ==>");
 
 			if (!InternetReadFile(
 					RequestHandle,
@@ -485,6 +503,8 @@ DWORD HttpTunnel::TransmitHttpRequest(
 				Result = ERROR_SUCCESS;
 				break;
 			}
+			
+			PROFILE_CHECKPOINT("InternetReadFile <==");
 
 			// Append the buffer to the output buffer
 			if (!OutBuffer)
@@ -531,6 +551,8 @@ DWORD HttpTunnel::TransmitHttpRequest(
 		}
 
 	} while (0);
+			
+	PROFILE_CHECKPOINT("Finished TransmitHttpRequest");
 
 	// Close handles
 	if (RequestHandle)
@@ -602,6 +624,8 @@ ULONG HttpTunnel::SendThreadFunc()
 		FD_SET(
 				LocalTcpServerSide,
 				&FdSet);
+	
+		PROFILE_CHECKPOINT("select ==>");
 
 		// Wait for some data...
 		Result = select(
@@ -610,6 +634,8 @@ ULONG HttpTunnel::SendThreadFunc()
 				NULL,
 				NULL,
 				NULL);
+		
+		PROFILE_CHECKPOINT("select <==");
 
 		// If select failed or there was no new data, act accordingly else risk
 		// the fist of the evil witch
@@ -622,6 +648,8 @@ ULONG HttpTunnel::SendThreadFunc()
 		}
 		else if (Result == 0)
 			continue;
+		
+		PROFILE_CHECKPOINT("recv ==>");
 
 		// Read in data from the local server side of the TCP connection
 		BytesRead = recv(
@@ -629,6 +657,8 @@ ULONG HttpTunnel::SendThreadFunc()
 				(char *)ReadBuffer,
 				sizeof(ReadBuffer),
 				0);
+		
+		PROFILE_CHECKPOINT("recv <==");
 
 		// On error or end of file...
 		if (BytesRead <= 0)
@@ -642,6 +672,8 @@ ULONG HttpTunnel::SendThreadFunc()
 		CPassiveX::Log(
 				TEXT("SendThreadFunc(): TUNNEL_IN: Transmitting %lu bytes of data to remote side.\n"),
 				BytesRead);
+		
+		PROFILE_CHECKPOINT("TransmitToRemote ==>");
 
 		// Transmit the data to the remote side
 		if ((Result = TransmitToRemote(
@@ -652,6 +684,8 @@ ULONG HttpTunnel::SendThreadFunc()
 					TEXT("SendThreadFunc(): TUNNEL_IN: TransmitToRemote failed, %lu.\n"),
 					Result);
 		}
+		
+		PROFILE_CHECKPOINT("TransmitToRemote <==");
 	}
 
 	// Exit the process if the send thread ends

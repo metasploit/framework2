@@ -1,9 +1,18 @@
+/*
+ * This file is part of the Metasploit Exploit Framework
+ * and is subject to the same licenses and copyrights as
+ * the rest of this package.
+ */
 #ifndef _PASSIVEX_HTTPTUNNEL_H
 #define _PASSIVEX_HTTPTUNNEL_H
 
 #define PASSIVEX_URI_SECOND_STAGE TEXT("/stage")
 #define PASSIVEX_URI_TUNNEL_IN    TEXT("/tunnel_in")
 #define PASSIVEX_URI_TUNNEL_OUT   TEXT("/tunnel_out")
+
+#define PROFILE_CHECKPOINT(x) \
+	CPassiveX::Log("%s:%d:%lu: %s\n", __FILE__, __LINE__, GetTickCount(), x)
+	
 
 /*
  * This class is responsible for managing the HTTP tunnel between a target host
