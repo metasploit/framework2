@@ -1,8 +1,8 @@
 package Msf::Payload::win32_reverse_stg_upexec;
 use strict;
-use base 'Msf::PayloadComponent::UploadExec';
+use base 'Msf::PayloadComponent::Win32UploadExecStage';
 sub load {
-  Msf::PayloadComponent::UploadExec->import('Msf::PayloadComponent::Win32ReverseStager');
+  Msf::PayloadComponent::Win32UploadExecStage->import('Msf::PayloadComponent::Win32ReverseStager');
 }
 
 my $info =
