@@ -204,7 +204,7 @@ sub _UnitTestGoogle {
  
   $sock->ClearError;
 
-  $sock->Send("GET / HTTP/1.0\r\n\r\n");
+  $sock->Send("GET / HTTP/1.1\r\nConnect: keep-alive\r\n\r\n");
 
   if($sock->IsError) {
     print STDOUT "Error in Send: " . $sock->GetError . "\n";
@@ -223,6 +223,13 @@ sub _UnitTestGoogle {
   else {
     print STDOUT "Did not find server header\n";
     return;
+  }
+
+  print STDOUT "Trying a Recv timeout.\n";
+
+  my $data = $sock->Recv(-1, 2);
+  if(!length($data) || $sock->IsError) {
+    print STDOUT "Error in Recv: " . $sock->GetError . "\n";
   }
 
   print STDOUT "Test seemed successful\n";
