@@ -45,6 +45,7 @@ sub new {
 
   my $hash = shift;
   $self->SetOptions($hash);
+  $self->SetTimeout(10) if(!exists($hash->{'Timeout'}));
 
   return($self);
 }
@@ -66,7 +67,9 @@ sub SetOptions {
     $self->AddProxies(@{$proxies});
     return if($self->GetError);
   }
-
+  if(exists($hash->{'Timeout'})) {
+    $self->SetTimeout($hash->{'Timeout'});
+  }
   return;
 }
 
@@ -95,6 +98,17 @@ sub AddProxies {
 #      push(@{$self->['Proxies']}, [ $type, $ip, $port ]);
 #    }
   }
+}
+
+sub SetTimeout {
+  my $self = shift;
+  my $timeout = shift;
+  $self->{'Timeout'} = $timeout;
+}
+
+sub GetTimeout {
+  my $self = shift;
+  return($self->{'Timeout'});
 }
 
 sub SetError {
@@ -315,7 +329,7 @@ sub Send {
 sub Recv {
   my $self = shift;
   my $length = shift;
-  my $timeout = @_ ? shift : 0;
+  my $timeout = @_ ? shift : $self->GetTimeout;
 
   return if($self->GetError);
   return if($self->SocketError(1));
@@ -331,7 +345,6 @@ sub Recv {
   # any data, and then we just read as much as we can, and return.
   if($length == -1) {
     my ($ready) = $selector->can_read($timeout);
-    print "1\n";
 
     if(!$ready) {
       # $self->SetError("Timeout $timeout reached."); # could be data from buffer anyway
@@ -340,7 +353,6 @@ sub Recv {
 
     while(1) {
       my ($ready) = $selector->can_read(.01);
-      print "2\n";
       last if(!$ready);
 
       my $tempData;
