@@ -10,7 +10,7 @@
 package Msf::Payload::win32_reverse;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
-sub load {
+sub _Load {
   Msf::PayloadComponent::Win32Payload->_Import('Msf::PayloadComponent::ReverseConnection');
 }
 
@@ -53,7 +53,7 @@ my $info =
 };
 
 sub new {
-  load();
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});
