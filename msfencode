@@ -19,40 +19,146 @@ require 5.6.0;
 use strict;
 
 use FindBin qw{$Bin};
+use Getopt::Std;
 use POSIX;
 
 use lib "$Bin/lib";
 use Msf::TextUI;
 use Pex;
+my %opts = ();
 
 Msf::UI::ActiveStateSucks();
 
-
 my $ui = Msf::TextUI->new($Bin);
-$ui->SetTempEnv('_MsfPayload', 1);
+my $payloadArch = ['x86'];
+my $payloadOS = ['linux'];
+my $badChars = '\x00';
+my $encodedPayload;
+my $rawShell;
 
-my $exploits = { };
-my $payloads = { };
 my $encoders = { };
-
-my $exploitsIndex = $ui->LoadExploits;
-my $payloadsIndex = $ui->LoadPayloads;
 my $encodersIndex = $ui->LoadEncoders;
-my $nopsIndex     = $ui->LoadNops;
-
-foreach my $key (keys(%{$payloadsIndex})) {
-    $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
-}
-
-foreach my $key (keys(%{$exploitsIndex})) {
-    $exploits->{$exploitsIndex->{$key}->Name} = $exploitsIndex->{$key};
-}
 
 foreach my $key (keys(%{$encodersIndex})) {
-    $encoders->{$encodersIndex->{$key}->Name} = $encodersIndex->{$key};
+    $encoders->{@{[split(/::/,$key)]}[-1]} = $encodersIndex->{$key};
 }
 
-$ui->SetTempEnv('_Exploits', $exploitsIndex);
-$ui->SetTempEnv('_Payloads', $payloadsIndex);
 $ui->SetTempEnv('_Encoders', $encodersIndex);
-$ui->SetTempEnv('_Nops', $nopsIndex);
+
+
+getopts("i:a:o:t:b:e:l", \%opts);
+
+if ($opts{'i'} && -r $opts{'i'}) {
+    Fatal('Invalid input file specified');
+}
+
+if ($opts{'a'}) {
+    $payloadArch = [split(/,/, $opts{'a'})];
+}
+
+if ($opts{'o'}) {
+    $payloadOS = [split(/,/, $opts{'o'})];
+}
+
+if($opts{'t'} && $opts{'t'} !~ /perl|c|raw/) {
+    Fatal('Invalid output type specified');
+}
+
+if ($opts{'b'} && $opts{'b'} !~ /\\x/) {
+    Fatal('Bad character list format is "\x00\x01\x02"');
+}
+
+if ($opts{'e'} && ! exists($encoders->{$opts{'e'}})) {
+    Fatal('Invalid encoder specified');
+}
+
+if ($opts{'l'}) {
+    ListEncoders();
+}
+
+my @encoderList = $ui->GetEncoders;
+if ($opts{'e'}) {
+    push @encoderList, 'Msf::Encoder::'.$opts{'e'};
+}
+
+my $encoderName;
+foreach $encoderName (@encoderList) {
+    $ui->PrintLine("Trying encoder $encoderName");
+    my $encoder = $ui->MakeEncoder($encoderName);
+    if(!$encoder) {
+      $ui->PrintLine("Failed to make encoder $encoderName");
+      next;
+    }
+    my $encoderArch = $encoder->Arch;
+    my $encoderOS = $encoder->OS;
+
+    if(!$ui->ListCheck($payloadArch, $encoderArch)) {
+      $ui->PrintLine("$encoderName failed, doesn't support all architectures");
+      next;
+    }
+
+    if(!$ui->ListCheck($payloadOS, $encoderOS)) {
+      $ui->PrintLine("$encoderName failed, doesn't support all operating systems");
+      next;
+    }
+
+    my $encodedShell = $encoder->Encode($rawShell, $badChars);
+
+    if(!$encodedShell) {
+      $ui->PrintLine("$encoderName failed to return an encoded payload");
+      next;
+    }
+
+    if($encoder->IsError) {
+      $ui->PrintLine("$encoderName failed with an error");
+      $ui->PrintLine($encoder->GetError);
+      $encoder->ClearError;
+      next;
+    }
+
+    if($ui->BadCharCheck($badChars, $encodedShell)) {
+      $ui->PrintLine("$encoderName failed, bad chars in encoded payload");
+      $ui->PrintLine("encoded payload:");
+      $ui->PrintLine(Pex::Utils::BufferC($encodedShell));
+      next;
+    }
+
+    $encodedPayload = Msf::EncodedPayload->new($rawShell, $encodedShell);
+    last;
+}
+
+if(!$encodedPayload) {
+    $ui->PrintLine("No encoders succeeded");
+}
+
+sub Fatal {
+    my $msg = shift;
+    print STDERR "[*] $msg\n";
+    exit(0);
+}
+
+
+sub Usage {
+    print STDERR qq{
+
+  Usage: $0 <options>
+Options:
+         -i <file>      Specify the file that contains the raw shellcode
+         -a <arch>      The target CPU architecture for the payload
+         -o <os>        The target operating system for the payload
+         -t <type>      The output type: perl, c, or raw
+         -b <chars>     The characters to avoid: '\x00\xFF'
+         -e <encoder>   Try to use this encoder first
+         -l             List all available encoders
+         
+};
+    exit(0);
+}
+
+sub ListEncoders {
+    print "Encoders:\n";
+    foreach my $name (sort(keys(%{$encoders}))) {
+        print "\t$name\n";
+    }
+    exit(0);
+}
