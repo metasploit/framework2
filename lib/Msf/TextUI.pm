@@ -234,7 +234,7 @@ sub Options {
   
   $self->PrintLine;
   print $self->DumpOptions(2, 'Exploit', $exploit);
-  print $self->DumpOptions(2, 'Payload', $payload) if $payloadName;
+  print $self->DumpOptions(2, 'Payload', $payload) if($payloadName);
   $self->PrintLine;
   $self->PrintLine;
 }
@@ -263,7 +263,7 @@ sub AdvancedOptions {
   
   $self->PrintLine;
   print $self->DumpAdvancedOptions(2, 'Exploit', $exploit);
-  print $self->DumpAdvancedOptions(2, 'Payload', $payload) if $payloadName;
+  print $self->DumpAdvancedOptions(2, 'Payload', $payload) if($payloadName);
   $self->PrintLine;
   $self->PrintLine;
 }
