@@ -22,7 +22,7 @@ my $info =
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
   'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
   'Priv'         => 0,
-  'OS'           => [ 'solaris', 'linux', 'bsd', 'hpux', 'irix', 'aix' ],
+  'OS'           => [ 'linux', 'bsd', 'hpux', 'irix', 'aix' ],
 };
 
 sub new {

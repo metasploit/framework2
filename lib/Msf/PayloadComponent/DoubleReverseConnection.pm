@@ -12,7 +12,7 @@ sub CheckHandler {
   my $sock1;
   my $sock2;
 
-  my @ready = $self->ListenerSelector->can_read(.5);
+  my @ready = $self->ListenerSelector->can_read(2);
   if(@ready) {
     $sock1 = $ready[0]->accept();
     $self->PrintLine('[*] Recieved first connection.');
@@ -35,7 +35,7 @@ sub CheckHandler {
     select(undef, undef, undef, 0.5);
     
     my $selector = IO::Select->new($sock1, $sock2);
-    @ready = $selector->can_read(2);
+    @ready = $selector->can_read(5);
     if(!@ready) {
       $self->PrintLine('[*] Failed to determine which is in and which is out!');
       return(0);
@@ -46,11 +46,11 @@ sub CheckHandler {
 
     if ($data =~ /foo/ && $data !~ /echo foo/ && $ready[0] eq $sock1) 
     {
-      $self->PipeRemoteIn($sock1);
-      $self->PipeRemoteOut($sock2);
-    } else {
       $self->PipeRemoteIn($sock2);
       $self->PipeRemoteOut($sock1);
+    } else {
+      $self->PipeRemoteIn($sock1);
+      $self->PipeRemoteOut($sock2);
     }
     
     # flush any pending data on both sockets, this is
@@ -58,7 +58,7 @@ sub CheckHandler {
     for ($sock1, $sock2) {
         $_->blocking(0);
         $_->autoflush(1);
-        while ($_->recv($data, 4096)) { }
+        while ($_->recv($data, 4096) > 0 ) { }
     }
 
     return(1);
