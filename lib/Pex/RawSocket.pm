@@ -34,7 +34,7 @@ sub send {
     my $data = shift;
     my $addr = shift;
     
-    my $dst = sockaddr_in(0, inet_aton($addr));
+    my $dst = sockaddr_in(0, gethostbyname($addr));
     return send($self->{'SOCKET'}, $data, 0, $dst);
 }
 
