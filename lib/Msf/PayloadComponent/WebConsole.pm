@@ -20,10 +20,10 @@ use IO::Select;
 use base 'Msf::PayloadComponent::TextConsole';
 use FindBin qw{$RealBin};
 
-sub _LoadConsole {
+sub LoadConsole {
   my $self = shift;
   my $out;
-	
+
   # Get handle to browser
   my $bs = $self->GetVar('_BrowserSocket');
   
@@ -61,8 +61,7 @@ sub _LoadConsole {
 
   # Kick off the shell server  
   $gIPC->printflush("NEW $sid $$\n");
-
-  print STDERR "Returning from _LoadConsole...\n";
+  
   return;
 }
 
