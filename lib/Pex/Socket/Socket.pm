@@ -19,6 +19,10 @@ use strict;
 use IO::Socket::INET;
 use IO::Select;
 
+sub Init {
+  my $self = shift;
+}
+
 sub Socket {
   my $self = shift;
   $self->{'Socket'} = shift if(@_);

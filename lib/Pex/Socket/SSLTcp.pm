@@ -40,6 +40,7 @@ sub new {
   return if(!$SSL_SUPPORT);
   my $hash = { @_ };
   $self->SetOptions($hash);
+  $self->Init;
 
   return if(!$self->_MakeSocket);
   return($self);

@@ -25,6 +25,7 @@ sub new {
   my $hash = { @_ };
   return($self->_newSSL(@_)) if($hash->{'SSL'});
   $self->SetOptions($hash);
+  $self->Init;
 
   return if(!$self->_MakeSocket);
   return($self)

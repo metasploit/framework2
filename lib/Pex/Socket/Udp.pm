@@ -21,6 +21,7 @@ sub new {
 
   my $hash = { @_ };
   $self->SetOptions($hash);
+  $self->Init;
 
   return if(!$self->_MakeSocket);
   return($self)
