@@ -1,7 +1,6 @@
 ;
 ;
 ;        Name: single_findsock
-;        Size: 60 bytes
 ;   Qualities: Nothing Special
 ;     Authors: vlad902 <vlad902 [at] gmail.com>
 ;     Version: $Revision$
@@ -30,7 +29,7 @@ main:
   mov	ebp, esp
 
 getpeername_loop:
-; 32-bit is okay since the connection should be establish already.
+; 32-bit is okay since the connection should be established already.
   inc	edi
 
   mov	esp, ebp
