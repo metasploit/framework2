@@ -1,10 +1,10 @@
 1) Start up the web server
 
 hdm@pagefault framework $ ./msfweb 
-[*] Starting Metasploit Web Interface on 192.168.0.247:55555..
+[*] Starting Metasploit Web Interface on 127.0.0.1:55555..
 
 
-2) Open up your favorite browser to http://192.168.0.247:55555
+2) Open up your favorite browser to http://127.0.0.1:55555
 
 3) Select your exploit from the available list
 

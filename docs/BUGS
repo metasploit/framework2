@@ -1,7 +1,7 @@
 This document lists the current known bugs for version 2.0 of the
 Metasploit Exploit Framework. If you run across an issue that is
 not included, please send the following information to
-framework[at]metasploit.com.
+msfdev [at] metasploit.com.
 
 1) What operating system, version, and service pack you are running.
 2) The 'Revision' number found in the header of the problem script.

