@@ -52,24 +52,29 @@ sub SetDefaults {
   $self->_Info($self->MergeHash($self->_Info, $hash));
 }
 
+sub Info {
+  my $self = shift;
+  return($self->_Info);
+}
+
 
 # Generic
 
-sub Name        { my $self = shift; return $self->_Info->{'Name'}; }
-sub Version     { my $self = shift; return $self->_Info->{'Version'}; }
-sub Author      { my $self = shift; return $self->_Info->{'Author'}; }
-sub Arch        { my $self = shift; return $self->_Info->{'Arch'}; }
-sub OS          { my $self = shift; return $self->_Info->{'OS'}; }
-sub Keys        { my $self = shift; return $self->_Info->{'Keys'}; }
-sub Priv        { my $self = shift; return $self->_Info->{'Priv'}; }
-sub UserOpts    { my $self = shift; return $self->_Info->{'UserOpts'}; }
-sub Refs        { my $self = shift; return $self->_Info->{'Refs'}; }
-sub Description { my $self = shift; return $self->_Info->{'Description'}; }
+sub Name        { my $self = shift; return($self->Info->{'Name'}); }
+sub Version     { my $self = shift; return($self->Info->{'Version'}); }
+sub Author      { my $self = shift; return($self->Info->{'Author'}); }
+sub Arch        { my $self = shift; return($self->Info->{'Arch'}); }
+sub OS          { my $self = shift; return($self->Info->{'OS'}); }
+sub Keys        { my $self = shift; return($self->Info->{'Keys'}); }
+sub Priv        { my $self = shift; return($self->Info->{'Priv'}); }
+sub UserOpts    { my $self = shift; return($self->Info->{'UserOpts'}); }
+sub Refs        { my $self = shift; return($self->Info->{'Refs'}); }
+sub Description { my $self = shift; return($self->Info->{'Description'}); }
 
 
 #fixme
 # Used?
-sub AutoOpts    { my $self = shift; return $self->_Info->{'AutoOpts'}; }
+sub AutoOpts    { my $self = shift; return $self->Info->{'AutoOpts'}; }
 
 sub Loadable {
   return(1);
