@@ -618,7 +618,6 @@ sub SessionList {
 				my %hash = IPCDataToHash($entry);
 				my $sid = $hash{'sid'};
 				$slist{$sid} = \%hash;
-				print "$sid ($entry\n)";
 			}
 		}
 	}
@@ -1657,14 +1656,14 @@ qq[
 		chomp($ok);
 
 		if ($ok eq 'SHUTDOWN') {
-			print STDERR "Shutting down the shell server...\n";
+			# print STDERR "Shutting down the shell server...\n";
 			$eout->close;
 			$pout->close;
 			exit(0);
 		}
 		
 		if ($ok ne 'SHELL') {
-			print STDERR "Unknown starting command: $ok\n";
+			# print STDERR "Unknown starting command: $ok\n";
 			$eout->close;
 			$pout->close;
 			exit(0);
@@ -1731,7 +1730,7 @@ qq[
 						next;
 					}
 					
-					print STDERR "Unknown server request: $data\n";
+					# print STDERR "Unknown server request: $data\n";
 				}
 			}
 		}
@@ -1749,10 +1748,10 @@ qq[
 	
 	if (! $ui->GetTempEnv('_ShellServer')) {
 		$pout->printflush("SHUTDOWN $sid\n");
-		print STDERR "Shutting down the shell server process...\n";
+		# print STDERR "Shutting down the shell server process...\n";
 	}	
 
-	print STDERR "Exiting exploit loop\n";
+	# print STDERR "Exiting exploit loop\n";
     exit(0);
 }
 
@@ -1778,20 +1777,17 @@ sub HTTPRequest {
 	while ($raw ne "\r\n")
 	{
 		$raw = $cli->RecvLine($timeout);
-		
+				
 		if (! $raw) {
-			$self->Log(1, "ERROR: invalid request from ".$cli->PeerAddr);
-			return { };
+			return { 'invalid' => 1 };
 		}
 		
 		if (length($raw) > 65535) {
-			$self->Log(0, "ERROR: oversized request from ".$cli->PeerAddr. " (".length($raw).")");
-			return { };
+			return { 'oversized' => 1 };
 		}
 		
 		if (scalar(@lines) > 100) {
-			$self->Log(0, "ERROR: too many HTTP headers from ".$cli->PeerAddr. " (".scalar(@lines).")");
-			return { };
+			return {'oversized' => 1 };
 		}
 
 		push @lines, $raw;
@@ -1804,7 +1800,7 @@ sub HTTPRequest {
 		$meth	= lc($1);
 		$uri	= $2;
 	} 
-	else { return; }
+	else { return {'invalid' => 1 };  }
 	
 	# Read the HTTP request headers
 	foreach my $line (@lines) {
@@ -1892,19 +1888,20 @@ sub HTTPRequest {
 		}
 		
 		# Clear the cache and return undef for cache attackers
-		return if $cache_hosts{$cli->PeerAddr}->{'_blocked_'};
+		if ($cache_hosts{$cli->PeerAddr}->{'_blocked_'}) {
+			$res->{'cache_block'}++;
+			return $res;
+		}
 		
 		if (	$url &&
 				$res->{'headers'}->{'if-modified-since'} &&
 				$cache_hosts{ $cli->PeerAddr }->{$url}	) {
 
 			$cli->Send(HTTPResponse(304, 'Probably cached...', 'text/html'));
-			# print "Cache hit on $url = ".$cache_hosts{ $cli->PeerAddr }->{$url}."\n";
-			return;
+			$res->{'cached'}++;
 		}
 		else {
 			$cache_hosts{ $cli->PeerAddr }->{$url} = time();
-			# print "Cache miss on $url...\n";
 		}
 	}
 	
@@ -2316,9 +2313,38 @@ sub Run {
 			# A new HTTP request
 			if ($socketInfo{$s}->[2] eq 'client') {
 				my $cli = Msf::Socket::Tcp->new_from_socket($s);
-				my $res = $fnHRP->($self, $cli);
-
 				my $cinfo = $cli->PeerAddr .':'. $cli->PeerPort;
+				
+				# Process the actual HTTP request
+				my $res = $fnHRP->($self, $cli);
+				
+				# Ignore requests that resulted in 'not modified' responses
+				if ( $res->{'cached'} ) {
+					$self->Log(5,  "HTTP: cache hit from $cinfo");
+					eval { $s->shutdown(2); $s->close; };
+					next;
+				}
+			
+				# Check for cache blocking (detected possible DoS)
+				if ($res->{'cache_block'}) {
+					$self->Log(3,  "HTTP: cache denial of service attack from $cinfo");
+					eval { $s->shutdown(2); $s->close; };	
+					next;
+				}
+				
+				if ($res->{'invalid'}) {
+					$self->Log(3,  "HTTP: invalid request from $cinfo");		
+					eval { $s->shutdown(2); $s->close; };
+					next;
+				}
+			
+				if ($res->{'oversized'}) {
+					$self->Log(3,  "HTTP: oversized request from $cinfo");		
+					eval { $s->shutdown(2); $s->close; };
+					next;			
+				}
+			
+				
 				
 				if ($res) {
 					my ($par, $chi);
@@ -2346,11 +2372,7 @@ sub Run {
 					}
 					
 				} 
-				else {
-					# Invalid request, trash it for now
-					$self->Log(3,  "HTTP: invalid request from $cinfo");		
-					eval { $s->shutdown(2); $s->close; };
-				}
+				
 
 				# XXX - local cleanup up the original socket?
 				delete($socketInfo{$s});

@@ -331,6 +331,9 @@ sub RecvLine {
   	if (defined(my $buff = $self->Recv(1, 1))) {
 		$data .= $buff;
 	}
+	
+    last if($self->GetError);
+    last if($self->SocketError(1));
   }
 
   if ( index($data, "\n") > -1 ) {
