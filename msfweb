@@ -914,6 +914,8 @@ sub ModuleList
 
 
 
+
+
 	$mList .= qq[ 
 <table align='center' cellpadding=1 border=0 cellspacing=0 width='100%' class='tblOuter'>        
 	<tr><td>
@@ -1489,6 +1491,7 @@ sub ExploitOptions
     }
 	
     $res .= "</table>\n";
+    $res .= "</form>\n";	
     return $res;
 }
 
