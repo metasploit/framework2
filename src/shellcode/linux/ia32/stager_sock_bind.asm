@@ -25,7 +25,7 @@
 ; meta-category=stager
 ; meta-connection-type=bind
 ; meta-name=bind_tcp
-; meta-basemod=Msf::PayloadComponent::BindConnection
+; meta-path=lib/Msf/PayloadComponent/Linux/ia32/BindStager.pm
 ; meta-offset-lport=0x14
 ;;
 BITS   32

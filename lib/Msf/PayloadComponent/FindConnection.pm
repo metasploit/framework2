@@ -22,6 +22,8 @@ sub ChildHandler {
   my $self = shift;
   my $sock = shift;
   my $blocking = $sock->blocking;
+  my $tries = 0;
+
   $sock->blocking(1);
   $sock->autoflush(1);
 
@@ -29,6 +31,7 @@ sub ChildHandler {
 
   my $selector = IO::Select->new($sock);
 
+AGAIN:
   my @ready = $selector->can_write(0.5);
 
   goto DONE if(!@ready || !$ready[0]->connected);
@@ -37,12 +40,12 @@ sub ChildHandler {
 
   @ready = $selector->can_read(0.5);
 
-  goto DONE if(!@ready || !$ready[0]->connected);
+  goto CHECK_AGAIN if(!@ready || !$ready[0]->connected);
 
   my $data;
   $ready[0]->recv($data, 4096);
   
-  goto DONE if(!length($data));
+  goto CHECK_AGAIN if(!length($data));
   if($data =~ /ABCDE/) {
     $self->PipeRemoteIn($ready[0]);
     $self->PipeRemoteOut($ready[0]);
@@ -51,7 +54,15 @@ sub ChildHandler {
     exit(0);
   }
 
+CHECK_AGAIN:
+  if ($tries == 0)
+  {
+	$tries++;
+	goto AGAIN;
+  }
+
 DONE:
+
   $sock->blocking($blocking);
   return;
 }

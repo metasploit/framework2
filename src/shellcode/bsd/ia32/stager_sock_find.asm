@@ -57,10 +57,10 @@ recvfrom:
 	cld
 	lodsd
 	pop  edx
-	pop  edx
 %ifdef FD_REG_EBX
 	pop  ebx
 %else
 	pop  edi
 %endif
+	pop  edx
 	jmp  esi

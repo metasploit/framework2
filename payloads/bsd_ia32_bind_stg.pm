@@ -7,25 +7,20 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linux_ia32_findrecv_stg;
+package Msf::Payload::bsd_ia32_bind_stg;
 use strict;
-use base 'Msf::PayloadComponent::Linux::ia32::ShellStage';
-
-my $advanced =
-{
-	'FINDTAG'     => [ 'msf!', 'Tag sent and searched for by the payload.' ],
-};
+use base 'Msf::PayloadComponent::BSD::ia32::ShellStage';
 
 my $info =
 {
-	'Name'        => 'Linux IA32 Staged Findsock Shell',
+	'Name'        => 'BSD IA32 Staged Bind Shell',
 	'Version'     => '$Revision$',
-	'Description' => 'Search file descriptors for a tag and spawn a shell as a stage',
+	'Description' => 'Listen on a port for a connection and spawn a shell as a stage',
 };
 
 sub _Load
 {
-	Msf::PayloadComponent::Linux::ia32::ShellStage->_Import('Msf::PayloadComponent::Linux::ia32::FindRecvStager');
+	Msf::PayloadComponent::BSD::ia32::ShellStage->_Import('Msf::PayloadComponent::BSD::ia32::BindStager');
 
 	__PACKAGE__->SUPER::_Load();
 }
@@ -37,7 +32,7 @@ sub new
 
 	_Load();
 
-	$hash = $class->MergeHashRec($hash, { 'Info' => $info, 'Advanced' => $advanced });
+	$hash = $class->MergeHashRec($hash, { 'Info' => $info });
 
 	my $self = $class->SUPER::new($hash, @_);
 

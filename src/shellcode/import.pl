@@ -116,6 +116,13 @@ sub TranslatePayloads
 
 		next if (not defined($meta));
 
+		if ((defined($meta->{'category'})) and
+		    ($meta->{'category'} eq 'stager'))
+		{
+			print "Skipping stager import until better support is added.\n";
+			next;
+		}
+
 		if ((defined($meta->{'importable'})) and
 		    ($meta->{'importable'} eq 'no'))
 		{
@@ -211,10 +218,19 @@ sub GetPayloadName
 sub TranslatePayload
 {
 	my ($name, $meta, $payload) = @{{@_}}{qw/name meta payload/};
-	my $filename = $payloadDirectory . $name . ".pm";
+	my $filename;
 	my $authorList = "";
 	my $contents = "";
 	my @authors;
+
+	if (defined($meta->{'path'}))
+	{
+		$filename = $meta->{'path'};
+	} 
+	else
+	{
+		$filename = $payloadDirectory . $name . ".pm";
+	}
 
 	# Translate the authors into a list for use in the perl module
 	if (defined($meta->{'authors'}))

@@ -7,9 +7,9 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linux_ia32_findrecv_stg;
+package Msf::Payload::bsd_ia32_findrecv_stg;
 use strict;
-use base 'Msf::PayloadComponent::Linux::ia32::ShellStage';
+use base 'Msf::PayloadComponent::BSD::ia32::ShellStage';
 
 my $advanced =
 {
@@ -18,14 +18,14 @@ my $advanced =
 
 my $info =
 {
-	'Name'        => 'Linux IA32 Staged Findsock Shell',
+	'Name'        => 'BSD IA32 Staged Findsock Shell',
 	'Version'     => '$Revision$',
 	'Description' => 'Search file descriptors for a tag and spawn a shell as a stage',
 };
 
 sub _Load
 {
-	Msf::PayloadComponent::Linux::ia32::ShellStage->_Import('Msf::PayloadComponent::Linux::ia32::FindRecvStager');
+	Msf::PayloadComponent::BSD::ia32::ShellStage->_Import('Msf::PayloadComponent::BSD::ia32::FindRecvStager');
 
 	__PACKAGE__->SUPER::_Load();
 }

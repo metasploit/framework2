@@ -61,12 +61,12 @@ dup_loop:
 	push byte 0x5a
 	pop  eax
 %endif
+	push ecx
 %ifdef FD_REG_EBX
 	push ebx
 %else
 	push edi
 %endif
-	push ecx
 	push ecx
 	int  0x80
 	dec  ecx
