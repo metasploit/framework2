@@ -60,6 +60,16 @@ sub StagePrefix
 	return $self->{'_StagePrefix'};
 }
 
+sub InlineStage
+{
+	my $self = shift;
+	my $inline = @_ ? shift : undef;
+
+	$self->{'_StageInline'} = $inline if (defined($inline));
+
+	return $self->{'_StageInline'};
+}
+
 #
 # Transmits the stage that we were handed such that it will be executed and
 # all the lored's people will be happy
@@ -73,6 +83,12 @@ sub HandleConnection
 
 	# Prepare yoself!
 	$self->SUPER::HandleConnection;
+
+	# If the multistage is transmitted outside of this context, do not transmit
+	# it.  This was added in order to support things that have to transmit the
+	# second stage out of band instead of over the actual exploit connection,
+	# like PassiveX.
+	return if ($self->InlineStage());
 
 	# Build out the stage
 	$sock     = $self->PipeRemoteOut;

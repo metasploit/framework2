@@ -9,8 +9,7 @@ strings:
 reg_values:
 	db    "1004120012011405"
 url:
-;	db    "explorer http://www.hick.org/~mmiller/bob.html", 0
-	db    "hh http://www.hick.org/~mmiller/test.html", 0
+	db    "hh AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 0
 
 get_find_function:
 	call startup
