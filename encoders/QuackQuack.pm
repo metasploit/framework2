@@ -20,8 +20,8 @@ my $advanced =
 my $info = {
     'Name'    => 'MacOS X PPC DWord Xor Encoder',
     'Version' => '1.0',
-    'Authors' => [ 'optyx <optyx@uberhax0r.net> [Artistic License]',
-                   'H D Moore <hdm [at] metasploit.com> [Artistic License]' ],
+    'Authors' => [ 'optyx <optyx@uberhax0r.net>',
+                   'H D Moore <hdm [at] metasploit.com>' ],
     'Arch'    => [ 'ppc' ],
     'OS'      => [ 'osx' ],
     'Description'  =>  "This is optyx's nifty ppc decoder",

@@ -19,7 +19,7 @@ my $info =
   'Name'         => 'winbind_stg',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
-  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
 };
 
 sub new {

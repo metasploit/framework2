@@ -14,7 +14,7 @@ use base 'Msf::Encoder';
 my $info = {
   'Name'    => 'None Encoder',
   'Version' => '$Revision$',
-  'Authors' => [ 'spoonm <ninjatools [at] hush.com> [Artistic License]', ],
+  'Authors' => [ 'spoonm <ninjatools [at] hush.com>', ],
   'Arch'    => [ 'x86', 'ppc', 'sparc', 'mips', 'parisc' ],
   'OS'      => [ ],
   'Description'  =>  'This encoder does not encode',

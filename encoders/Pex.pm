@@ -21,8 +21,8 @@ my $info = {
   'Version' => '$Revision$',
   'Authors' =>
     [
-      'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-      'spoonm <ninjatools [at] hush.com> [Artistic License]',
+      'H D Moore <hdm [at] metasploit.com>',
+      'spoonm <ninjatools [at] hush.com>',
     ],
   'Arch'    => [ 'x86' ],
   'OS'      => [ ],

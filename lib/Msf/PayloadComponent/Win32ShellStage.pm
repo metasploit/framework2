@@ -4,7 +4,7 @@ use base 'Msf::PayloadComponent::Win32StagePayload';
 
 my $info =
 {
-    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
     'Priv'         => 0,
 
     # win32 specific code

@@ -7,7 +7,7 @@ sub load {
 
 my $info =
 {
-    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
     'Arch'         => [ 'x86' ],
     'Priv'         => 0,
     'OS'           => [ 'win32' ],

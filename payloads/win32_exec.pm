@@ -19,7 +19,7 @@ my $info =
   'Name'         => 'winexec',
   'Version'      => '$Revision$',
   'Description'  => 'Execute an arbitrary command',
-  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
   'UserOpts'     =>
     {
       'CMD' => [1, 'DATA', 'The command string to execute'],

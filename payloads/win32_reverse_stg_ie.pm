@@ -19,7 +19,7 @@ my $info =
   'Name'         => 'winreverse_stg_ie',
   'Version'  => '$Revision$',
   'Description'  => 'Listen for connection, send address of GP/LL across, read/exec InlineEgg',
-  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
   'UserOpts'	   =>
     {
       'IEGG' => [1, 'PATH', 'Path to InlineEgg stage'],

@@ -19,7 +19,7 @@ my $info =
   'Name'         => 'winreverse_stg',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
-  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
 };
 
 sub new {
