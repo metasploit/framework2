@@ -17,7 +17,7 @@ my $info =
 	'Name'         => 'Windows Execute Command',
 	'Version'      => '$Revision$',
 	'Description'  => 'Execute an arbitrary command',
-	'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
+	'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],
 	'UserOpts'     =>
 		{
 			'CMD' => [1, 'DATA', 'The command string to execute'],

