@@ -408,7 +408,7 @@ sub ProcessWebRequest {
 		
 		if ($mbase eq 'PAYLOADS' && exists($payloads->{$mid}) ) {
 			$mname = $payloads->{$mid}->Name;
-			foreach ( KeysToIcons( @{ $exploits->{$mid}->OS } ) ) {
+			foreach ( KeysToIcons( @{ $payloads->{$mid}->OS } ) ) {
 				$icons  .= "<img src='/RESOURCE?ICON=$_' border=0 class='iconset' alt='$_'> ";
 			}			
 		}
