@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'winreverse_stg',
+  'Name'         => 'Windows reverse staged shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

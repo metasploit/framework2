@@ -8,9 +8,9 @@ my $advanced = {
 
 my $info =
 {
-  'Name'         => 'linx86findrecv',
+  'Name'         => 'recv tag findsock',
   'Version'      => '$Revision$',
-  'Description'  => 'Spawn a shell on the established connection',
+  'Description'  => 'Spawn a shell on the established connection, proxy/nat safe',
   'Authors'      => [ 'spoonm', ],
   'Arch'         => [ 'x86' ],
   'Priv'         => 0,

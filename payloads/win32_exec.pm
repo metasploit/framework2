@@ -16,7 +16,7 @@ sub load {
 
 my $info =
 {
-  'Name'         => 'winexec',
+  'Name'         => 'winexec cmd',
   'Version'      => '$Revision$',
   'Description'  => 'Execute an arbitrary command',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
