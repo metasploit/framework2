@@ -46,13 +46,13 @@ sub LoadExploits {
 sub LoadEncoders {
 #fixme external encoders
     my $self = shift;
-    my $dir = @_ ? shift : $self->_BaseDir . '/encoders/internal';
+    my $dir = @_ ? shift : $self->_BaseDir . '/encoders';
     return($self->LoadModules($dir, 'Msf::Encoder::'));
 }
 sub LoadNops {
 #fixme external nops
     my $self = shift;
-    my $dir = @_ ? shift : $self->_BaseDir . '/nops/internal';
+    my $dir = @_ ? shift : $self->_BaseDir . '/nops';
     return($self->LoadModules($dir, 'Msf::Nop::'));
 }
 sub LoadPayloads {
