@@ -27,7 +27,7 @@ my $SSL_SUPPORT;
 # Determine if SSL support is enabled
 BEGIN
 {
-    if (0 && eval "require Net::SSLeay")
+    if (eval "require Net::SSLeay")
     {
         Net::SSLeay->import();
         Net::SSLeay::load_error_strings();
@@ -35,6 +35,7 @@ BEGIN
         Net::SSLeay::randomize(time() + $$);
         $SSL_SUPPORT++;
     }
+    
 }
 
 sub new
