@@ -476,9 +476,9 @@ sub ePayloads
         print "\nMetasploit Framework Usable Payloads\n";
         print   "====================================\n\n";
 
-        foreach my $x (sort(keys(%{$exploitPayloads})))
+        foreach my $xp (sort(keys(%{$exploitPayloads})))
         {
-            print "  $x" . (" " x (30-length($x))) . $payloads->{$exploit}->Description . "\n";
+            print "  $xp" . (" " x (30-length($xp))) . $exploitPayloads->{$xp}->Description . "\n";
         }
         print "\n";
     } else {
@@ -676,7 +676,7 @@ sub xCallback
                             $args[1]->peerhost . ":" . $args[1]->peerport);
 
             my ($currfd, $currfn);
-            $currfn = time() . "_". $state->{'X'}->{'module'} . "_" . 
+            $currfn = time() . "_". $state->{'Exploit'}->{'Name'} . "_" . 
                       $args[1]->sockhost . "." . $args[1]->sockport . "_" .
                       $args[1]->peerhost . "_" . $args[1]->peerport . ".log";
                       
@@ -685,7 +685,7 @@ sub xCallback
                 $state->{'CURRLOG'} = $currfd;
                 
                 print $currfd "   Time: " . scalar(localtime()) . "\n";
-                print $currfd "   Name: " . $state->{'X'}->{'object'}->Name . "\n";
+                print $currfd "   Name: " . $state->{'Exploit'}->{'Name'} . "\n";
                 print $currfd "Options:";
                 foreach my $var (keys(%{$e})) { print $currfd " $var=" . $e->{$var} }
                 print $currfd "\n\n";
@@ -720,9 +720,9 @@ sub xLogEntry
     my ($msg) = @_;
     my $info;
     
-    if (exists($state->{'X'}) && exists($state->{'X'}->{'object'}))
+    if (exists($state->{'Exploit'}) && exists($state->{'Exploit'}->{'Name'}))
     {
-        $info = $state->{'X'}->{'object'}->Name();
+        $info = $state->{'Exploit'}->{'Name'};
     }
     
     return scalar(localtime()) . " '$info' $msg\n";
@@ -762,7 +762,7 @@ sub xCreateSetList
     {
         my %options = ();
         
-        my $x = $state->{"X"}->{"object"};
+        my $x = $state->{'Exploit'}->{'Exploit'};
         my $e = $console->getEnv();
         my $p = $e->{'PAYLOAD'};
 
@@ -787,9 +787,9 @@ sub xCreateSetValueList
     {
         my %results = ();
         
-        my $n = $state->{'X'}->{'SETNAME'};
-        my $x = $state->{'X'}->{'object'};
-        my $v = $state->{'X'}->{'payloads'};
+        my $n = $state->{'SetName'};
+        my $x = $state->{'Exploit'}->{'Exploit'};
+        my $v = $state->{'Exploit'}->{'Payloads'};
         my $e = $console->getEnv();
         my $p = $e->{'PAYLOAD'};
 
@@ -863,7 +863,7 @@ sub xTabCompletion
         
         if (! $args[1] || (! $args[2] && ($args[1] && $text)))
         {
-            $state->{'X'}->{'SETNAME'} = $args[0];
+            $state->{'SetName'} = $args[0];
             $state->{'TabVals'} = [sort(xCreateSetValueList())];
         }
     }

@@ -168,7 +168,7 @@ CHECK:
       last if(!@{$payload->Arch});
       next CHECK if(!scalar(grep { $_ eq $arch } @{$payload->Arch}));
     }
-
+    
     # If the exploit has a any keys set, we need to make sure that the
     # matched payload also has the same keys. This allows us to create
     # specific payloads for wierd exploit scenarios (for instance, where
@@ -181,7 +181,9 @@ CHECK:
     next if($exploit->Priv < $payload->Priv);
 
     #fixme Eventually we should also factor in the Encoder Size, even though we will catch it in Encode
-    next if($exploit->Payload->{'Size'} < $payload->Size);
+    next if (defined($exploit->Payload->{'Size'}) && $exploit->Payload->{'Size'} < $payload->Size);
+    
+   
 
     $match->{$payloadName} = $payloads->{$payloadName};
   }
