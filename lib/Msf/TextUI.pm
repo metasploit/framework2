@@ -22,6 +22,7 @@ use Msf::ColPrint;
 use IO::Socket;
 use POSIX;
 use Msf::Logging;
+use Msf::Logo;
 
 sub new {
   my $class = shift;
@@ -505,16 +506,7 @@ sub Exploit {
 }
 
 sub PrintAsciiLogo {
-    print STDOUT 
-'
-                __.                       .__.        .__. __.
-  _____   _____/  |______    ____________ |  |   ____ |__|/  |_
- /     \_/ __ \   __\__  \  /  ___/\____ \|  |  /  _ \|  \   __\
-|  Y Y  \  ___/|  |  / __ \_\___ \ |  |_> >  |_(  <_> )  ||  |
-|__|_|  /\___  >__| (____  /____  >|   __/|____/\____/|__||__|
-      \/     \/  v2.3    \/     \/ |__|
-'; # jbl
-
+    print STDOUT "\n".Msf::Logo::Random()."\n";
 }
 
 1;
