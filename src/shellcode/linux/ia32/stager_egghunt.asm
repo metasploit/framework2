@@ -31,6 +31,7 @@ BITS   32
 GLOBAL _start
 
 _start:
+	cld
 
 loop_inc_page:
 	or   cx, 0x0fff
