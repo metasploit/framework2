@@ -30,11 +30,11 @@ use Pex::Utils;
 # xor (which is the key) is passed as a perl number, unpack that shit with V yo
 
 sub Encode {
-  my $class = shift;
+  my $self = shift;
   my $xor = shift;
   my $buffer = shift;
 
-  my $pack = $class->_PackType;
+  my $pack = $self->_PackType;
   my $res;
 
 #  printf("New xor key 0x%08x $xor\n", $xor);
@@ -61,9 +61,9 @@ sub Encode {
 }
 
 sub KeyScan {
-  my $class = shift;
+  my $self = shift;
 
-  my $ref = $class->_KeyScanBytes(@_);
+  my $ref = $self->_KeyScanBytes(@_);
   return if(!defined($ref));
   my @bytes = @{$ref};
 
@@ -75,19 +75,19 @@ sub KeyScan {
 # Xor Dword Additive Feedback KeyScan yo
 # Still has some issues, but it does ok
 sub _KeyScanBytes {
-  my $class = shift;
+  my $self = shift;
   my $data = shift;
   my $badChars = shift;
 
   my $badKeys;
 
-  $badKeys = $class->_FindBadKeys($data, $badChars);
+  $badKeys = $self->_FindBadKeys($data, $badChars);
 
-  my($keys, $r) = $class->_FindKey($badKeys, $badChars);
+  my($keys, $r) = $self->_FindKey($badKeys, $badChars);
   return if(!defined($keys) || @{$keys} != 4);
 
   while(1) {
-    my $pos = $class->_Check(
+    my $pos = $self->_Check(
       unpack('V', pack('C4', @{$keys})),
       $data,
       $badChars
@@ -110,7 +110,7 @@ sub _KeyScanBytes {
 }
 
 sub _PackType {
-  my $class = shift;
+  my $self = shift;
   return('V');
 }
 

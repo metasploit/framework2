@@ -154,7 +154,7 @@ sub _Check {
 
 sub _UnitTest {
   my $self = shift;
-  my $self = $self->new;
+#  my $self = $self->new;
 
   my $string = "\x00\x01\x02AABBCCDD";
   my $badChars = "\x00A";
