@@ -40,7 +40,7 @@ sub EncodePayload {
   my $badchars = shift;
 
   my $decoder =
-    Pex::x86::mov(length($payload) - 1, "ecx").
+    Pex::x86::Mov(length($payload) - 1, "ecx", $badchars).
     "\xe8\xff\xff\xff".			# call $+4
     "\xff\xc1".				# inc ecx
     "\x5e".				# pop esi
@@ -54,7 +54,7 @@ sub CountdownXor {
   my @payload = split('', shift); 
   my $xored;
 
-  for(my $count=0; $count <= $#payload; $count++)
+  for(my $count=0; $count < scalar @payload; $count++)
   {
     $xored .= pack("C", (unpack("C", $payload[$count]) ^ ($count + 1)));
   }

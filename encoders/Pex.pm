@@ -41,11 +41,12 @@ sub _GenEncoder {
   my $self = shift;
   my $xor = shift;
   my $len = shift;
+  my $badchars = shift;
   my $xorkey = pack('V', $xor);
 
   # spoon's smaller variable-length encoder (updated to use call $+4 by vlad902)
   my $decoder =
-    Pex::x86::sub(-((($len -1) / 4) + 1), "ecx").
+    Pex::x86::Sub(-((($len -1) / 4) + 1), "ecx", $badchars).
     "\xe8\xff\xff\xff".			# call $+4
     "\xff\xc0".				# inc eax
     "\x5e".				# pop esi

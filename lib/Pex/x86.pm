@@ -140,43 +140,100 @@ sub EncodeEffective {
   return 0xc0 | ($shift_num << 3) | $reg;
 }
 
-sub mov {
-  my $constant = shift;
-  my $dst = RegNameToNumber(shift);
+sub Clear {
+	my $reg = shift;
+	my $badchars = shift;
 
-# XXX: Add support for signedness
-  if($constant >= 0 && $constant <= 0x7f)
-  {
-    return "\x6a" . pack("C", $constant) . pack("C", 0x58 + $dst);
-  }
-  elsif($constant >= 0 && $constant <= 0xff)
-  {
-    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . pack("C", 0xb0 + $dst) . pack("C", $constant);
-  }
-  elsif($constant >= 0 && $constant <= 0xffff)
-  {
-    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . "\x66" . pack("C", 0xb8 + $dst) . pack("n", $constant);
-  }
+	my @good;
+	my @chars = (0x29, 0x2b, 0x31, 0x33);
+	foreach(@chars)
+	{
+		if(index($badchars, $_) == -1)
+		{
+			push @good, $_;
+		}
+	}
+
+	return pack("C", $good[rand(scalar @good)]) . pack("C", EncodeModRM($reg, $reg));
 }
 
-sub sub {
-  my $constant = shift;
-  my $dst = RegNameToNumber(shift);
+sub Mov {
+	my $constant = shift;
+	my $dst = RegNameToNumber(shift);
+	my $badchars = shift;
 
+	my @opcodes;
+	if($constant >= 0 && $constant <= 0x7f)
+	{
+		push @opcodes, "\x6a" . pack("C", $constant) .  pack("C", 0x58 + $dst);
+	}
+	if($constant >= 0 && $constant <= 0xff)
+	{
+		push @opcodes, Clear($dst, $badchars) . pack("C", 0xb0 + $dst) . pack("C", $constant);
+	}
+	if($constant >= 0 && $constant <= 0xffff)
+	{
+		push @opcodes, Clear($dst, $badchars) . "\x66" . pack("C", 0xb8 + $dst) . pack("v", $constant);
+	}
+	push @opcodes, Clear($dst, $badchars) . pack("C", 0xb8 + $dst) . pack("V", $constant);
+
+	my @bad = split(//, $badchars);
+	for(my $index = 0; $index < scalar @opcodes; $index++)
+	{
+		my $failed = 0;
+		foreach(@bad)
+		{
+			if(index($opcodes[$index], $_) != -1)
+			{
+				$failed = 1;
+			}
+		}
+
+		if($failed == 0)
+		{
+			return $opcodes[$index];
+		}
+	}
+
+	return $badchars; # Err, what else can we do here?
+}
+
+sub Sub {
+	my $constant = shift;
+	my $dst = RegNameToNumber(shift);
+	my $badchars = shift;
+
+	my @opcodes;
 # XXX: Needs work. Do special encoding for eax? (One byte smaller)
-  if($constant >= -0x7f && $constant <= 0x7f)
-  {
-    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . "\x83" . pack("C", EncodeEffective(5, $dst)) . pack("C", $constant); 
-  }
-  elsif($constant >= -0xffff && $constant <= 0)
-  {
-    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . "\x66\x81" . pack("C", EncodeEffective(5, $dst)) . pack("v", $constant); 
-  }
-  else
-  {
-    return "\x31" . pack("C", EncodeModRM($dst, $dst)) . "\x81" . pack("C", EncodeEffective(5, $dst)) . pack("V", $constant); 
-  }
+	if($constant >= -0x7f && $constant <= 0x7f)
+	{
+		push @opcodes, Clear($dst, $badchars) . "\x83" . pack("C", EncodeEffective(5, $dst)) . pack("C", $constant); 
+	}
+	if($constant >= -0xffff && $constant <= 0)
+	{
+		push @opcodes, Clear($dst, $badchars) . "\x66\x81" . pack("C", EncodeEffective(5, $dst)) . pack("v", $constant); 
+	}
+	push @opcodes, Clear($dst, $badchars) . "\x81" . pack("C", EncodeEffective(5, $dst)) . pack("V", $constant); 
 
+	my @bad = split(//, $badchars);
+	for(my $index = 0; $index < scalar @opcodes; $index++)
+	{
+		my $failed = 0;
+		foreach(@bad)
+		{
+			if(index($opcodes[$index], $_) != -1)
+			{
+				$failed = 1;
+			}
+		}
+
+		if($failed == 0)
+		{
+			return $opcodes[$index];
+		}
+	}
+
+	return $badchars; # Err, what else can we do here?
 }
 
 1;

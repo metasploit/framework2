@@ -35,12 +35,13 @@ sub _GenEncoder {
   my $self = shift;
   my $xor = shift;
   my $len = shift;
+  my $badchars = shift;
   my $xorkey = pack('V', $xor);
 
 
   # spoon's smaller variable-length fnstenv encoder
   my $decoder =
-    Pex::x86::mov((($len - 1) / 4) + 1, "ecx").
+    Pex::x86::Mov((($len - 1) / 4) + 1, "ecx", $badchars).
     "\xd9\xee".                         # fldz
     "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
     "\x5b".                             # pop ebx
