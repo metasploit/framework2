@@ -25,7 +25,7 @@ my $defaults = {
   'Nop'     => 'Msf::Nop::Pex',
   'DebugLevel' => 0,
   'Logging' => 0,
-  'Console' => 'Msf::PayloadComponent::TextConsole',
+#  'Console' => 'Msf::PayloadComponent::TextConsole',
   'AlternateExit' => 2,
 # These are defaulting in Pex::Socket too, but these defaults will override
 # the Pex defaults if thats what you want.
