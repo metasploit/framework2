@@ -35,7 +35,7 @@ Msf::UI::ActiveStateSucks();
 
 my $ui = Msf::TextUI->new($Bin);
 my $FRAMEVERSION = $ui->Version;
-my $VERSION = '$ Revision $';
+my $VERSION = '$Revision$';
 
 $SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
 
@@ -61,10 +61,10 @@ my $state = {'Mode' => 'Main'};
 # this is also good if they add/remove a module the directories 
 Load();
 
-gUse($opts{'u'}) if(exists($opts{'u'}));
-
 my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
 $console->tabCompletion(\&xTabCompletion);
+
+gUse('use', $opts{'u'}) if(exists($opts{'u'}));
 
 # virtual command table
 my %virtualCmds = ();
