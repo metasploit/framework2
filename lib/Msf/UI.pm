@@ -170,7 +170,7 @@ CHECK:
     if(@{$exploit->OS} && @{$payload->OS}) {
       my $valid = 0;
       foreach my $os (@{$payload->OS}) {
-        $valid = 1 if($os = 'any' || scalar(grep { $_ eq $os } @{$exploit->OS}));
+        $valid = 1 if(scalar(grep { $_ eq $os } @{$exploit->OS}));
       }
       if(!$valid) {
         # OS is not in payload
