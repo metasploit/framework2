@@ -6,7 +6,7 @@ my $info =
 {
     Name         => 'cmd_sol_bind',
     Version      => '1.0',
-    Description  => 'Listen for connection and spawn a shell',
+    Description  => 'Use inetd to create a persistent bindshell',
     Author       => 'H D Mooore <hdm[at]metasploit.com> [Artistic License]',
     Arch         => [  ],
     Priv         => 0,

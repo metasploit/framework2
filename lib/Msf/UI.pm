@@ -147,7 +147,7 @@ CHECK:
       }
     }
 
-    # If the exploit has a any keys set, we need to make sure that the
+    # If the exploit has any keys set, we need to make sure that the
     # matched payload also has the same keys. This allows us to create
     # specific payloads for weird exploit scenarios (for instance, where
     # the process doesn't have a valid heap (hdm)
@@ -156,6 +156,12 @@ CHECK:
         $self->PrintDebugLine(3, $payload->Name . " failed, keys do not match");
         next CHECK;
       }
+    }
+
+    # If the exploit has not Keys but the payload does, ignore it.
+    if (! scalar(@{$exploit->Keys}) && scalar(@{$payload->Keys}))
+    {
+        next CHECK;
     }
     
     if($exploit->Priv < $payload->Priv) {

@@ -12,9 +12,6 @@ my $info =
     Priv         => 0,
     OS           => [ ],
     Keys         => ['cmd'], 
-    Multistage   => 0,
-    Type         => 'none',
-    Size         => '',
     UserOpts     =>
         {
             'CMD' => [1, 'DATA', 'The command to execute'],

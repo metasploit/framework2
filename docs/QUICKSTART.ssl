@@ -1,5 +1,12 @@
 To enable SSL support, simply install the Net::SSLeay perl module,
-this module is available from http://search.cpan.org.
+This module can be found at http://search.cpan.org as well as the 
+"extras" subdirectory of this package. To install this module:
+
+# cd extras
+# tar -zxf Net_SSLeay.pm-1.23.tar.gz
+# cd Net_SSLeay.pm-1.23
+# perl Makefile.PL && make && make install
+# cd .. && rm -rf Net_SSLeay.pm-1.23
 
 To specify SSL mode for any given exploit, just set the "SSL" option
 to any non-false value (1, True, Yes, etc).
