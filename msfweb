@@ -26,6 +26,7 @@ use IO::Socket;
 use Getopt::Std;
 
 no utf8;
+no locale;
 
 Msf::UI::ActiveStateSucks();
 
@@ -804,7 +805,7 @@ sub SessionUpdate {
 			$init = time;
 			print CACHE "<!-- INIT:$init -->\n";
 			close (CACHE);
-		} else { print STDERR "Could not write cache file: $!"; exit(0); }
+		} else { print STDERR "Could not write cache file: ($cache_file) $!"; exit(0); }
 	}
 				
 	while (1) {
@@ -1735,7 +1736,7 @@ qq[
 
 		unlink($cache_file);
 		if (! open (CACHE, ">>$cache_file")) {
-			print STDERR "Could not open cache file: $!\n";
+			print STDERR "Could not open cache file: ($cache_file) $!\n";
 			$eout->close;
 			$pout->close;
 			exit(0);
@@ -1744,7 +1745,7 @@ qq[
 		my $cache = IO::Handle->new_from_fd(fileno(CACHE), ">");
 		
 		if (not defined($cache)) {
-			print STDERR "Could not open cache file: $!\n";
+			print STDERR "Could not open cache file descriptor: ($cache_file) $!\n";
 			$eout->close;
 			$pout->close;
 			exit(0);

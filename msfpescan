@@ -28,6 +28,7 @@ use Pex::Nasm::Ndisasm;
 use Msf::ColPrint;
 
 no utf8;
+no locale;
 
 my $VERSION = '$Revision$';
 

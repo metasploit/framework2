@@ -28,6 +28,7 @@ use Msf::TextUI;
 use Pex;
 
 no utf8;
+no locale;
 
 Msf::UI::ActiveStateSucks();
 

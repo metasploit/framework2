@@ -25,6 +25,7 @@ use Pex;
 use CGI qw/:standard/;
 
 no utf8;
+no locale;
 
 chdir($RealBin);
 

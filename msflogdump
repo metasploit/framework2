@@ -16,6 +16,7 @@
 use Getopt::Std;
 use strict;
 no utf8;
+no locale;
 
 my $VERSION = '$Revision$';
 

@@ -37,6 +37,7 @@ use Pex::PEInfo;
 use Pex;
 
 no utf8;
+no locale;
 
 my %opts;
 getopts('h', \%opts);
