@@ -717,6 +717,18 @@ sub NativeLM {
     return $self->{'NativeLM'};
 }
 
+sub PeerNativeOS {
+    my $self = shift;
+    $self->{'PeerNativeOS'} = shift if @_;
+    return $self->{'PeerNativeOS'};
+}
+
+sub PeerNativeLM {
+    my $self = shift;
+    $self->{'PeerNativeLM'} = shift if @_;
+    return $self->{'PeerNativeLM'};
+}
+
 sub DefaultDomain {
     my $self = shift;
     $self->{'DefaultDomain'} = shift if @_;
@@ -1088,6 +1100,16 @@ sub SMBSessionSetupClear {
 
     $self->AuthUserID($smb_res->Get('user_id'));
     
+    $log_res->Set('request' => substr($smb_res->Get('request'), $log_res->Length));
+
+    my ($nos, $nlm, $grp) = split(/\x00/, $log_res->Get('request'));
+    $self->PeerNativeOS($nos);
+    $self->PeerNativeLM($nlm);
+    
+    if (! $self->DefaultDomain) {
+        $self->DefaultDomain($grp);
+    }
+    
     return $log_res; 
 }
 
@@ -1173,7 +1195,17 @@ sub SMBSessionSetupNTLM {
     }
     
     $self->AuthUserID($smb_res->Get('user_id'));
+
+    $log_res->Set('request' => substr($smb_res->Get('request'), $log_res->Length));
+
+    my ($nos, $nlm, $grp) = split(/\x00/, $log_res->Get('request'));
+    $self->PeerNativeOS($nos);
+    $self->PeerNativeLM($nlm);
     
+    if (! $self->DefaultDomain) {
+        $self->DefaultDomain($grp);
+    }
+        
     return $log_res;        
 }
 
