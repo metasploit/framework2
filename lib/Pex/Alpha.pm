@@ -30,7 +30,7 @@ my %registers =	(
 		);
 
 
-sub addq {
+sub Addq {
   my $src = shift;
   my $constant = shift;
   my $dst = shift;
@@ -39,7 +39,7 @@ sub addq {
 }
 
 # Negative number 64-bit integer overflow problems.
-sub ldah {
+sub Ldah {
   my $src = shift;
   my $constant = shift;
   my $dst = shift;
@@ -47,7 +47,7 @@ sub ldah {
   return pack("V", ((9 << 26) | ($registers{$dst} << 21) | ($registers{$src} << 16) | ($constant >> 16)));
 }
 
-sub lda {
+sub Lda {
   my $src = shift;
   my $constant = shift;
   my $dst = shift;
@@ -56,33 +56,33 @@ sub lda {
 }
 
 # Acts as set/mov, does size optimizations where possible.
-sub set {
+sub Set {
   my $constant = shift;
   my $dst = shift;
 
 # XXX: Brain dead algo, split into two parts, upper and lower word.
   if($constant <= 255 && $constant >= 0)
   {
-    return addq("zero", $constant, $dst);
+    return Addq("zero", $constant, $dst);
   }
   elsif($constant <= 0xffff && $constant >= 0)
   {
-    return lda("zero", $constant, $dst);
+    return Lda("zero", $constant, $dst);
   }
   elsif($constant & 0xffff)
   {
     if($constant & 0x8000)
     {
-      return ldah("zero", $constant + (1 << 16), $dst) . lda($dst, $constant, $dst);
+      return Ldah("zero", $constant + (1 << 16), $dst) . Lda($dst, $constant, $dst);
     }
     else
     {
-      return ldah("zero", $constant, $dst) . lda($dst, $constant, $dst);
+      return Ldah("zero", $constant, $dst) . Lda($dst, $constant, $dst);
     }
   }
   else
   {
-    return ldah("zero", $constant, $dst);
+    return Ldah("zero", $constant, $dst);
   }
 }
 
