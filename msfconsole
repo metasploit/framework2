@@ -549,14 +549,22 @@ sub xLogHandler
     # This is the start of a new payload handler session
     if ($args[0] eq "CONNECT")
     {
-        $mlog .= xLogEntry("Connection established " . 
-                        $args[1]->sockhost . ":" . $args[1]->sockport . " " .
-                        $args[1]->peerhost . ":" . $args[1]->peerport);
+        my $connstr;
+        if ($args[1]->can('sockhost') && $args[1]->can('peerhost'))
+        {
+            $connstr =  $args[1]->sockhost . ":" . $args[1]->sockport . " " . 
+                        $args[1]->peerhost . ":" . $args[1]->peerport;
+        } else {
+            $connstr = "findsock";
+        }
+        
+        
+    
+        $mlog .= xLogEntry("Connection established " . $connstr);
 
         my ($currfd, $currfn);
-        $currfn = time() . "_". $state->{'Exploit'}->{'Name'} . "_" . 
-                  $args[1]->sockhost . "." . $args[1]->sockport . "_" .
-                  $args[1]->peerhost . "_" . $args[1]->peerport . ".log";
+        $currfn = time() . "_". $state->{'Exploit'}->{'Name'} . "_" . $connstr . ".log";
+        $currfn =~ s/\:/\_/g;
 
         if (open($currfd, ">$logdir/$currfn"))
         {
@@ -573,9 +581,7 @@ sub xLogHandler
             }
             print $currfd "\n";
             
-            print $currfd "   Conn: " .
-                  $args[1]->sockhost . ":" . $args[1]->sockport . " " .
-                  $args[1]->peerhost . ":" . $args[1]->peerport . "\n";
+            print $currfd "   Conn: $connstr\n";
             
             print $currfd "\n\n";
         }       
