@@ -32,6 +32,10 @@ Pre-Release Tasks
  - Add documentation describing how the shared config file relates to msfcli and msfconsole
  
  - The Pex library needs documentation and API guides for standalone use 
+
+ - Add nasm into cygwin environment
+
+ - Send ey4s hookers and booze
  
  
 Post-Release Tasks
