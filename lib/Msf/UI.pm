@@ -117,10 +117,13 @@ CHECK:
   foreach my $payloadName (keys(%$payloads)) {
     my $payload = $payloads->{$payloadName};
 
+    # If a exploit's arch or os is empty, it means they support allows
+    # Same with a payload
+
     # Match the OS arrays of both the exploits and payloads
     # If an exploit has say 2 os's (linux and bsd maybe)
     # we will match all payloads that are linux or bsd
-    if(@{$exploit->OS}) {
+    if(@{$exploit->OS} && @{$payload->OS}) {
       my $valid = 0;
       foreach my $os (@{$payload->OS}) {
         $valid = 1 if(scalar(grep { $_ eq $os } @{$exploit->OS}));
@@ -133,7 +136,7 @@ CHECK:
     }
     
     # Match the Arch arrays of both the exploits and payloads
-    if(@{$exploit->Arch}) {
+    if(@{$exploit->Arch} && @{$payload->Arch}) {
       my $valid = 0;
       foreach my $arch (@{$payload->Arch}) {
         $valid = 1 if(scalar(grep { $_ eq $arch } @{$exploit->Arch}));
@@ -188,7 +191,7 @@ sub Encode {
   my $exploitSpace = $exploit->PayloadSpace;
   my $encodedPayload;
 
-  if(BadCharCheck($badChars, $prependEncoder)) {
+  if($self->BadCharCheck($badChars, $prependEncoder)) {
     # This should never happen unless the exploit coder is dumb, but might as well check
     $self->SetError('Bad Characters in prependEncoder');
     return;
@@ -232,7 +235,7 @@ sub Encode {
       next;
     }
 
-    if(BadCharCheck($badChars, $encodedShell)) {
+    if($self->BadCharCheck($badChars, $encodedShell)) {
       $self->PrintDebugLine(2, "$encoderName failed, bad chars in encoded payload");
       $self->PrintDebugLine(5, "encoded payload:");
       $self->PrintDebugLine(5, Pex::Utils::BufferC($encodedShell));
@@ -300,7 +303,7 @@ sub Encode {
       next;
     }
 
-    if(BadCharCheck($badChars, $nops)) {
+    if($self->BadCharCheck($badChars, $nops)) {
       $self->PrintDebugLine(2, "$nopName failed, bad chars in nops");
       next;
     }

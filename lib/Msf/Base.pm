@@ -7,6 +7,7 @@ use FindBin qw {$Bin $RealBin $Script $RealScript};
 use Msf::Encoder;
 use Msf::Nop;
 use Msf::EncodedPayload;
+use Msf::Socket;
 use File::Spec::Functions;
 
 my $envDebug = 0;

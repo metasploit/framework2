@@ -167,6 +167,7 @@ sub Load {
 
 sub gSave {
     my $cmd = shift;
+    $ui->SaveTempEnv($state->{'Exploit'}->{'Name'}) if($state->{'Mode'} eq 'Exploit');
     $ui->SaveConfig;
     print "Saved config to: " . $ui->ConfigFile . "\n";
 }
@@ -308,6 +309,7 @@ sub gUse
 sub eBack
 {
     $ui->SaveTempEnv($state->{'Exploit'}->{'Name'});
+    $ui->UnsetTempEnv;
     $state->{'Mode'} = 'Main';
     $console->_prompt("msf > ");
 }
