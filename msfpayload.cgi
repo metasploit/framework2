@@ -91,7 +91,7 @@ if (! $action)
         PrintRow("Payload Options", $subtable);
     }
     print "</table><br><br>\n";
-    print "<center><input type='submit value='Generate Shellcode'><br></center>\n";
+    print "<center><input type='submit' value='Generate Shellcode'><br></center>\n";
     print $query->end_form;
         
     DisplayFooter();
