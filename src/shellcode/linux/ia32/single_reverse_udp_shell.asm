@@ -21,6 +21,7 @@
 BITS   32
 GLOBAL _start
 
+%define  ASSUME_REG_EDX 0
 %include "generic.asm"
 
 _start:
