@@ -22,7 +22,7 @@
 ;
 ;        This payload works by using the sigaction system call to 
 ;        validate addresses in a process prior to checking to see
-;        if the contain the eight byte egg being searched for.  
+;        if they contain the eight byte egg being searched for.  
 ;        Once the egg is found the payload simply jumps eight bytes
 ;        past it.
 ;
