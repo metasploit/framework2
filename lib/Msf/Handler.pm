@@ -17,6 +17,7 @@ package Msf::Handler;
 use base 'Msf::Module';
 use IO::Socket;
 use IO::Select;
+use strict;
 
 sub new { return bless {}, shift }
 
@@ -144,4 +145,66 @@ sub DataPumpXor
     $callback->("FINISHED");
     return(1);
 }
+
+
+# This routine handles a situation where the read and write handles are 
+# different for the socket, but the same for the console
+sub DataPumpSplit
+{
+    my ($self, $cli, $svr_to, $svr_from,  $callback) = @_;
+    my $interrupt = 0;
+
+    if (ref($callback) ne "CODE") { $callback = sub { }; }
+
+    $SIG{"PIPE"} = 'IGNORE';
+    $SIG{"INT"}  = sub { $interrupt++ };
+
+    my $con;
+    my $sel = IO::Select->new();
+
+    $sel->add($cli);
+    $sel->add($svr_from);
+
+    while (fileno($svr_from) && $interrupt == 0)
+    {
+        my $fd;
+        my @fds = $sel->can_read(0.5);
+        foreach $fd (@fds)
+        {
+	        my $rdata;
+            my $bytes = sysread($fd, $rdata, 2048);
+
+            if(! defined($bytes) || $bytes == 0)
+            {
+                close($svr_from);
+                close($svr_to);
+    		    $interrupt++;
+                $callback->("CLOSED");
+            } else {
+                # pass data between socket and console
+                my $dataq = $rdata;
+                if ($fd eq $svr_from)
+                {
+                    $callback->("DATA", "SERVER", $rdata);
+                    while (length($dataq) && (my $x = syswrite($cli, $dataq, 2048)))
+                    {
+                        #print STDERR "[*] Wrote to client $x of " . length($dataq) . "\n";
+                        $dataq = substr($dataq, $x);
+                    }
+                } else {
+                    $callback->("DATA", "CLIENT", $rdata);
+                    while (length($dataq) && (my $x = syswrite($svr_to, $dataq, 2048)))
+                    {
+                        #print STDERR "[*] Wrote to server $x of " . length($dataq) . "\n";
+                        $dataq = substr($dataq, $x);
+                    }
+                }
+            }
+        }
+    }
+
+    $callback->("FINISHED");
+    return(1);
+}
+
 1;
