@@ -42,37 +42,9 @@ sub _Nops {
   return($self->{'Nops'});
 }
 
-sub _NopGen {
-  my $self = shift;
-  $self->{'NopGen'} = shift if(@_);
-  return($self->{'NopGen'});
-}
-
-sub _NopBadChars {
-  my $self = shift;
-  $self->{'NopBadChars'} = shift if(@_);
-  return($self->{'NopBadChars'});
-}
-
 sub SetNops {
   my $self = shift;
   return($self->_Nops(shift));
-}
-
-sub SetNopGen {
-  my $self = shift;
-  $self->_NopGen(shift);
-  $self->_NopBadChars(shift);
-}
-
-sub NopGen {
-  my $self = shift;
-  my $size = shift;
-  my $ngen = $self->_NopGen;
-  
-  return if ! $ngen;
-  return if ! $size;
-  return $ngen->Nops($size, $self->_NopBadChars);  
 }
 
 sub RawPayload {
