@@ -88,7 +88,7 @@ sub Validate {
       return;
     }
     elsif(!defined($value)) {
-      # option is not required, set it to the default
+      # Option is not required, set it to the default
       if (defined($dflt)) { $self->SetVar($key, $dflt) }
     }
     elsif(uc($type) eq 'ADDR') {
@@ -97,7 +97,7 @@ sub Validate {
         $self->SetError("Invalid address $value for $key");
         return;
       }
-      # replace a hostname with an IP address
+      # Replace a hostname with an IP address
       $self->SetVar($key, inet_ntoa($addr));
     }
     elsif(uc($type) eq 'PORT') {
@@ -110,6 +110,13 @@ sub Validate {
       if($value !~ /^(y|n|t|f|0|1)$/i) {
         $self->SetError("Invalid boolean $value for $key");
         return;
+      }
+      
+      # Replace common true/false values with a simple 1/0
+      if($value =~ /^(y|t|1)$/i) {
+        $self->SetVar($key, 1);
+      } else {
+        $self->SetVar($key, 0);
       }
     }
     elsif(uc($type) eq 'PATH') {
