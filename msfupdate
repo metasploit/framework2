@@ -76,8 +76,8 @@ if ($opts{f}) {
 }
 
 # Display a big nasty warning for non-SSL unless -x is specified
-if (!$opts{x} && $opts{u}) {
-    if (! $SSL_SUPPORT) {
+if ($opts{u}) {
+    if (! $opts{x} && ! $SSL_SUPPORT) {
         print "[*] WARNING: The Net::SSLeay module is not installed.\n";
         print "    The update process will fall back to plain HTTP,\n";
         print "    this opens up the possibility of someone being\n";
