@@ -20,7 +20,7 @@ sub ConsoleOut {
     return IO::Handle->new_from_fd(1, '>');
 }
 
-sub HandleConsole {
+sub _HandleConsole {
   my $self = shift;
   my $sockIn = $self->SocketIn;
   my $sockOut = $self->SocketOut;

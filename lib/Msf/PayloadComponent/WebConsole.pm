@@ -31,7 +31,7 @@ sub ConsoleOut {
     return $self->SUPER::ConsoleOut;
 }
 
-sub HandleConsole {
+sub _HandleConsole {
   my $self = shift;
 
   # Get handle to browser
@@ -46,7 +46,7 @@ sub HandleConsole {
   );  
   
   if (! $sock) {
-    $brow->send("WebConsole: HandleConsole(): Failed to bind a port for the proxy shell: $!\n");
+    $brow->send("WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!\n");
     return;
   }
   
@@ -85,8 +85,8 @@ sub HandleConsole {
   $brow->shutdown(2);
   $brow->close;
 
-  # Call upwards to TextConsole's HandleConsole
-  $self->SUPER::HandleConsole;
+  # Call upwards to TextConsole's _HandleConsole
+  $self->SUPER::_HandleConsole;
 }
 
 1;

@@ -21,7 +21,9 @@ sub HandleConsole {
   my $console = $self->GetVar('_Console');
   $console = 'Msf::PayloadComponent::TextConsole' if(!$console);
   __PACKAGE__->import($console);
-  $self->SUPER::HandleConsole;
+  $self->_HandleConsole;
+#  $self->SUPER::HandleConsole;
 }
+
 
 1;
