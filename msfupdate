@@ -314,6 +314,8 @@ sub DownloadFile {
     my $port = $SSL_SUPPORT ? 443 : 80;
     my $data;
     
+    $path = EscapeURI($path);
+    
     my $sock = IO::Socket::INET->new
     (
         PeerAddr    => $host,
@@ -484,4 +486,12 @@ sub Diff {
     }
     
     return $res;
+}
+
+sub EscapeURI {
+    my $path = shift;
+	my %escapes = ();
+	for (0..255) { $escapes{chr($_)} = sprintf("%%%02X", $_) }
+	$path =~ s/([^A-Za-z0-9\-_.!~*'()\/])/$escapes{$1}/eg;
+    return $path;
 }
