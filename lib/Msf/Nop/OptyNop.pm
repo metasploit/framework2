@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+
 package Msf::Nop::OptyNop;
 use strict;
 use base 'Msf::Nop';

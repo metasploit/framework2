@@ -329,7 +329,7 @@ to alter the payload of packets that pass through. All occurences
 of foo will be replaced with bar. This example is easy to test with 
 netcat, but otherwise makes little sense. :) Adapt to your needs:
 
-#!/usr/bin/perl 
+
 
 use Net::Divert;
 use NetPacket::IP qw(IP_PROTO_UDP);

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+
 
 use strict;
 package Msf::Encoder::XorDword;

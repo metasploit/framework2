@@ -16,14 +16,13 @@
 
 # This is a really ghetto proof-of-concept for a web-based exploit interface
 
-# XXX TODO
-#	1. IP-based access control
-#	2. Basic HTTP authentication
-#	3. SSL mode support
-#	4. Admin
-#	5. Logs
-#   6. ShikataGaNai != random via msfweb payload encoder? !?!?!!
-#	7. Command line option parsing (tehem, logs, etc);
+#	TODO:
+#		+ Kill sessions that do not automatically close
+#		+ Build out the 'admin' pages
+#		+ Build out the 'logs' pages
+#		+ Add an option for HTTP authentication
+#
+#
 
 
 require 5.6.0;
@@ -204,14 +203,14 @@ sub Usage {
 Usage: $0 <options>
 
 Options:
-		-a	<ip address>  Bind to this IP instead of the loopback address
-		-p	<tcp port>    Bind to this TCP port instead of 55555
-		-l	<log file>    The path name to use for a log file (stderr)
-		-v	<log level>   A number between 0 and 10 that controls log verbosity
-		-t	<theme name>  Select a specific theme for the web interface
-		-T	<theme dir>   Use an alternate directory for msfweb themes
-		-C	<cache dir>   Use a specific directory for session cache files
-		-r	<boolean>     Reload all modules with each new web request
+	-a	<ip address>  Bind to this IP instead of the loopback address
+	-p	<tcp port>    Bind to this TCP port instead of 55555
+	-l	<log file>    The path name to use for a log file (stderr)
+	-v	<log level>   A number between 0 and 10 that controls log verbosity
+	-t	<theme name>  Select a specific theme for the web interface
+	-T	<theme dir>   Use an alternate directory for msfweb themes
+	-C	<cache dir>   Use a specific directory for session cache files
+	-r	<boolean>     Reload all modules with each new web request
 
 };
     exit(0);

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+
 
 package Msf::PayloadComponent::FindConnection;
 use strict;

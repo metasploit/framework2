@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+
 ##
 #         Name: WebConsole.pm
 #       Author: H D Moore <hdm [at] metasploit.com>
