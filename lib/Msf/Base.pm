@@ -47,7 +47,7 @@ sub GetEnv {
   my @envs = ($self->GetTempEnv, $self->GetGlobalEnv);
   print join(' ', caller()) if($envDebug >= 3);
   foreach my $env (@envs) {
-    if(defined($key)) {
+    if(defined($env->{$key})) {
       print "Get $key => " . $env->{$key} . "\n" if($envDebug);
       return($env->{$key});
     }
@@ -110,6 +110,33 @@ sub SetTempEnv {
   my @pairs = @_;
 
   my $env = $self->_TempEnv;
+
+  for(my $i = 0; $i < @pairs; $i += 2) {
+    print "TempSet $pairs[$i] => " . $pairs[$i + 1] . "\n" if($envDebug);
+    $env->{$pairs[$i]} = $pairs[$i + 1];
+  }
+  return($env);
+}
+
+sub GetSavedTempEnv {
+  my $self = shift;
+  my $envName = shift;
+  my $key = shift;
+  my $env = $self->_TempEnvs->{$envName};
+  return if(!defuned($env));
+  if(defined($key)) {
+    print "TempGet $key => " . $env->{$key} . "\n" if($envDebug);
+    return($env->{$key});
+  }
+  return($env);
+}
+
+sub SetSavedTempEnv {
+  my $self = shift;
+  my $envName = shift;
+  my @pairs = @_;
+
+  my $env = $self->_TempEnvs->{$envName};
 
   for(my $i = 0; $i < @pairs; $i += 2) {
     print "TempSet $pairs[$i] => " . $pairs[$i + 1] . "\n" if($envDebug);
