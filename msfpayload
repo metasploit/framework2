@@ -42,23 +42,13 @@ $ui->SetTempEnv('_MsfPayload', 1);
 
 my $exploits = { };
 my $payloads = { };
-my $exploitsIndex = $ui->LoadExploits;
 my $payloadsIndex = $ui->LoadPayloads;
-my $encoders = $ui->LoadEncoders;
-my $nops     = $ui->LoadNops;
 
 foreach my $key (keys(%{$payloadsIndex})) {
     $payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
 }
 
-foreach my $key (keys(%{$exploitsIndex})) {
-    $exploits->{$exploitsIndex->{$key}->Name} = $exploitsIndex->{$key};
-}
-
-$ui->SetTempEnv('_Exploits', $exploitsIndex);
 $ui->SetTempEnv('_Payloads', $payloadsIndex);
-$ui->SetTempEnv('_Encoders', $encoders);
-$ui->SetTempEnv('_Nops', $nops);
 
 my $sel = shift(@ARGV);
 my $p = $payloads->{$sel};
@@ -71,8 +61,7 @@ foreach my $opt (@ARGV) {
   $ui->SetTempEnv(split('=', $opt));
 }
 
-$p = $ui->ModuleName($p)->new;
-$ui->SetTempEnv('_Exploit', $exploits->{'Tester'});
+$p = $p->SelfName->new;
 $ui->SetTempEnv('_PayloadName', $sel);
 $ui->SetTempEnv('_Payload', $p);
 
@@ -84,21 +73,14 @@ if (! $action || $action =~ /^S/)
 
 Usage() if $action !~ /^C|^P|^R/;
 
-my $s = $ui->Encode;
-if (! $s)
-{
-    print "Error: " . $ui->Error() . "\n";
-    exit(0);
-}
-
-if ($action =~ /^R/) { print $s->RawPayload; exit; }
+if ($action =~ /^R/) { print $p->Build; exit; }
 
 if ($p->Multistage)
 {
     print STDERR "Warning: Multistage payloads only return first stage\n\n";
 }
 
-my $r = $action =~ /^C/ ? Pex::Text::BufferC($s->RawPayload) : Pex::Text::BufferPerl($s->RawPayload);
+my $r = $action =~ /^C/ ? Pex::Text::BufferC($p->Build) : Pex::Text::BufferPerl($p->Build);
 
 print $r;
 exit(0);
