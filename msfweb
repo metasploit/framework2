@@ -980,9 +980,18 @@ sub ModuleList
 
 ];
 
+
+	# Build a hash mapping the module titles to the module names
+	my $mname = {};
+	foreach my $ename ( @{ $moduleMerge->{$mfilt} } ) {
+		my $mod = $modules->{$mtype}->{$ename};
+		$mname->{ $mod->Name } = $ename;
+	}
+
 	# Dump out all of the matching modules for this key, os, or arch
-	foreach my $ename (sort @{ $moduleMerge->{$mfilt} }) {
-	
+	foreach my $etitle (sort keys %{ $mname } ) {
+		
+		my $ename = $mname->{ $etitle };
 		my $mod = $modules->{$mtype}->{$ename};
 		my $icons;
 		
