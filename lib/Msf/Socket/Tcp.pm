@@ -24,4 +24,10 @@ sub _PexParent {
   return('Pex::Socket::Tcp');
 }
 
+sub _newSSL {
+  my $self = shift;
+  return(Msf::Socket::SSLTcp->new(@_));
+}
+
+
 1;
