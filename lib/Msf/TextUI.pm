@@ -336,7 +336,7 @@ sub Exploit {
   my @targets = $exploit->TargetsList;
   my $target = $self->GetEnv('TARGET');
 
-  if(defined($target) && defined($targets[$target])) {
+  if(defined($target) && !defined($targets[$target])) {
     $self->PrintLine('[*] Invalid target specified.');
     return;
   }
@@ -413,10 +413,10 @@ sub PrintAsciiLogo {
 '
                 __.                       .__.        .__. __.
   _____   _____/  |______    ____________ |  |   ____ |__|/  |_
- / 0x90\_/ __ \   __\__  \  /  ___/\____ \|  |  /  _ \|  \   __\
+ /     \_/ __ \   __\__  \  /  ___/\____ \|  |  /  _ \|  \   __\
 |  Y Y  \  ___/|  |  / __ \_\___ \ |  |_> >  |_(  <_> )  ||  |
 |__|_|  /\___  >__| (____  /____  >|   __/|____/\____/|__||__|
-      \/     \/          \/     \/ |__|
+      \/     \/  0x90    \/     \/ |__|
 '; # jbl + figlet
 
 }
