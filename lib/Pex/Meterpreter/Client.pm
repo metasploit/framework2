@@ -59,6 +59,9 @@ sub new
 	$self->{'selector'}           = IO::Select->new;
 	$self->{'selectables'}        = {};
 
+	# Modules list
+	$self->{'modules'}            = ();
+
 	return $self;
 }
 

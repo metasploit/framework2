@@ -94,14 +94,14 @@ sub new
 		$self->{'listeners'}   = ();
 		$self->{'connections'} = ();
 
-		$self->registerHandlers(client => $client);
-
 		$instance = $self;
 	}
 	else
 	{
 		$self = $instance;
 	}
+		
+	$self->registerHandlers(client => $client);
 
 	return $self;
 }

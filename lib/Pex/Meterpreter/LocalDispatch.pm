@@ -658,6 +658,23 @@ sub use
 		my $clientExtension;
 		my $clientPath;
 		my $serverPath;
+		my $skip = 0;
+
+		# Check to see if the module is already loaded
+		foreach my $exists (@{ $client->{'modules'} })
+		{
+			if (lc($exists) eq lc($module))
+			{
+				$client->writeConsoleOutput(text =>
+						"Error: The module '$module' is already loaded.\n");
+
+				$skip = 1;
+
+				last;
+			}
+		}
+
+		next if ($skip);
 
 		# Load the client module
 		$clientPath  = "Pex::Meterpreter::Extension::Client::$module";
@@ -674,6 +691,9 @@ sub use
 					"Error: The client extension '$module' could not be loaded.\n");
 			last;
 		}
+
+		# Push the module into the loaded module list
+		push @{ $client->{'modules'} }, $module;
 
 		# Load the server module
 		$serverPath  = $path . "ext_server_" . lc($module) . ".dll";
