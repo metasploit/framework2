@@ -1,9 +1,17 @@
 #!/usr/bin/perl
-###############a
+###############
 
 ##
-#         Name: msfelfscan
-#	  Author: Richard Johnson <rjohnson [at] uninformed.org>
+#         Name: msfpescan
+#       Author: Richard Johnson <rjohnson [at] uninformed.org>
+#      Version: $Revision$
+#  Description: Search PE files for given opcodes
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
 ##
 
 require 5.6.0;
