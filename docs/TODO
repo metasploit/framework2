@@ -1,6 +1,8 @@
 Pre-Release Tasks
 ==================
 
+ - The msfweb interface does not work correctly on Mac OS X
+
  - Change the add bl calls to add ebx in Encoder... lots of these
 
  - Multiple return values of Check, not just 0/1, we need 0 for plain not vuln, 1 for looks vuln, 2 for confirmed, -1 for cant exploit, -2 for cant tell
