@@ -2354,8 +2354,8 @@ sub Run {
 	}
 	
 	$httpd->blocking(0);
-	
-	$SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
+
+	$SIG{'CHLD'} = \&_Reaper;
 
 	my %socketInfo = 
 	(
@@ -2497,7 +2497,16 @@ sub Run {
 					$socketInfo{$s}->[0]->close;
 				};
 				delete($socketInfo{$s});
+				waitpid(-1, WNOHANG);
 			}
 		}
 	}
 }
+
+# Reinstate the signal handler for SysV boxes...
+sub _Reaper {
+	sub { while (waitpid(-1, WNOHANG) == 0) { } };
+	$SIG{'CHLD'} = \&_Reaper;
+}
+
+1;
