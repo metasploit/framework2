@@ -122,6 +122,13 @@ if (! $dbg_skp)
         }
         close(X);
         
+        if (! -r $dbg_fn_com) 
+        {
+            print STDERR "[*] Download failed\n";
+            exit(0);
+        }
+        
+        
         rename($dbg_fn_com, $filename . "_" . $dbg_hsh . "._");
         unlink($dbg_fn_com);
     }
