@@ -42,7 +42,7 @@ BEGIN
 }
 
 my %opts;
-getopts('hrvusmaxfU', \%opts);
+getopts('hrvusmaxf', \%opts);
 
 if ($opts{v}) {
     print "Msfupdate Version: $REV\n";
@@ -60,8 +60,9 @@ my ($old_data, $now_data, $new_data);
 my ($old, $now, $new);
 my ($mod, $upx, $upd);
 
-
-print "[*] Calculating local file checksums...\n";
+print "\n";
+print "+ -- --=[ msfupdate v$FRAMEWORK [revision $REV]\n\n";
+print "[*] Calculating local file checksums, please wait...\n";
 $now_data = ScanFiles('.');
 print "\n";
 
@@ -87,12 +88,12 @@ if ($opts{f}) {
 # Display a big nasty warning for non-SSL unless -x is specified
 if ($opts{u} || $opts{U}) {
     if (! $opts{x} && ! $SSL_SUPPORT) {
-        print "[*] WARNING: The Net::SSLeay module is not installed.\n";
-        print "    The update process will fall back to plain HTTP,\n";
-        print "    this may allow a malicious attacker to inject\n";
-        print "    hostile code into your system.\n";
+        print "[*] WARNING: The Net::SSLeay module is not installed. The update\n";
+        print "    process will fall back to plain HTTP, this may allow a \n";
+        print "    malicious attacker to inject hostile code into your system.\n";
         print "\n";
         print "Continue anyways (yes or no) ";
+        
         my $resp;
         while ($resp !~ /yes|no/i) {
             print "> ";
@@ -154,8 +155,8 @@ if ( ($opts{u} || $opts{U}) && ! $mver) {
 if ($mver && $mver ne $FRAMEWORK) {
 
     if (! $opts{U}) {
-        print "[*] ATTENTION: A new version of the Framework is available (v$mver)!\n";
-        print "    To upgrade, execute msfupdate with the -U parameter.\n\n";
+        print "[*] Version $mver of the Metasploit Framework is now available.\n";
+        print "    - http://metasploit.com/projects/Framework/downloads.html\n\b\n";
     }
     else {
         print "[*] Starting upgrade process for version $mver...\n\n";
@@ -169,7 +170,6 @@ if ($opts{U} && $mver && $mver eq $FRAMEWORK) {
 
 # Upgrade to a new major release version...
 if ($opts{U}) {
- 
   
     my $backupdir = 'backup_'. $FRAMEWORK;
     
@@ -192,6 +192,7 @@ if ($opts{U}) {
     print "    package manager to upgrade\n\n";
     
     print "    Please type 'yes' to initiate the upgrade process.\n";
+    print "Continue? (yes or no) ";
     
     my $resp;
     while ($resp !~ /yes|no/i) {
@@ -266,15 +267,13 @@ if ($opts{U}) {
 
 # They modified something, ask them what they want to do with it
 if (! $opts{a} && keys(%{$mod})) {  
-    print "[*] WARNING: You have made modifications to the\n";
-    print "    following components of the Framework:\n\n";
+    print "[*] You have modified the following Framework components:\n\n";
     foreach (sort(keys(%{$mod}))) {
         print "\t".$_."\n";
     }
     print "\n";
-    print "    Would you like to preserve these changes? If\n";
-    print "    you say no, all local modifications will be\n";
-    print "    overwritten by the updates.\n";
+    print "    Would you like to preserve these changes? If you say no, all\n";
+    print "    local modifications will be overwritten by the update process.\n";
     print "\n";
     print "Preserve modifications (yes or no) ";
     my $resp;
@@ -286,6 +285,7 @@ if (! $opts{a} && keys(%{$mod})) {
     if ($resp =~ /no/i) {
         $mod = {};
     }
+    print "\n";
 }
 
 foreach (keys(%{$upd})) {
@@ -329,15 +329,15 @@ if (! keys(%{$upd})) {
     exit(0);
 }
 
-print "[*] Update Task Summary\n\n";
+print "[*] Online Update Task Summary\n\n";
 foreach my $entry (keys(%{$upd})) {
     next if $opts{U};
     
     if ($mod->{$entry}) {
-        print "\tIgnore $entry\n";
+        print "\tIgnore: $entry\n";
     }
     else {
-        print "\tUpdate $entry\n";
+        print "\tUpdate: $entry\n";
     }
 }
 print "\n";
@@ -369,6 +369,8 @@ if ($opts{U}) {
 my $upd_tot = scalar(@tasks);
 my $upd_cur = 0;
 
+print "\n";
+print "[*] Starting online update of $upd_tot file(s)...\n\n";
 foreach my $entry (@tasks) {
     if ($mod->{$entry}) {
         next;
@@ -390,10 +392,10 @@ foreach my $entry (@tasks) {
     printf("[%.4d/%.4d - 0x%.6x bytes] $entry\n", ++$upd_cur, $upd_tot, length($data));
 }
 
+print "\n";
 print "[*] Regenerating local file database\n";
 $now_data = ScanFiles('.');
 WriteFile('.current', $now_data);
-
 
 
 sub Usage { 
@@ -407,7 +409,9 @@ sub Usage {
     print STDERR "         -a             Do not prompt, default to overwrite all files\n";
     print STDERR "         -x             Do not require confirmation for non-SSL updates\n";
     print STDERR "         -f             Disable ssl support entirely, use with -x to avoid warnings\n";
-    print STDERR "         -U             Upgrade to a new major revision of the Framework\n";
+    
+    # Too buggy and dangerous to use
+    # print STDERR "         -U             Upgrade to a new major revision of the Framework\n";
     # Developer options
     # print STDERR "         -r             Rebuild the local version database\n";
     print "\n";
