@@ -53,11 +53,11 @@ if (! exists($opt->{'PAYLOAD'}) || ! exists($payloads->{$opt->{'PAYLOAD'}}))
 }
 
 
+my $sel = $opt->{'PAYLOAD'};
+my $p = $payloads->{$sel};
+
 if (! $action)
-{
-    my $sel = $opt->{'PAYLOAD'};
-    my $p = $payloads->{$sel};
-    
+{   
     DisplayHeader("Payload Information");
     print $query->start_form;
     
