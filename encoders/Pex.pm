@@ -4,7 +4,7 @@ use base 'Msf::Encoder';
 use Pex::Encoder;
 
 my $advanced = {
-  'Pex Output' => [0, 'Let Pex print stuff (like whats going on)'],
+  'PexDebug' => [0, 'Sets the Pex Debugging level (zero is no output)'],
 };
 
 my $info = {
@@ -26,7 +26,7 @@ sub EncodePayload {
   my $self = shift;
   my $rawshell = shift;
   my $badChars = shift;
-  return(Pex::Encoder::Encode('x86', 'DWord Xor', 'JmpCall', $self->GetLocal('PexOutput'), $rawshell, $badChars));
+  return(Pex::Encoder::Encode('x86', 'DWord Xor', 'JmpCall', $rawshell, $badChars, $self->GetLocal('PexDebug')));
 }
 
 1;

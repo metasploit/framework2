@@ -27,12 +27,16 @@ use strict;
 #
 
 my $encoders = {
+  'Dispatcher' => \&DefaultDispatcher,
   'x86' => { 
     'DWord Xor' => {
       'Dispatcher'  => \&DWordXorDispatcher,
       'JmpCall'     => ['Variable length 26/29 byte Jmp/Call encoder', \&XorDecoderDwordJmpCall],
       'Fnstenv Sub' => ['Variable length 26/29 byte Fnstenv encoder', \&XorDecoderDwordFnstenvSub],
       'Fnstenv Mov' => ['Variable Length 23/25 byte Fnstenv encoder', \&XorDecoderDwordFnstenvMov],
+    },
+    'AlphaNum' => {
+      'Skylined' => ['Skylined\'s AlphaNumerica encoder', \&EncodeAlphaNum],
     },
 #    'Byte Xor' => {
 #      'Fnstenv Sub' => ['25 byte Fnstenv encoder', \&XorDecoderByte],
@@ -66,7 +70,7 @@ sub Encode {
   my $arch = shift;
   my $type = shift;
   my $name = shift;
-  my ($output, $rawshell, $badChars) = @_;
+  my ($rawshell, $badChars, $debug) = @_;
   my @args = @_; # args (maybe encoder specific)
 
 
@@ -76,14 +80,14 @@ sub Encode {
 #    print $encoder->[1]->[1];
 #    print "\n" . join(' ', @{$encoder->[2]}) . "\n";
     my @encoderName = @{$encoder->[2]};
-    print "Trying @encoderName\n" if($output);
+    print "Trying @encoderName\n" if($debug);
     my $encoded = &{$encoder->[0]}(@encoderName, $encoder->[1]->[1], @args);
 
     # If you are using this with msf, this check will happen again inside of
     # the framework, but the check remains for standalone pex usage
     # sanity checking, this should never happen
     if(BadCharCheck($encoded, $badChars)) {
-      print "Caught bad chars in @encoderName\n" if($output);
+      print "Caught bad chars in @encoderName\n" if($debug);
     }
     else {
       return($encoded);
@@ -145,24 +149,38 @@ sub DispatchHelper {
   return($dispatch);
 }
 
+sub DefaultDispatcher {
+  my $arch = shift;
+  my $type = shift;
+  my $name = shift;
+  my $encoder = shift;
+  my $rawshell = shift;
+  my $badChars = shift;
+  my $debug =  shift;
+  my @extraArgs = @_;
+
+  print "DefaultDispatcher called to use $arch -> $type -> $name\n" if($debug);
+  return(&{$encoder}($rawshell, $badChars, $debug, @extraArgs));
+}
+
 sub DWordXorDispatcher {
   my $arch = shift;
   my $type = shift;
   my $name = shift;
   my $encoder = shift;
-  my $output =  shift;
   my $rawshell = shift;
   my $badChars = shift;
+  my $debug =  shift;
   my @extraArgs = @_;
 
-  print "Called to use $arch -> $type -> $name\n" if($output);
+  print "DWordXorDispatcher Called to use $arch -> $type -> $name\n" if($debug);
 
   my $xorkey = XorKeyScanDword($rawshell, $badChars);
     
     if (! $xorkey)
     {
-        print "Could not locate valid xor key\n";
-        return;   
+        print "Could not locate valid xor key\n" if($debug);
+        return;
     }
     
     my $xordat = XorDword($xorkey, $rawshell);
@@ -190,7 +208,7 @@ sub BadCharCheck {
 # This code is a port of Skylined's awesome alpha encoder
 #
 sub EncodeAlphaNum {
-    my ($rawshell, $xbadc, $type) = @_;
+    my ($rawshell, $xbadc, $debug, $type) = @_;
     my $prepend = "";
     
     if (! $type)
@@ -224,7 +242,7 @@ sub EncodeAlphaNum {
     # first check to see if the encoder/alphabet is allowed 
     if ( Pex::Utils::CharsInBuffer($allowed.$decoder.'Z', $xbadc) )
     {
-        print "Encoder failed: restricted character in decoder or alphabet\n";
+        print "Encoder failed: restricted character in decoder or alphabet\n" if($debug);
         return;
     }
     
@@ -242,7 +260,7 @@ sub EncodeAlphaNum {
 
     if (! exists($baseaddr{$type}))
     {
-        print "Encoder failed: invalid type specified ($type)\n";
+        print "Encoder failed: invalid type specified ($type)\n" if($debug);
         return;
     }
 

@@ -3,6 +3,10 @@ use strict;
 use base 'Msf::Encoder';
 use Pex::Encoder;
 
+my $advanced = {
+  'PexDebug' => [0, 'Sets the Pex Debugging level (zero is no output)'],
+};
+
 my $info = {
   'Name'  => 'Pex Alphanumeric Encoder',
   'Version'  => '1.0',
@@ -15,7 +19,7 @@ my $info = {
 
 sub new {
   my $class = shift; 
-  return($class->SUPER::new({'Info' => $info}, @_));
+  return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
 sub EncodePayload {
@@ -30,7 +34,7 @@ sub EncodePayload {
   }
   
   print "Using type: $type\n";
-  return(Pex::Encoder::EncodeAlphaNum($rawshell, $badChars, $type));
+  return(Pex::Encoder::Encode('x86', 'AlphaNum', 'Skylined', $rawshell, $badChars, $self->GetLocal('PexDebug'), $type));
 }
 
 1;
