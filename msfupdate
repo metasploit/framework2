@@ -159,12 +159,19 @@ if (! $opts{a} && keys(%{$mod})) {
     }
 }
 
-# Do not remove user-created files
 foreach (keys(%{$upd})) {
+    # Do not remove user-created files
     if ($upd->{$_} eq 'Del') {
         delete($upd->{$_});
     }
+
+    print STDERR "$_ => ".$now->{$_} ." ?= ". $new->{$_}."\n";
+    # Ignore updates we already have
+    if ($now->{$_} eq $new->{$_}) {
+        delete($upd->{$_});
+    }    
 }
+
 
 # Ignore locally modified files when -a is supplied
 if ($opts{a}) {
@@ -403,6 +410,17 @@ sub ProcessHTTP {
 sub WriteFile {
     my $file = shift;
     my $data = shift;
+
+    # create subdirectories if needed
+    my @path = split(/\//, $file);
+    pop(@path);
+    my $cdir;
+    foreach (@path) {
+        $cdir .= "/$_";
+        print "making $cdir\n";
+        mkdir($cdir, 0755);
+    }
+    
     open (my $out, ">$file") || return;
     print $out $data;
     close ($out);
