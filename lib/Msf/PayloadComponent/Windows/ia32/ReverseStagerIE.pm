@@ -60,4 +60,10 @@ sub new
 	return $self;
 }
 
+sub Loadable {
+    my $self = shift;
+    return 0 if ! $self->GetVar('EnablePython');
+    return 1;
+}
+
 1;
