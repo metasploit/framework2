@@ -563,7 +563,7 @@ sub SessionUpdate {
 
 		# If there is a new data, display it
 		if ($res) {
-			$res .= "<script language='javascript'>self.scrollTo(0, 100000)</script>";
+			$res .= "<script language='javascript'>self.scrollTo(0, 999999999)</script>";
 			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
 			$tick = time();
 			$idle = 0;
@@ -577,9 +577,9 @@ sub SessionUpdate {
 			$idle++;
 		}
 		
-		# If we have been idle for two minutes, shut down
-		if ($idle > 12) {
-			$res =  "<div class='textBold'>!!!: Idle timeout reached, closing down</div>\n";
+		# If we have been idle for five minutes, shut down the reader
+		if ($idle > 30) {
+			$res =  "<div class='textBold'>!!! Idle timeout reached, reload to start again.</div>\n";
 			$res .= "</pre></body></html>\n";
 			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
 			exit(0);
