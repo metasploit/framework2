@@ -291,7 +291,7 @@ sub Targets {
   $self->PrintLine;
   for(my $i = 0; $i < scalar(@targets); $i++)
   {
-    $self->PrintLine(sprintf("  %d  $targets[$i]", $i));
+    $self->PrintLine(sprintf("  %2d  $targets[$i]", $i));
   }
   $self->PrintLine;
 }
@@ -354,7 +354,15 @@ sub Exploit {
   
   # Important: Default the target to 0, maybe this should somehow
   # be in Msf::Exploit, maybe be part of the Validate process?
-  $self->SetTempEnv('TARGET', 0) if(!defined($target));
+  $target = $exploit->DefaultTarget if(!defined($target));
+
+  if($target == -1) {
+    $self->PrintLine('[*] Exploit does not default targets, one must be specified.');
+    return;
+  }
+  else {
+    $self->SetTempEnv('TARGET', $target);
+  }
 
   if(defined($payload)) {
     my $encodedPayload = $self->Encode;
