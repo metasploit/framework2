@@ -79,6 +79,11 @@ sub WriteConfig {
   my $globalEnv = shift;
   my $tempEnvs = shift;
 
+  if(!-e $configFile) {
+    my (undef, $dir) = File::Spec::Functions::splitpath($configFile);
+    return if(!-d $dir && !mkdir($dir, 0700));
+  }
+
   open(OUTFILE, ">$configFile") or return;
   foreach (sort(keys(%{$globalEnv}))) {
     print OUTFILE "$_=" . $globalEnv->{$_} . "\n";
@@ -91,5 +96,6 @@ sub WriteConfig {
   }
   close(OUTFILE);
 }
+
 
 1;

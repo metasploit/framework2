@@ -26,7 +26,7 @@ sub new {
   my $class = shift;
   my $self = $class->SUPER::new({
     'BaseDir'  => shift,
-    'ConfigFile' => @_ ? shift : '.msfconfig',
+    'ConfigFile' => @_ ? shift : 'config',
   });
   $self->_Initalize;
   return($self);
@@ -50,27 +50,44 @@ sub _Initalize {
 
 sub ConfigFile {
   my $self = shift;
-  return($ENV{'HOME'} ."/". $self->_ConfigFile);
+  return($self->_DotMsfDir ."/". $self->_ConfigFile);
+}
+
+sub _DotMsfDir {
+  my $self = shift;
+  return($ENV{'HOME'} . '/.msf');
 }
 
 sub LoadExploits {
   my $self = shift;
-  my $dir = @_ ? shift : $self->_BaseDir . '/exploits';
+  my $dir = @_ ? shift : [
+    $self->_BaseDir . '/exploits',
+    $self->_DotMsfDir . '/exploits',
+  ];
   return($self->LoadModules($dir, 'Msf::Exploit::'));
 }
 sub LoadEncoders {
   my $self = shift;
-  my $dir = @_ ? shift : $self->_BaseDir . '/encoders';
+  my $dir = @_ ? shift : [
+    $self->_BaseDir . '/encoders',
+    $self->_DotMsfDir . '/encoders',
+  ];
   return($self->LoadModules($dir, 'Msf::Encoder::'));
 }
 sub LoadNops {
   my $self = shift;
-  my $dir = @_ ? shift : $self->_BaseDir . '/nops';
+  my $dir = @_ ? shift : [
+    $self->_BaseDir . '/nops',
+    $self->_DotMsfDir . '/nops',
+  ];
   return($self->LoadModules($dir, 'Msf::Nop::'));
 }
 sub LoadPayloads {
   my $self = shift;
-  my $dir = @_ ? shift : $self->_BaseDir . '/payloads';
+  my $dir = @_ ? shift : [
+    $self->_BaseDir . '/payloads',
+    $self->_DotMsfDir . '/payloads',
+  ];
   return($self->LoadModules($dir, 'Msf::Payload::'));
 }
 
@@ -80,42 +97,55 @@ sub LoadModules {
   my $prefix = shift;
   my $modules = { };
 
-  return $modules if(!-d $dir);
-  return $modules if(!opendir(DIR, $dir));
+  my @dirs;
 
-  while (defined(my $entry = readdir(DIR))) {
-    my $path = "$dir/$entry";
-    next if(!-f $path);
-    next if(!-r $path);
-    next if($entry !~ /.pm$/);
-
-    $entry =~ s/\.pm$//g;
-    $entry = $prefix . $entry;
-
-    # remove the module from global namespace
-    delete($::{$entry."::"});
-
-    # load the module via do since we dont import
-    $self->PrintDebugLine(3, "Doing $path");
-    do $path;
-
-    if($@) {
-      $self->PrintLine("[*] Error loading $path: $@");
-      delete($::{$entry."::"});
-      next;
-    }
-
-    my $module = $entry->new();
-
-    if(!$module->Loadable || $module->PrintError) {
-      $self->PrintDebugLine(1, "[*] Loadable failed for $entry");
-      delete($::{$entry."::"});
-      next;
-    }
-
-    $modules->{$entry} = $module;
+  if(ref($dir) eq 'ARRAY') {
+    @dirs = @{$dir};
   }
-  closedir(DIR);
+  else {
+    @dirs = ($dir);
+  }
+
+  foreach my $dir (@dirs) {
+
+    next if(!-d $dir);
+    next if(!opendir(DIR, $dir));
+
+    while (defined(my $entry = readdir(DIR))) {
+      my $path = "$dir/$entry";
+      next if(!-f $path);
+      next if(!-r $path);
+      next if($entry !~ /.pm$/);
+
+      $entry =~ s/\.pm$//g;
+      $entry = $prefix . $entry;
+
+      # remove the module from global namespace
+      delete($::{$entry."::"});
+
+      # load the module via do since we dont import
+      $self->PrintDebugLine(3, "Doing $path");
+      do $path;
+
+      if($@) {
+        $self->PrintLine("[*] Error loading $path: $@");
+        delete($::{$entry."::"});
+        next;
+      }
+
+      my $module = $entry->new();
+
+      if(!$module->Loadable || $module->PrintError) {
+        $self->PrintDebugLine(1, "[*] Loadable failed for $entry");
+        delete($::{$entry."::"});
+        next;
+      }
+
+      $modules->{$entry} = $module;
+    }
+    closedir(DIR);
+  }
+
   return($modules);
 }
 
