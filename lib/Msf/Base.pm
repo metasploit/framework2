@@ -9,7 +9,7 @@ use Msf::Nop;
 use Msf::EncodedPayload;
 use File::Spec::Functions;
 
-my $envDebug = 1;
+my $envDebug = 0;
 
 sub new {
   my $class = shift;
@@ -47,7 +47,7 @@ sub GetEnv {
   my @envs = ($self->GetTempEnv, $self->GetGlobalEnv);
   print join(' ', caller()) if($envDebug >= 3);
   foreach my $env (@envs) {
-    if(defined($env->{$key})) {
+    if(defined($key)) {
       print "Get $key => " . $env->{$key} . "\n" if($envDebug);
       return($env->{$key});
     }
@@ -55,6 +55,15 @@ sub GetEnv {
 # fixme more than two envs...
   return($self->MergeHash($envs[0], $envs[1]));
 }
+
+# fixme SetEnv...
+# the cli wont work until this does, setting Temp
+#sub SetEnv {
+#  my $self = shift;
+#  my $key = shift;
+#  my $val = shift;
+#  return $self->SetTempEnv($key, $val);
+#}
 
 
 sub GetGlobalEnv {
@@ -118,33 +127,6 @@ sub SetTempEnv {
   return($env);
 }
 
-sub GetSavedTempEnv {
-  my $self = shift;
-  my $envName = shift;
-  my $key = shift;
-  my $env = $self->_TempEnvs->{$envName};
-  return if(!defuned($env));
-  if(defined($key)) {
-    print "TempGet $key => " . $env->{$key} . "\n" if($envDebug);
-    return($env->{$key});
-  }
-  return($env);
-}
-
-sub SetSavedTempEnv {
-  my $self = shift;
-  my $envName = shift;
-  my @pairs = @_;
-
-  my $env = $self->_TempEnvs->{$envName};
-
-  for(my $i = 0; $i < @pairs; $i += 2) {
-    print "TempSet $pairs[$i] => " . $pairs[$i + 1] . "\n" if($envDebug);
-    $env->{$pairs[$i]} = $pairs[$i + 1];
-  }
-  return($env);
-}
-
 sub UnsetTempEnv {
   my $self = shift;
   my $key = shift;
@@ -194,14 +176,12 @@ sub GetError {
   my $self = shift;
   return($self->_Error);
 }
-
 sub SetError {
   my $self = shift;
   my $error = shift;
   $self->_Error($error);
   return($error);
 }
-
 sub ClearError {
   my $self = shift;
   $self->_Error(undef);
@@ -211,8 +191,10 @@ sub PrintError {
   my $self = shift;
   my $error = $self->_Error;
 
-  return(0) if ! defined($error);
-
+  if(! defined($error)) {
+    return(0);
+  }
+  
   $self->PrintLine('Error: ', $error);
   $self->ClearError;
   return(1);
@@ -231,7 +213,6 @@ sub PrintDebug {
   }
   $self->Print(@_) if($self->DebugLevel >= $level);
 }
-
 sub PrintDebugLine {
   my $self = shift;
   my $level = shift;
