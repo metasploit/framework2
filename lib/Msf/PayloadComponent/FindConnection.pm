@@ -8,6 +8,7 @@ use IO::Select;
 
 my $info = {
   'Keys' => ['findsock'],
+  'UserOpts' => { },
 };
 
 sub new {
