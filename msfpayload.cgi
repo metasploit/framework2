@@ -123,7 +123,7 @@ if (! $action)
                          "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
         }
         $subtable .= "</table>\n";
-        PrintRow("Payload Options", $subtable);
+        PrintRow("Payload Options", "<br><br>$subtable");
     }
     print "</table><br><br>\n";
     
