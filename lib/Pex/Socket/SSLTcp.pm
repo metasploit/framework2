@@ -133,7 +133,7 @@ sub _DoRecv {
 sub _UnitTest {
   my $class = shift;
   print STDOUT "Connecting to ssl google.com:443\n";
-  my $sock = __PACKAGE__->new('PeerAddr' => 'google.com', 'PeerPort', 443);
+  my $sock = $class->new('PeerAddr' => 'google.com', 'PeerPort', 443);
   if(!$sock || $sock->IsError) {
     print STDOUT "Error creating socket: $!\n";
     return;

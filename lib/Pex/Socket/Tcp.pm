@@ -40,7 +40,7 @@ sub _newSSL {
 sub Proxies {
   my $self = shift;
   $self->{'Proxies'} = shift if(@_);
-  $self->{'Proxies'} = [ ] if(ref($self->{'Proxies'} ne 'ARRAY'));
+  $self->{'Proxies'} = [ ] if(ref($self->{'Proxies'}) ne 'ARRAY');
   return($self->{'Proxies'});
 }
 
@@ -77,13 +77,13 @@ sub TcpConnectSocket {
   my $localPort = shift;
 
   my $proxies = $self->Proxies;
-  if($localPort && $proxies) {
+  if($localPort && @{$proxies}) {
     $self->SetError('A local port was specified and proxies are enabled, they are mutually exclusive.');
     return;
   }
 
   my $sock;
-  if($proxies) {
+  if(@{$proxies}) {
     $sock = $self->ConnectProxies($host, $port);
     return if(!$sock);
   } 
@@ -182,18 +182,22 @@ sub ConnectProxies {
 
 sub _UnitTest {
   my $class = shift;
-  print STDOUT "Connecting to google.com:80\n";
-  my $sock = __PACKAGE__->new('PeerAddr' => 'google.com', 'PeerPort', 80);
+  print STDOUT "Connecting to google.com:80 $class\n";
+  my $sock = $class->new('PeerAddr' => 'google.com', 'PeerPort', 80);
   if(!$sock || $sock->IsError) {
     print STDOUT "Error creating socket: $!\n";
     return;
   }
+  print STDOUT "Calling Google Unit Test\n";
   $class->_UnitTestGoogle($sock);
 }
 
 sub _UnitTestGoogle {
   my $class = shift;
   my $sock = shift;
+
+  $sock->TimeoutErrors(1);
+  $sock->RecvTimeout(4);
 
   print STDOUT "Trying a Recv timeout.\n";
 
@@ -231,6 +235,17 @@ sub _UnitTestGoogle {
   if(!length($data) || $sock->IsError) {
     print STDOUT "Error in Recv: " . $sock->GetError . "\n";
   }
+
+  $sock->ClearError;
+
+  print STDOUT "Trying a default Recv timeout.\n";
+
+  my $data = $sock->Recv(-1);
+  if(!length($data) || $sock->IsError) {
+    print STDOUT "Error in Recv: " . $sock->GetError . "\n";
+  }
+
+  print STDOUT "-$data-\n";
 
   print STDOUT "Test seemed successful\n";
 

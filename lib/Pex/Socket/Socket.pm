@@ -66,6 +66,12 @@ sub RecvLoopTimeout {
   return($self->{'RecvLoopTimeout'});
 }
 
+sub TimeoutErrors {
+  my $self = shift;
+  $self->{'TimeoutErrors'} = shift if(@_);
+  return($self->{'TimeoutErrors'});
+}
+
 sub SetOptions {
   my $self = shift;
   my $hash = shift;
@@ -74,6 +80,7 @@ sub SetOptions {
   $self->Timeout(30);
   $self->RecvTimeout(10);
   $self->RecvLoopTimeout(.5);
+  $self->TimeoutErrors(0);
 
   my @options = ('Timeout', 'RecvTimeout', 'RecvLoopTimeout', 'PeerAddr', 'PeerPort', 'LocalPeerPort');
   foreach my $option (@options) {
@@ -227,16 +234,17 @@ sub _RecvGobble {
   my ($ready) = $selector->can_read($timeout);
 
   if(!$ready) {
-    $self->SetError("Timeout $timeout reached."); # there could be data from buffer anyway
+    $self->SetError("Timeout $timeout reached.") if($self->TimeoutErrors); # there could be data from buffer anyway
     return($data);
   }
 
-#  print "Gobble got data.\n";
+  print "Gobble got data. $ready\n";
 
   my $timeoutLoop = $self->RecvLoopTimeout;
   while(1) {
     my ($ready) = $selector->can_read($timeoutLoop);
     last if(!$ready);
+    print "Gobble got fun loop.\n";
 
     my $tempData = $self->_DoRecv(4096, 1);
 
@@ -260,7 +268,7 @@ sub _RecvLength {
     my ($ready) = $selector->can_read($timeout);
 
     if(!$ready) {
-      # $self->SetError("Timeout $timeout reached.");
+      $self->SetError("Timeout $timeout reached.") if($self->TimeoutErrors);
       $self->SetError("Socket disconnected.") if(!$self->Socket->connected);
       return($data);
     }

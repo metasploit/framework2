@@ -19,9 +19,9 @@ $VERSION = 2.0;
 use strict;
 use base 'Msf::Socket::SSLTcpBase', 'Pex::Socket::SSLTcp', 'Msf::Module';
 
-sub _UnitTest {
-  my $class = shift;
-  $class->SUPER::_UnitTest;
+sub _PexParent {
+  my $self = shift;
+  return('Pex::Socket::SSLTcp');
 }
 
 1;

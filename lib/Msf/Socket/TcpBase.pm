@@ -20,10 +20,14 @@ use base 'Msf::Socket::SocketBase';
 
 sub Init {
   my $self = shift;
-#  $self->SUPER::Init;
+  print "Pre yay";
+  $self->_PexCall('Init');
+
+  print "Yay, super fun Init called.\n";
 
   my $proxies = $self->GetVar('Proxies');
   if ($proxies) {
+    print "Proxies $proxies\n";
     foreach (split(',', $proxies)) {
       $self->AddProxy(split(':', $_));
       return if($self->IsError);

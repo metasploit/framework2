@@ -17,6 +17,13 @@
 package Msf::Socket::SocketBase;
 use strict;
 
+sub _PexCall {
+  my $self = shift;
+  my $method = $self->_PexParent . '::' . shift;
+  print "Calling $method\n";
+  return($self->$method(@_));
+}
+
 
 #sub SSL {
 #  my $self = shift;
