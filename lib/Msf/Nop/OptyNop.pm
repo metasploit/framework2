@@ -27,7 +27,7 @@ my $synWeight = 3;
 
 # Print a . for all simple (codeLen == 1/SetReg) and print a + for all the
 # more complicated instructions.  Nice to use to tune synWeight.
-my $debug = 2;
+my $debug = 1;
 
 my $none  = 0;
 my $reg1  = 1;
@@ -354,7 +354,8 @@ my $table = [
   # \xd2\xf0 ? deadspace? sal == shl.... so....
   [ "\xd3\xf8",           2, $reg1, [ $sreg1 ] ], # sar reg1, cl
  
-  [ "\xd4",               2, $none, [ $eax ]    ], # /* aam $imm8 */
+  # lie, make codelen == 2, and do a custom check for div by zero
+  [ "\xd4",               2, $none, [ $eax ], \&_InsHandlerDiv ], # /* aam $imm8 */
   [ "\xd5",               2, $none, [ $eax ]    ], # /* aad $imm8 */
   [ "\xd6",               1, $none, [ $eax ]    ], # /* # salc */
 
@@ -664,6 +665,28 @@ sub _InsHandlerJmp {
     return(1);
   }
 }
+sub _InsHandlerDiv {
+  my $self = shift;
+  my $type = shift;
+  my $index = shift;
+  my $pos = shift;
+  my $len = shift;
+  my $data = shift;
+
+  # Can't just do a insert since we need to check the next byte...
+  if($type == 0) {
+    return(0);
+  }
+  elsif($type == 1) {
+    my $byte = substr($data, $pos, 1);
+    # prevent a div by zero.
+
+    return(0) if(ord($byte) == 0);
+    return(1);
+  }
+}
+    
+
 
 sub _InsHandlerPrefix {
   my $self = shift;
