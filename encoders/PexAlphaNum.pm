@@ -32,8 +32,7 @@ sub EncodePayload {
   {
     $type = 'win32';
   }
-  
-  print "Using type: $type\n";
+
   return(Pex::Encoder::Encode('x86', 'AlphaNum', 'Skylined', $rawshell, $badChars, $self->GetLocal('PexDebug'), $type));
 }
 
