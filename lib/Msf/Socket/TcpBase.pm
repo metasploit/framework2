@@ -20,11 +20,7 @@ use base 'Msf::Socket::SocketBase';
 
 sub Init {
   my $self = shift;
-  print "Pre yay";
   $self->_PexCall('Init');
-
-  print "Yay, super fun Init called.\n";
-
   my $proxies = $self->GetVar('Proxies');
   if ($proxies) {
     print "Proxies $proxies\n";
