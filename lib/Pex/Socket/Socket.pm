@@ -274,7 +274,10 @@ sub _RecvLength {
 
   my $selector = IO::Select->new($self->Socket);
   my $data;
-
+  
+  # avoid a potential loop
+  return if $length < 0;
+  
   while($length) {
     my ($ready) = $selector->can_read($timeout);
 
@@ -312,4 +315,56 @@ sub _DoRecv {
   return($data);
 }
 
+sub RecvLine {
+  my $self		= shift;
+  my $timeout	= @_ ? shift() : 10;
+  my $timelim	= time() + $timeout;
+  my $data;
+  
+  while ( index($data, "\n") == -1 && time() < $timelim ) {
+  	if (defined(my $buff = $self->Recv(1, 1))) {
+		$data .= $buff;
+	}
+  }
+
+  if ( index($data, "\n") > -1 ) {
+  	return $data;
+  }
+  
+  # rebuffer the data if no new-line was found
+  $self->AddBuffer($data);
+  
+  return;
+}
+
+sub RecvLineMulti {
+  my $self		= shift;
+  my $timeout	= @_ ? shift() : 10;
+  my $timelim	= time() + $timeout;
+  my $done		= 0;
+  my $data;
+  
+  if ( defined(my $buff = $self->RecvLine($timeout)) ) {
+	return $buff if length($buff) < 4;
+	return $buff if substr($buff, 3, 1) ne '-';
+    $data .= $buff;
+  }
+  else {
+  	return;
+  }
+  
+  while ( time() < $timelim ) {
+  	if ( defined(my $buff = $self->RecvLine(1)) ) {
+	  $data .= $buff;
+	  if (substr($buff, 3, 1) ne '-') {
+        return $data;	  
+	  }
+	}
+  }
+  
+  # timeout reading the entire multi-line response 
+  $self->AddBuffer($data);
+  
+  return;
+}
 1;
