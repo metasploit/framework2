@@ -18,7 +18,7 @@ sub EncodePayload {
 
   my $xordat = Pex::Encoding::XorDword->Encode($xorkey, $rawshell);
 
-  my $shellcode = $self->_GenEncoder($xorkey, length($xordat)) . $xordat;
+  my $shellcode = $self->_GenEncoder($xorkey, length($xordat), $badChars) . $xordat;
 
   my $pos = Pex::Text::BadCharIndex($badChars, $shellcode);
   if($pos != -1) {
