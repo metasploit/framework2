@@ -98,7 +98,7 @@ my %exploitCmds =
     'set'       => [\&eSet,                         "Set a temporary environment variable"],
     'unset'     => [\&eUnset,                       "Remove a temporary environment variable"],
     'back'      => [\&eBack,                        "Drop back to the main menu"],
-    'show'      => [sub{Load(); eShow(@_);},        "Show options, payloads, or targets"],
+    'show'      => [sub{Load(); eShow(@_);},        "Show options, advanced, payloads, or targets"],
     'check'     => [sub{Load(); eCheck(@_);},       "Perform vulnerability check"],
     'exploit'   => [sub{Load(); eExploit(@_);},     "Launch the actual exploit"],
 );
@@ -460,11 +460,12 @@ sub mShow
 sub eShow 
 {
     my ($cmd, @args) = @_;
-    if (lc($args[0]) eq "options")  { eOptions();  return }
-    if (lc($args[0]) eq "targets")  { eTargets();  return }
-    if (lc($args[0]) eq "payloads") { ePayloads(); return }
+    if (lc($args[0]) eq 'options')  { eOptions();  return }
+    if (lc($args[0]) eq 'advanced') { eAdvanced(); return }
+    if (lc($args[0]) eq 'targets')  { eTargets();  return }
+    if (lc($args[0]) eq 'payloads') { ePayloads(); return }
 
-    xMsg("show", "specify 'options', 'targets', or 'payloads'");
+    xMsg("show", "specify 'options', 'advanced', 'targets', or 'payloads'");
 
 }
 
@@ -513,6 +514,34 @@ sub eOptions
     print   "============================\n\n";
     print $ui->DumpOptions(2, 'Exploit', $exploit);
     print $ui->DumpOptions(2, 'Payload', $payload) if(defined($payload));
+    print "\n\n";
+}
+
+sub eAdvanced
+{
+    my $exploit = $state->{'Exploit'}->{'Exploit'};
+    my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
+
+    my $payload = $ui->GetEnv('PAYLOAD');
+
+    if ($exploit->Payload && ! $payload)
+    {
+        xMsg("advanced", "a payload must be specified first: 'set PAYLOAD <payloadname>'");
+        return;
+    }
+    
+    if ($exploit->Payload && ! exists($payloads->{$payload}))
+    {
+        xMsg("advanced", "invalid payload specified: $payload");
+        return;
+    }
+    
+    $payload = $payloads->{$payload};
+
+    print "\nExploit and Payload Advanced Options\n";
+    print   "====================================\n\n";
+    print $ui->DumpAdvancedOptions(2, 'Payload', $payload) if(defined($payload));
+    print $ui->DumpAdvancedOptions(2, 'Exploit', $exploit);
     print "\n\n";
 }
 
@@ -846,8 +875,8 @@ sub xTabCompletion
     
     if (lc($cmd) eq "show")
     {
-        if ($state->{'Mode'} eq "Main") { $state->{'TabVals'} = ["exploits", "payloads", "config"] }
-        if ($state->{'Mode'} eq "Exploit") { $state->{'TabVals'} = ["options", "targets", "payloads"] }
+        if ($state->{'Mode'} eq 'Main') { $state->{'TabVals'} = ['exploits', 'payloads', 'config'] }
+        if ($state->{'Mode'} eq 'Exploit') { $state->{'TabVals'} = ['advanced', 'options', 'targets', 'payloads'] }
     }
     
     if (lc($cmd) eq "info")
