@@ -44,7 +44,7 @@ sub HandleConsole {
     "[*] Proxy shell started on ".
     "<a href='telnet://$addr:".$sock->sockport."'>".
     "$addr:".$sock->sockport."</a><br>\n"
-  )
+  );
 
   # Accept connection from user
   my $sel = IO::Select->new($sock);
