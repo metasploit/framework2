@@ -99,16 +99,16 @@ if (! $action || $action =~ /^S/)
 
 Usage() if $action !~ /^C|^P|^R/;
 
-my $s = $p->Build($opt);
+my $s = $ui->Encode;
 if (! $s)
 {
     print "Error: " . $p->Error() . "\n";
     exit(0);
 }
 
-if ($action =~ /^R/) { print $s; exit; }
+if ($action =~ /^R/) { print $s->RawPayload; exit; }
 
-my $r = $action =~ /^C/ ? Pex::Utils::BufferC($s) : Pex::Utils::BufferPerl($s);
+my $r = $action =~ /^C/ ? Pex::Utils::BufferC($s->RawPayload) : Pex::Utils::BufferPerl($s->RawPayload);
 
 print $r;
 exit(0);
