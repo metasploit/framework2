@@ -36,6 +36,11 @@ sub Type        { my $self = shift; return $self->_Info->{'Type'}; }
 sub Size        { my $self = shift; return $self->_Info->{'Size'}; }
 sub Multistage  { my $self = shift; return $self->_Info->{'Multistage'}; }
 
+sub Loadable {
+  my $self = shift;
+  return($self->Size > 0);
+}
+
 # Fall throughs
 sub Build {
   my $self = shift;

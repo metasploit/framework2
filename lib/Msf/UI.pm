@@ -40,68 +40,70 @@ sub ConfigFile {
 }
 
 sub LoadExploits {
-    my $self = shift;
-    my $dir = @_ ? shift : $self->_BaseDir . '/exploits';
-    return($self->LoadModules($dir, 'Msf::Exploit::'));
+  my $self = shift;
+  my $dir = @_ ? shift : $self->_BaseDir . '/exploits';
+  return($self->LoadModules($dir, 'Msf::Exploit::'));
 }
 sub LoadEncoders {
-    my $self = shift;
-    my $dir = @_ ? shift : $self->_BaseDir . '/encoders';
-    return($self->LoadModules($dir, 'Msf::Encoder::'));
+  my $self = shift;
+  my $dir = @_ ? shift : $self->_BaseDir . '/encoders';
+  return($self->LoadModules($dir, 'Msf::Encoder::'));
 }
 sub LoadNops {
-
-    my $self = shift;
-    my $dir = @_ ? shift : $self->_BaseDir . '/nops';
-    return($self->LoadModules($dir, 'Msf::Nop::'));
+  my $self = shift;
+  my $dir = @_ ? shift : $self->_BaseDir . '/nops';
+  return($self->LoadModules($dir, 'Msf::Nop::'));
 }
 sub LoadPayloads {
-    my $self = shift;
-    my $dir = @_ ? shift : $self->_BaseDir . '/payloads';
-    my $res = $self->LoadModules($dir, 'Msf::Payload::');
-    foreach my $pay (keys (%{ $res }))
-    {
-        if (! $res->{$pay}->Size)
-        {
-            # XXX- should this default to on?
-            $self->PrintLine("[*] Could not load module $pay");
-            delete($res->{$pay});
-        }
-    }
-    return $res;
+  my $self = shift;
+  my $dir = @_ ? shift : $self->_BaseDir . '/payloads';
+  return($self->LoadModules($dir, 'Msf::Payload::'));
 }
 
 sub LoadModules {
-    my $self = shift;
-    my $dir = shift;
-    my $prefix = shift;
-    my $res = {};
+  my $self = shift;
+  my $dir = shift;
+  my $prefix = shift;
+  my $modules = { };
 
-    return $res if ! -d $dir;
-    return $res if ! opendir(DIR, $dir);
+  return $modules if(!-d $dir);
+  return $modules if(!opendir(DIR, $dir));
 
-    while (defined(my $entry = readdir(DIR)))
-    {
-        my $path = "$dir/$entry";
-        next if ! -f $path;
-        next if ! -r $path;
-        next if $entry !~ /.pm$/;
+  while (defined(my $entry = readdir(DIR))) {
+    my $path = "$dir/$entry";
+    next if(!-f $path);
+    next if(!-r $path);
+    next if($entry !~ /.pm$/);
 
-        $entry =~ s/\.pm$//g;
-        $entry = $prefix . $entry;
+    $entry =~ s/\.pm$//g;
+    $entry = $prefix . $entry;
 
-        # remove the module from global namespace
-        delete($::{$entry."::"});
+    # remove the module from global namespace
+    delete($::{$entry."::"});
 
-        # load the module via do since we dont import
-        $self->PrintDebugLine(3, "Doing $path");
-        do $path;
+    # load the module via do since we dont import
+    $self->PrintDebugLine(3, "Doing $path");
+    do $path;
 
-        if ($@) { $self->PrintLine("[*] Error loading $path: $@") }
-        else { $res->{$entry} = $entry->new() }
+    if($@) {
+      $self->PrintLine("[*] Error loading $path: $@");
+      delete($::{$entry."::"});
+      next;
     }
-    closedir(DIR);
-    return($res);
+
+    my $module = $entry->new();
+
+    if(!$module->Loadable) {
+      $self->PrintLine("[*] Loadable failed for $entry");
+      $module->PrintError;
+      delete($::{$entry."::"});
+      next;
+    }
+
+    $modules->{$entry} = $module;
+  }
+  closedir(DIR);
+  return($modules);
 }
 
 sub MatchPayloads {

@@ -71,6 +71,10 @@ sub Description { my $self = shift; return $self->_Info->{'Description'}; }
 # Used?
 sub AutoOpts    { my $self = shift; return $self->_Info->{'AutoOpts'}; }
 
+sub Loadable {
+  return(1);
+}
+
 sub Validate {
   my $self = shift;
   my $userOpts = $self->UserOpts;
