@@ -34,7 +34,6 @@ use Pex;
 
 Msf::UI::ActiveStateSucks();
 
-
 my $ui = Msf::TextUI->new($Bin);
 
 $SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
@@ -75,7 +74,6 @@ my %globalCmds =
     '?'         => [\&gHelp,                 "Show the main console help"],
     'quit'      => [\&gExit,                 "Exit the console"],
     'exit'      => [\&gExit,                 "Exit the console"],
-    # 'exec',     => [\&gExec,                 "Execute an external command"],
     'show'      => [sub{Load(); gShow(@_);}, "Display exploits, payloads, or config"],
     'use'       => [sub{Load(); gUse(@_);},  "Select an exploit by name"],
     'info'      => [sub{Load(); gInfo(@_);}, "Display detailed exploit or payload information"],
@@ -83,8 +81,7 @@ my %globalCmds =
     'save'      => [\&gSave,                 "Save configuration to disk"],
     'setg'      => [\&gSet,                  "Set a global environment variable"],
     'unsetg'    => [\&gUnset,                "Remove a global environment variable"],
-    'logging'   => [\&gLogging,              "Enable or disable session logging"],
-
+    'logging'   => [\&gLogging,              "Enable or disable session logging"]
 );
 
 
@@ -693,12 +690,15 @@ sub xCreateSetList
         my $p = $ui->GetEnv('PAYLOAD');
         
         foreach (keys(%{$x->UserOpts})) { $options{$_}++ }
+        foreach (keys(%{$x->Advanced})) { $options{$_}++ }
+        
         if ($x->Payload && $p && exists($payloads->{$p}))
         {
             $p = $payloads->{$p};
             foreach (keys(%{$p->UserOpts})) { $options{$_}++ }
+            foreach (keys(%{$p->Advanced})) { $options{$_}++ }
         }
-        
+         
         if ($x->Payload) { $options{"PAYLOAD"}++ }
         if ($x->TargetsList) { $options{"TARGET"}++  }
 
@@ -732,15 +732,23 @@ sub xCreateSetValueList
         
         my ($req, $type, $desc, $dflt);
         
-        if (exists($x->UserOpts->{$n}))
-        {
+        if (exists($x->UserOpts->{$n})) {
             ($req, $type, $desc, $dflt) = @{$x->UserOpts->{$n}};  
         }
         
-        if ($p && exists($p->UserOpts->{$n}))
-        {
+        if (exists($x->Advanced->{$n})) {
+            ($req, $type) = (0, 'DATA');
+            ($dflt, $desc) = @{$x->Advanced->{$n}};
+        }
+                
+        if ($p && exists($p->UserOpts->{$n})) {
             ($req, $type, $desc, $dflt) = @{$p->UserOpts->{$n}};  
-        }        
+        }
+                
+        if ($p && exists($p->Advanced->{$n})) {
+            ($req, $type) = (0, 'DATA');
+            ($dflt, $desc) = @{$p->Advanced->{$n}};
+        }
         
         if ($dflt) { return ($dflt) }
         
