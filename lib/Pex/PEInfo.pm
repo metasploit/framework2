@@ -664,6 +664,8 @@ sub _LoadVersionData {
     my $rdata = substr($self->{'RAW'}, $self->_RV2O($resource->[0]), $resource->[1]);
     my $vdata = $self->{'RESOURCE'}->{'Types'}->{'VERSION'};
     return if ! $vdata;
+
+    my ($versionFile, $versionProd);
     
     # XXX - Only read first section right now
     my $vblock = $vdata->{'/VERSION/0/0'}->{'Data'};
@@ -686,8 +688,8 @@ sub _LoadVersionData {
         }
         
         my @vfixed = unpack('VVv8V*', substr($vblock, $vfixed_ptr, $vinf_vlen));   
-        my $versionFile = join(".", ( $vfixed[3], $vfixed[2], $vfixed[5], $vfixed[4]));
-        my $versionProd = join(".", ( $vfixed[7], $vfixed[6], $vfixed[9], $vfixed[8]));
+        $versionFile = join(".", ( $vfixed[3], $vfixed[2], $vfixed[5], $vfixed[4]));
+        $versionProd = join(".", ( $vfixed[7], $vfixed[6], $vfixed[9], $vfixed[8]));
     }
     
     # Add the length of the VS_FIXEDFILEINFO structure
@@ -717,8 +719,10 @@ sub _LoadVersionData {
     my $sinf_size = $sinf_wlen - ($sinf_xpad - $vinf_xpad );
     
     my $sfi = $self->_ParseStringTableArray($vblock, $vblock_rva, $sinf_xpad, $sinf_size);
-    $sfi->{'FixedFileVersion'} = $versionFile;
-    $sfi->{'FixedProdVersion'} = $versionProd;
+    if ($versionFile) {
+        $sfi->{'FixedFileVersion'} = $versionFile;
+        $sfi->{'FixedProdVersion'} = $versionProd;
+    }
     
     $self->{'VERSION'} = $sfi;
     
