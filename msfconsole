@@ -661,7 +661,7 @@ sub eExploit
             if ($phand)
             {
                 xMsg("exploit", "starting handler $phand");
-                my $res = $handler->$phand($payload, $ui->GetEnv, $child);
+                my $res = $handler->$phand($payload, $child);
                 kill('TERM', $child);
 
                 if (! $res)

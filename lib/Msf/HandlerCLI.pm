@@ -65,7 +65,7 @@ sub ConsoleStop
 
 sub reverse_shell
 {
-    my ($self, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $exploit) = @_;
     
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
@@ -143,7 +143,7 @@ sub reverse_shell
 
 sub bind_shell
 {
-    my ($self, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $exploit) = @_;
     my $stopconnect = 0;
     my $victim;
 
@@ -208,7 +208,7 @@ sub bind_shell
 
 sub impurity_reverse
 {
-    my ($self, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $exploit) = @_;
 
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
@@ -306,7 +306,7 @@ sub impurity_reverse
 
 sub findsock_shell
 {
-    my ($self, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $exploit) = @_;
     my $s = $self->GetVar('HCSOCK');
     Pex::Unblock($s);
 
@@ -395,7 +395,7 @@ sub findsock_shell_exp
 
 sub reverse_shell_xor
 {
-    my ($self, $pay, $opt, $exploit) = @_;
+    my ($self, $pay, $exploit) = @_;
     
     my $s = IO::Socket::INET->new (
                 Proto => "tcp",
