@@ -317,18 +317,52 @@ sub Recv {
   my $length = shift;
   my $timeout = @_ ? shift : 0;
 
-  $length = 99999999 if($length == -1);
-
   return if($self->GetError);
   return if($self->SocketError(1));
 
   # Try to get any data out of our own buffer first
   my $data = $self->RemoveBuffer($length);
-  $length -= length($data);
 
   my $selector = IO::Select->new($self->GetSocket);
 
   my $sslEmptyRead = 5;
+
+  # Special case -1 lengths, we will wait up to timeout to get
+  # any data, and then we just read as much as we can, and return.
+  if($length == -1) {
+    my ($ready) = $selector->can_read($timeout);
+    print "1\n";
+
+    if(!$ready) {
+      # $self->SetError("Timeout $timeout reached."); # could be data from buffer anyway
+      return($data);
+    }
+
+    while(1) {
+      my ($ready) = $selector->can_read(.01);
+      print "2\n";
+      last if(!$ready);
+
+      my $tempData;
+
+      if($self->UseSSL) {
+        $tempData = $self->SSLRead;
+        if(!length($tempData)) {
+          $self->SetError('Dry ssl read.');
+        }
+      }
+      else {
+        $self->GetSocket->recv($tempData, 4096);
+      }
+
+      last if(!length($tempData));
+      $data .= $tempData;   
+    }
+    return($data);
+  }
+
+
+  $length -= length($data);
 
   while($length) {
     my ($ready) = $selector->can_read($timeout);
@@ -347,13 +381,12 @@ sub Recv {
       # a clean way around this, so we just try until we get two
       # empty reads in a row or we time out
       
-      $tempData = Net::SSLeay::read($self->{'SSLFd'});
+      $tempData = $self->SSLRead;
       if(!length($tempData)) {
-        if($timeout && !--$sslEmptyRead) {
+        if($timeout) {
           $self->SetError('Dry ssl read, out of tries');
           return($data);
         }
-        select(undef, undef, undef, .1);
         next;
       }
     }
@@ -374,6 +407,27 @@ sub Recv {
   }
 
   return($data);
+}
+
+# This should be called when we know the socket has data waiting for us.
+# We try to ssl read, if there is data return, we return with it, otherwise
+# we loop for several tries waiting for ssl data
+sub SSLRead {
+  my $self = shift;
+  my $sslEmptyRead = 5;
+
+  while(1) {
+    my $data = Net::SSLeay::read($self->{'SSLFd'});
+    if(!length($data)) {
+      if(!--$sslEmptyRead) {
+        return;
+      }
+      select(undef, undef, undef, .1);
+    }
+    else {
+      return($data);
+    }
+  }
 }
 
 1;
