@@ -111,6 +111,7 @@ while (1)
     $ui->SetTempEnv('_Encoders', $encoders);
     $ui->SetTempEnv('_Nops', $nops);
 
+    my $logaction;
     if ($state->{'MODULE'})
     {
         my $mname = exists($exploits->{$state->{'MODULE'}}) 
@@ -118,9 +119,24 @@ while (1)
 
         $res = "<table width=100% bgcolor='black'><tr><td>".
                "<font color='white'><b>Module: $mname</b></font></td></tr></table><br>\n";
+        $logaction = "$mname";
+        
+        if($state->{'PAYLOAD'}) {
+            $logaction .= " PAYLOAD=".$state->{'PAYLOAD'};
+        }
+        
+        if ($state->{'OPT_RHOST'}) {
+            $logaction .= " HOST=".$state->{'OPT_RHOST'};
+        }
+        
+        if ($state->{'OPT_RPORT'}) {
+            $logaction .= " PORT=".$state->{'OPT_RPORT'};
+        }       
     }
 
     $state->{'client'} = $cli;
+    vprint($cli->peerhost.":".$cli->peerport."  ".$state->{'MODE'}."  $logaction\n");
+    
     $res .= ProcessRequest($cli, $state);
 
     $cli->send("HTTP/1.0 200 OK\r\n\r\n$res");

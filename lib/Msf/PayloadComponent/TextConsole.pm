@@ -65,6 +65,7 @@ LOOPER:
     foreach my $ready (@ready) {
       if($ready == $consoleIn) {
         my $data = $consoleIn->getline;
+        last LOOPER if (! length($data));
         $self->SendLog($data);
         $data = $self->SendFilter($data);
         $sockOut->send($data);
