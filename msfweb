@@ -71,9 +71,6 @@ my %config	=
 );
 
 
-$SIG{'PIPE'} = 'IGNORE';
-
-
 # Process the command line options
 getopts("a:l:v:p:t:T:C:r:hD", \%args);
 
@@ -218,7 +215,7 @@ Options:
 	-p	<tcp port>    Bind to this TCP port instead of 55555
 	-l	<log file>    The path name to use for a log file (stderr)
 	-v	<log level>   A number between 0 and 10 that controls log verbosity
-	-t	<theme name>  Select a specific theme for the web interface
+	-t	<theme name>  Select a specific theme: default, gwhite, gblack
 	-T	<theme dir>   Use an alternate directory for msfweb themes
 	-C	<cache dir>   Use a specific directory for session cache files
 	-r	<boolean>     Reload all modules with each new web request
@@ -674,7 +671,7 @@ sub SessionLoad {
         <title>Metasploit Framework v$VERSION - Session $sid </title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
     </head>
-<frameset rows="*, 65" border=0 frameborder=0 framespacing=0>
+<frameset rows="*, 90" border=0 frameborder=0 framespacing=0>
   <frame src="/SESSIONS?MODE=UPDATE&SID=$sid" name="update">
   <frame src="/SESSIONS?MODE=COMMAND&SID=$sid" name="command">
   <noframes><body>This feature requires frames...</body></noframes>
@@ -693,15 +690,16 @@ sub SessionCommand {
 	my $cmd		= $state->{'CMD'};
 	my $cmdurl	= "/SESSIONS?MODE=COMMAND&amp;SID=$sid&amp;CMD=";
 
+	my $lspace  = "&nbsp;" x 4;
 	my $verify	= 'javascript:if(!confirm("Are you sure that you want to kill this session?")){return false; }';
 	my $cmdbar	=
 	"<div class='textBold' class='CommandBar'>\n".
 	"<ul id='CommandBarList'>\n".
-	"<li>Session Commands:".
-	"<li><a href='".$cmdurl."DIE' onClick='$verify'>Session::Kill</a>".
-	"<li><a href='".$cmdurl."INT'>Session::Break</a>".
-	"<li><a href='http://metasploit.com/' target='_blank'>Metasploit::Website</a>".
-	"<li><a href='http://s1.amazon.com/exec/varzea/pay/T2FKAC37FCOAYS/104-6179093-5143961' target='_blank'>Metasploit::Donate</a>".		
+	"<li>Session Commands:$lspace".
+	"<li><a href='".$cmdurl."DIE' onClick='$verify'>Session::Kill</a>$lspace".
+	"<li><a href='".$cmdurl."INT'>Session::Break</a>$lspace".
+	"<li><a href='http://metasploit.com/' target='_blank'>Metasploit::Website</a>$lspace".
+	"<li><a href='http://s1.amazon.com/exec/varzea/pay/T2FKAC37FCOAYS/104-6179093-5143961' target='_blank'>Metasploit::Donate</a> ".		
 	"</ul>\n".
 	"</div>";
 		
@@ -1799,8 +1797,8 @@ qq[
 						# Interrupt via magic command string :(
 						if ($cmd eq 'INT') {
 							$out .= "Session interrupt request...";
-							$eout->printflush();
-							$eout->printflush("!^! MSF_INTERRUPT\n");
+							# $eout->printflush();
+							# $eout->printflush("!^! MSF_INTERRUPT\n");
 							kill INT => $epid;
 						}
 						

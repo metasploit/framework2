@@ -38,6 +38,7 @@ sub _HandleConsole {
 		
 			my $answer = $self->PipeRead($pLocalIn);
 
+			print "STDERR: ans: '$answer'\n";
 			# Wait half of a second and try it again.
 			if (! $answer) {
 				select(undef, undef, undef, 0.5);
