@@ -34,7 +34,6 @@ sub Nops {
 
   my $exploit = $self->GetVar('_Exploit');
   my $random  = $self->GetLocal('RandomNops');
-  my $badRegs = $exploit->NopBadRegs;
   my $badChars = $exploit->PayloadBadChars;
 
   return(pack('N',0x60606060) x ($length / 4));
