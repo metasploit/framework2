@@ -705,7 +705,7 @@ sub ModuleList
 		$mList .= "</select>\n";
 	}
 	
-	$mList .= "</select><input type='submit' value=' Filter Selection '></div></form><br\>\n";
+	$mList .= "</select><input type='submit' value=' Filter Modules '></div></form><br\>\n";
 
 	if ($mfilt eq 'ALL') {
 		$moduleMerge->{'ALL'} = [ keys %{ $mALL } ];
