@@ -69,6 +69,13 @@ print "[*] Starting Metasploit v$VERSION Web Interface on $host:$port...\n";
 
 $SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
 
+# XXX 
+if ($ui->GetEnv('Logging')) {
+	# print "[*] Logging is not available with the msfweb user interface\n";
+    $ui->UnsetGlobalEnv('Logging');
+    $ui->UnsetTempEnv('Logging');
+}
+    
 while (1)
 {
     my $add;
@@ -105,7 +112,7 @@ while (1)
     }
     
     foreach my $key (keys(%{$payloadsIndex})) {
-        $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
+        $payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
     }
 
     $ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
@@ -113,6 +120,10 @@ while (1)
     $ui->SetTempEnv('_Encoders', $encoders);
     $ui->SetTempEnv('_Nops', $nops);
 
+	# XXX
+    $ui->UnsetGlobalEnv('Logging');
+    $ui->UnsetTempEnv('Logging');
+s
     my $logaction;
     if ($state->{'MODULE'})
     {
@@ -444,14 +455,12 @@ sub ExploitExec
     my $res; 
     my $exploit = $exploits->{$module};
     
-    if (! $exploit)
-    {
+    if (! $exploit) {
         return "<b>Invalid Module</b>";
     }
 
     my $o = StateToOptions($state);
-    foreach my $k (keys(%{ $o }))
-    {
+    foreach my $k (keys(%{ $o })) {
         $ui->SetTempEnv($k, $o->{$k});
     }
     
@@ -459,7 +468,7 @@ sub ExploitExec
     
     my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
 
-    my $payloadName = $ui->GetTempEnv('PAYLOAD');
+    my $payloadName = $ui->GetEnv('PAYLOAD');
     my $payload = $validPayloads->{$payloadName};
 
     # Mmmmm, candy
@@ -503,31 +512,32 @@ sub ExploitExec
     
     
     # we hijack the socket from the web service
-    my $cli = $state->{'client'};
+	my $cli = $state->{'client'};
+    $cli->blocking(0);
+    $cli->autoflush(1);
     
-    $cli->send("HTTP/1.1 200 OK\r\nConnection: Close\r\nContent-type: text/html\r\n\r\n");
-    $cli->send(HTML_Header());
+    # Map the client socket to a Msf::Socket to handle all sorts of
+    # annoying error conditions for us. This is particularly useful
+    # when the client reloads quickly or otherwise disconnects from
+    # msfweb in mid-subroutine.
+    my $Browser = Msf::Socket::Tcp->new_from_socket($cli);
     
-    $cli->send("<b>Processing exploit request (".$exploit->Name.")...</b><br>\n");
-    $cli->send("<b>Using payload: " . $payloadName . "<br>\n");
-    Pex::Unblock($cli);
-    
-    $cli->send("<pre>\n");
-    open(STDOUT, ">&=" . fileno($cli));
-    open(STDERR, ">&=" . fileno($cli));
+    $Browser->Send("HTTP/1.1 200 OK\r\nConnection: Close\r\nContent-type: text/html\r\n\r\n");
+    $Browser->Send(HTML_Header());
+    $Browser->Send("<b>Processing exploit request (".$exploit->Name.")...</b><br>\n");
+    $Browser->Send("<b>Using payload: " . $payloadName . "<br>\n");
+    $Browser->Send("<pre>\n");
 
     $|++;
     
-    $ui->SetTempEnv("BROWSER", $cli);
+    $ui->SetTempEnv('BROWSER', $cli);
     $ui->Exploit();
-    
-    $cli->send(join("<br>\n", @{$ui->DumpLines}));
 
-    $cli->send("\n</pre><br>");
+    $Browser->Send(join("<br>\n", @{$ui->DumpLines}));
+    $Browser->Send("\n</pre><br>");
+    $Browser->Send(HTML_Footer());
+	$Browser->Close;
     
-    $cli->send(HTML_Footer());
-    $cli->shutdown(2);
-    $cli->close();
     exit(0);
 }
 
@@ -579,8 +589,7 @@ sub HTTPRequest {
         if (! length($val)) { delete($state->{$var}) }
     }
     
-    if (! $state->{'MODE'})
-    {
+    if (! $state->{'MODE'}) {
         $state->{'MODE'} = "MAIN";
     }
     

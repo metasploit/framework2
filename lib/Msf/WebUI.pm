@@ -7,7 +7,7 @@
 #       Author: H D Moore <hdm [at] metasploit.com>
 #      Version: $Revision$
 #  Description: Instantiable class derived from TextUI with methods useful to
-#               web-based user interfaces.
+#                      web-based user interfaces.
 #      License:
 #
 #      This file is part of the Metasploit Exploit Framework
@@ -39,22 +39,39 @@ sub new {
 }
 
 # We overload the UI::PrintLine call so that we can
-# buffer exploit output and display as needed
+# buffer the output from the exploit and display it
+# as needed
 sub PrintLine {
     my $self = shift;
     my $msg = shift;
     
+    # ignore empty messages
+    return(0) if ! length($msg);
+    
     # If we are exploit mode, write output to browser
-    if (my $s = $self->GetEnv('BROWSER'))
-    {
-        $s->send("$msg\n");
+    if (my $s = $self->GetEnv('BROWSER')) {
+    	if ($s->connected) {
+	        $s->send("$msg\n");
+        }
         return;
     }
     
     my @buffer = @{$self->GetEnv('PrintLine')};
     push @buffer, $msg;
     $self->SetTempEnv('PrintLine', \@buffer);
+    return(1);
 }
+
+sub PrintError {
+	my $self = shift;
+    my $msg  = shift;
+    return(0) if ! length($msg);
+    return(0) if ! $self->IsError;
+    $self->PrintLine("Error: $msg");
+    $self->ClearError;
+    return(1);
+}
+
 
 sub DumpLines {
     my $self = shift;

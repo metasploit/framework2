@@ -19,7 +19,7 @@
 package Msf::Base;
 use strict;
 
-use FindBin qw {$Bin $RealBin $Script $RealScript};
+use FindBin qw {$RealBin $RealScript};
 use File::Spec::Functions;
 
 # Load the core modules
@@ -134,15 +134,6 @@ sub GetEnv {
   return;
 }
 
-# fixme SetEnv...
-# the cli wont work until this does, setting Temp
-#sub SetEnv {
-#  my $self = shift;
-#  my $key = shift;
-#  my $val = shift;
-#  return $self->SetTempEnv($key, $val);
-#}
-
 
 # Global Environment
 sub GetGlobalEnv {
@@ -252,7 +243,6 @@ sub SetSavedTempEnv {
   return($env);
 }
 
-
 sub DeleteTempEnv {
   my $self = shift;
   my $key = shift;
@@ -310,10 +300,12 @@ sub ClearError {
 sub PrintError {
   my $self = shift;
   my $error = $self->_Error;
-
   return(0) if(!$self->IsError);
   
-  $self->PrintLine('Error: ', $error);
+  if ($error) {
+  	$self->PrintLine("Error: $error");
+  }
+  
   $self->ClearError;
   return(1);
 }
@@ -375,15 +367,6 @@ sub ErrorLine {
   $self->PrintLine(@_);
 }
 
-# fixme still used? add hooks?
-sub FatalError {
-  my $self = shift;
-  my $error = shift;
-  $self->SetError($error);
-  $self->PrintError;
-  exit(1);
-}
-
 # Other stuff
 sub DebugLevel {
   my $self = shift;
@@ -402,6 +385,7 @@ sub MergeHash {
   }
   return(\%hash);
 }
+
 sub MergeHashRec {
   my $self = shift;
   my $hash1 = shift || { };
@@ -455,7 +439,7 @@ sub ModuleEndName {
 
 sub ScriptPath {
   my $self = shift;
-  return "$RealBin/$Script";
+  return "$RealBin/$RealScript";
 }
 
 sub ScriptBase {
