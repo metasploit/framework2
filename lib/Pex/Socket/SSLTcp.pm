@@ -60,7 +60,7 @@ sub SSLCtx {
 
 sub Close {
   my $self = shift;
-  Net::SSLeay::Free($self->SSLFd);
+  Net::SSLeay::free($self->SSLFd);
   Net::SSLeay::CTX_free($self->SSLCtx);
   $self->SUPER::Close;
 }
