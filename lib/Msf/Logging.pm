@@ -17,6 +17,11 @@ sub Filename {
   return($self->{'Filename'});
 }
 
+sub PrintLine {
+  my $self = shift;
+  return($self->Print(@_, "\n"));
+}
+
 sub Print {
   my $self = shift;
   return if(!$self->GetEnv('Logging'));
@@ -77,3 +82,12 @@ sub CreateLogDir {
 }
 
 1;
+
+
+
+
+
+
+
+
+#### 
