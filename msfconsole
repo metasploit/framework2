@@ -400,46 +400,45 @@ sub gChdir
     }
 }
 
-sub gInfo
-{
-    my ($cmd, @args) = @_;
-    if (! $args[0] || ($args[0] ne "exploit" && $args[0] ne "payload"))
-    {
-        xMsg("info", "usage: info <exploit|payload> <name>");
-        return;
-    }
+sub gInfo {
+  my $cmd = shift;
+  my @args = @_;
+  my $module;
+  my $type;
+
+  # Support old info exploit/payload syntax
+  if(@args == 2) {
+    $module = $args[1];
+    $type = $args[0];
+  }
+  elsif(@args == 1) {
+    $module = $args[0];
+  }
     
-    if ($args[0] eq "exploit")
-    {
-        if (! $args[1]) 
-        {
-            xMsg("info", "exploit: requires the exploit name");
-            return;
-        }
-        
-        if (! $exploits->{$args[1]})
-        {
-            xMsg("info", "exploit: invalid exploit name");
-            return
-        }
-        print "\n".$ui->DumpExploitSummary($exploits->{$args[1]});
-    }
- 
-    if ($args[0] eq "payload")
-    {
-        if (! $args[1]) 
-        {
-            xMsg("info", "payload: requires the payload name");
-            return;
-        }
-        
-        if (! $payloads->{$args[1]})
-        {
-            xMsg("info", "payload: invalid payload name");
-            return;
-        }
-        print "\n" . $ui->DumpPayloadSummary($payloads->{$args[1]});
-    }
+  if(!defined($module) || ($type ? $type !~ /^(encoder|exploit|payload|nop)$/ : 0)) {
+    xMsg("info", "usage: info [type] <module name>");
+    return;
+  }
+
+  if($exploits->{$module} && ($type ? $type eq 'exploit' : 1)) {
+    print "\n" . $ui->DumpExploitSummary($exploits->{$module});
+  }
+  elsif($payloads->{$module} && ($type ? $type eq 'payload' : 1)) {
+    print "\n" . $ui->DumpPayloadSummary($payloads->{$module});
+  }
+
+  # Kinda a hack, we rebuild the keys for exploits and payloads, but
+  # not for nops or encoders...
+  elsif($encoders->{'Msf::Encoder::' . $module} && ($type ? $type eq 'encoder' : 1)) {
+    print "\n" . $ui->DumpEncoderSummary($encoders->{'Msf::Encoder::' . $module});
+  }
+  elsif($nops->{'Msf::Nop::' . $module} && ($type ? $type eq 'nop' : 1)) {
+    print "\n" . $ui->DumpNopSummary($nops->{'Msf::Nop::' . $module});
+  }
+  
+  else {
+    xMsg("info", "invalid module name");
+  }
 }
 
 sub mShow 

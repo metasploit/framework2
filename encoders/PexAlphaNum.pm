@@ -24,6 +24,7 @@ my $info = {
   'OS'      => [ ],
   'Description'  =>  "Skylined's alphanumeric encoder ported to perl",
   'Refs'    => [ ],
+  'Keys'    => [ 'alphanum' ],
 };
 
 sub new {

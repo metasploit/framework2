@@ -207,6 +207,7 @@ sub DumpEncoderSummary {
   $output .= "       Name: " . $e->Name . "\n";
   $output .= "    Version: ".  $e->Version . "\n";
   $output .= "     OS/CPU: " . join(", ", @{$e->OS}) . "/" . join(", ", @{$e->Arch}) . "\n";
+  $output .= "       Keys: " . join(' ', @{$e->Keys}) . "\n";
   $output .= "\n";
 
   $output .= "Provided By:\n";
@@ -222,6 +223,31 @@ sub DumpEncoderSummary {
   $output .= "Description:\n$desc\n";
   return($output);
 }
+sub DumpNopSummary {
+  my $self = shift;     
+  my $e = shift;   
+  my $output;
+    
+  $output .= "       Name: " . $e->Name . "\n";
+  $output .= "    Version: ".  $e->Version . "\n";
+  $output .= "     OS/CPU: " . join(", ", @{$e->OS}) . "/" . join(", ", @{$e->Arch}) . "\n";
+  $output .= "       Keys: " . join(' ', @{$e->Keys}) . "\n";
+  $output .= "\n";
+    
+  $output .= "Provided By:\n";
+  foreach (@{$e->Authors}) {
+    $output .= "    $_\n";
+  }                       
+  $output .= "\n";
+    
+  $output .= "Advanced Options:\n";
+  $output .= $self->DumpAdvancedOptions(4, 'Advanced', $e);
+    
+  my $desc = $self->WordWrap($e->Description, 4, 60);
+  $output .= "Description:\n$desc\n";                
+  return($output);
+}
+
 
 
 
