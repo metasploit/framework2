@@ -312,7 +312,8 @@ sub Encode {
     $self->SetError("No nop generators succeeded");
     return;
   }
-  $self->SetTempEnv('EncodedPayload', $encodedPayload);
+#  $self->SetTempEnv('EncodedPayload', $encodedPayload);
+  return($encodedPayload);
 }
 
 sub GetEncoders {

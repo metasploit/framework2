@@ -529,33 +529,43 @@ sub eCheck
 sub eExploit 
 {
     $ui->SaveTempEnv('_Save');
+
+    $ui->SetTempEnv('_Exploits', $exploits);
+    $ui->SetTempEnv('_Payloads', $payloads);
+    $ui->SetTempEnv('_Encoders', $encoders);
+    $ui->SetTempEnv('_Nops', $nops);
+
     my $exploit = $state->{'Exploit'}->{'Exploit'};
     my $exploitPayloads = xValidPayloads($exploit);
+
+    $ui->SetTempEnv('_Exploit', $exploit);
 
     my $payload = $ui->GetEnv('PAYLOAD');
 
     if ($exploit->Payload && ! $payload)
     {
         xMsg("exploit", "a payload must be specified first: 'set PAYLOAD <payloadname>'");
-        return;
+        goto CLEANUP;
     }
     
     if ($exploit->Payload && ! exists($exploitPayloads->{$payload}))
     {
         xMsg("exploit", "invalid payload specified: $payload");
-        return;
+        goto CLEANUP;
     }
     
+    $ui->SetTempEnv('_PayloadName', $payload);
     $payload = $exploitPayloads->{$payload};
+    $ui->SetTempEnv('_Payload', $payload);
 
     $exploit->Validate;
-    return if($exploit->PrintError);
+    goto CLEANUP if($exploit->PrintError);
     
     # validate payload module options
     if ($payload)
     {
         $payload->Validate;
-        return if($payload->PrintError);
+        goto CLEANUP if($payload->PrintError);
     }
 
     my @targets = $exploit->Targets;
@@ -571,8 +581,9 @@ sub eExploit
 
     if (defined($payload))
     {
-        $exploit->SetEncodedPayload($ui->Encode($exploit, $payload));
-        return if($ui->PrintError);
+        my $encodedPayload = $ui->Encode;
+        goto CLEANUP if($ui->PrintError || !$encodedPayload);
+        $ui->SetTempEnv('EncodedPayload', $encodedPayload);
     }
 
     $ui->SetTempEnv('HCALLBACK', \&xCallback);
@@ -634,6 +645,7 @@ sub eExploit
     }
     print "\n";
     
+CLEANUP:
     $ui->LoadTempEnv('_Save');
     $ui->DeleteTempEnv('_Save');
 }
