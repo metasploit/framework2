@@ -107,6 +107,7 @@ sub NinjaSetupHandler {
     'PeerHost'  => $host,
     'PeerPort'  => $port,
     'Proto'     => 'tcp',
+    'Listen'    => 5,
     'Blocking'  => 0,
   );
 
@@ -142,7 +143,7 @@ sub NinjaCheckHandler {
     $self->NinjaSock->recv($data, 4096);
     return if(!length($data));
 
-    if($data =~ /Added server/) {
+    while($data =~ /Added server/g) {
       $self->PrintLine('[!] socketNinja has new connection.');
       return(0) if($dontKill);
       return(1);
