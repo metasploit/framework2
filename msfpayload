@@ -123,7 +123,7 @@ exit(0);
 
 sub Usage
 {
-    print STDERR "   Usage: $0 <payload> [var=val] <S|C|P>\n";
+    print STDERR "   Usage: $0 <payload> [var=val] <S|C|P|R>\n";
     print STDERR "Payloads: \n";
     foreach my $p (sort(keys(%{$payloads})))
     {
