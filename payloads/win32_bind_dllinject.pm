@@ -23,7 +23,7 @@ my $info =
                         'Matt Miller <mmiller [at] hick.org> [Unknown License]',
                         'Jarkko Turkulainen <jt [at] klake.org> [Unknown License]',
                     ],
-  'UserOpts'     => { 'DLL' => [1, 'PATH', 'The full path the DLL that should be injected'] },
+  'UserOpts'     => { 'DLL' => [1, 'PATH', 'The full path to the DLL that should be injected'] },
                 
 };
 
