@@ -11,6 +11,11 @@ sub import {
   }
 }
 
+sub Win32StagePayload {
+  my $self = shift;
+  return($self->_Info->{'Win32StagePayload'});
+}
+
 sub HandleConnection {
   my $self = shift;
   $self->SUPER::HandleConnection;
@@ -18,10 +23,7 @@ sub HandleConnection {
   my $blocking = $sock->blocking;
   $sock->blocking(1);
 
-#  $self->_Info->{'Win32Payload'} = $self->_Info->{'Win32StagePayload'};
-#  $self->InitWin32;
-
-  my $payload = $self->BuildWin32($self->_Info->{'Win32StagePayload'});
+  my $payload = $self->BuildWin32($self->Win32StagePayload);
 
   $self->PrintLine('[*] Sending Stage (' . length($payload) . ' bytes)');
   $sock->send($payload);
