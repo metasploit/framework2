@@ -136,7 +136,10 @@ sub Nops {
 # DEBUG DEBUG DEBUG
 #  $nop = "\x91\xd0\x20\x01";
 
-# XXX: $random support
+  if(! $random)
+  {
+    return Inssethi() x ($length / 4);			# XXX: Lame.
+  }
 
   while(length($nop) < $length)
   {
