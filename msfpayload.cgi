@@ -20,7 +20,7 @@ use strict;
 
 use POSIX;
 
-use lib "/home/httpd/code/framework";
+use lib "/home/httpd/code/framework/lib";
 use Msf::TextUI;
 use Pex;
 use CGI qw/:standard/;
