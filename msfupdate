@@ -30,8 +30,16 @@ BEGIN
 
 chdir($RealBin);
 
+my $old_data;
 my $now_data = ScanFiles('.');
-my $old_data = ReadFile('.current');
+if (! -r '.current') {
+    WriteFile('.current', $now_data);
+    $old_data = $new_data;
+} 
+else {
+    $old_data = ReadFile('.current');
+}
+
 my $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.txt");
 
 my $now = Hashit($now_data);
@@ -55,7 +63,13 @@ foreach (keys(%{$upd})) {
 }
 print "\n\n";
 
-
+my $upx = Diff($old, $new);
+print "Changes between sets\n";
+print "==========================\n\n";
+foreach (keys(%{$upx})) {
+    print "\t".$upx->{$_}."\t$_\n";
+}
+print "\n\n";
 sub ScanFiles {
     my $dir = shift;
     my $res;
