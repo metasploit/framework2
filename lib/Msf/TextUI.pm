@@ -351,7 +351,7 @@ sub Exploit {
     if($exploit->Payload) {
       if($pHandler) {
         $self->PrintDebugLine(1, "[*] Starting handler $pHandler");
-        my $res = $handler->$pHandler($payload, $child);
+        my $res = $handler->$pHandler($child);
         kill('TERM', $child);
 
         if(!$res) {
