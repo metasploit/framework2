@@ -47,6 +47,12 @@ sub _InjectDLL {
   return $self->GetVar('VNCDLL');
 }
 
+sub _InjectDLLName
+{
+	my $self = shift;
+
+	return "hax0r.dll"; # randomize me!
+}
 
 sub HandleConnection {
   my $self = shift;

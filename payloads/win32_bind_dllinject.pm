@@ -23,7 +23,11 @@ my $info =
                         'Matt Miller <mmiller [at] hick.org> [Unknown License]',
                         'Jarkko Turkulainen <jt [at] klake.org> [Unknown License]',
                     ],
-  'UserOpts'     => { 'DLL' => [1, 'PATH', 'The full path to the DLL that should be injected'] },
+  'UserOpts'     => 
+	{ 
+		'DLL'     => [1, 'PATH', 'The full path to the DLL that should be injected'],
+		'DLLNAME' => [0, 'PATH', 'The name of the DLL as it will appear in the module list'] 
+	},
                 
 };
 
@@ -39,6 +43,15 @@ sub new {
 sub _InjectDLL {
   my $self = shift;
   return $self->GetVar('DLL');
+}
+
+sub _InjectDLLName {
+  my $self = shift;
+  my $name =  $self->GetVar('DLLNAME');
+
+  $name = "hax0r.dll" if (not defined($name));
+
+  return $name;
 }
 
 1;
