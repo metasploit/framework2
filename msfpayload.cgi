@@ -155,7 +155,8 @@ if ($action eq "BUILD")
 
     my $badchars_bin;
     my $badchars_str;
-    if (defined($opt->{'BadChars'}) && defined($opt->{'ENCODE'}))
+    print "encode: ".$opt->{'ENCODE'}."\n";
+    if (defined($opt->{'BadChars'}) && $opt->{'ENCODE'} )
     {
         foreach my $hc (split(/\s+/, $opt->{'BadChars'}))
         {
