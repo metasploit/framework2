@@ -22,6 +22,11 @@ sub JmpShort {
   return("\xeb" . PackLSB($dist));
 }
 
+sub call {
+  my $dist = RelNumber(shift, 0);
+  return("\xe8" . PackDword($dist));
+}
+
 sub RelNumber {
   my $number = shift;
   my $delta = @_ ? shift : 0;
