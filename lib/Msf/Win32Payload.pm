@@ -115,7 +115,7 @@ sub Build {
 
     my $exit_func = ($self->GetVar('EXITFUNC')) ? $self->GetVar('EXITFUNC') : 'seh';
     my $exit_hash = exists($exit_types->{$exit_func}) ? $exit_types->{$exit_func} : $exit_types->{'seh'};
-    substr($generated, $exit_offset, 4, pack('L', $exit_hash));
+    substr($generated, $exit_offset, 4, pack('V', $exit_hash));
     $self->PrintDebugLine(3, "Win32Payload: exitfunc: $exit_offset -> $exit_hash ($exit_func)");  
     return $generated;
 }

@@ -51,7 +51,7 @@ sub PatternOffset
        my @results;
        my ($idx, $lst) = (0,0);
 
-       $address = pack("L", eval($address));
+       $address = pack("V", eval($address));
        $idx = index($pattern, $address, $lst);
 
        while ($idx > 0)

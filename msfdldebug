@@ -80,9 +80,9 @@ my $debug_off = $pe->VirtualToOffset($debug_rva->[0]);
 my $debug_dat = substr($raw, $debug_off, $debug_rva->[1]);
 my $debug_tds = substr($debug_dat, 4);
 
-my $debug_typ = unpack("L", substr($debug_dat, 12));
-my $debug_siz = unpack("L", substr($debug_dat, 16));
-my $debug_dir = unpack("L", substr($debug_dat, 24));
+my $debug_typ = unpack("V", substr($debug_dat, 12));
+my $debug_siz = unpack("V", substr($debug_dat, 16));
+my $debug_dir = unpack("V", substr($debug_dat, 24));
 
 
 # printf("DEBUG: TYPE=0x%.8x SIZE=0x%.8x OFFSET=0x%.8x\n", $debug_typ, $debug_siz, $debug_dir);
@@ -160,7 +160,7 @@ if (! $dbg_skp)
     $dbg_raw = $raw;
 }
 
-$pdb_hsh = sprintf("%.8x%x", unpack("L", substr($dbg_raw, $debug_dir + 8)), unpack("L", substr($dbg_raw, $debug_dir + 12)));
+$pdb_hsh = sprintf("%.8x%x", unpack("V", substr($dbg_raw, $debug_dir + 8)), unpack("V",substr($dbg_raw, $debug_dir + 12)));
 
 if ($pdb_hsh)
 {

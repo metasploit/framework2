@@ -319,8 +319,8 @@ sub XorDecoderDwordAntiIds {
         my $loopCounter = int(($len - 1) / 4) + 1;
         $loopCounter *= -1;
 
-        my $xorlen = pack("L", $loopCounter);
-        my $xorkey = pack("L", $xor);
+        my $xorlen = pack("V", $loopCounter);
+        my $xorkey = pack("V", $xor);
         
 
         # this anti-0xff encoder written by hdm [at] metasploit.com
@@ -377,7 +377,7 @@ sub XorDecoderDwordAntiIds {
 sub XorDecoderDwordJmpCall {
   my $xor = shift;
   my $len = shift;
-  my $xorkey = pack('L', $xor);
+  my $xorkey = pack('V', $xor);
   my $l = PackLength($len);
 
   # spoon's smaller variable-length encoder
@@ -418,7 +418,7 @@ sub XorDecoderDwordJmpCall {
 # This is useful if you have a BadChar of say 0xff, and your payload is small (or insanely large)
 # enough to not have 0xff in your payload, which is realistic (<= 512 && > 4)
 sub XorDecoderDwordFnstenvSub {
-  my $xorkey = pack('L', shift());
+  my $xorkey = pack('V', shift());
   my $l = PackLength(shift());
 
 
@@ -455,7 +455,7 @@ sub XorDecoderDwordFnstenvSub {
 sub XorDecoderDwordFnstenvMov {
   my $xor = shift;
   my $len = shift;
-  my $xorkey = pack('L', $xor);
+  my $xorkey = pack('V', $xor);
   my $l = PackLength($len);
 
 
@@ -497,8 +497,8 @@ sub PackLength {
 
   $data->{'padLength'} = $loopCounter;
   $data->{'negPadLength'} = -1 * $loopCounter;
-  $data->{'length'} = pack('L', $data->{'padLength'});
-  $data->{'negLength'} = pack('L', $data->{'negPadLength'});
+  $data->{'length'} = pack('V', $data->{'padLength'});
+  $data->{'negLength'} = pack('V', $data->{'negPadLength'});
 
   $data->{'negSmall'} = 1 if($data->{'negPadLength'} >= -128);
   $data->{'small'}    = 1 if($data->{'padLength'} <= 127);
@@ -587,8 +587,8 @@ sub XorDword {
     {
 	    my $chunk = substr($buffer, $c);
         $chunk .= ("\x00" x (4 - length($chunk)));
-	    $chunk  = unpack("L", $chunk) ^ $xor;
-	    $res   .= pack("L", $chunk);
+	    $chunk  = unpack("V", $chunk) ^ $xor;
+	    $res   .= pack("V", $chunk);
 	}
     return $res;
 }
@@ -665,7 +665,7 @@ sub XorKeyScanDword
                 for my $iD (1 .. 255)
                 {
                     next if (exists($lu[3]->{$iD}) || $avh{$iD});
-                    return unpack("L", pack("CCCC", $iA, $iB, $iC, $iD));
+                    return unpack("V", pack("CCCC", $iA, $iB, $iC, $iD));
                 }
             }
         }

