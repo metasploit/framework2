@@ -196,6 +196,7 @@ sub SaveTempEnv {
   $self->_TempEnvs->{$name} = \%copy;
 }
 
+# fixme LoadTempEnv doesn't make a copy, so you are modifing the saved copy...
 sub LoadTempEnv {
   my $self = shift;
   my $name = shift;
