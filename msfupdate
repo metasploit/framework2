@@ -388,6 +388,10 @@ sub SSLVerify {
     if ($cert) {
         my $x509_issuer =  Net::SSLeay::X509_get_issuer_name($cert);
         my $issuer = Net::SSLeay::X509_NAME_oneline($x509_issuer);
+        
+        # differences between openssl 0.9.6 vs 0.9.7 (thanks par!)
+        $issuer =~ s/Email/emailAddress/g;
+        
         if ($ok && $issuer eq $SSL_ISSUER) {
             $SSL_VERIFIED++;
             return 1;
