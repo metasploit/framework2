@@ -79,9 +79,7 @@ sub readCommand {
     my $line = $self->_term->readline($self->_prompt);
     return if(!defined($line));
     next if(length($line) == 0);
-    $line =~ s/^\s*//g;
-    $line =~ s/\s*$//g;
-    $line =~ s/\$([^\s]+)/$self->_env->{$1}/eg;
+    $line =~ s/^\s+|\s+$//g;
     my ($command, @args) = $self->parseCommands($line);
     if($self->_useEnv && $command eq 'set') {
       if(@args == 1) {
