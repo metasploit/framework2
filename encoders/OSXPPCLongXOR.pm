@@ -17,7 +17,7 @@ my $advanced =  {};
 
 my $info = {
     'Name'    => 'MacOS X PPC LongXOR Encoder',
-    'Version' => '1.0',
+    'Version' => '$Revision$',
     'Authors' => [ 'Dino Dai Zovi <ddz [at] theta44.org>',
 		           'H D Moore <hdm [at] metasploit.com>' ],
     'Arch'    => [ 'ppc' ],

@@ -17,7 +17,7 @@ my $advanced = {
 
 my $info = {
   'Name'    => 'Pex Alphanumeric Encoder',
-  'Version' => '1.0',
+  'Version' => '$Revision$',
   'Authors' => [ 'Berend-Jan Wever <skylined [at] edup.tudelft.nl>', ],
   'Arch'    => [ 'x86' ],
   'OS'      => [ ],

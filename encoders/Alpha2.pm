@@ -19,7 +19,7 @@ my $advanced = {
 
 my $info = {
   'Name'    => 'Skylined\'s Alpha2 Alphanumeric Encoder',
-  'Version' => '1.0',
+  'Version' => '$Revision$',
   'Authors' => [ 'Berend-Jan Wever <skylined [at] edup.tudelft.nl>', ],
   'Arch'    => [ 'x86' ],
   'OS'      => [ ],
