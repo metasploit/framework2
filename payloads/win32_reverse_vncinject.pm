@@ -26,6 +26,7 @@ my $info =
   'UserOpts'     => { 
                         'DLL'     => [1, 'PATH', 'The full path the VNC service dll'],
                         'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
+                        'AUTOVNC' => [1, 'BOOL', 'Automatically launch vncviewer', 0],
                     },
                 
 };
@@ -51,25 +52,6 @@ sub HandleConnection {
   $self->SUPER::HandleConnection;
   sleep(1);
 
-  my $error = "OK\n";
-  
-  if (! $error) {
-    $self->PrintLine("[*] No confirmation seen from the remote VNC service");
-    $sock->close;
-    $self->KillChild;    
-    return;
-  }
-  
-  chomp($error);
-  if ($error =~ m/ERROR:(.*)$/) {
-    $self->PrintLine("[*] Error creating VNC service: $1");
-    $sock->close;
-    $self->KillChild;    
-    return;
-  }
-  
-  $self->PrintLine("[*] VNC server returned: $error");
-
   # Create listener socket
   my $lis = IO::Socket::INET->new(
     'Proto'     => 'tcp',
@@ -86,6 +68,15 @@ sub HandleConnection {
   }
   
   $self->PrintLine('[*] VNC proxy listening on port '.$lis->sockport.'...');
+  
+  if ($self->GetVar('AUTOVNC')) {
+    my $pid = fork();
+    if (! $pid) {
+        system("vncviewer 127.0.0.1:".$self->GetVar('VNCPORT'));
+        exit(0);
+    }
+  }
+  
   
   # Accept connection from user
   my $sel = IO::Select->new($lis);
