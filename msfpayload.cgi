@@ -189,12 +189,15 @@ sub DisplayFooter {
 
 sub DisplayPayloads {
     print $query->start_form;
-    print "Select a payload";
-    foreach my $p (keys(%{$payloads}))
+    
+    print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
+    foreach my $p (sort(keys(%{$payloads})))
     {
-        print "<input type='radio' name='PAYLOAD' value='$p'>".$payloads->{$p}->Name."<br>\n";
+        print CreateRow("<input type='radio' name='PAYLOAD' value='$p'>", "<b>$p</b>", $payloads->{$p}->Description);
     }
-    print "<input type='submit' value='Select Payload'><br>\n";
+    print "</table><br>";
+    
+    print "<center><input type='submit' value='Select Payload'><br></center>\n";
     print $query->end_form;
 }
 
