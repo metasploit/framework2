@@ -1,3 +1,28 @@
+;;
+;
+;        Name: osx_dword_xor_tag
+;   Qualities: Null-Free Decoder
+;   Platforms: MacOS X / PPC
+;     Authors: H D Moore <hdm [at] metasploit.com>
+;     Version: $Revision$
+;     License:
+;
+;        This file is part of the Metasploit Exploit Framework
+;        and is subject to the same licenses and copyrights as
+;        the rest of this package.
+;
+; Description:
+;
+;        A simple XOR decoder that accounts for PPC cache issues.
+;        This decoder is not capable of encoding a payload that
+;        contains a NULL dword (since the XOR against the key would
+;        trigger the exit of the decoding loop).
+;
+;        Originally based on Dino's longxor.s
+;
+;;
+
+;;; Based on Dino Dai Zovi's PPC decoder (20030821) ...
 
 ;;; Based on Dino Dai Zovi's PPC decoder (20030821) ...
 ;;; This encoder can't deal with null DWORDS in the payload
@@ -25,7 +50,7 @@ Lxorlp:
 
 	;;; Do the self-modifying code song and dance
 	dcbf	r5, r31			; Flush data cache block to memory
-        .long	0x7cff04ac		; (sync) Wait for flush to complete
+	.long	0x7cff04ac		; (sync) Wait for flush to complete
 	icbi	r5, r31			; Invalidate instruction cache block
 
 	;;; Increment the data pointer

