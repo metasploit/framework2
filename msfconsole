@@ -111,7 +111,7 @@ my %exploitCmds =
 );
 
 
-$state->{'LocalAddress'} = Pex::InternetIP();
+$state->{'LocalAddress'} = Pex::Utils::SourceIP();
 xAddAddressCache($state->{'LocalAddress'});
 
 Msf::TextUI::PrintAsciiLogo();

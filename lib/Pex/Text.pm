@@ -43,7 +43,6 @@ sub Base64Encode {
   return $res;
 }
 
-
 sub Base64Decode {
   my $str = shift;
   $str =~ tr|A-Za-z0-9+=/||cd;            # remove non-base64 chars
@@ -183,5 +182,43 @@ sub Freeform {
   return($data);
 }
 
+
+sub PatternCreate {
+    my ($length) = @_;
+    my ($X, $Y, $Z);
+    my $res;
+
+    while (1)
+    {
+        for my $X ("A" .. "Z") { for my $Y ("a" .. "z") { for my $Z (0 .. 9) {
+           $res .= $X;
+           return $res if length($res) >= $length;
+
+           $res .= $Y;
+           return $res if length($res) >= $length;
+
+           $res .= $Z;
+           return $res if length($res) >= $length;
+        }}}
+    }
+}
+
+sub PatternOffset {
+       my ($pattern, $address) = @_;
+       my $endian = @_ ? shift() : 'V';
+       my @results;
+       my ($idx, $lst) = (0,0);
+
+       $address = pack($endian, hex($address));
+       $idx = index($pattern, $address, $lst);
+
+       while ($idx > 0)
+       {
+            push @results, $idx;
+            $lst = $idx + 1;
+            $idx = index($pattern, $address, $lst);
+       }
+       return @results;
+}
 
 1;

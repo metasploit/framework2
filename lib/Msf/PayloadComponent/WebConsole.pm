@@ -51,7 +51,7 @@ sub HandleConsole {
   }
   
   # Display listener link to browser
-  my $addr = Pex::InternetIP($brow->peerhost);
+  my $addr = Pex::Utils::SourceIP($brow->peerhost);
   
   $brow->send(
     "[*] Proxy shell started on ".

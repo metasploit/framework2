@@ -420,7 +420,7 @@ sub ExploitOptions
         my $dflt = $popts->{$popt}->[3];
         my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
         
-        $dflt = Pex::InternetIP() if $popt eq "LHOST";
+        $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
         
         $res .= "<tr><td><b>$popt</b></td>".
                 "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".

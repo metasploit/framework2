@@ -326,4 +326,18 @@ sub ParseKeys {
   return(keys(%defaults));
 }
 
+
+# Create a UDP socket to a random internet host and use it to 
+# determine our local IP address, without actually sending data
+sub SourceIP {
+	my $dst = @_ ? shift() : '4.3.2.1';
+    my $res = '127.0.0.1';
+    my $s = IO::Socket::INET->new(PeerAddr => $dst, PeerPort => 53, Proto => 'udp') 
+    || return $res;    
+    $res = $s->sockhost;   
+    $s->close();
+    undef($s);
+    return $res;
+}
+
 1;
