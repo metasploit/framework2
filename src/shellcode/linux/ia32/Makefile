@@ -1,7 +1,7 @@
 NASM=nasm
 STAGERS=stager_sock_bind stager_egghunt stager_sock_find stager_sock_reverse 
-PROVIDERS=provider_tcp_shell provider_udp_shell
-OBJS=${STAGERS} ${PROVIDERS}
+STAGES=stage_tcp_shell stage_udp_shell
+OBJS=${STAGERS} ${STAGES}
 
 include ../../Makefile.incl
 
