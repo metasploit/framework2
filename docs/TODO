@@ -7,7 +7,6 @@ Pre-Release Tasks
 
  - Flush out Pex::x86
  - Add raw mode support to Pex::Socket (spoof)
- - Add interface dump function to DCERPC
  
 
  - Exchange exploit sucks, remove it or fix it
@@ -23,7 +22,6 @@ Pre-Release Tasks
  - The Pex library needs documentation and API guides for standalone use 
 
  - Add nasm into cygwin environment
- - Change registry path to avoid pre-installed cygwin clash
  - Include other tools in the cygwin envirnment (like what?)
 
  - Find a host for bugzilla 
