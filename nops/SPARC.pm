@@ -154,7 +154,7 @@ sub Nops {
   my $backup_length = $length;
 
   my $exploit = $self->GetVar('_Exploit');
-  my $random  = $self->GetLocal('RandomNops');
+  my $random  = $self->GetVar('RandomNops');
   my $badChars = $exploit->PayloadBadChars;
   my ($nop, $tempnop, $count, $rand);
 

@@ -33,7 +33,7 @@ sub Nops {
   my $length = shift;
 
   my $exploit = $self->GetVar('_Exploit');
-  my $random  = $self->GetLocal('RandomNops');
+  my $random  = $self->GetVar('RandomNops');
   my $badChars = $exploit->PayloadBadChars;
 
   # Much room for future improvement :(

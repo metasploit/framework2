@@ -26,8 +26,8 @@ sub new {
 
 sub OSXPayload {
 	my $self = shift;
-	my $host = $self->GetLocal('LHOST');
-	my $port = $self->GetLocal('LPORT');
+	my $host = $self->GetVar('LHOST');
+	my $port = $self->GetVar('LPORT');
 	my $badc = $self->BadChars || "\x00";
 	
 	my $scode = pack('N*', 
