@@ -18,15 +18,18 @@
 
 package Msf::Base;
 use strict;
-use Pex::Text;
 
 use FindBin qw {$Bin $RealBin $Script $RealScript};
+use File::Spec::Functions;
 
-#fixme Temporary hack
+# Load the core modules
 use Msf::Encoder;
 use Msf::Nop;
 use Msf::EncodedPayload;
-use File::Spec::Functions;
+use Msf::Socket::Tcp;
+use Msf::Socket::Udp;
+
+use Pex::Text;
 
 my $envDebug = 0;
 
