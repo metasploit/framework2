@@ -8,7 +8,6 @@ Pre-Release Tasks
  - Flush out Pex::x86
  - Add raw mode support to Pex::Socket (spoof)
  
-
  - Exchange exploit sucks, remove it or fix it
  - DCOM exploit needs to be fixed so it works on XP again!
  - DCOM exploit needs vulnerability check mode
@@ -21,7 +20,6 @@ Pre-Release Tasks
  - Make sure docs refer to shared config between all ui's
  - The Pex library needs documentation and API guides for standalone use 
 
- - Add nasm into cygwin environment
  - Include other tools in the cygwin envirnment (like what?)
 
  - Find a host for bugzilla 
