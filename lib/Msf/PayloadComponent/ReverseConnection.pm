@@ -10,7 +10,7 @@ my $info = {
   'UserOpts' =>
     {
       'LHOST'         =>  [1, 'ADDR', 'Local address to receive connection'],
-      'LPORT'         =>  [1, 'PORT', 'Local port to receive connection'],
+      'LPORT'         =>  [1, 'PORT', 'Local port to receive connection', 4321],
     },
 };
 

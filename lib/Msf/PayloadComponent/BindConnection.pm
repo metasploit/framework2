@@ -8,7 +8,7 @@ use IO::Socket::INET;
 my $info = {
   'UserOpts' =>
     {
-      'LPORT' => [1, 'PORT', 'Listening port for bind shell'],
+      'LPORT' => [1, 'PORT', 'Listening port for bind shell', 4444],
     },
 };
 
