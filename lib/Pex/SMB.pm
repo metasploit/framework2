@@ -1105,7 +1105,6 @@ sub SMBSessionSetupNTLM {
     if (! $self->DefaultDomain) {
         $self->DefaultDomain($grp);
     }
-        
     return $log_res;        
 }
 
