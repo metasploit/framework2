@@ -7,13 +7,13 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linx86_reverse_impurity;
+package Msf::Payload::linux_ia32_reverse_impurity;
 use strict;
 use base 'Msf::PayloadComponent::ReverseConnection';
 
 my $info =
 {
-  'Name'         => 'Linux Reverse Impurity Upload/Execute',
+  'Name'         => 'Linux IA32 Reverse Impurity Upload/Execute',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and download impurity module',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

@@ -7,14 +7,14 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linx86_adduser;
+package Msf::Payload::linux_ia32_adduser;
 use strict;
 use base 'Msf::PayloadComponent::NoConnection';
 use Pex::x86;
 
 my $info =
 {
-  'Name'         => 'Linux add user',
+  'Name'         => 'Linux IA32 Add User',
   'Version'      => '$Revision$',
   'Description'  => 'Create a new user with UID 0',
   'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>',

@@ -1,10 +1,10 @@
-package Msf::Payload::linx86_dN_reverse;
+package Msf::Payload::linux_ia32_dN_reverse;
 use strict;
 use base 'Msf::PayloadComponent::ReverseConnection';
 
 my $info =
 {
-  'Name'         => 'linx86_dN_reverse',
+  'Name'         => 'Linux IA32 dN Reverse',
   'Version'      => '0.1',
   'Description'  => 'Aegis server to connect back',
   'Authors'      => [ 'Your mom', ],

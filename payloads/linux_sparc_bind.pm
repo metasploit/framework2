@@ -7,14 +7,14 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linsparc_bind;
+package Msf::Payload::linux_sparc_bind;
 use base 'Msf::PayloadComponent::BindConnection';
 use strict;
 use Pex::SPARC;
 
 my $info =
 {
-  'Name'         => 'Linux Bind Shell',
+  'Name'         => 'Linux SPARC Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],

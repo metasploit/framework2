@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linx86_findsock;
+package Msf::Payload::linux_ia32_findsock;
 use strict;
 use base 'Msf::PayloadComponent::FindConnection';
 
@@ -17,7 +17,7 @@ my $advanced = {
 
 my $info =
 {
-  'Name'         => 'Linux SrcPort Findsock Shell',
+  'Name'         => 'Linux IA32 SrcPort Findsock Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Spawn a shell on the established connection',
   'Authors'      => [ 'LSD [Unknown License]', ],

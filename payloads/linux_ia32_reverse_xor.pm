@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::linx86_reverse_xor;
+package Msf::Payload::linux_ia32_reverse_xor;
 use strict;
 use base 'Msf::PayloadComponent::InlineEggPayload';
 sub _Load {
@@ -17,7 +17,7 @@ sub _Load {
 
 my $info =
 {
-  'Name'         => 'Linux Reverse Xor Shell',
+  'Name'         => 'Linux IA32 Reverse Xor Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn an encrypted shell',
   'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
