@@ -127,6 +127,34 @@ sub SetTempEnv {
   return($env);
 }
 
+sub GetSavedTempEnv {
+  my $self = shift;
+  my $envName = shift;
+  my $key = shift;
+  my $env = $self->_TempEnvs->{$envName};
+  return if(!defuned($env));
+  if(defined($key)) {
+    print "TempGet $key => " . $env->{$key} . "\n" if($envDebug);
+    return($env->{$key});
+  }
+  return($env);
+}
+
+sub SetSavedTempEnv {
+  my $self = shift;
+  my $envName = shift;
+  my @pairs = @_;
+
+  my $env = $self->_TempEnvs->{$envName};
+
+  for(my $i = 0; $i < @pairs; $i += 2) {
+    print "TempSet $pairs[$i] => " . $pairs[$i + 1] . "\n" if($envDebug);
+    $env->{$pairs[$i]} = $pairs[$i + 1];
+  }
+  return($env);
+}
+
+
 sub UnsetTempEnv {
   my $self = shift;
   my $key = shift;
@@ -276,6 +304,5 @@ sub FatalError {
   $self->PrintError;
   exit(1);
 }
-
 
 1;
