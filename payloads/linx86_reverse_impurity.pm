@@ -4,17 +4,17 @@ use base 'Msf::Payload';
 
 my $info =
 {
-    Name         => 'linx86reverse_imp',
-    Version      => '1.0',
-    Description  => 'Connect back to attacker and download impurity module',
-    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-    Arch         => [ 'x86' ],
-    Priv         => 0,
-    OS           => [ 'linux' ],
-    Multistage   => 0,
-    Type         => 'impurity_reverse',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'linx86reverse_imp',
+    'Version'      => '1.0',
+    'Description'  => 'Connect back to attacker and download impurity module',
+    'Author'       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 0,
+    'OS'           => [ 'linux' ],
+    'Multistage'   => 0,
+    'Type'         => 'impurity_reverse',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'LHOST' => [1, 'ADDR', 'Local address to receive connection'],
             'LPORT' => [1, 'PORT', 'Local port to receive connection'],

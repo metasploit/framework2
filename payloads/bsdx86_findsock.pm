@@ -4,17 +4,17 @@ use base 'Msf::Payload';
 
 my $info =
 {
-    Name         => 'bsdx86findsock',
-    Version      => '1.0',
-    Description  => 'Spawn a shell on the established connection',
-    Author       => 'LSD [Unknown License]',
-    Arch         => [ 'x86' ],
-    Priv         => 0,
-    OS           => [ 'bsd' ],
-    Multistage   => 0,
-    Type         => 'findsock_shell',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'bsdx86findsock',
+    'Version'      => '1.0',
+    'Description'  => 'Spawn a shell on the established connection',
+    'Author'       => 'LSD [Unknown License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 0,
+    'OS'           => [ 'bsd' ],
+    'Multistage'   => 0,
+    'Type'         => 'findsock_shell',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'CPORT' => [1, 'PORT', 'Local port used by exploit'],
         }

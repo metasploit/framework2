@@ -4,20 +4,20 @@ use base 'Msf::CommandPayload';
 
 my $info =
 {
-    Name         => 'cmd_generic',
-    Version      => '1.0',
-    Description  => 'Run a specific command on the remote system',
-    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-    Arch         => [  ],
-    Priv         => 0,
-    OS           => [ ],
-    Keys         => ['cmd'], 
-    UserOpts     =>
+    'Name'         => 'cmd_generic',
+    'Version'      => '1.0',
+    'Description'  => 'Run a specific command on the remote system',
+    'Author'       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+    'Arch'         => [  ],
+    'Priv'         => 0,
+    'OS'           => [ ],
+    'Keys'         => ['cmd'], 
+    'UserOpts'     =>
         {
             'CMD' => [1, 'DATA', 'The command to execute'],
         },
         
-    CommandPayload => "[>CMD<]",
+    'CommandPayload' => "[>CMD<]",
 };
 
 sub new {

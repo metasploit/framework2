@@ -5,19 +5,19 @@ use Pex::Utils;
 
 my $info =
 {
-    Name         => 'winadduser',
-    Version      => '1.0',
-    Description  => 'Create admin user X with pass X',
-    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-    Arch         => [ 'x86' ],
-    Priv         => 1,
-    OS           => [ 'win32' ],
-    Multistage   => 0,
-    Type         => 'none',
-    Size         => '',
-    UserOpts     => {  },
+    'Name'         => 'winadduser',
+    'Version'      => '1.0',
+    'Description'  => 'Create admin user X with pass X',
+    'Author'       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 1,
+    'OS'           => [ 'win32' ],
+    'Multistage'   => 0,
+    'Type'         => 'none',
+    'Size'         => '',
+    'UserOpts'     => {  },
     # win32 specific code
-    Win32Payload =>
+    'Win32Payload' =>
     {
         Offsets => { 'EXITFUNC' => [21, 'L'] },
         Payload =>

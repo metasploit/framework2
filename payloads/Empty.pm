@@ -4,14 +4,14 @@ use base 'Msf::Payload';
 
 my $info =
 {
-    Name         => 'Empty',
-    Version      => '$Revision$',
-    Description  => 'Empty payload (for testing)',
-    Authors      => [ 'spoonm <ninjatools [at] hush.com>', ],
-    Priv         => 0,
-    Multistage   => 0,
-    Type         => '',
-    Size         => '0',
+    'Name'         => 'Empty',
+    'Version'      => '$Revision$',
+    'Description'  => 'Empty payload (for testing)',
+    'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
+    'Priv'         => 0,
+    'Multistage'   => 0,
+    'Type'         => '',
+    'Size'         => '0',
 };
 
 sub new {

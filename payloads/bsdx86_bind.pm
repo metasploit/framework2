@@ -4,17 +4,17 @@ use base 'Msf::Payload';
 
 my $info =
 {
-    Name         => 'bsdx86bind',
-    Version      => '1.0',
-    Description  => 'Listen for connection and spawn a shell',
-    Author       => 'LSD [Unknown License]',
-    Arch         => [ 'x86' ],
-    Priv         => 0,
-    OS           => [ 'bsd' ],
-    Multistage   => 0,
-    Type         => 'bind_shell',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'bsdx86bind',
+    'Version'      => '1.0',
+    'Description'  => 'Listen for connection and spawn a shell',
+    'Author'       => 'LSD [Unknown License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 0,
+    'OS'           => [ 'bsd' ],
+    'Multistage'   => 0,
+    'Type'         => 'bind_shell',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'LPORT' => [1, 'PORT', 'Local port to receive connection'],
         }

@@ -4,17 +4,17 @@ use base 'Msf::Payload';
 
 my $info =
 {
-    Name         => 'solx86bind',
-    Version      => '1.0',
-    Description  => 'Listen for connection and spawn a shell',
-    Author       => 'bighawk [Unknown License]',
-    Arch         => [ 'x86' ],
-    Priv         => 0,
-    OS           => [ 'solaris' ],
-    Multistage   => 0,
-    Type         => 'bind_shell',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'solx86bind',
+    'Version'      => '1.0',
+    'Description'  => 'Listen for connection and spawn a shell',
+    'Author'       => 'bighawk [Unknown License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 0,
+    'OS'           => [ 'solaris' ],
+    'Multistage'   => 0,
+    'Type'         => 'bind_shell',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'LPORT' => [1, 'PORT', 'Listening port for bind shell'],
         }

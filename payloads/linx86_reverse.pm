@@ -4,17 +4,17 @@ use base 'Msf::Payload';
 
 my $info =
 {
-    Name         => 'linx86reverse',
-    Version      => '1.0',
-    Description  => 'Connect back to attacker and spawn a shell',
-    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
-    Arch         => [ 'x86' ],
-    Priv         => 0,
-    OS           => [ 'linux' ],
-    Multistage   => 0,
-    Type         => 'reverse_shell',
-    Size         => '',
-    UserOpts     =>
+    'Name'         => 'linx86reverse',
+    'Version'      => '1.0',
+    'Description'  => 'Connect back to attacker and spawn a shell',
+    'Author'       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
+    'Arch'         => [ 'x86' ],
+    'Priv'         => 0,
+    'OS'           => [ 'linux' ],
+    'Multistage'   => 0,
+    'Type'         => 'reverse_shell',
+    'Size'         => '',
+    'UserOpts'     =>
         {
             'LHOST' => [1, 'ADDR', 'Local address to receive connection'],
             'LPORT' => [1, 'PORT', 'Local port to receive connection'],
