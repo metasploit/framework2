@@ -16,13 +16,14 @@ my $ConfigDir;
 
 sub new {
     my $class = shift;
-    my $dir   = shift || do 
+    my $self  = bless {}, $class;
+    
+    $self->{'ConfigDir'} = shift || do
     {
-        $dir = exists($ENV{'HOME'})) ? $ENV{'HOME'} : $Bin;
-        $dir .= "/.msfconfig";
+        $self->{'ConfigDir'} = exists($ENV{'HOME'}) ? $ENV{'HOME'} : $Bin;
+        $self->{'ConfigDir'} .= "/.msfconfig";
     };
     
-    $self->{'ConfigDir'} = $dir;
     $self->LoadConfig;
     return $self;
 }
@@ -31,12 +32,12 @@ sub ConfigDir {
     my $self = shift;
     my $dir  = shift;
     
-    if (! -d $dir && mkdir(0700, $dir) && ! -d $dir)
+    if (! -d $dir && mkdir($dir, 0700) && ! -d $dir)
     {
         $self->PrintLine("Msf::Config: Could not access configuration directory '$dir' ($!)");
-        return FALSE;
+        return(0);
     }
-    return TRUE;
+    return(1);
 }
 
 sub LoadConfig {
@@ -50,7 +51,7 @@ sub LoadConfig {
     foreach (keys(%{$defaults})) { $conf->{'G'}->{$_} = $defaults->{$_} }  
     
     # Look for directory, try to create, make sure it exists
-    if (! -d $dir && mkdir(0700, $dir) && ! -d $dir)
+    if (! -d $dir && mkdir($dir, 0700) && ! -d $dir)
     {
         # Could not create config directory from one reason or another
         $self->PrintLine("Msf::Config: Could not access configuration directory '$dir' ($!)");
@@ -124,65 +125,21 @@ sub SaveConfig {
 }
 
 
-
-1;
-__DATA__
-sub PopulateConfig {
-  my $self = shift;
-  my $configFile = shift;
-  my ($globalEnv, $tempEnvs) = $self->ReadConfig($configFile);
-  $self->SetGlobalEnv(%{$self->MergeHash($globalEnv, $defaults)});
-
-  $self->SaveTempEnv('_Save');
-  $self->UnsetTempEnv;
-  foreach my $tempEnv (keys %{$tempEnvs}) {
-    $self->SetTempEnv(%{$tempEnvs->{$tempEnv}});
-    $self->SaveTempEnv($tempEnv);
-    $self->UnsetTempEnv;
-  }
-  $self->LoadTempEnv('_Save');
-  $self->DeleteTempEnv('_Save');
+sub AddrCacheAdd {
+    my $self = shift;
+    my $addr = shift;
+    $self->{'AddrCache'}->{$addr}++;
 }
 
-sub SaveConfig {
-  my $self = shift;
-  my $configFile = shift;
-  $self->WriteConfig($configFile, $self->GetEnv);
+sub AddrCacheDel {
+    my $self = shift;
+    my $addr = shift;
+    delete($self->{'AddrCache'}->{$addr});
 }
 
-sub ReadConfig {
-  my $self = shift;
-  my $configFile = shift;
-  my $globalEnv = { };
-  my $tempEnvs = { };
-  my $env = $globalEnv;
-  open(INFILE, "<$configFile") or return($globalEnv, $tempEnvs);
-  while(<INFILE>) {
-    s/\r//g;
-    chomp;
-    next if(/^\w*#/);
-    if(/^(.*?)=(.*)/) {
-      $env->{$1} = $2;
-    }
-    elsif(/^(.*?):/) {
-      $tempEnvs->{$1} = { };
-      $env = $tempEnvs->{$1};
-    }
-  }
-  close(INFILE);
-  return($globalEnv, $tempEnvs);
-}
-
-#fixme needs to be updated for temp envs
-sub WriteConfig {
-  my $self = shift;
-  my $configFile = shift;
-  my %config = @_;
-  open(OUTFILE, ">$configFile") or return;
-  foreach (keys(%config)) {
-    print OUTFILE "$_=$config{$_}\n";
-  }
-  close(OUTFILE);
+sub AddrCache {
+    my $self = shift;
+    return keys(%{$self->{'AddrCache'}});
 }
 
 1;
