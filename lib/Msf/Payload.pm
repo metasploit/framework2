@@ -26,6 +26,7 @@ my $defaults =
   'Append'      => '',
   'Prepend'     => '',
   'PrependEncoder'  => '',  
+  'BadChars'    => '',
 };
 
 sub new {
@@ -42,6 +43,7 @@ sub _Load {
 sub Type        { my $self = shift; return $self->_Info->{'Type'}; }
 sub Size        { my $self = shift; return $self->_Info->{'Size'}; }
 sub Multistage  { my $self = shift; return $self->_Info->{'Multistage'}; }
+sub BadChars    { my $self = shift; return $self->_Info->{'BadChars'}; }
 
 sub Loadable {
   my $self = shift;

@@ -42,6 +42,8 @@ my $exploitsIndex;
 my $payloadsIndex;
 my $encoders;
 my $nops;
+my $skey = 0;
+my $ubase;
 
 my $HTTP_OK =
     "HTTP/1.0 200 OK\r\n".
@@ -51,7 +53,7 @@ my $HTTP_OK =
 my ($x, $opt, $verbose, $cli);
 
 my %args = ();
-getopts("vha:h", \%args);
+getopts("vha:hr", \%args);
 
 if ($args{h}) { Usage() }
 if ($args{v}) { $verbose++ }
@@ -73,14 +75,40 @@ my $httpd = IO::Socket::INET->new
 
 print "[*] Starting Metasploit v$VERSION Web Interface on $host:$port...\n";
 
+
+# Only provides some level of protection when the following conditions are met:
+# 1. Access controls prevent a malicious user from obtaining the session key
+# 2. Hostile service responses are stripped from remote data
+
+# Go Go Ghetto PRNG!
+srand();
+for (1 .. (rand() * 128) + 128) {
+	$skey ^= ($skey * rand() * 0xffff) + $$;
+}
+
 $SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
 
-# XXX 
-if ($ui->GetEnv('Logging')) {
-	# print "[*] Logging is not available with the msfweb user interface\n";
-#    $ui->UnsetGlobalEnv('Logging');
-#    $ui->UnsetTempEnv('Logging');
+# Create the inital list of modules
+$exploitsIndex = $ui->LoadExploits;
+$payloadsIndex = $ui->LoadPayloads;
+$encoders = $ui->LoadEncoders;
+$nops     = $ui->LoadNops;
+
+foreach my $key (keys(%{$exploitsIndex})) {
+	$exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
 }
+
+foreach my $key (keys(%{$payloadsIndex})) {
+	$payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
+}
+
+$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+$ui->SetTempEnv('_Encoders', $encoders);
+$ui->SetTempEnv('_Nops', $nops);
+
+
+# XXX - figure out logging...
     
 while (1)
 {
@@ -94,45 +122,44 @@ while (1)
     # Parse the HTTP request
     my $state = HTTPRequest($cli);
     
+	# Generate the base URL
+	$ubase = "/msf".GenerateSID($cli->peeraddr)."/";
+	
     # Socket was closed
-    exit if ! defined($state);
+    exit(0) if ! defined($state);
     
     # Request was invalid
-    if ($state == -1)
-    {
+    if ($state == -1) {
         $cli->send($HTTP_OK."Request Failed");
         $cli->close();
         exit(0);
     }
 
     my $res;
-    
-    # Load up all our modules
-    $exploitsIndex = $ui->LoadExploits;
-    $payloadsIndex = $ui->LoadPayloads;
-    $encoders = $ui->LoadEncoders;
-    $nops     = $ui->LoadNops;
-
-    foreach my $key (keys(%{$exploitsIndex})) {
-        $exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
-    }
-    
-    foreach my $key (keys(%{$payloadsIndex})) {
-        $payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
-    }
-
-    $ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
-    $ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
-    $ui->SetTempEnv('_Encoders', $encoders);
-    $ui->SetTempEnv('_Nops', $nops);
-
-	# XXX
-#    $ui->UnsetGlobalEnv('Logging');
-#    $ui->UnsetTempEnv('Logging');
-
+	
+	# Reload all modules only when the -r option has been specified
+	if (exists($args{'r'})) {
+		$exploitsIndex = $ui->LoadExploits;
+		$payloadsIndex = $ui->LoadPayloads;
+		$encoders = $ui->LoadEncoders;
+		$nops     = $ui->LoadNops;
+		
+		foreach my $key (keys(%{$exploitsIndex})) {
+			$exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
+		}
+		
+		foreach my $key (keys(%{$payloadsIndex})) {
+			$payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
+		}
+		
+		$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+		$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+		$ui->SetTempEnv('_Encoders', $encoders);
+		$ui->SetTempEnv('_Nops', $nops);
+	}
+	
     my $logaction;
-    if ($state->{'MODULE'})
-    {
+    if ($state->{'MODULE'}) {
         my $mname = exists($exploits->{$state->{'MODULE'}}) 
                     ? $exploits->{$state->{'MODULE'}}->Name() : "Invalid Module";
 
@@ -161,23 +188,19 @@ while (1)
     $cli->send($HTTP_OK.$res);
     $cli->close();
     exit(0);
-  
 }
 
-sub Usage
-{
+sub Usage {
     print STDERR "Usage: $0 -a hostname:port [-v]\n";
     exit(0);
 }
 
-sub vprint
-{
+sub vprint {
     my ($msg) = @_;
     if ($verbose) { print $msg }
 }
 
-sub ProcessRequest
-{
+sub ProcessRequest {
     my ($cli, $state) = @_;
     my ($html, $body);
    
@@ -198,8 +221,7 @@ sub ProcessRequest
     return($html);
 }
 
-sub HTML_Header
-{
+sub HTML_Header {
     return qq
     [
     <html>
@@ -226,12 +248,11 @@ sub HTML_Header
     ];
 }
 
-sub HTML_Footer
-{
+sub HTML_Footer {
     return "
     <br>
     <center>
-        <a href='/'>Exploit Listing</a> |
+        <a href='$ubase'>Exploit Listing</a> |
         <a href='http://metasploit.com/'>Metasploit.com</a> |
         <a href='http://s1.amazon.com/exec/varzea/pay/T2FKAC37FCOAYS/103-6224645-8776633'>Donate!</a>
     </center>
@@ -239,9 +260,7 @@ sub HTML_Footer
     </html>";
 }
 
-
-sub URLEncode
-{
+sub URLEncode {
     my ($data) = @_;
     my $res;
     foreach (split(//, $data))  
@@ -249,13 +268,12 @@ sub URLEncode
     return $res;
 }
 
-sub StateToURL
-{
+sub StateToURL {
     my ($mode, $state) = @_;
     my (%tmp, $res);
-    
-    foreach (keys(%{$state})) 
-    {
+    $res = $ubase."?";
+	
+    foreach (keys(%{$state})) {
         next if $_ eq "client";
         
         my $value = $_ eq "MODE" ? $mode : $state->{$_};
@@ -264,13 +282,11 @@ sub StateToURL
     return $res;
 }
 
-sub StateToOptions
-{
+sub StateToOptions {
     my ($state) = @_;
     my $res = {};
     
-    foreach (keys(%{$state})) 
-    {
+    foreach (keys(%{$state})) {
         if (m/^OPT\_(.*)/ && defined($state->{$_})) { $res->{$1} = $state->{$_} }
     }
     return $res;
@@ -283,10 +299,9 @@ sub ExploitList
     $res .= "<table align='center' padding=6 border=0 cellspacing=0 width=750>\n";
     $res .= "<tr><td colspan=2 align='left'><b><h2>Metasploit v$VERSION Exploit Index</h2></b></td></tr>\n";
 
-    foreach my $x (sort(keys(%{$exploits})))
-    {
+    foreach my $x (sort(keys(%{$exploits}))) {
         $res .= "<tr><td> <li> </td><td>".
-                "<a href='/MODE=SUMMARY&MODULE=".
+                "<a href='".$ubase."MODE=SUMMARY&MODULE=".
                 URLEncode($x)."'>". 
                 $exploits->{$x}->Name. 
                 "</a></td></tr>\n";
@@ -302,8 +317,7 @@ sub ExploitSummary
     my $module = $state->{'MODULE'};
     my $res; 
     
-    if (! exists($exploits->{$module}))
-    {
+    if (! exists($exploits->{$module})) {
         return "<b>Invalid Module</b>";
     }
     
@@ -347,16 +361,14 @@ sub ExploitPayload
     my $module = $state->{'MODULE'};
     my $res; 
     
-    if (! exists($exploits->{$module}))
-    {
+    if (! exists($exploits->{$module})) {
         return "<b>Invalid Module</b>";
     }
 
     my $x = $exploits->{$module};
     my $matches = $ui->MatchPayloads($x, $payloads) if($x->Payload);
 
-    if (defined($x->Payload) )
-    {
+    if (defined($x->Payload) ) {
         $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
         
         foreach my $k (sort(keys(%{ $matches })))
@@ -378,8 +390,7 @@ sub ExploitOptions
     my $module = $state->{'MODULE'};
     my $res; 
     
-    if (! exists($exploits->{$module}))
-    {
+    if (! exists($exploits->{$module})) {
         return "<b>Invalid Module</b>";
     }
 
@@ -394,12 +405,10 @@ sub ExploitOptions
         return $res;
     }
  
-    $res .= "<form action='/' method='GET'>\n";
-    foreach (keys(%{$state}))
-    {
+    $res .= "<form action='$ubase' method='GET'>\n";
+    foreach (keys(%{$state})) {
         next if $_ eq 'client';
-        if ($_ ne "MODE")
-        {
+        if ($_ ne "MODE") {
             $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
         } else {
             $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
@@ -409,8 +418,7 @@ sub ExploitOptions
     my $mopts = $x->UserOpts();
     my $popts = defined($x->Payload) ? $p->UserOpts() : {};
 
-    foreach my $mopt (sort(keys(%{$mopts})))
-    {
+    foreach my $mopt (sort(keys(%{$mopts}))) {
         my $dflt = $mopts->{$mopt}->[3];
         my $reqd = $mopts->{$mopt}->[0] ? "Required" : "Optional";
         $res .= "<tr><td><b>$mopt</b></td>".
@@ -419,8 +427,7 @@ sub ExploitOptions
                 "<td>".$mopts->{$mopt}->[2]."</td></tr>\n";
     }
     
-    foreach my $popt (sort(keys(%{$popts})))
-    {
+    foreach my $popt (sort(keys(%{$popts}))) {
 
         my $dflt = $popts->{$popt}->[3];
         my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
@@ -433,12 +440,10 @@ sub ExploitOptions
                 "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
     
-    if (scalar($x->TargetsList))
-    {
+    if (scalar($x->TargetsList)) {
         my $tidx = 0;
         $res .= "<tr><td colspan=6><br><b>Available Targets:</b><blockquote>\n";
-        foreach my $tgt ($x->TargetsList)
-        {
+        foreach my $tgt ($x->TargetsList) {
             $res .= "<input type='radio' name='OPT_TARGET' value='$tidx'> $tgt<br>\n";
             $tidx++;
         }
@@ -486,13 +491,10 @@ sub ExploitExec
     $exploit->ApplyAutoOpts;
    
     
-    if ($state->{"ExploitAction"} eq "Vulnerability Check")
-    {
-        $res .= "\n<form action='/' method='GET'>\n";
-        foreach (keys(%{$state}))
-        {
-            if ($_ ne "MODE")
-            {
+    if ($state->{"ExploitAction"} eq "Vulnerability Check") {
+        $res .= "\n<form action='$ubase' method='GET'>\n";
+        foreach (keys(%{$state})) {
+            if ($_ ne "MODE")  {
                 $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
             } else {
                 $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
@@ -506,18 +508,15 @@ sub ExploitExec
         $res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
         return $res;
     }
-    
-    
     $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
     
-    if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
-    {
+    if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) ) {
         $res .=  "<tr><td>Payload must be selected first!</td></tr></table>\n";
         return $res;
     }
     
     
-    # we hijack the socket from the web service
+    # We hijack the socket from the web service
     my $cli = $state->{'client'};
     $cli->blocking(0);
     $cli->autoflush(1);
@@ -533,8 +532,6 @@ sub ExploitExec
     $Browser->Send("<b>Processing exploit request (".$exploit->Name.")...</b><br>\n");
     $Browser->Send("<b>Using payload: " . $payloadName . "<br>\n");
     $Browser->Send("<pre>\n");
-
-    $|++;
     
     $ui->SetTempEnv('_BrowserSocket', $cli);
     $ui->Exploit();
@@ -547,6 +544,7 @@ sub ExploitExec
     exit(0);
 }
 
+# Primitive HTTP request parser
 sub HTTPRequest {
     my $cli = shift;
     my $sel = IO::Select->new($cli);
@@ -555,6 +553,7 @@ sub HTTPRequest {
     
     $cli->blocking(0);
     
+	# Read the first 2048 bytes of the request
     my $max = time() + 5;
     while ($max > time() && $res !~ /\r\n/)
     {
@@ -567,21 +566,44 @@ sub HTTPRequest {
     }
     ($res) = split(/\n/, $res);
 
-    if ($res =~ m/^GET (.*) HTTP\/1\.[0|1]/) { $url = $1 }
-    else 
-    {
-        print $res;
-        return(-1);
+	# Extract the URI
+    if ($res =~ m/^GET\s+(.*)\s+HTTP\/1\.[01]/) { $url = $1 }
+    else {
+		print STDERR "Invalid request from ".$cli->peerhost()."\n";
+		return(-1);
     }
-
-    $url =~ s/^\///g;
+	
+	# Extract the session ID
+	my ($sid) = $url =~ m/^\/msf([^\/]+)\//;
+	my $vid = GenerateSID($cli->peeraddr);
+	
+	# Redirect the user if the SID does not match
+	if ($sid ne $vid) {
+		print STDERR "Invalid session ID ($sid != $vid)\n";
+		my $rdir =
+			"HTTP/1.0 302 Rejected\r\n".
+			"Location: /msf$vid/\r\n".
+			"\r\n";
+			
+		$cli->send($rdir);
+		$cli->close;
+		return undef;
+	}
+	
+	# Strip some things from the URI
+    $url =~ s/^\/+msf[^\/]+\///g;
     $url =~ s/^\?//g;
+	
+	# Convert URI encoding to hex encoding
     $url =~ s/\+/%20/g;
+	
+	# Remove some hostile bits from the request
     $url =~ s/\x00|\x0A|\x0D//g;
 
+		
+	# Break the invidual variables into chunks
     my @chunks = split(/&/, $url);
-    foreach my $chunk (@chunks)
-    {
+    foreach my $chunk (@chunks) {
         my ($var, $val) = split(/=/, $chunk);
         $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
         $state->{$var} = $val;
@@ -600,4 +622,9 @@ sub HTTPRequest {
     }
     
     return $state;
+}
+
+sub GenerateSID {
+	my $data = shift;
+	return unpack("H*", pack('N', $skey) ^ $data);
 }

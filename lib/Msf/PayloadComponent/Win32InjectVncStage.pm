@@ -126,14 +126,16 @@ sub VNCProxy {
           $cli->recv($data, 8192);
           last LOOPER if (! length($data));     
           last LOOPER if(!$srv || !$srv->connected);
-          $srv->send($data);
+          eval { $srv->send($data); };
+          last LOOPER if $@;
         }
         elsif($ready == $srv) {
           my $data;
           $srv->recv($data, 8192);
           last LOOPER if(!length($data));
           last LOOPER if(!$cli || !$cli->connected);
-          $cli->send($data);
+          eval { $cli->send($data); };
+          last LOOPER if $@;
         }
       }
     }

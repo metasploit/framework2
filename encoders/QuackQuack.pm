@@ -34,6 +34,12 @@ sub new {
     return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
+sub Loadable {
+    my $self = shift;
+    return(0) if ! $self->GetLocal('DebugPPC');
+    return 1;
+}
+
 sub EncodePayload {
     my $self     = shift;
     my $payload  = shift;

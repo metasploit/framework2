@@ -61,8 +61,8 @@ sub HandleConnection {
   sleep(2);
 
   $self->PrintLine('[*] Uploading file (' . length($upload) . '), Please wait...');
-  $sock->send(pack('V', length($upload)));
-  $sock->send($upload);
+  eval { $sock->send(pack('V', length($upload))); };
+  eval { $sock->send($upload); };
   $self->PrintLine('[*] Executing uploaded file...');
 
   $sock->blocking($blocking);

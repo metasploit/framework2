@@ -221,7 +221,7 @@ CHECK:
     }
     
     if($exploit->Priv < $payload->Priv) {
-      $self->PrintDebugLine(3, $payload->SelfEndName . " failed, payload needs more priviledge than exploit provides");
+      $self->PrintDebugLine(3, $payload->SelfEndName . " failed, payload needs more privilege than exploit provides");
       next CHECK;
     }
 
@@ -291,6 +291,9 @@ sub Encode {
       next;
     }
 
+    # Allow the payload to adapt to the restricted character set    
+    $payload->BadChars($badChars);
+ 
     my $rawShell = $exploit->PayloadPrepend . $payload->Build . $exploit->PayloadAppend;
     my $encodedShell = $encoder->Encode($rawShell, $badChars);
 

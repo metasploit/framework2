@@ -64,8 +64,8 @@ LOOPER:
         $data = $self->SendFilter($data);
         
         last LOOPER if(!$sockOut || !$sockOut->connected);
-        
-        $sockOut->send($data);
+        eval { $sockOut->send($data); };
+        last LOOPER if $@;
       }
       elsif($ready == $sockIn) {
         my $data;

@@ -195,6 +195,8 @@ sub HandleConnection {
 
 	$self->PrintLine('[*] Uploading dll to memory (' . length($upload) . '), Please wait...');
 	$sock->blocking(1);
-	$sock->send(pack('V', length($upload)));
-	$sock->send($upload);
+	eval { $sock->send(pack('V', length($upload))); };
+	eval { $sock->send($upload); };
 }
+
+1;

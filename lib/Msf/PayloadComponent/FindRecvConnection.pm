@@ -40,13 +40,13 @@ sub ChildHandler {
 
 #  print Pex::Text::BufferC($tag);
 
-  $ready[0]->send($tag);
+  eval { $ready[0]->send($tag); };
 #  $ready[0]->send('msf!');
   sleep(1);
 
   my @ready = $selector->can_write(.5);
   goto DONE if(!@ready || !$ready[0]->connected);
-  $ready[0]->send("echo ABCDE \r\n");
+  eval { $ready[0]->send("echo ABCDE \r\n"); };
 
   @ready = $selector->can_read(.5);
 

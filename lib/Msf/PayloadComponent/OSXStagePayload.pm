@@ -1,4 +1,4 @@
-package Msf::PayloadComponent::SolarisStagePayload;
+package Msf::PayloadComponent::OSXStagePayload;
 use strict;
 use vars qw{@ISA};
 
@@ -11,9 +11,9 @@ sub _Import {
   }
 }
 
-sub SolarisStagePayload {
+sub OSXStagePayload {
   my $self = shift;
-  return($self->_Info->{'SolarisStagePayload'});
+  return($self->_Info->{'OSXStagePayload'});
   
 }
 
@@ -24,7 +24,7 @@ sub HandleConnection {
   my $blocking = $sock->blocking;
   $sock->blocking(1);
 
-  my $payload = $self->BuildSolaris($self->SolarisStagePayload);
+  my $payload = $self->BuildOSX($self->OSXStagePayload);
   $self->PrintLine('[*] Sending Stage (' . length($payload) . ' bytes)');
   eval { $sock->send($payload); };
   

@@ -51,7 +51,10 @@ sub PrintLine {
     # If we are exploit mode, write output to browser
     if (my $s = $self->GetEnv('_BrowserSocket')) {
     	if ($s->connected) {
-	        $s->send("$msg\n");
+	        eval { $s->send("$msg\n"); };
+			if ($@) {
+				print STDERR "Writing message to closed socket: $!\n";
+			}
         }
         return;
     }

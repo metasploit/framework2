@@ -27,8 +27,8 @@ sub CheckHandler {
     $sock2 = $ready[0]->accept();
     $self->PrintLine('[*] Recieved second connection.');
 
-    $sock1->send("echo foo;\n");
-    $sock2->send("echo foo;\n");
+    eval { $sock1->send("echo foo;\n"); };
+    eval { $sock2->send("echo foo;\n"); };
 
     # avoid a race condition with the select call and cases where both
     # sockets have data.

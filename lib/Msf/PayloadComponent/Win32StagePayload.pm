@@ -26,7 +26,7 @@ sub HandleConnection {
   my $payload = $self->BuildWin32($self->Win32StagePayload);
 
   $self->PrintLine('[*] Sending Stage (' . length($payload) . ' bytes)');
-  $sock->send($payload);
+  eval { $sock->send($payload); };
   $self->PrintDebugLine(3, '[*] Stage Sent.');
 
   $sock->blocking($blocking);

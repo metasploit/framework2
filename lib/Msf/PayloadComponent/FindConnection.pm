@@ -33,7 +33,7 @@ sub ChildHandler {
 
   goto DONE if(!@ready || !$ready[0]->connected);
 
-  $ready[0]->send("echo ABCDE\r\n");
+  eval { $ready[0]->send("echo ABCDE\r\n"); };
 
   @ready = $selector->can_read(0.5);
 

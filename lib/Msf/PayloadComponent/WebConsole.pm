@@ -36,7 +36,8 @@ sub _HandleConsole {
 
   # Get handle to browser
   my $brow = $self->GetVar('_BrowserSocket');
-
+  my $bs = Pex::Socket::Tcp->new_from_socket($brow);
+  
   # Create listener socket
   my $sock = IO::Socket::INET->new(
     'Proto'     => 'tcp',
@@ -46,17 +47,17 @@ sub _HandleConsole {
   );  
   
   if (! $sock) {
-    $brow->send("WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!\n");
-    return;
+	  $bs->Send("WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!\n");
+	  return;
   }
   
   # Display listener link to browser
   my $addr = Pex::Utils::SourceIP($brow->peerhost);
   
-  $brow->send(
-    "[*] Proxy shell started on ".
-    "<a href='telnet://$addr:".$sock->sockport."'>".
-    "$addr:".$sock->sockport."</a>\n"
+  $bs->Send(
+	"[*] Proxy shell started on ".
+	"<a href='telnet://$addr:".$sock->sockport."'>".
+	"$addr:".$sock->sockport."</a>\n"
   );
 
   # Accept connection from user
@@ -71,19 +72,20 @@ sub _HandleConsole {
   }
   
   if (! $csock) {
-    $brow->send("[*] Shutting down proxy shell due to timeout\n");
-    return;
+	  $bs->Send("[*] Shutting down proxy shell due to timeout\n");
+	  return;
   }
+  
+  my $cs = Pex::Socket::Tcp->new_from_socket($csock);
 
-  $brow->send("[*] Connection to proxy shell from ".$csock->peerhost.":".$csock->peerport."\n");
-  $csock->send("\r\nMetasploit Web Interface Shell Proxy\r\n\r\n");
-
+  $bs->Send("[*] Connection to proxy shell from ".$csock->peerhost.":".$csock->peerport."\n");
+  $cs->Send("\r\nMetasploit Web Interface Shell Proxy\r\n\r\n");
+  
+  
   # Map connected socket to ConsoleIn, ConsoleOut
   $self->{'WebShell'} = $csock;  
-  
-  $brow->send("</body></html>\n");
-  $brow->shutdown(2);
-  $brow->close;
+  $bs->Send("</body></html>\n");
+  $bs->Close;
 
   # Call upwards to TextConsole's _HandleConsole
   $self->SUPER::_HandleConsole;

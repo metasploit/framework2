@@ -58,7 +58,7 @@ sub HandleConnection {
   close(PROG);
 
   $self->PrintLine('[*] Sending InlineEgg payload (' . length($payload) . ' bytes)');
-  $sock->send($payload);
+  eval { $sock->send($payload); };
   $self->PrintDebugLine(3, '[*] Payload Sent.');
 
   $sock->blocking($blocking);
