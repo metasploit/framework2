@@ -28,7 +28,7 @@ BEGIN
         Net::SSLeay->import();
         Net::SSLeay::load_error_strings();
         Net::SSLeay::SSLeay_add_ssl_algorithms();
-        Net::SSLeay::randomize(time() + $$);
+        Net::SSLeay::randomize();
         $SSL_SUPPORT++;
     }
 }
