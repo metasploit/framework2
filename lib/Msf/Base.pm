@@ -348,7 +348,7 @@ sub PrintDebugLine {
   if(defined($self->_OverridePrintDebugLine)) {
     return(&{$self->_OverridePrintDebugLine}($self, $level, @_));
   }
-  $self->PrintLine(@_) if($self->DebugLevel >= $level);
+  $self->PrintDebug(@_, "\n") if($self->DebugLevel >= $level);
 }
 
 sub Error {
