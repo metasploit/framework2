@@ -49,15 +49,13 @@ if (! exists($opt->{'PAYLOAD'}) || ! exists($payloads->{$opt->{'PAYLOAD'}}))
     DisplayHeader("Available Payloads");
     DisplayPayloads();
     DisplayFooter();
-
+    exit(0);
 }
 
 
 my $sel = $opt->{'PAYLOAD'};
 my $p = $payloads->{$sel};
-my $popts = { };
-
-if (defined($p)) { $popts = $p->UserOpts } else { print "!!!!!: $sel<br>\n" }
+my $popts = $p->UserOpts;
 
 if (! $action)
 {   
@@ -114,7 +112,7 @@ if ($action eq "BUILD")
     my $optstr;
     foreach (keys(%{$popts})) 
     {
-        if(defined($opt->{$_}))
+        if(defined($opt->{$_}) && length($opt->{$_}))
         {
             $optstr.= " $_=".$opt->{$_};
         }
@@ -191,7 +189,6 @@ sub DisplayFooter {
 
 sub DisplayPayloads {
 
-    
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     foreach my $p (sort(keys(%{$payloads})))
     {
