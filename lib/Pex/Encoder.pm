@@ -30,7 +30,7 @@ my $encoders = {
   'x86' => { 
     'DWord Xor' => {
       'Dispatcher'  => \&DWordXorDispatcher,
-      'JmpCall'     => ['Variable length 26/29 byte Jmp/Call encoder', \&XorDecoderDwordCall],
+      'JmpCall'     => ['Variable length 26/29 byte Jmp/Call encoder', \&XorDecoderDwordJmpCall],
       'Fnstenv Sub' => ['Variable length 26/29 byte Fnstenv encoder', \&XorDecoderDwordFnstenvSub],
       'Fnstenv Mov' => ['Variable Length 23/25 byte Fnstenv encoder', \&XorDecoderDwordFnstenvMov],
     },
@@ -348,7 +348,7 @@ sub XorDecoderDwordAntiIds {
 
 # Variable Length Decoder Using jmp/call 26/29 bytes.
 # Uses smaller encoder if payload is <= 512 bytes
-sub XorDecoderDwordCall {
+sub XorDecoderDwordJmpCall {
   my $xor = shift;
   my $len = shift;
   my $xorkey = pack('L', $xor);
