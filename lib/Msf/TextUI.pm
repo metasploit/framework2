@@ -150,8 +150,15 @@ sub DumpExploitSummary {
     $output .= "Payload Information:\n";
     $output .= "    Space: " . $exploit->PayloadSpace . "\n";
     $output .= "    Avoid: " . length($exploit->PayloadBadChars) . " characters\n";
-    $output .= "  " . ($exploit->PayloadKeysType eq 'or' ? '|' : '&');
+    $output .= "   " . ($exploit->PayloadKeysType eq 'or' ? '|' : '&');
     $output .= " Keys: " . join(' ', @{$exploit->PayloadKeysParsed}) . "\n\n";
+    $output .= "Nop Information:\n";
+    $output .= " SaveRegs: " . join(' ', @{$exploit->NopSaveRegs}) . "\n";
+    $output .= "   " . ($exploit->NopKeysType eq 'or' ? '|' : '&');
+    $output .= " Keys: " . join(' ', @{$exploit->NopKeysParsed}) . "\n\n";
+    $output .= "Encoder Information:\n";
+    $output .= "   " . ($exploit->EncoderKeysType eq 'or' ? '|' : '&');
+    $output .= " Keys: " . join(' ', @{$exploit->EncoderKeysParsed}) . "\n\n";
   }
 
   my $desc = $self->WordWrap($exploit->Description, 4, 66);
