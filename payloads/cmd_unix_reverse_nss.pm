@@ -32,6 +32,8 @@ sub new {
   my $hash = @_ ? shift : { };
   $hash = $class->MergeHashRec($hash, {'Info' => $info});
   my $self = $class->SUPER::new($hash, @_);
+  # lego my keygo
+  $self->_Info->{'Keys'} = $info->{'Keys'};
   return($self);
 }
 
