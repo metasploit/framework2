@@ -32,7 +32,7 @@ sub new {
   select(STDOUT); $|++;
   
   # create a new empty printline buffer
-  $self->SetTempEnv('PrintLine', [ ]);
+  $self->SetTempEnv('_PrintLineBuffer', [ ]);
   $self->_OverridePrintLine(\&PrintLine);
   
   return($self);
@@ -56,9 +56,9 @@ sub PrintLine {
         return;
     }
     
-    my @buffer = @{$self->GetEnv('PrintLine')};
+    my @buffer = @{$self->GetEnv('_PrintLineBuffer')};
     push @buffer, $msg;
-    $self->SetTempEnv('PrintLine', \@buffer);
+    $self->SetTempEnv('_PrintLineBuffer', \@buffer);
     return(1);
 }
 
@@ -75,8 +75,8 @@ sub PrintError {
 
 sub DumpLines {
     my $self = shift;
-    my @res  = @{$self->GetEnv('PrintLine')};
-    $self->SetTempEnv('PrintLine', [ ]);
+    my @res  = @{$self->GetEnv('_PrintLineBuffer')};
+    $self->SetTempEnv('_PrintLineBuffer', [ ]);
     return \@res;
 }
 
