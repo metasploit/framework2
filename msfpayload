@@ -80,7 +80,7 @@ if (! $action || $action =~ /^S/)
     print "\n";
     print "        Name: $sel\n";
     print "     Version: " . $p->Version . "\n";
-    print "     Authors: " . join(" ", $p->Authors) . "\n";
+    print "     Authors: " . join(" ", @{$p->Authors}) . "\n";
     print "Architecture: " . join(" ", @{$p->Arch}) . "\n";
     print "  Privileged: " . ($p->Priv ? "Yes" : "No") . "\n";
     print "Supported OS: " . join(" ", @{$p->OS()}) . "\n";
