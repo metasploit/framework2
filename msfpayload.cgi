@@ -264,7 +264,13 @@ sub DisplayPayloads {
     {
         my $pos = $payloads->{$p}->OS;
         my $par = $payloads->{$p}->Arch;
-        if (ref($pos) ne 'ARRAY' || scalar(@{$pos}) > 1) {
+        if ( ref($pos) ne 'ARRAY' || 
+             scalar(@{$pos}) > 1  || 
+             scalar(@{$pos}) == 0 || 
+             ref($pae) ne 'ARRAY' || 
+             scalar(@{$par}) > 1  ||
+             scalar(@{$par}) == 0 || 
+           ) {
             $ost->{'other'}->{'generic'}->{$p}++;
         } else {
             $ost->{$pos->[0]}->{$par->[0]}->{$p}++;
@@ -275,8 +281,7 @@ sub DisplayPayloads {
             print "<tr><td>\n";
             print "[$proc/$arch]<br><blockquote>\n";
             foreach my $pay (keys(%{$ost->{$arch}->{$proc}})) {
-                my $x = $ost->{$arch}->{$proc}->{$pay};
-                print "$x\n";
+                print "<a href='".$ENV{'SCRIPT_NAME'}."?PAYLOAD=$pay'>$pay</a><br>\n";
             }
             print "</blockquote>\n";
             print "</td></tr>\n";
