@@ -29,6 +29,10 @@ sub CheckHandler {
 
     $sock1->send("echo foo;\n");
     $sock2->send("echo foo;\n");
+
+    # avoid a race condition with the select call and cases where both
+    # sockets have data.
+    select(undef, undef, undef, 0.5);
     
     my $selector = IO::Select->new($sock1, $sock2);
     @ready = $selector->can_read(2);
@@ -40,13 +44,21 @@ sub CheckHandler {
     my $data;
     $ready[0]->recv($data, 4096);
 
-    if ($data =~ /foo/ && $ready[0] eq $sock1) 
+    if ($data =~ /foo/ && $data !~ /echo foo/ && $ready[0] eq $sock1) 
     {
       $self->SocketIn($sock1);
       $self->SocketOut($sock2);
     } else {
       $self->SocketIn($sock2);
       $self->SocketOut($sock1);
+    }
+    
+    # flush any pending data on both sockets, this is
+    # mostly for cosmetic reasons...
+    for ($sock1, $sock2) {
+        $_->blocking(0);
+        $_->autoflush(1);
+        while ($_->recv($data, 4096)) { }
     }
 
     return(1);
