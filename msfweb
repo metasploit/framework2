@@ -16,19 +16,21 @@
 
 require 5.6.0;
 
-$VERSION = "2.0";
-
 use strict;
 use FindBin qw{$Bin};
 use lib "$Bin/lib";
-use Msf::HandlerWEB;
+use Msf::HandlerWeb;
 use Msf::WebUI;
 
 use POSIX;
 use IO::Socket;
 use Getopt::Std;
+use HTTP::Daemon;
+use HTTP::Status;
 
 Msf::UI::ActiveStateSucks();
+
+my $VERSION = "2.0";
 
 my $ui = Msf::WebUI->new($Bin);
 
@@ -84,6 +86,18 @@ while (1)
     $encoders = $ui->LoadEncoders;
     $nops     = $ui->LoadNops;
 
+    foreach my $key (keys(%{$exploitsIndex})) {
+        $exploits->{$exploitsIndex->{$key}->Name} = $exploitsIndex->{$key};
+    }
+    
+    foreach my $key (keys(%{$payloadsIndex})) {
+        $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
+    }
+
+    $ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+    $ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+    $ui->SetTempEnv('_Encoders', $encoders);
+    $ui->SetTempEnv('_Nops', $nops);
 
 
     while (my $req = $cli->get_request)
@@ -126,8 +140,8 @@ while (1)
                    "<font color='white'><b>Module: $mname</b></font></td></tr></table><br>\n";
         }
 
-
-        $ui->SetGlobalEnv('ClientSocket') = $cli;
+        
+        $state->{'client'} = $cli;
         $res .= ProcessRequest($cli, $state, $out);
 
         $out->code(RC_OK);
@@ -265,7 +279,7 @@ sub ExploitSummary
     
     my $x = $exploits->{$module};
     
-    my $desc = $x->Desc();
+    my $desc = $x->Description();
     $desc =~ s/\</\&lt;/g;
     $desc =~ s/\>/\&gt;/g;
     
@@ -312,7 +326,7 @@ sub ExploitPayload
             my $u = StateToURL('OPTIONS', $state);
             my $pname = $payloads->{$k}->Name();
             $res .= "<tr><td><a href='".$u."PAYLOAD=" . $pname . "'>$pname</a></td>";
-            $res .= "<td>" .$payloads->{$k}->Desc() . "</td></tr>\n";
+            $res .= "<td>" .$payloads->{$k}->Description() . "</td></tr>\n";
         }
         $res .= "</table>\n";
     } else {
@@ -405,16 +419,34 @@ sub ExploitExec
     my ($state) = @_;
     my $module = $state->{'MODULE'};
     my $res; 
+    my $exploit = $exploits->{$module};
     
-    if (! exists($exploits->{$module}))
+    if (! $exploit)
     {
         return "<b>Invalid Module</b>";
     }
 
-    my $x = $exploits->{$module};
-    my $p = $payloads->{$state->{'PAYLOAD'}};
-    
     my $o = StateToOptions($state);
+    foreach my $k (keys(%{ $o }))
+    {
+        $ui->SetTempEnv($k, $o->{$k});
+    }
+    
+    $ui->SetTempEnv('PAYLOAD', $state->{'PAYLOAD'});
+    
+    my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
+
+    my $payloadName = $ui->GetTempEnv('PAYLOAD');
+    my $payload = $validPayloads->{$payloadName};
+
+    # Mmmmm, candy
+    $ui->SetTempEnv('_Exploits', $exploits);
+    $ui->SetTempEnv('_Payloads', $payloads);
+    $ui->SetTempEnv('_Exploit', $exploit);
+    $ui->SetTempEnv('_PayloadName', $payloadName);
+    $ui->SetTempEnv('_Payload', $payload);
+    $ui->SetTempEnv('_ValidPayloads', $validPayloads);
+   
     
     if ($state->{"ExploitAction"} eq "Vulnerability Check")
     {
@@ -427,18 +459,20 @@ sub ExploitExec
             } else {
                 $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
             }
-        }   
+        }
+
         $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit'>\n";
         $res .= "</form>\n";
         $res .= "<hr><br><br>\n";
-        $res .= "<b>Check Results</b>: " . $x->Check($o) . "<br>\n";
+        $res .= "<br><b>Check Results:</b> " . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "<br>\n";
+        $res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
         return $res;
     }
     
     
     $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
-        
-    if (defined($x->Payload) && ! $state->{"PAYLOAD"})
+    
+    if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
     {
         $res .=  "<tr><td>Payload must be selected first!</td></tr></table>\n";
         return $res;
@@ -451,145 +485,21 @@ sub ExploitExec
     $cli->send("HTTP/1.1 200 OK\r\nConnection: Close\r\nContent-type: text/html\r\n\r\n");
     $cli->send(HTML_Header());
     
-    $cli->send("<b>Processing exploit request (".$x->Name.")...</b><br>\n");
-    
-  
-    my $p = $state->{'PAYLOAD'};
-
-    if ($x->Payload && ! $p)
-    {
-        print STDERR "msfconsole: exploit: a payload must be specified first: 'set payload <payloadname>'\n";
-        return;
-    }
-    
-    if ($x->Payload && ! exists($payloads->{$p}))
-    {
-        print STDERR "msfconsole: exploit: invalid payload specified: $p\n";
-        return;
-    }
-    
-    $p = $payloads->{$p};
-
-
-    # validate exploit module options
-    if (! $x->Validate($o) )
-    {
-        $cli->send("msfweb: exploit option: " . $x->Error() . "\n");
-        exit(0);
-    }
-    
-    # validate payload module options
-    if ($x->Payload)
-    {
-        # validate payload options
-        if (! $p->Validate($o))
-        {
-            $cli->send("msfweb: payload option: " . $p->Error() . "\n");
-            exit(0);  
-        }
-    }
-    
-    # process any AutoOpts set by the exploit module
-    # this allows certain exploits to provide default
-    # configuration options to payloads
-    foreach my $k (keys(%{$x->AutoOpts}))
-    {
-        if (! exists($o->{$k}))
-        {
-            $o->{$k} = $x->AutoOpts->{$k};
-        } 
-    }
-    
-    # generate the shellcode from the payload
-    if ($x->Payload)
-    {
-        my $shellcode = Pex::Encoder::Encode($x, $p, $o);
-        if (! $shellcode)
-        {
-            $cli->send("msfweb: exploit: error creating shellcode: " . $p->Error() . "\n");
-            exit(0);
-        }
-
-        if (length($shellcode) != $x->PayloadSpace)
-        {
-            $cli->send("msfweb: exploit: error creating shellcode: wrong length!\n");
-            exit(0);
-        }
-
-        # set the payload
-        $o->{"SHELLCODE"} = $shellcode;
-    }
-
-    $o->{"HCALLBACK"} = sub {  };
-    $o->{"OUTPUT"} = $state->{'client'};
-
-
-    # map standard i/o to the client socket
-
+    $cli->send("<b>Processing exploit request (".$exploit->Name.")...</b><br>\n");
+    $cli->send("<b>Using payload: " . $payloadName . "<br>\n");
     Pex::Unblock($cli);
     
     $cli->send("<pre>\n");
     open(STDOUT, ">&=" . fileno($cli));
     open(STDERR, ">&=" . fileno($cli));
 
-
-    $| = 1;    
+    $|++;
     
-    my $handler = Pex::HandlerWeb->new();
-    my ($phand, $chand, $phcode, $chcode);
-    if ($p && $handler->can($p->Type))
-    {
-        $phand = $p->Type;
-        $chand = $phand . "_exp";
-        
-        # create the link between the child and parent processes
-        if ($handler->can($phand) && $handler->can($chand))
-        {
-            my ($csock, $psock);
-            $o->{'HANDLER'} = $handler;
-            $o->{'HCFUNC'}  = $chand;
-            
-            print STDERR "msfweb: creating link between child and parent process\n";
-            
-            socketpair($o->{'HCSOCK'}, $o->{'HPSOCK'},  AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
-            || die "msfweb: exploit: socketpair: $!";
-        }
-        
-    }
-
-    my $child = fork();
-    if ($child)
-    {
-        if ($x->Payload)
-        {
-            if ($phand)
-            {
-                $o->{'BROWSER'} = $cli;
-                $cli->send("<b>msfweb: starting handler $phand...</b><br>\n");
-                my $res = $handler->$phand($p, $o, $child);
-                $cli->send("<b>msfweb: handler $phand is finished...</b>\n");
-                kill('TERM', $child);
-
-                if (! $res)
-                {
-                    $cli->send("<b>msfweb: handler errror ". $handler->Error() ."</b>\n");
-                    kill('TERM', $child);
-                }
-
-            } else {
-                $cli->send("<b>msfweb: no handler for type ". $p->Type() ."</b>\n");
-            }
-        }
-        
-        while (waitpid($child, WNOHANG) == 0) { sleep(1) }
-        
-    } else {
-        select(undef, undef, undef, 0.5);
-        $x->setPrint(\&webPrint);
-        $x->Exploit($o); 
-        exit(0);
-    }
+    $ui->SetTempEnv("BROWSER", $cli);
+    $ui->Exploit();
     
+    $cli->send(join("<br>\n", @{$ui->DumpLines}));
+
     $cli->send("\n</pre><br>");
     
     $cli->send(HTML_Footer());
@@ -598,18 +508,6 @@ sub ExploitExec
     exit(0);
 }
 
-
-sub HandlerCallback
-{
-    # print STDERR "CALLBACK: " . join(" | ", @_) . "\n";
-}
-
-sub webPrint
-{
-    my $self = shift;
-    $| = 1;
-    $cli->send(join('', @_, '<br>'));
-}
 
 package MSFWeb;
 use base "HTTP::Daemon";

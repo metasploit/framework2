@@ -26,7 +26,7 @@ use strict;
 
 sub shell_proxy
 {
-    my ($self, $shell) = @_;
+    my ($self, $pump, @args) = @_;
     my $b = $self->GetVar('BROWSER');
     
     my $s = IO::Socket::INET->new (
@@ -38,19 +38,18 @@ sub shell_proxy
     );
 
     # the findsock handler passes a non-socket as the shell
-    if ($shell->can("sockhost"))
+    if ($args[0]->can("sockhost"))
     {
         $b->send("[*] Processing connection: " . 
-                 $shell->sockhost . ":" . $shell->sockport . " -- " .
-                 $shell->peerhost . ":" . $shell->peerport . "\n");
+                 $args[0]->sockhost . ":" . $args[0]->sockport . " -- " .
+                 $args[0]->peerhost . ":" . $args[0]->peerport . "\n");
     }
     
     $b->send("[*] Proxy shell started on port ". $s->sockport ."\n");
     $b->send("[*] Please click <a href='telnet://" . Pex::InternetIP() .":".$s->sockport."'>here</a>.<br>\n");
 
     my $proxy = fork(); 
-    return ($proxy, $s) if $proxy;
-    
+    return $proxy if $proxy;
 
     $SIG{"TERM"} = sub { exit(0) };
     $SIG{"INT"}  = sub { exit(0) };
@@ -70,19 +69,43 @@ sub shell_proxy
 
             $victim->send("[*] Welcome to the Shell Proxy :)\n");
             
-            if ($shell->can("sockhost"))
+            if ($args[0]->can("sockhost"))
             {
-                $victim->send("[*] Connected to " . $shell->peerhost . ":" . $shell->peerport . "\n\n");
+                $victim->send("[*] Connected to " . $args[0]->peerhost . ":" . $args[0]->peerport . "\n\n");
             }
-            
-            $self->DataPump($shell, $victim, sub { });
-            
+            $self->SUPER->$pump($victim, @args);
             $victim->send("[*] Exiting Shell Proxy...\n");
             $victim->close();
             undef($victim);
-            exit(0);
+            exit(0);            
         }
     }
 }
 
+
+# Overload the DataPumps to replace the console with the telnet connection
+
+sub DataPumpSplit
+{
+    my $self = shift;
+    my $cons = shift;
+    my $proxy = $self->shell_proxy('DataPumpSplit', @_);
+    waitpid($proxy, 0);
+}
+
+sub DataPumpXor
+{
+    my $self = shift;
+    my $cons = shift;    
+    my $proxy = $self->shell_proxy('DataPumpXor', @_);
+    waitpid($proxy, 0);
+}
+
+sub DataPump
+{    
+    my $self = shift;
+    my $cons = shift;    
+    my $proxy = $self->shell_proxy('DataPump', @_);
+    waitpid($proxy, 0); 
+}
 1;

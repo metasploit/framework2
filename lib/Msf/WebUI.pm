@@ -29,115 +29,35 @@ sub new {
   # configure STDERR/STDERR for text display
   select(STDERR); $|++;
   select(STDOUT); $|++;
+  
+  # create a new empty printline buffer
+  $self->{'PrintLine'} = [ ];
+  
   return($self);
 }
 
 
-
-
-# ===
-sub Summary {
-  my $self = shift;
-  my $exploit = $self->GetTempEnv('_Exploit');
-  print $self->DumpExploitSummary($exploit) . "\n";
+# We overload the UI::PrintLine call so that we can
+# buffer exploit output and display as needed
+sub PrintLine {
+    my $self = shift;
+    my $msg = shift;
+    
+    # If we are exploit mode, write output to browser
+    if (my $s = $self->GetEnv('BROWSER'))
+    {
+        $s->send($msg, "\n");
+        return;
+    }
+    
+    push @{$self->{'PrintLine'}}, $msg;
 }
 
-sub Payloads {
-  my $self = shift;
-  my $exploit = $self->GetTempEnv('_Exploit');
-  my $payloads = $self->GetTempEnv('_Payloads');
-
-  if (!$exploit->Payload) {
-    $self->PrintLine('[*] This exploit does not use payloads.');
-    return;
-  }
-
-  my $match = $self->MatchPayloads($exploit, $payloads);
-
-  $self->PrintLine;
-  $self->PrintLine('Metasploit Framework Usable Payloads');
-  $self->PrintLine('====================================');
-  $self->PrintLine;
-  print $self->DumpPayloads(2, $match) . "\n";
-}
-
-sub Options {
-  my $self = shift;
-  my $exploit = $self->GetTempEnv('_Exploit');
-  my $payload = $self->GetTempEnv('_Payload');
-  my $payloadName = $self->GetTempEnv('_PayloadName');
-
-  if($exploit->Payload && defined($payloadName) && !$payload) {
-    $self->PrintLine("[*] Invalid payload specified: $payloadName");
-    return;
-  }
-  
-  $self->PrintLine; 
-  if ($payloadName)
-  {
-    $self->PrintLine('Exploit and Payload Options');
-    $self->PrintLine('===========================');
-  } else {
-    $self->PrintLine('Exploit Options');
-    $self->PrintLine('===============');
-  }
-  
-  
-  $self->PrintLine;
-  print $self->DumpOptions(2, 'Exploit', $exploit);
-  print $self->DumpOptions(2, 'Payload', $payload) if($payloadName);
-  $self->PrintLine;
-  $self->PrintLine;
-}
-
-sub AdvancedOptions {
-  my $self = shift;
-  my $exploit = $self->GetTempEnv('_Exploit');
-  my $payload = $self->GetTempEnv('_Payload');
-  my $payloadName = $self->GetTempEnv('_PayloadName');
-
-  if($exploit->Payload && defined($payloadName) && !$payload) {
-    $self->PrintLine("[*] Invalid payload specified: $payloadName");
-    return;
-  }
-  
-  $self->PrintLine; 
-  if ($payloadName)
-  {
-    $self->PrintLine('Exploit and Payload Options');
-    $self->PrintLine('===========================');
-  } else {
-    $self->PrintLine('Exploit Options');
-    $self->PrintLine('===============');
-  }
-  
-  
-  $self->PrintLine;
-  print $self->DumpAdvancedOptions(2, 'Exploit', $exploit);
-  print $self->DumpAdvancedOptions(2, 'Payload', $payload) if($payloadName);
-  $self->PrintLine;
-  $self->PrintLine;
-}
-
-sub Targets {
-  my $self = shift;
-  my $exploit = $self->GetTempEnv('_Exploit');
-
-  my @targets = $exploit->TargetsList;
-  if(!@targets) {
-    $self->PrintLine('[*] This exploit does not define any targets.');
-    return;
-  }
-
-  $self->PrintLine;
-  $self->PrintLine('Supported Exploit Targets');
-  $self->PrintLine('=========================');
-  $self->PrintLine;
-  for(my $i = 0; $i < scalar(@targets); $i++)
-  {
-    $self->PrintLine(sprintf("  %d  $targets[$i]", $i));
-  }
-  $self->PrintLine;
+sub DumpLines {
+    my $self = shift;
+    my $res  = $self->{'PrintLine'};
+    $self->{'PrintLine'} = [ ];
+    return $res;
 }
 
 
@@ -202,7 +122,7 @@ sub Exploit {
     $self->SetTempEnv('EncodedPayload', $encodedPayload);
   }
 
-  my $handler = Msf::HandlerCLI->new();
+  my $handler = Msf::HandlerWeb->new();
   
   my ($pHandler, $cHandler);
   if($payload && $handler->can($payload->Type)) {
