@@ -1,4 +1,4 @@
-NASM=nasm
+ASM=nasm
 STAGERS=stager_sock_bind stager_sock_bind_udp stager_sock_bind_icmp \
         stager_egghunt stager_sock_find stager_sock_reverse \
         stager_sock_reverse_icmp stager_sock_reverse_udp \
