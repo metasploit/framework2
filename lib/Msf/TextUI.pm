@@ -137,7 +137,6 @@ sub DumpExploitSummary {
   $output .= $self->DumpOptions(4, 'Exploit', $exploit);
 
   if ($exploit->Payload) {
-    $output .= "\n";
     $output .= "Payload Information:\n";
     $output .= "    Space: " . $exploit->PayloadSpace . "\n";
     $output .= "    Avoid: " . scalar(split(//, $exploit->PayloadBadChars)) . " characters\n";
