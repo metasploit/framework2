@@ -169,15 +169,18 @@ CHECK:
       next CHECK if(!scalar(grep { $_ eq $arch } @{$payload->Arch}));
     }
 
-    # So for keys, we want to make sure none of the keys in exploit
-    # are in payload.
+    # If the exploit has a any keys set, we need to make sure that the
+    # matched payload also has the same keys. This allows us to create
+    # specific payloads for wierd exploit scenarios (for instance, where
+    # the process doesn't have a valid heap
+
     foreach my $key (@{$exploit->Keys}) {
-      next CHECK if(scalar(grep { $_ eq $key } @{$payload->Keys}));
+      next CHECK if ! (scalar(grep { $_ eq $key } @{$payload->Keys}));
     }
     
     next if($exploit->Priv < $payload->Priv);
 
-#fixme Eventually we should also factor in the Encoder Size, even though we will catch it in Encode
+    #fixme Eventually we should also factor in the Encoder Size, even though we will catch it in Encode
     next if($exploit->Payload->{'Size'} < $payload->Size);
 
     $match->{$payloadName} = $payloads->{$payloadName};
@@ -225,6 +228,7 @@ sub MakeEncoder {
 
     return($encoder);
 }
+
 sub MakeNop {
     my $self = shift;
     # Even though there is already a entry in default in Msf::Config
@@ -233,79 +237,5 @@ sub MakeNop {
     my $nop = $name->new(@_);
     return($nop);
 }
-
-1;
-__DATA__
-
-sub PatternCreate
-{
-    my ($length) = @_;
-    my ($X, $Y, $Z);
-    my $res;
-
-    while (1)
-    {
-        for my $X ("A" .. "Z") { for my $Y ("a" .. "z") { for my $Z (0 .. 9) {
-           $res .= $X;
-           return $res if length($res) >= $length;
-
-           $res .= $Y;
-           return $res if length($res) >= $length;
-
-           $res .= $Z;
-           return $res if length($res) >= $length;
-        }}}
-    }
-}
-
-sub PatternOffset
-{
-       my ($pattern, $address) = @_;
-       my @results;
-       my ($idx, $lst) = (0,0);
-
-       $address = pack("L", eval($address));
-       $idx = index($pattern, $address, $lst);
-
-       while ($idx > 0)
-       {
-            push @results, $idx;
-            $lst = $idx + 1;
-            $idx = index($pattern, $address, $lst);
-       }
-       return @results;
-}
-
-sub Unblock {
-    my $fd = shift || return;
-    
-    # Using the "can" method $fd->can() does not work
-    # when dealing with subclasses of IO::Handle :(
-    if (ref($fd) =~ /Socket|GLOB/)
-    {
-        $fd->blocking  (0);
-        $fd->autoflush (1);
-    }
-    
-    if ($^O ne "MSWin32")
-    {
-        my $flags = fcntl($fd, F_GETFL,0);
-        fcntl($fd, F_SETFL, $flags|O_NONBLOCK);
-    }
-}
-
-
-# Create a UDP socket to a random internet host and use it to 
-# determine our local IP address, without actually sending data
-sub InternetIP {
-    my $res = "127.0.0.1";
-    my $s = IO::Socket::INET->new(PeerAddr => '4.3.2.1', PeerPort => 53, Proto => "udp") 
-    || return $res;    
-    $res = $s->sockhost;   
-    $s->close();
-    undef($s);
-    return $res;
-}
-
 
 1;

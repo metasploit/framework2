@@ -34,6 +34,9 @@ use IO::Socket;
 use Getopt::Std;
 
 
+# XXX - UI class needs to be written for this, everything will be broke
+# until the UI is fixed.
+
 $VERSION = "2.0";
 
 my $exploits = Pex::LoadExploits("$Bin/exp");
@@ -290,7 +293,7 @@ sub ExploitPayload
     }
 
     my $x = $exploits->{$module};
-    my $matches = Pex::MatchPayloads($x, $payloads);
+    my $matches = $ui->MatchPayloads($x, $payloads);
 
     if (defined($x->Payload) )
     {

@@ -727,7 +727,7 @@ sub xLogEntry
     return scalar(localtime()) . " '$info' $msg\n";
 }
 
-sub xValidPayloads { return Pex::MatchPayloads(shift, $payloads) }
+sub xValidPayloads { return $ui->MatchPayloads(shift, $payloads) }
 
 sub xCheckSystemCommand
 {
