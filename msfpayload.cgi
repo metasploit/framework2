@@ -123,7 +123,7 @@ if ($action eq "BUILD")
     print "<pre>\n";
     
     print "unsigned char scode[] =\n$sC\n\n\n";
-    print "my $shellcode =\n$sP\n\n\n";
+    print "my \$shellcode =\n$sP\n\n\n";
 
     DisplayFooter();
     exit(0);
