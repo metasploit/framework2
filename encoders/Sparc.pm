@@ -37,8 +37,8 @@ sub EncodePayload {
     my $payload  = shift;
     my $badchars = shift;
 
-    my $xor_key   = Pex::Encoder::XorDwordFeedback($payload, $badchars);
-    my $xor_data  = Pex::Encoder::XorDword($xor_key, $payload);
+    my $xor_key   = Pex::Encoder::KeyScanXorDwordFeedback($payload, $badchars);
+    my $xor_data  = Pex::Encoder::XorDwordFeedback($xor_key, $payload);
 
     my $encoder = 
         "\x20\xbf\xff\xff".   # /* bn,a  _start - 4 */
