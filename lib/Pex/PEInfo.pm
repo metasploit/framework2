@@ -125,6 +125,74 @@ sub ImageBase {
     return $self->{'OPT_IMG_HDR'}->{'ImageBase'};
 }
 
+sub Imports {
+    my $self = shift;
+    return $self->{'IMPORT'};
+}
+
+sub Import {
+    my $self = shift;
+    my $name = shift;
+    return {} if ! exists($self->{'IMPORT'}->{$name});
+    return $self->{'IMPORT'}->{$name};
+}
+
+sub IAT {
+    my $self = shift;
+    my $func = shift;
+    
+    foreach my $dll (keys(%{ $self->{'IMPORT'} })) {
+        foreach my $proc (keys(%{ $self->{'IMPORT'}->{$dll} })) {
+            if (lc($func) eq lc($func)) {
+                return $self->{'IMPORT'}->{$dll}->{$proc}->{'iat_res'};
+            }
+        }
+    }
+}
+
+sub Exports {
+    my $self = shift;
+    return $self->{'EXPORT'};
+}
+
+sub ExportAddress {
+    my $self = shift;
+    my $name = shift;
+    return if ! exists($self->{'EXPORT'}->{'funcs'}->{$name});
+    return $self->{'EXPORT'}->{'funcs'}->{$name}->{'add'};
+}
+
+sub ExportOrdinal {
+    my $self = shift;
+    my $name = shift;
+    return if ! exists($self->{'EXPORT'}->{'funcs'}->{$name});
+    return $self->{'EXPORT'}->{'funcs'}->{$name}->{'ord'};
+}
+
+sub ExportOrdinalLookup {
+    my $self = shift;
+    my $ord  = shift;
+    return if ! defined($self->{'EXPORT'}->{'ordinals'}->[$ord]);
+    return $self->{'EXPORT'}->{'ordinals'}->[$ord];
+}
+
+sub Resources {
+    my $self = shift;
+    return $self->{'RESOURCE'};
+}
+
+sub VersionStrings {
+    my $self = shift;
+    return $self->{'VERSION'};
+}
+
+sub VersionString {
+    my $self = shift;
+    my $name = shift;
+    return if ! exists($self->{'VERSION'}->{$name});
+    return $self->{'VERSION'}->{$name};
+}
+
 sub LoadImage {
     my ($self, $fn) = @_;
     my $data;   
@@ -442,6 +510,7 @@ sub _LoadExport {
         
         if (! exists($etable->{$ord_str})) {
 
+            # Process forwarders
             my $forwarder = unpack('Z*', substr($data, $self->_RV2O($ord_table[$idx]), 512));
             if ($forwarder =~ /^\w+\.\w+$/) {
                 $ord_str = $forwarder;
@@ -648,6 +717,8 @@ sub _LoadVersionData {
     my $sinf_size = $sinf_wlen - ($sinf_xpad - $vinf_xpad );
     
     my $sfi = $self->_ParseStringTableArray($vblock, $vblock_rva, $sinf_xpad, $sinf_size);
+    $sfi->{'FixedFileVersion'} = $versionFile;
+    $sfi->{'FixedProdVersion'} = $versionProd;
     
     $self->{'VERSION'} = $sfi;
     
