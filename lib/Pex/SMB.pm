@@ -194,6 +194,7 @@ $STSMB->Set
     'process_id'    => $$,
     'user_id'       => 0,
     'multiplex_id'  => 0,
+    'request'       => '',
 );
 
 # Protocol Negotiation Header
@@ -358,8 +359,8 @@ sub SMBSessionRequest {
       
     my $data = "\x20".$self->NBName($name)."\x00".
                "\x20".$self->NBRedir."\x00";
+    
     my $ask = $STSession->copy;
-
     $ask->Set('type' => 0x81, 'request' => $data);  
     
     $sock->Send($ask->Fetch);
@@ -449,7 +450,13 @@ sub SMBNegotiateClear {
 
     my $smb_res = $STSMB->copy;
     $smb_res->Fill($ses_res->Get('request'));
-
+    
+    print "Session: " .length($ses_res->Get('request')) . " | " . $smb_res->Length."\n";
+    print "length: ". length($smb_res->{'LeftOver'})."\n";
+    print "length: ". length($smb_res->Get('request'))."\n";
+    print Pex::Utils::BufferPerl($smb_res->{'LeftOver'})."\n";
+    
+ 
     if ($smb_res->Get('error_class') != 0) {
         $self->SetError('Negotiate returned NT status '.$smb_res->Get('error_class'));
         return;
@@ -462,12 +469,15 @@ sub SMBNegotiateClear {
 
     # XXX - use leftover vs request because SetSize doesn't work right here...
     my $neg_res = $STNegRes->copy;
+<<<<<<< SMB.pm
+    $neg_res->Fill($smb_res->{'LeftOver'});
+   
+=======
     $neg_res->Fill($smb_res->LeftOver);
+>>>>>>> 1.8
     
-    
-    print Pex::Utils::BufferPerl($smb_res->Get('request'))."\n";
-
-    print Pex::Utils::BufferPerl($neg_res->Get('enc_key'))."\n";
+    print "length: ". length($smb_res->{'LeftOver'})."\n";
+    print "Word Count: " .$neg_res->Get('word_count')."\n";
 
 
     return $smb_res;
