@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::OSX::ppc::ShellStage';
 
 my $info =
 {
-	'Name'        => 'Mac OS X Staged Bind Shell',
+	'Name'        => 'Mac OS X PPC Staged Bind Shell',
 	'Version'     => '$Revision$',
 	'Description' => 'Listen on a port for a connection and spawn a shell as a stage',
 };

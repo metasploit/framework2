@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::OSX::ppc::ShellStage';
 
 my $info =
 {
-	'Name'        => 'Mac OS X Staged Reverse Shell',
+	'Name'        => 'Mac OS X PPC Staged Reverse Shell',
 	'Version'     => '$Revision$',
 	'Description' => 'Connect back on a port and spawn a shell as a stage',
 };

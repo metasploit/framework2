@@ -13,7 +13,7 @@ use base 'Msf::PayloadComponent::BindConnection';
 
 my $info =
 {
-  'Name'         => 'Mac OS X Bind Shell',
+  'Name'         => 'Mac OS X PPC Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
