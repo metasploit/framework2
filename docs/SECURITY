@@ -5,7 +5,7 @@ msfdev@metasploit.com.
 
 [security tips]
 
-	- We recommend that you use a robust, secure terminal emulator when
+    - We recommend that you use a robust, secure terminal emulator when
     utilizing the command-line interfaces. Please see the references at the
     bottom of this document for more information.
     
