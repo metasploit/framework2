@@ -55,7 +55,7 @@ my $state = {'Mode' => 'Main'};
 
 my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
 $console->tabCompletion(\&xTabCompletion);
-$console->_useEnv(undef);
+#$console->_useEnv(undef);
 
 # virtual command table
 my %virtualCmds = ();
