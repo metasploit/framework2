@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::solsparc_find;
+package Msf::Payload::solsparc_findsock;
 use strict;
 use base 'Msf::PayloadComponent::SolarisShellStage';
 sub load {
