@@ -2,9 +2,6 @@
 ; 
 ;        Name: stager_sock_reverse
 ;   Qualities: Can Have Nulls
-;   Platforms: BSD
-;     Authors: skape <mmiller [at] hick.org>
-;     Authors: vlad902 <vlad902 [at] gmail.com>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -18,6 +15,19 @@
 ;
 ;        File descriptor in edi.
 ;
+; Meta-Information:
+;
+; meta-shortname=BSD Reverse TCP Stager
+; meta-description=Connect back to the framework and run a second stage
+; meta-authors=skape <mmiller [at] hick.org>, vlad902 <vlad902 [at] gmail.com>
+; meta-os=bsd
+; meta-arch=ia32
+; meta-category=stager
+; meta-connection-type=reverse
+; meta-name=reverse_tcp
+; meta-basemod=Msf::PayloadComponent::ReverseConnection
+; meta-offset-lhost=0x0a
+; meta-offset-lport=0x13
 ;;
 BITS   32
 GLOBAL main

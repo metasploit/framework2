@@ -2,9 +2,6 @@
 ; 
 ;        Name: stager_sock_bind
 ;   Qualities: Can Have Nulls
-;   Platforms: BSD
-;     Authors: skape <mmiller [at] hick.org>
-;     Authors: vlad902 <vlad902 [at] gmail.com>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -16,6 +13,18 @@
 ;
 ;        Implementation of a BSD portbind TCP stager.
 ;
+; Meta-Information:
+;
+; meta-shortname=BSD Bind TCP Stager
+; meta-description=Listen on a port for a connection and run a second stage
+; meta-authors=skape <mmiller [at] hick.org>, vlad902 <vlad902 [at] gmail.com>
+; meta-os=bsd
+; meta-arch=ia32
+; meta-category=stager
+; meta-connection-type=bind
+; meta-name=bind_tcp
+; meta-basemod=Msf::PayloadComponent::BindConnection
+; meta-offset-lport=0x8
 ;;
 BITS   32
 GLOBAL main

@@ -2,7 +2,6 @@
 ; 
 ;        Name: stager_sock_find
 ;   Qualities: Nothing Special
-;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -16,6 +15,18 @@
 ;
 ;        File descriptor in edi
 ;
+; Meta-Information:
+;
+; meta-shortname=BSD FindTag Stager
+; meta-description=Run a second stage from an established connection
+; meta-authors=skape <mmiller [at] hick.org>
+; meta-os=bsd
+; meta-arch=ia32
+; meta-category=stager
+; meta-connection-type=findtag
+; meta-name=find
+; meta-basemod=Msf::PayloadComponent::FindConnection
+; meta-offset-findtag=0x1b
 ;;
 BITS   32
 GLOBAL main

@@ -2,9 +2,6 @@
 ; 
 ;        Name: stager_sock_bind
 ;   Qualities: Can Have Nulls
-;   Platforms: BSDi
-;     Authors: skape <mmiller [at] hick.org>
-;              optyx <optyx [at] uberhax0r.net>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -17,6 +14,19 @@
 ;        Implementation of a BSDi portbind TCP stager.
 ;
 ;        File descriptor in edi.
+;
+; Meta-Information:
+;
+; meta-shortname=BSDi Bind TCP Stager
+; meta-description=Listen on a port for a connection and run a second stage
+; meta-authors=skape <mmiller [at] hick.org>, optyx <optyx [at] uberhax0r.net>
+; meta-os=bsdi
+; meta-arch=ia32
+; meta-category=stager
+; meta-connection-type=bind
+; meta-name=bind_tcp
+; meta-basemod=Msf::PayloadComponent::BindConnection
+; meta-offset-lport=0x1d
 ;
 ;;
 BITS   32
