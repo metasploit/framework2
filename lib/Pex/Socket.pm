@@ -482,7 +482,11 @@ sub ConnectProxies {
         'Proto'     => 'tcp',
         'ReuseAddr' => 1, 
     );
-    return undef if ! $sock;
+    if (! $sock || ! $sock->connected)
+    {
+        $self->SetError("Proxy server type $base->[0] at $base->[1] failed connection: $!");
+        return;
+    }
     
     my $lastproxy = $base;
     foreach my $proxy (@proxies)  
