@@ -200,6 +200,7 @@ sub address {
   $length = 1 if(!$length);
   my $index = $pe->VirtualToOffset($address);
   my $found = substr($data, $index, $length);
+  return if(length($found) == 0);
   printf("0x%.8x   %s\n", $address, hexOutput($found));
 }
 
