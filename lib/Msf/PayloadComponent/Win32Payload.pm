@@ -56,6 +56,7 @@ sub Size {
     my $self = shift;
     my $size = 0;
     $size += length($self->{'Win32Payload'}->{'Payload'});
+    $size++; # take into account the prepended clear direction instruction
     $self->PrintDebugLine(3, "Win32Payload: returning Size of $size");
     return $size;
 }
@@ -90,6 +91,8 @@ sub Build {
         $self->PrintDebugLine(3, "Win32Payload: exitfunc: $exit_offset -> $exit_hash ($exit_func)");
     }
 
+    # temporary hack to ensure that direction bit is not set
+    $generated = "\xfc".$generated;
     return $generated;
 }
 
