@@ -43,6 +43,13 @@ sub HandleConnection {
   $self->SUPER::HandleConnection;
   sleep(1);
 
+
+  if (! $sock->connected) {
+    $self->PrintLine("[*] Connection closed before password could be sent");
+    $self->KillChild;
+    return;
+  }
+
   my $pass = substr($self->GetVar('VNCPASS'), 0, 8);
   $pass   .= "\x00" x (8-length($pass));
 
