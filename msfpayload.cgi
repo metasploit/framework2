@@ -89,6 +89,8 @@ if (! $p)
 }
 
 $p = $ui->ModuleName($p)->new;
+$p = $p->SelfName->new;
+
 $ui->SetTempEnv('_Exploit', $exploits->{'Tester'});
 $ui->SetTempEnv('_PayloadName', $sel);
 $ui->SetTempEnv('_Payload', $p);
