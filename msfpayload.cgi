@@ -103,11 +103,11 @@ if (! $action)
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     PrintRow("Name",            Encode($sel));
     PrintRow("Version",         $p->Version);
-    PrintRow("Authors",         Encode(join(" ", @{$p->Authors})));
-    PrintRow("Architecture",    join(" ", @{$p->Arch}));
+    PrintRow("Authors",         Encode(join(", ", @{$p->Authors})));
+    PrintRow("Architecture",    join(", ", @{$p->Arch}));
     PrintRow("Privileged",      ($p->Priv ? "Yes" : "No"));
     PrintRow("Multistage",      ($p->Multistage ? "Yes" : "No"));
-    PrintRow("Supported OS",    join(" ", @{$p->OS()}));
+    PrintRow("Supported OS",    join(", ", @{$p->OS()}));
     PrintRow("Total Size",      $p->Size);
 
     if (scalar(keys(%{$p->UserOpts})))
