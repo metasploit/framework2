@@ -73,7 +73,7 @@ sub EncodePayload {
     $encoderType .= 'Nocompress';
   }
 
-  $self->PrintLine("Trying $encoderType");
+  $self->PrintDebugLine(5, "Trying $encoderType");
   my $decoder = $self->_Encode($rawshell, $encoderType, $type);
   return if(!defined($decoder));
 
