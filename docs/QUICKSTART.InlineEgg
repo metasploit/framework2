@@ -1,0 +1,12 @@
+Follow these steps to install the InlineEgg payloads.
+
+1) Extract the "inlineegg.py" script from the InlineEgg-1.02.tar.gz archive
+    # cd inlineegg
+    # tar -zxf InlineEgg-1.02.tar.gz
+    
+2) Place this module into the system python path (/usr/lib/python2.x)
+    # cp InlineEgg-1.02/inlineegg.py /usr/lib/python2.2
+    
+3) Copy the payloads from the inlineegg directory to the "/pay/ext" subdirectory.
+    # cp -a *.py ../pay/ext/
+

@@ -1,0 +1,1316 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfconsole
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Purpose: Console shell for launching exploits
+#      Version: $Revision$
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use strict;
+
+use FindBin qw{$Bin};
+use vars qw($VERSION);
+use IO::Socket;
+use POSIX;
+
+$VERSION = "2.0";
+
+use lib "$Bin/lib";
+
+use Pex::PsuedoShell;
+use Msf::HandlerConsole;
+use Msf::TextUI;
+
+
+my $ui = Msf::TextUI->new($Bin);
+
+$SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
+
+my $exploitsIndex;
+my $payloadsIndex;
+my $encoders;
+my $nops;
+my $exploits;
+my $payloads;
+
+# For many reasons (modules setup stuff on new), internal variables
+# keeping state between exploit attempts, etc, we want new instances
+# of everything, so we will call load before anything that uses a
+# module, and we will let the Load functions do the module instantiation
+# this is also good if they add/remove a module the directories 
+Load();
+
+my $statetbl = {"MODE" => "Main"};
+
+my $console = Pex::PsuedoShell->new();
+$console->_prompt("msf > ");
+$console->tabCompletion(\&xTabCompletion);
+
+# virtual command table
+my %vcmds = ();
+
+# I know the sub thing is ugly, but I did it to make clear what functions
+# are calling Load(), because this could bring up some very hard to find bugs
+# and cause some really bizarre issues depending on all sorts of factors
+# **** Make sure to call Load if the function uses any module (exploit, payload, etc) *****
+
+# global command tables
+my %gcmds =
+(
+    'version'   => [\&gVersion,              "Show console version"],
+    'help'      => [\&gHelp,                 "Show the main console help"],
+    '?'         => [\&gHelp,                 "Show the main console help"],
+    'quit'      => [\&gExit,                 "Exit the console"],
+    'exit'      => [\&gExit,                 "Exit the console"],
+    'cenv'      => [\&gCenv,                 "Clear the console environment"],
+    'back'      => [\&gBack,                 "Drop back to the main menu"],
+    'exec',     => [\&gExec,                 "Execute an external command"],
+    'show'      => [sub{Load(); gShow(@_);}, "Display exploits, payloads, or config"],
+    'use'       => [sub{Load(); gUse(@_);},  "Select an exploit by name"],
+    'info'      => [sub{Load(); gInfo(@_);}, "Display detailed exploit or payload information"],
+    'set'       => [\&gNop,                  "Set a console environment variable"],
+    'unset'     => [\&gUnset,                "Remove a console environment variable"],
+    'cd'        => [\&gChdir,                "Change working directory"],
+    'procname'  => [\&gPname,                "Changes the process name shown in ps"],
+    'save'      => [\&gSave,                 "Save configuration to disk"],
+    'load'      => [\&gLoad,                 "Load configuration from disk"],
+    'logging'   => [\&gLogging,              "Enable or disable logging"],
+    'confdir'   => [\&gConfdir,              "Set configuration and log dir"],
+    
+);
+
+
+# main mode commands
+my %mcmds =
+(
+    'reload'    => [sub{Load();},              "Reload exploits and payloads"],
+    'show'      => [sub{Load(); mShow(@_);},   "Show available exploits and payloads"],
+);
+
+# exploit mode commands
+my %ecmds = 
+(
+    'show'      => [sub{Load(); eShow(@_);},        "Show options, payloads, or targets"],
+    'check'     => [sub{Load(); eCheck(@_);},       "Perform vulnerability check"],
+    'exploit'   => [sub{Load(); eExploit(@_);},     "Launch the actual exploit"],
+);
+
+
+# load saved configuration
+gLoad();
+
+$statetbl->{'LocalAddress'} = Pex::InternetIP();
+xAddAddressCache($statetbl->{'LocalAddress'});
+
+# print initialization message
+printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n", 
+       $VERSION, 
+       scalar(keys(%{$exploits})),
+       scalar(keys(%{$payloads}))
+);
+
+while (1)
+{
+    %vcmds = %gcmds;
+    
+    my $state = $statetbl->{'MODE'};
+    
+    if ($state eq "Main")    { foreach (keys(%mcmds)){ $vcmds{$_} = $mcmds{$_} } }
+    if ($state eq "Exploit") { foreach (keys(%ecmds)){ $vcmds{$_} = $ecmds{$_} } }
+    
+    my ($cmd, @args) = $console->readCommand();
+
+    if (exists($vcmds{$cmd})){ $vcmds{$cmd}->[0]($cmd, @args) } else { gUnknown($cmd, @args) } 
+}
+
+sub Load {
+  $exploitsIndex = $ui->LoadExploits;
+  $payloadsIndex = $ui->LoadPayloads;
+  $encoders      = $ui->LoadEncoders;
+  $nops          = $ui->LoadNops;
+  
+  $exploits = { };
+  $payloads = { };
+  
+  # Generate exploits index
+  # Payloads are now indexed by the shortened package name instead of package name
+  # exploitsIndex also relates this package name to the full package name
+  my $i = 0;
+  foreach my $key (sort(keys(%{$exploitsIndex})))
+  {
+    my $name = $key;
+    $name =~ s/(.*):://g; # Remove package prefix
+    $exploits->{$name} = $exploitsIndex->{$key};
+    $exploitsIndex->{$name} = $key;
+  }
+  
+  # Generate payloads index
+  # Payloads are now indexed by Name instead of package name
+  foreach my $key (keys(%{$payloadsIndex})) {
+    $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
+  }
+}
+
+
+sub gVersion { print "msfconsole version $VERSION\n" }
+
+sub gCenv { $console->_env( { } ) }
+
+sub gUnset
+{
+    my ($cmd, @args) = @_;
+    my $e = $console->_env();
+    delete($e->{$args[0]});
+    $console->_env($e);
+}
+
+sub gExit { exit(0) }
+
+sub gPname 
+{
+    my ($cmd, @args) = @_;
+    $0 = scalar(@args) ? join(" ", @args) : "vi";
+} 
+
+sub gUnknown 
+{
+    my ($cmd, @args) = @_;
+    
+    if (! xCheckSystemCommand($cmd)) 
+    {
+        xMsg($cmd, "command not found");
+    } else {
+        system($cmd, @args);
+    }
+}
+
+sub gHelp
+{
+    my ($cmd, @args) = @_;
+    
+    print "\nMetasploit Framework " .$statetbl->{'MODE'}  . " Console Help\n";
+    print   "======================================\n\n";
+    foreach my $topic (sort(keys(%vcmds)))
+    {
+        print "\t" . $topic . (" " x (15 - length($topic))) . $vcmds{$topic}->[1] . "\n";
+    }
+    print "\n";
+}
+
+sub gLogging 
+{
+    my ($cmd, @args) = @_;
+    my $c = $statetbl->{'CONF'};
+    
+    if (! scalar(@args))
+    {
+        my $status = $c->{'LOGGING'} ? "enabled" : "disabled";
+        xMsg("logging", "logging is currently $status");
+        return;
+    }
+    
+    if ($args[0] =~ /^(On|Enable|Y|T)/i)
+    {
+        $c->{'LOGGING'} = 1;
+        xMsg("logging", "logging has been enabled");
+    } else {
+        $c->{'LOGGING'} = 0;
+        xMsg("logging", "logging has been disabled");
+    }
+}
+
+sub gConfdir 
+{
+    my ($cmd, @args) = @_;
+    my $c = $statetbl->{'CONF'};
+    
+    if (! -d $args[0])
+    {
+        xMsg("confdir", "creating directory $args[0]");
+        mkdir($args[0], 0755);
+    }
+    
+    $c->{'CONFDIR'} = $args[0];
+    xMsg("confdir", "set configuration directory to $args[0]");
+}
+
+sub gLoad 
+{
+    my $c = {};
+    my $e = {};
+    my $cdir;
+    
+    if (! exists($c->{'CONFDIR'}) || ! -d $c->{'CONFDIR'})
+    {
+        if (-d $ENV{"HOME"})
+        {
+            $cdir = $ENV{"HOME"} . "/.msfconsole";
+        } else {
+            $cdir = ".msfconsole";
+        }
+        
+        if (! -d $cdir) { mkdir($cdir, 0755) }
+        if (! -d $cdir) { return }
+        $c->{'CONFDIR'} = $cdir;
+    }
+    
+    if (-r "$cdir/environ")
+    {
+        local *X;
+        if(open(X, "<$cdir/environ"))
+        {
+            while(<X>) { chomp; if (m/^([^=]*)=(.*)/) { $e->{$1} = $2 } }
+            close(X);
+        }
+    }
+    
+    if (-r "$cdir/config")
+    {
+        local *X;
+        if(open(X, "<$cdir/config"))
+        {
+            while(<X>) { chomp; if (m/^([^=]*)=(.*)/) { $c->{$1} = $2 } }
+            close(X);
+        }        
+    }
+    
+    if (-r "$cdir/addrcache")
+    {
+        local *X;
+        if(open(X, "<$cdir/addrcache"))
+        {
+            while(<X>) { chomp; xAddAddressCache($_) }
+            close(X);
+        }        
+    }    
+    $console->_env($e);
+    $statetbl->{'CONF'} = $c;
+    xMsg("load", "loaded configuration from $cdir");
+}
+
+sub gSave 
+{
+    my $c = $statetbl->{'CONF'};
+    my $e = $console->_env();
+    my $cdir;
+    
+    local *X;
+    
+    if (! exists($c->{'CONFDIR'}) || ! -d $c->{'CONFDIR'})
+    {
+        if (-d $ENV{"HOME"})
+        {
+            $cdir = $ENV{"HOME"} . "/.msfconsole";
+        } else {
+            $cdir = ".msfconsole";
+        }
+        
+        if (! -d $cdir) { mkdir($cdir, 0755) }
+        if (! -d $cdir) { return }
+        $c->{'CONFDIR'} = $cdir;
+    } else { $cdir = $c->{'CONFDIR'} }
+    
+    if(open(X, ">$cdir/environ"))
+    {
+        foreach my $var (keys(%{$e}))
+        {
+            print X $var."=".$e->{$var}."\n";
+        }
+        close(X);
+    }
+    
+    if(open(X, ">$cdir/config"))
+    {
+        foreach my $var (keys(%{$c}))
+        {
+            print X $var."=".$c->{$var}."\n";
+        }
+        close(X);
+    }
+    
+    if(open(X, ">$cdir/addrcache"))
+    {
+        foreach (xGetAddressCache())
+        {
+            print X $_ . "\n";
+        }
+    }
+    
+     
+    xMsg("save", "wrote configuration to $cdir");
+}
+
+sub gExec 
+{
+    my ($cmd, @args) = @_;
+    print "\nExecuting command: " . join(" ", @args) . "\n";
+    system(join(" ", @args));
+}
+
+sub gUse 
+{
+    my ($cmd, @args) = @_;
+    if (! exists($exploits->{$args[0]}))
+    {
+        xMsg("use", "please specify a valid exploit name");
+        return;
+    }
+    
+    my $x = $exploits->{$args[0]};
+    
+    # switch to exploit mode
+    $statetbl->{"MODE"} = "Exploit";
+    
+    # wipe out any previous exploit state
+    delete($statetbl->{"X"});
+    
+    $statetbl->{"X"}->{"object"} = $x;
+    $statetbl->{"X"}->{"module"} = $args[0];
+    $statetbl->{"X"}->{"payloads"} = xValidPayloads($x);
+    
+    $console->_prompt("msf $args[0] > ");
+}
+
+sub gBack
+{
+    $statetbl->{"MODE"} = "Main";
+    $console->_prompt("msf > ");
+}
+
+sub gChdir
+{
+    my ($cmd, @args) = @_;
+    
+    if (! $args[0])
+    {
+        chdir($ENV{'HOME'});
+        return;
+    }
+    
+    if (chdir($args[0]))
+    {
+        xMsg("chdir", "changed to directory $args[0]");
+    } else {
+        xMsg("chdir", "failed to change directory $!");
+    }
+}
+
+sub gInfo
+{
+    my ($cmd, @args) = @_;
+    if (! $args[0] || ($args[0] ne "exploit" && $args[0] ne "payload"))
+    {
+        xMsg("info", "usage: info <exploit|payload> <name>");
+        return;
+    }
+    
+    if ($args[0] eq "exploit")
+    {
+        if (! $args[1]) 
+        {
+            xMsg("info", "exploit: requires the exploit name");
+            return;
+        }
+        
+        if (! $exploits->{$args[1]})
+        {
+            xMsg("info", "exploit: invalid exploit name");
+            return
+        }
+        xDisplayExploit($args[1]);
+    }
+ 
+    if ($args[0] eq "payload")
+    {
+        if (! $args[1]) 
+        {
+            xMsg("info", "payload: requires the payload name");
+            return;
+        }
+        
+        if (! $payloads->{$args[1]})
+        {
+            xMsg("info", "payload: invalid payload name");
+            return
+        }
+        xDisplayPayload($args[1]);
+    }
+}
+
+sub mShow 
+{
+    my ($cmd, @args) = @_;
+    my $c = $statetbl->{'CONF'};
+    
+    if (lc($args[0]) eq "exploits")
+    {
+        print "\nMetasploit Framework Loaded Exploits\n";
+        print   "====================================\n\n";
+        
+        print $ui->DumpExploits(2, $exploits) . "\n";
+        return;
+    }
+    
+    if (lc($args[0]) eq "payloads")
+    {
+        print "\nMetasploit Framework Loaded Payloads\n";
+        print   "====================================\n\n";
+        
+        print $ui->DumpPayloads(2, $payloads) . "\n";
+        return;
+    }
+
+    if (lc($args[0]) eq "config")
+    {
+        print "\nMetasploit Framework Configuration\n";
+        print   "====================================\n\n";
+        
+        foreach my $v (sort(keys(%{$c})))
+        {
+            print "  $v" . (" " x (30-length($v))) . $c->{$v} ."\n";
+        }
+        print "\n";
+        return;
+    }
+        
+    xMsg("show", "requires an option, either 'exploits', 'payloads', or 'config'");
+}
+
+
+sub eShow 
+{
+    my ($cmd, @args) = @_;
+    if (lc($args[0]) eq "options")  { eOptions();  return }
+    if (lc($args[0]) eq "targets")  { eTargets();  return }
+    if (lc($args[0]) eq "payloads") { ePayloads(); return }
+
+    xMsg("show", "specify 'options', 'targets', or 'payloads'");
+
+}
+
+sub ePayloads
+{
+    my $x = $statetbl->{"X"}->{"object"};
+    my $vpayloads = $statetbl->{"X"}->{"payloads"};
+    
+    if ($x->Payload)
+    {
+        print "\nMetasploit Framework Usable Payloads\n";
+        print   "====================================\n\n";
+
+        foreach my $x (sort(keys(%{$vpayloads})))
+        {
+            print "  $x" . (" " x (30-length($x))) . $payloads->{$x}->Description . "\n";
+        }
+        print "\n";
+    } else {
+         xMsg("payloads", "this exploit does not require a payload");
+    }
+}
+
+sub eOptions
+{
+    my $x = $statetbl->{"X"}->{"object"};
+    my $vpayloads = $statetbl->{"X"}->{"payloads"};
+
+    my $e = $console->getEnv;
+    my $p = $e->{'PAYLOAD'};
+
+    if ($x->Payload && ! $p)
+    {
+        xMsg("options", "a payload must be specified first: 'set PAYLOAD <payloadname>'");
+        return;
+    }
+    
+    if ($x->Payload && ! exists($payloads->{$p}))
+    {
+        xMsg("options", "invalid payload specified: $p");
+        return;
+    }
+    
+    $p = $payloads->{$p};
+
+    print "\nExploit and Payload Options\n";
+    print   "============================\n\n";
+
+    my %mopts = %{$x->UserOpts};
+    foreach my $k (sort(keys(%mopts)))
+    {
+        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
+        print "  $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
+    }
+    print "\n";
+    
+    %mopts = defined($x->Payload) ? %{$p->Opts} : ( );
+    foreach my $k (sort(keys(%mopts)))
+    {
+        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
+        print "  $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
+    }
+    print "\n\n"; 
+}
+
+sub eTargets 
+{
+    my $x = $statetbl->{"X"}->{"object"};
+    if (! $x->Targets)
+    {
+        xMsg("targets", "this exploit has no targets defined");
+        return;
+    }
+    
+    print "\nSupported Exploit Targets\n";
+    print   "=========================\n\n";
+    
+    my $tidx = 0;
+    foreach my $tname ($x->Targets)
+    {
+        print "  $tidx\t$tname\n";
+        $tidx++;
+    }
+    print "\n";
+}
+
+sub eCheck   
+{ 
+    my $x = $statetbl->{"X"}->{"object"};
+    my $e = $console->getEnv();
+    my $opt = {};
+    
+    # build option table from environment 
+    foreach my $o (keys(%{$x->UserOpts}))
+    {
+        if (exists($e->{$o})) { $opt->{$o} = $e->{$o} }
+    }
+
+    # verify that all required exploit options have been set
+    if (! $x->Validate($opt) )
+    {
+        xMsg("check", $x->Error());
+        return;
+    }
+    
+    my $res = $x->Check($opt);
+    xMsg("check", $res);
+}
+
+
+sub eExploit 
+{ 
+    my $x = $statetbl->{"X"}->{"object"};
+    my $vpayloads = $statetbl->{"X"}->{"payloads"};
+    
+    my $e = $console->getEnv();
+    my $opt = {};
+
+    my $p = $e->{'PAYLOAD'};
+
+    if ($x->Payload && ! $p)
+    {
+        xMsg("exploit", "a payload must be specified first: 'set payload <payloadname>'");
+        return;
+    }
+    
+    if ($x->Payload && ! exists($payloads->{$p}))
+    {
+        xMsg("exploit", "invalid payload specified: $p");
+        return;
+    }
+    
+    $p = $payloads->{$p};
+
+    # validate exploit module options
+    foreach my $o (keys(%{$x->UserOpts}))
+    {
+        if (exists($e->{$o})) 
+        { 
+            $opt->{$o} = $e->{$o};
+            
+            # cache ip addresses for tab completion
+            xAddAddressCache($e->{$o})  if $x->UserOpts->{$o}->[1] eq "ADDR";
+        }
+    }
+    
+    if (! $x->Validate($opt) )
+    {
+        xMsg("exploit", $x->Error());
+        return;
+    }
+    
+    # validate payload module options
+    if ($x->Payload)
+    {
+        # build option table from environment 
+        foreach my $o (keys(%{$p->Opts}))
+        {
+            if (exists($e->{$o})) 
+            { 
+                $opt->{$o} = $e->{$o};
+                
+                # cache ip addresses for tab completion
+                xAddAddressCache($e->{$o})  if $p->Opts->{$o}->[1] eq "ADDR";
+            }
+        }
+        
+        # validate payload options
+        if (! $p->Validate($opt))
+        {
+            xMsg("exploit", $p->Error());
+            return;        
+        }
+    }
+    
+    # process any AutoOpts set by the exploit module
+    # this allows certain exploits to provide default
+    # configuration options to payloads
+    foreach my $o (keys(%{$x->AutoOpts}))
+    {
+        if (! exists($opt->{$o}))
+        {
+            $opt->{$o} = $x->AutoOpts->{$o};
+        } 
+    }
+    
+    
+    # set the target if necessaary
+    if (exists($e->{'TARGET'})) { $opt->{'TARGET'} = $e->{'TARGET'} }
+    
+    # generate the shellcode from the payload
+    if ($x->Payload)
+    {
+        my $shellcode = Pex::Encoder::Encode($x, $p, $opt);
+        if (! $shellcode)
+        {
+            xMsg("exploit", "error creating shellcode: " . $p->Error());
+            return;
+        }
+
+        if (length($shellcode) != $x->Payload->{'Size'})
+        {
+            xMsg("exploit", "error creating shellcode: wrong length!");
+            return;
+        }
+
+        # set the payload
+        $opt->{"SHELLCODE"} = $shellcode;
+    }
+    
+    $opt->{"HCALLBACK"} = \&xCallback;
+
+    my $handler = Pex::HandlerConsole->new();
+    
+    my ($phand, $chand, $phcode, $chcode);
+    if ($p && $handler->can($p->Type))
+    {
+        $phand = $p->Type;
+        $chand = $phand . "_exp";
+        
+        # create the link between the child and parent processes
+        if ($handler->can($phand) && $handler->can($chand))
+        {
+            my ($csock, $psock);
+            $opt->{'HANDLER'} = $handler;
+            $opt->{'HCFUNC'}  = $chand;
+            
+            xMsg("exploit", "creating link between child and parent process");
+            
+            socketpair($opt->{'HCSOCK'}, $opt->{'HPSOCK'},  AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
+            || die "msfconsole: exploit: socketpair: $!";
+        }
+        
+    }
+    
+    my $child = fork();
+    
+    if ($child)
+    {
+        if ($x->Payload)
+        {
+            if ($phand)
+            {
+                xMsg("exploit", "starting handler $phand");
+                my $res = $handler->$phand($p, $opt, $child);
+                kill('TERM', $child);
+
+                if (! $res)
+                {
+                    xMsg("exploit", "handler error: " . $handler->Error() );
+                    kill('TERM', $child);
+                }
+
+            } else {
+                xMsg("exploit", "no handler for payload type: " . $p->Type());
+            }
+        }
+        
+        while (waitpid($child, WNOHANG) == 0) { sleep(1) }
+        
+    } else {
+        select(undef, undef, undef, 0.5);
+        $x->Exploit($opt); 
+        exit(0);
+    }
+    print "\n";
+}
+
+
+sub xMsg
+{
+    my ($loc, $msg) = @_;
+    print STDERR "msfconsole: $loc: $msg\n";
+}
+
+
+sub xCallback 
+{ 
+    my @args = @_;
+    my $c = $statetbl->{'CONF'};
+    my $e = $console->_env;
+    if ($c->{'LOGGING'})
+    {
+        my ($mlog, $clog);
+        if (! -d $c->{'CONFDIR'} . "/logs") { mkdir ($c->{'CONFDIR'} . "/logs", 0755) }
+        
+        # This logs all successful connects and disconnects into the main log file
+        if ($args[0] eq "CONNECT")
+        {
+            $mlog .= xLogEntry("Connection established: " . 
+                            $args[1]->sockhost . ":" . $args[1]->sockport . " <-> " .
+                            $args[1]->peerhost . ":" . $args[1]->peerport);
+
+            my ($currfd, $currfn);
+            $currfn = time() . "_". $statetbl->{'X'}->{'module'} . "_" . 
+                      $args[1]->sockhost . "." . $args[1]->sockport . "_" .
+                      $args[1]->peerhost . "_" . $args[1]->peerport . ".log";
+                      
+            if (open($currfd, ">".$c->{'CONFDIR'} . "/logs/$currfn"))
+            {
+                $statetbl->{'CURRLOG'} = $currfd;
+                
+                print $currfd "   Time: " . scalar(localtime()) . "\n";
+                print $currfd "   Name: " . $statetbl->{'X'}->{'object'}->Name . "\n";
+                print $currfd "Options:";
+                foreach my $var (keys(%{$e})) { print $currfd " $var=" . $e->{$var} }
+                print $currfd "\n\n";
+            }       
+        }     
+
+        if ($args[0] eq "CLOSED")
+        {
+            $mlog .= xLogEntry("Connection closed");
+            close($statetbl->{'CURRLOG'});
+        } 
+
+
+        if ($args[0] eq "DATA")
+        {
+            my $currfd = $statetbl->{'CURRLOG'};
+            my $flow = ($args[1] eq "CLIENT") ? ">>" : "<<";
+            print $currfd time().$flow." ".$args[2]."\n";
+        }
+        
+        if (length($mlog))
+        {
+            open (X, '>>' . $c->{'CONFDIR'} . "/main.log");
+            print X $mlog;
+            close(X);
+        }
+    }
+}
+
+sub xLogEntry
+{
+    my ($msg) = @_;
+    my $info;
+    
+    if (exists($statetbl->{'X'}) && exists($statetbl->{'X'}->{'object'}))
+    {
+        $info = $statetbl->{'X'}->{'object'}->Name();
+    }
+    
+    return scalar(localtime()) . " '$info' $msg\n";
+}
+
+sub xValidPayloads { return Pex::MatchPayloads(shift, $payloads) }
+
+sub xCheckSystemCommand
+{
+    my $cmd = shift;
+    foreach my $d (split(/:/, $ENV{'PATH'})) { return(1) if -x "$d/$cmd" }
+    return(0);
+}
+
+# Can't remember where this bit of code came from...
+sub xWordWrap
+{
+    my $text = shift;
+    my $w    = shift || 60;
+    
+    $text =~ s/(?:^|\G\n?)(?:(.{1,$w})(?:\s|\n|$)|(\S{$w})|\n)/$1$2\n/sg;
+    return $text;
+}
+
+sub xDisplayExploit 
+{ 
+    my ($name) = @_;
+    my $x = $exploits->{$name};
+    
+    print "\nDetailed Exploit Information\n";
+    print   "============================\n\n";
+    print   "      Name: " . $x->Name . "\n";
+    print   "   Version: ". $x->Version . "\n";
+    print   " Target OS: " . join(", ", @{$x->OS}) . "\n";
+    print   "Privileged: " . ($x->Priv ? "Yes" : "No") . "\n";
+    print   "\n";
+    
+    print   "Provided By:\n";
+    print   "    " . $x->Author . "\n\n";
+    
+    print   "Available Targets:\n";
+    foreach ($x->Targets) { print "    " . $_ . "\n" }
+    
+    print "\n";
+    print  "Available Options:\n";
+    my %mopts = %{$x->UserOpts};
+    foreach my $k (sort(keys(%mopts)))
+    {
+        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
+        print "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
+    }
+    
+    if ($x->Payload)
+    {
+        print "\n";
+        print "Payload Information:\n";
+        print "     Size: " . $x->Payload->{'Size'} . "\n";
+        print "    Avoid: " . scalar(split(//, $x->Payload->{'BadChars'})) . " characters\n";
+    }
+    
+    my $desc = xWordWrap($x->Description);
+    $desc =~ s/\n/\n    /g;
+    print "\n";
+    print "Description:\n    $desc\n";
+    
+    print "References:\n";
+    foreach ($x->Refs) { print "    " . $_->[0] . "\n" }
+    print "\n";
+    
+}
+
+sub xDisplayPayload 
+{
+    my ($name) = @_;
+    my $p = $payloads->{$name};
+    
+    print "\nDetailed Payload Information\n";
+    print   "============================\n\n";
+    print   "       Name: " . $p->Name . "\n";
+    print   "    Version: ".  $p->Vers . "\n";
+    print   "     OS/CPU: " . $p->OS . "/" . $p->Arch . "\n"; 
+    print   "Needs Admin: " . ($p->Priv ? "Yes" : "No") . "\n";
+    print   "\n";
+    
+    print   "Provided By:\n";
+    print   "    " . $p->Auth . "\n\n";
+    
+    print  "Available Options:\n";
+    my %mopts = %{$p->Opts};
+    foreach my $k (sort(keys(%mopts)))
+    {
+        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
+        print "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
+    }
+    
+    my $desc = xWordWrap($p->Description);
+    $desc =~ s/\n/\n    /g;
+    print "\n";
+    print "Description:\n    $desc\n";
+
+    print "\n";
+}
+
+
+
+sub xGetAddressCache
+{
+    my $cache = $statetbl->{'CacheAddress'};
+    return keys(%{$cache});
+}
+
+sub xAddAddressCache
+{
+    $statetbl->{'CacheAddress'}->{shift()}++
+}
+
+
+#
+# TAB COMPLETION ROUTINES
+#
+
+
+sub xCreateSetList
+{
+    if ($statetbl->{"MODE"} eq "Main") { return () } 
+    
+    if ($statetbl->{"MODE"} eq "Exploit") 
+    {
+        my %options = ();
+        
+        my $x = $statetbl->{"X"}->{"object"};
+        my $e = $console->getEnv();
+        my $p = $e->{'PAYLOAD'};
+
+        foreach (keys(%{$x->UserOpts})) { $options{$_}++ }
+        if ($x->Payload && $p && exists($payloads->{$p}))
+        {
+            $p = $payloads->{$p};
+            foreach (keys(%{$p->Opts})) { $options{$_}++ }
+        }
+        
+        if ($x->Payload) { $options{"PAYLOAD"}++ }
+        if ($x->Targets) { $options{"TARGET"}++  }
+        return(keys(%options));
+    }
+}
+
+sub xCreateSetValueList
+{
+    if ($statetbl->{"MODE"} eq "Main") { return () } 
+    
+    if ($statetbl->{"MODE"} eq "Exploit") 
+    {
+        my %results = ();
+        
+        my $n = $statetbl->{'X'}->{'SETNAME'};
+        my $x = $statetbl->{'X'}->{'object'};
+        my $v = $statetbl->{'X'}->{'payloads'};
+        my $e = $console->getEnv();
+        my $p = $e->{'PAYLOAD'};
+
+        if ($x->Payload && $p && exists($payloads->{$p})) { $p = $payloads->{$p} }
+        
+        if (uc($n) eq "PAYLOAD") { return keys(%{$v}) }
+        
+        if (uc($n) eq "TARGET")
+        {
+            my $tidx = 0;
+            foreach ($x->Targets) { $results{$tidx}++ ; $tidx++;}
+            return keys(%results);
+        }
+        
+        my ($req, $type, $desc, $dflt);
+        
+        if (exists($x->UserOpts->{$n}))
+        {
+            ($req, $type, $desc, $dflt) = @{$x->UserOpts->{$n}};  
+        }
+        
+        if ($p && exists($p->Opts->{$n}))
+        {
+            ($req, $type, $desc, $dflt) = @{$p->Opts->{$n}};  
+        }        
+        
+        if ($dflt) { return ($dflt) }
+        
+        if ($type eq "ADDR") { return xGetAddressCache() }
+        if ($type eq "BOOL") { return ("TRUE", "FALSE") }
+        if ($type eq "FILE") { return undef }
+    }
+}
+
+sub xTabCompletion
+{
+    my ($text, $line, $start, $end) = @_;
+
+    # this handles command matching
+    if ($start == 0)
+    {
+        my @matches = $console->_term->completion_matches($text, \&xTabCompletionCmd);
+        return(@matches);
+    }
+    
+    my ($cmd, @args) = split(/\s+/, $line);
+    #print STDERR "[*] t=$text l=$line s=$start e=$end ($cmd) -> " . join(", ", @args) . "\n";
+    
+    if (lc($cmd) eq "use")
+    {
+        my @matches = $console->_term->completion_matches($text, \&xTabCompletionUse);
+        return(@matches);
+    }
+    
+    if (lc($cmd) eq "show")
+    {
+        if ($statetbl->{'MODE'} eq "Main")
+        {
+            my @matches = $console->_term->completion_matches($text, \&xTabCompletionShowMain);
+            return(@matches);
+        }
+        
+        if ($statetbl->{'MODE'} eq "Exploit")
+        {
+            my @matches = $console->_term->completion_matches($text, \&xTabCompletionShowExploit);
+            return(@matches);        
+        }
+    }
+    
+    if (lc($cmd) eq "info")
+    {
+        # display variables if no args are specified
+        if (! $args[0] || (! $args[1] && ($args[0] && $text)))
+        {
+            my @matches = $console->_term->completion_matches($text, \&xTabCompletionInfo);
+            return(@matches);
+        }
+        
+        if (! $args[1] || (! $args[2] && ($args[1] && $text)))
+        {
+            if ($args[0] eq "exploit")
+            {
+                my @matches = $console->_term->completion_matches($text, \&xTabCompletionInfoExploit);
+                return(@matches);
+            }
+            
+            if ($args[0] eq "payload")
+            {
+                my @matches = $console->_term->completion_matches($text, \&xTabCompletionInfoPayload);
+                return(@matches);
+            }            
+        }
+    }
+
+        
+    if (lc($cmd) eq "set")
+    {
+        # display variables if no args are specified
+        if (! $args[0] || (! $args[1] && ($args[0] && $text)))
+        {
+            my @matches = $console->_term->completion_matches($text, \&xTabCompletionSet);
+            return(@matches);
+        }
+        
+        if (! $args[1] || (! $args[2] && ($args[1] && $text)))
+        {
+            $statetbl->{'X'}->{'SETNAME'} = $args[0];
+            my @matches = $console->_term->completion_matches($text, \&xTabCompletionSetValue);
+            return(@matches);        
+        }
+    }
+     
+    if (lc($cmd) eq "exec") {  return () }   
+    
+    # default to file system matches
+    return ();
+}
+
+# This is a localized closure for matching speed, this routine has been borrowed
+# from http://lists.n0i.net/pipermail/perl/2003-October/000015.html
+{
+    my $list_index;
+    my @name;
+    
+    sub xTabCompletionCmd
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+
+        # If this is a new word to complete, initialize now.  This
+        # includes saving the length of TEXT for efficiency, and
+        # initializing the index variable to 0.
+
+        unless ($state) {
+	        $list_index = 0;
+            @name = sort(keys(%vcmds));
+        }
+
+        # Return the next name which partially matches from the
+        # command list.
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+
+        # If no names matched, then return NULL.
+        return undef;
+
+    }
+}
+
+# use "exploit" command completion
+{
+    my $list_index;
+    my @name;
+    sub xTabCompletionUse
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+        unless ($state) {
+	        $list_index = 0;
+	        @name = sort(keys(%{$exploits}));
+        }
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+        return undef;
+
+    }
+}
+
+# show "exploit" | "payloads" completion
+{
+    my $list_index;
+    my @name;
+    sub xTabCompletionShowMain
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+        unless ($state) {
+	        $list_index = 0;
+	        @name = ("exploits", "payloads", "config");
+        }
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+        return undef;
+    }
+}
+
+# show "options|targets|payloads"
+{
+    my $list_index;
+    my @name;
+    sub xTabCompletionShowExploit
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+        unless ($state) {
+	        $list_index = 0;
+	        @name = ("options", "targets", "payloads");
+        }
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+        return undef;
+    }
+}
+
+# info "exploit" | "payload" completion
+{
+    my $list_index;
+    my @name;
+    sub xTabCompletionInfo
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+        unless ($state) {
+	        $list_index = 0;
+	        @name = ("exploit", "payload");
+        }
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+        return undef;
+    }
+}
+
+# info exploit completion
+{
+    my $list_index;
+    my @name;
+    sub xTabCompletionInfoExploit
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+        unless ($state) {
+	        $list_index = 0;
+	        @name = keys(%{$exploits});
+        }
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+        return undef;
+    }
+}
+
+# info payload completion
+{
+    my $list_index;
+    my @name;
+    sub xTabCompletionInfoPayload
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+        unless ($state) {
+	        $list_index = 0;
+	        @name = keys(%{$payloads});
+        }
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+        return undef;
+    }
+}
+
+# set variable name completion
+{
+    my $list_index;
+    my @name;
+    sub xTabCompletionSet
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+        unless ($state) {
+	        $list_index = 0;
+	        @name = sort(xCreateSetList());
+        }
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+        return undef;
+    }
+}
+
+# set variable value completion
+{
+    my $list_index;
+    my @name;
+    sub xTabCompletionSetValue
+    {
+        my ($text, $state) = @_;
+        $text = quotemeta($text);
+        unless ($state) {
+	        $list_index = 0;
+	        @name = sort(xCreateSetValueList());
+        }
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+        return undef;
+    }
+}

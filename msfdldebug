@@ -1,0 +1,213 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfdldebug
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Purpose: Download debug symbols for a given DLL or EXE
+#      Version: $Revision$
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+#   Notes:
+#          This script has been tested with the DLL files that ship with Windows NT 4.0.
+#          Windows 2000, and Windows XP. It does not support the RSDS .NET type yet,
+#          nor does it actually extract any of the symbols from the files it downloads. 
+#          Seperate extraction tools will be made available as they are completed. At 
+#          this point I plan on releasing a symbol extractor for the unstripped images,
+#          NB09 debug files, and NB10 program database files. For the download to work
+#          you must already have wget and cabextract in your path, they available from:
+#
+#          wget:        http://wget.sunsite.dk/
+#          cabextract:  http://www.kyz.uklinux.net/cabextract.php
+#
+##
+
+
+require 5.6.0;
+use strict;
+use vars qw($VERSION);
+
+use lib "$Bin/lib";
+
+use Pex;
+use Pex::PEInfo;
+
+my $VERSION = 1.0;
+
+my $target = shift() || Usage();
+my $pe = PEInfo->new($target);
+my $dbg_idx = 0;
+my $dbg_skp = 0;
+my $dbg_hsh;
+my $dbg_raw;
+my $pdb_hsh;
+my ($exe_nb09, $exe_nb10, $exe_nb11);
+my $valid_nb10 = 0;
+
+if (! $pe)
+{
+    print "[*] Error loading the executable image.\n";
+    exit(0);
+}
+
+my $filename = lc($target);
+$filename =~ s/.*\/(.*)/$1/g;
+
+my $raw = $pe->Raw();
+
+$dbg_hsh = sprintf("%.8x%x", $pe->ImageHeader("TimeDateStamp"), $pe->OptImageHeader("SizeOfImage"));
+
+if ($pe->ImageHeader("NumberOfSymbols") > 0 && $pe->ImageHeader("PointerToSymbolTable") > 0)
+{
+    printf("[*] This file contains " . $pe->ImageHeader("NumberOfSymbols") .
+          " symbols at offset 0x%.8x.\n", $pe->ImageHeader("PointerToSymbolTable"));
+}
+
+my $debug_rva = $pe->Rva("debug");
+if (! $debug_rva->[0])
+{
+    print " [  RVA ] " . join("\n", $pe->Rvas()) . "\n";
+    print "[*] No debug directory found, something is seriously wrong...\n";
+    exit(0);
+}
+
+my $debug_off = $pe->VirtualToOffset($debug_rva->[0]);
+my $debug_dat = substr($raw, $debug_off, $debug_rva->[1]);
+my $debug_tds = substr($debug_dat, 4);
+
+my $debug_typ = unpack("L", substr($debug_dat, 12));
+my $debug_siz = unpack("L", substr($debug_dat, 16));
+my $debug_dir = unpack("L", substr($debug_dat, 24));
+
+
+# printf("DEBUG: TYPE=0x%.8x SIZE=0x%.8x OFFSET=0x%.8x\n", $debug_typ, $debug_siz, $debug_dir);
+
+if ($debug_typ == 2 && substr($raw, $debug_dir, 4) eq "NB10")
+{
+    print "[*] Executable contains a NB10 signature and does not require a DBG file.\n";
+    $dbg_skp++;
+    $dbg_idx = $exe_nb10;
+}
+
+if (! $dbg_skp)
+{
+
+    my $dbg_fn = $filename;
+    $dbg_fn =~ s/(.*)\..../$1\.dbg/;
+
+    my $dbg_fn_com = $dbg_fn;
+    $dbg_fn_com =~ s/\.dbg/\.db\_/;
+
+    if (! -r $filename . "_" . $dbg_hsh . "._")
+    {
+        my $url = "http://msdl.microsoft.com/download/symbols/$dbg_fn/$dbg_hsh/$dbg_fn_com";
+        print "[*] Downloading DBG file: $url\n";
+        unlink($dbg_fn_com);
+        open(X, "wget -q $url|") || die "wget: $!";
+        while(<X>)
+        {
+            chomp;
+            next if !length($_);
+            print "[*] WGET> $_\n";
+        }
+        close(X);
+        
+        rename($dbg_fn_com, $filename . "_" . $dbg_hsh . "._");
+        unlink($dbg_fn_com);
+    }
+
+    unlink($dbg_fn);
+    
+    open(X, "cabextract " . $filename . "_" . $dbg_hsh . "._|") || die "cabextract: $!";
+    while(<X>)
+    {
+        chomp;
+        next if !length($_);
+        print "[*] CAB> $_\n";
+    }
+    close(X);
+    
+    if (! -f $dbg_fn)
+    {
+        print STDERR "[*] Could not extract debug file.\n";
+        exit(0);
+    }
+    open(X, "<$dbg_fn");
+    while (<X>) { $dbg_raw .= $_ }
+    close (X);
+    
+    $dbg_idx = index($dbg_raw, "NB09");
+    if ($dbg_idx)
+    {
+        print "[*] This DBG file contains a NB09 symbol table, no PDB needed.\n";
+        exit(0);
+    }
+    
+    $debug_dir = index($dbg_raw, "NB10");
+    if (! $debug_dir)
+    {
+        print "[*] No NB10 CodeView segment found in the debug file, giving up.\n";
+        exit(0);
+    }
+    
+} else {
+
+    $dbg_raw = $raw;
+}
+
+$pdb_hsh = sprintf("%.8x%x", unpack("L", substr($dbg_raw, $debug_dir + 8)), unpack("L", substr($dbg_raw, $debug_dir + 12)));
+
+if ($pdb_hsh)
+{
+    my $dbg_fn = $filename;
+    $dbg_fn =~ s/(.*)\..../$1\.pdb/;
+
+    my $dbg_fn_com = $dbg_fn;
+    $dbg_fn_com =~ s/\.pdb/\.pd\_/;
+
+    if (! -r $filename . "_" . $pdb_hsh . "._")
+    {
+        my $url = "http://msdl.microsoft.com/download/symbols/$dbg_fn/$pdb_hsh/$dbg_fn_com";
+        print "[*] Downloading PDB file: $url\n";
+        unlink($dbg_fn_com);
+        
+        open(X, "wget -q $url|") || die "wget: $!";
+        while(<X>)
+        {
+            chomp;
+            next if !length($_);
+            print "[*] WGET> $_\n";
+        }
+        close(X);
+        
+        rename($dbg_fn_com, $filename . "_" . $pdb_hsh . "._");
+        unlink($dbg_fn_com);
+    }
+
+    unlink($dbg_fn);
+    
+    open(X, "cabextract " . $filename . "_" . $pdb_hsh . "._|") || die "cabextract: $!";
+    while(<X>)
+    {
+        chomp;
+        next if !length($_);
+        print "[*] CAB> $_\n";
+    }
+    close(X);
+
+    if (! -f $dbg_fn)
+    {
+        print STDERR "[*] Could not extract debug file.\n";
+        exit(0);
+    }
+}  
+
+
+sub Usage {
+    print STDERR "Usage: $0 <file>\n";
+    exit(0);
+}

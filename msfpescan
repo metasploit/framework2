@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfpescan
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Purpose: Search PE files for given opcodes
+#      Version: $Revision$
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use strict;
+use vars qw($VERSION);
+
+use FindBin qw{$Bin};
+use Getopt::Std;
+
+use lib "$Bin/lib";
+
+use Pex;
+use Pex::PEInfo;
+
+$VERSION = "1.0";
+
+my %opts = ();
+
+my %jmps =
+    (
+        "\xff\xd0" => ["eax", "call"],
+        "\xff\xe0" => ["eax", "jmp" ],
+        "\xff\xd1" => ["ecx", "call"],
+        "\xff\xe1" => ["ecx", "jmp" ],
+        "\xff\xd2" => ["edx", "call"],
+        "\xff\xe2" => ["edx", "jmp" ],
+        "\xff\xd3" => ["ebx", "call"],
+        "\xff\xe3" => ["ebx", "jmp" ],
+        "\xff\xd4" => ["esp", "call"],
+        "\xff\xe4" => ["esp", "jmp" ],
+        "\xff\xd5" => ["ebp", "call"],
+        "\xff\xe5" => ["ebp", "jmp" ],
+        "\xff\xd6" => ["esi", "call"],
+        "\xff\xe6" => ["esi", "jmp" ],
+        "\xff\xd7" => ["edi", "call"],
+        "\xff\xe7" => ["edi", "jmp" ],
+        
+        "\x50\xc3" => ["eax", "push"],
+        "\x53\xc3" => ["ebx", "push"],
+        "\x51\xc3" => ["ecx", "push"],
+        "\x52\xc3" => ["edx", "push"],
+        "\x54\xc3" => ["esp", "push"],
+        "\x55\xc3" => ["ebp", "push"],
+        "\x56\xc3" => ["esi", "push"],
+        "\x57\xc3" => ["edi", "push"],
+    );
+
+
+
+getopts("jcf:r:p:l:", \%opts);
+if (! $opts{f} || (! $opts{j} && ! $opts{c})) { usage() }
+
+my $filename = $opts{f};
+my $pe = Pex::PEInfo->new($filename);
+
+if (! $pe)
+{
+    print STDERR "$0: could not load PE image from file.\n";
+    exit(0);
+}
+
+my $data = $pe->Raw;
+
+if (exists($opts{j})) 
+{
+    foreach my $opc (keys(%jmps))
+    {
+        next if ($opts{r} && lc($opts{r}) ne $jmps{$opc}->[0]);
+
+        my $lst = 0;
+        my $idx = index($data,  $opc, $lst);
+        while ($idx > 0)
+        {
+            my ($reg, $typ) = @{$jmps{$opc}};
+            printf("$reg\t$typ\t0x%.8x\n", $pe->OffsetToVirtual($idx));
+            $lst = $idx + 1;
+            $idx = index($data, $opc, $lst);
+        }
+    }
+    exit(0);
+}
+
+
+if (exists($opts{c}))
+{
+    if (! $opts{p}) { print STDERR "$0: no pattern specified\n"; exit(0); }
+    
+    my $bytesarg =  $opts{p};
+    my $byteslen = $opts{l} || length($bytesarg) / 2;
+
+    if (length($bytesarg) % 2 != 0)
+    {
+        print "$0: bytes should be a string of hex digits\n";
+        exit(0);
+    }
+
+    $bytesarg =~ s/([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+    if (length($bytesarg) > $byteslen)
+    {
+        print "$0: length calculation is wrong: $bytesarg\n";
+        exit(0);
+    }
+
+    my $lst = 0;
+    my $idx = index($data,  $bytesarg, $lst);
+    while ($idx > 0)
+    {
+        my $hexval;
+        foreach my $b (split(//, substr($data, $idx, $byteslen)))
+        {
+            $hexval .= sprintf("0x%.2x ", ord($b));
+        }
+
+        printf("0x%.8x\t%s\n", $pe->OffsetToVirtual($idx), $hexval);
+        $lst = $idx + 1;
+        $idx = index($data, $bytesarg, $lst);
+    }
+    exit(0);
+}
+
+sub usage 
+{
+    print STDERR "  Usage: $0 -f filename.exe <-j|-c> <options>\n";
+    print STDERR "  Modes:\n";
+    print STDERR "         -j           Search for jump equivalent instructions\n";
+    print STDERR "         -c           Search for custom byte pattern\n";
+    print STDERR "Options:\n";
+    print STDERR "         -r           Specify register for jump search mode\n";
+    print STDERR "         -p  <data>   Pattern to search for in custom mode (FFD4)\n";
+    print STDERR "         -l  <count>  Number of bytes to show after pattern\n";
+    print STDERR "\n";
+    exit(0);
+
+}

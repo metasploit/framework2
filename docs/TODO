@@ -1,0 +1,14 @@
+ MetaSploit Framework TODO 
+===========================
+  
+ - Write sample handler callbacks for macros and logging
+    
+ - Write end-user documentation
+ 
+ - Verify that everything still works under ActiveState
+
+ - Validate target parameter
+ 
+ - Make options case insensitive
+
+ - Fix BSD exploits (only bsdreverse works?)

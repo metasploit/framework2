@@ -1,0 +1,606 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfweb
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Purpose: Web interface launching exploits
+#      Version: $Revision$
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+# This is a very ugly proof-of-concept MSF interface
+
+require 5.6.0;
+
+use strict;
+use vars qw($VERSION);
+
+use FindBin qw{$Bin};
+use lib "$Bin/lib";
+use Pex;
+use Pex::HandlerWeb;
+
+use HTTP::Daemon;
+use HTTP::Status;
+
+use POSIX;
+use IO::Socket;
+use Getopt::Std;
+
+
+$VERSION = "2.0";
+
+my $exploits = Pex::LoadExploits("$Bin/exp");
+my $payloads = Pex::LoadPayloads("$Bin/pay");
+my ($x, $opt, $verbose, $cli);
+
+my %args = ();
+getopts("vha:", \%args);
+
+if ($args{h}) { Usage() }
+if ($args{v}) { $verbose++ }
+
+my ($host, $port, $pass) = (Pex::InternetIP(), 55555, "meta");
+if ($args{a})
+{
+    ($host, $port) = split(/:/, $args{a});
+    if (! $port) { $port = 55555 }
+}
+
+
+my $http = MSFWeb->new
+(
+    LocalAddr => $host, 
+    LocalPort => $port,
+    ReuseAddr => 1, 
+    Listen => 20
+) || die "httpd: $!";
+
+
+print "[*] Starting Metasploit Web Interface on $host:$port...\n";
+
+$SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
+
+while (1)
+{
+    my $add;
+    ($cli, $add) = $http->accept();
+    next if ! $cli;
+    
+    my $child = fork();
+    
+    if (! $child)
+    {
+        while (my $req = $cli->get_request)
+        {
+            if ($req->method ne "GET")
+            {
+                $cli->send_error(RC_PAYMENT_REQUIRED);
+                next;
+            }
+
+            my $res;
+            my $out = HTTP::Response->new();
+            
+            my $state = {};
+            
+            my $url = $req->url->path_query;
+            $url =~ s/^\///g;
+            $url =~ s/^\?//g;
+            $url =~ s/\+/%20/g;
+            $url =~ s/\x00|\x0A|\x0D//g;
+                        
+            my @chunks = split(/&/, $url);
+            foreach my $chunk (@chunks)
+            {
+                my ($var, $val) = split(/=/, $chunk);
+                $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+                $state->{$var} = $val;
+                
+                # ignore empty values
+                $val =~ s/^\s+|\s+$//g;
+                if (! length($val)) { delete($state->{$var}) }
+            }
+    
+            if ($state->{'MODULE'})
+            {
+                my $mname = exists($exploits->{$state->{'MODULE'}}) 
+                            ? $exploits->{$state->{'MODULE'}}->Name() : "Invalid Module";
+                            
+                $res = "<table width=100% bgcolor='black'><tr><td>".
+                       "<font color='white'><b>Module: $mname</b></font></td></tr></table><br>\n";
+            }
+    
+    
+            $state->{"client"} = $cli;
+            $res .= ProcessRequest($cli, $state, $out);
+            
+            $out->code(RC_OK);
+            $out->message('EXPLOITS');
+            $out->content($res);
+            $cli->send_response($out);
+
+            vprint("[*] User "  .  $cli->peerhost() . " requested ". $url . "\n");
+        }
+        $cli->close();
+        exit(0);
+    }
+}
+
+sub Usage
+{
+    print STDERR "Usage: $0 -a hostname:port [-v]\n";
+    exit(0);
+}
+
+sub vprint
+{
+    my ($msg) = @_;
+    if ($verbose) { print $msg }
+}
+
+sub ProcessRequest
+{
+    my ($cli, $state, $out) = @_;
+    my ($html, $body);
+   
+    my $body = "Default Response";
+    
+    if (! exists($state->{'MODE'}) )   { $body = ExploitList() }
+    if ($state->{'MODE'} eq "SUMMARY") { $body = ExploitSummary($state) }
+    if ($state->{'MODE'} eq "PAYLOAD") { $body = ExploitPayload($state) }
+    if ($state->{'MODE'} eq "OPTIONS") { $body = ExploitOptions($state) }
+    if ($state->{'MODE'} eq "TARGETS") { $body = ExploitTargets($state) }
+    if ($state->{'MODE'} eq "CHECK")   { $body = ExploitCheck($state) }
+    if ($state->{'MODE'} eq "EXPLOIT") { $body = ExploitExec($state) }    
+    
+    $html = HTML_Header() . $body . HTML_Footer();
+    
+    return($html);
+}
+
+sub HTML_Header
+{
+    return "
+    <html>
+    <head><title>Metasploit Framework Web Console</title></head>
+    <body bgcolor='white' text='black'>";
+}
+
+sub HTML_Footer
+{
+    return "
+    <br>
+    <center>
+        <a href='/'>Exploit Listing</a> |
+        <a href='http://metasploit.com/'>Metasploit.com</a>
+    </center>
+    </body>
+    </html>";
+}
+
+
+sub URLEncode
+{
+    my ($data) = @_;
+    my $res;
+    foreach (split(//, $data))  
+    { $res .= sprintf("%%%.2x", ord($_)) }
+    return $res;
+}
+
+sub StateToURL
+{
+    my ($mode, $state) = @_;
+    my (%tmp, $res);
+    
+    foreach (keys(%{$state})) 
+    {
+        next if $_ eq "client";
+        
+        my $value = $_ eq "MODE" ? $mode : $state->{$_};
+        $res .= $_ . "=" . URLEncode($value) . "&";
+    }
+    return $res;
+}
+
+sub StateToOptions
+{
+    my ($state) = @_;
+    my $res = {};
+    
+    foreach (keys(%{$state})) 
+    {
+        if (m/^OPT\_(.*)/ && defined($state->{$_})) { $res->{$1} = $state->{$_} }
+    }
+    return $res;
+}
+
+sub ExploitList
+{
+    my $res;
+    
+    $res = "<table align='center' padding=6 border=0 cellspacing=0 width=600>\n";
+    $res .= "<tr><td colspan=2 align='left'><b>Available Exploits</b></td></tr>\n";
+   
+
+    foreach my $x (sort(keys(%{$exploits})))
+    {
+        $res .= "<tr><td> . </td><td>".
+                "<a href='/MODE=SUMMARY&MODULE=$x'>" . 
+                $exploits->{$x}->Name . "</a></td></tr>\n";
+    }
+
+    $res .= "</table>\n";
+    return $res;
+}
+
+sub ExploitSummary
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    
+    if (! exists($exploits->{$module}))
+    {
+        return "<b>Invalid Module</b>";
+    }
+    
+    my $x = $exploits->{$module};
+    
+    my $desc = $x->Desc();
+    $desc =~ s/\</\&lt;/g;
+    $desc =~ s/\>/\&gt;/g;
+    
+    $res = "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
+    
+    
+    foreach my $item (qw(Name Author Version))
+    {
+        $res .= "<tr><td align='left' width=80><b>$item:</b></td><td>" . $x->$item() . "</td></tr>\n";
+    }
+    
+    $res .= "<tr><td colspan=2>";
+    $res .= "<br>$desc<br><br>";
+
+    foreach my $ref (@{$x->Refs()}) { $res .= "<li> <a href='$ref'>$ref</a><br>\n" }
+
+    my $u = StateToURL('PAYLOAD', $state);
+    $res .= "<br><a href='$u'>Select Payload</a><br>\n";
+    $res .= "</td></tr></table>\n";
+
+    return $res;
+}
+
+sub ExploitPayload
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    
+    if (! exists($exploits->{$module}))
+    {
+        return "<b>Invalid Module</b>";
+    }
+
+    my $x = $exploits->{$module};
+    my $matches = Pex::MatchPayloads($x, $payloads);
+
+    if (defined($x->Payload) )
+    {
+        $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
+        
+        foreach my $k (sort(keys(%{ $matches })))
+        {
+            my $u = StateToURL('OPTIONS', $state);
+            my $pname = $payloads->{$k}->Name();
+            $res .= "<tr><td><a href='".$u."PAYLOAD=" . $pname . "'>$pname</a></td>";
+            $res .= "<td>" .$payloads->{$k}->Desc() . "</td></tr>\n";
+        }
+        $res .= "</table>\n";
+    } else {
+        return ExploitOptions($state);
+    }
+}
+
+sub ExploitOptions
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    
+    if (! exists($exploits->{$module}))
+    {
+        return "<b>Invalid Module</b>";
+    }
+
+    my $x = $exploits->{$module};
+    my $p = $payloads->{$state->{'PAYLOAD'}};
+    
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
+        
+    if (defined($x->Payload) && ! $state->{"PAYLOAD"})
+    {
+        $res .=  "<tr><td>Payload must be selected first!</td></tr></table>\n";
+        return $res;
+    }
+ 
+    $res .= "<form action='/' method='GET'>\n";
+    foreach (keys(%{$state}))
+    {
+        if ($_ ne "MODE")
+        {
+            $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
+        } else {
+            $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
+        }
+    }
+
+    my $mopts = $x->UserOpts();
+    my $popts = defined($x->Payload) ? $p->Opts() : {};
+
+    foreach my $mopt (sort(keys(%{$mopts})))
+    {
+        my $dflt = $mopts->{$mopt}->[3];
+        my $reqd = $mopts->{$mopt}->[0] ? "Required" : "Optional";
+        $res .= "<tr><td><b>$mopt</b></td>".
+                "<td>$reqd</td><td>". $mopts->{$mopt}->[1] ."</td>".
+                "<td><input type='text' name='OPT_$mopt' value='$dflt'></td>".
+                "<td>".$mopts->{$mopt}->[2]."</td></tr>\n";
+    }
+    
+    foreach my $popt (sort(keys(%{$popts})))
+    {
+
+        my $dflt = $popts->{$popt}->[3];
+        my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
+        
+        $dflt = $state->{'client'}->sockhost if $popt eq "LHOST";
+        
+        $res .= "<tr><td><b>$popt</b></td>".
+                "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
+                "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
+                "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
+    }
+    
+    if (scalar($x->Targets))
+    {
+        my $tidx = 0;
+        $res .= "<tr><td colspan=6><br><b>Available Targets:</b><blockquote>\n";
+        foreach my $tgt ($x->Targets)
+        {
+            $res .= "<input type='radio' name='OPT_TARGET' value='$tidx'> $tgt<br>\n";
+            $tidx++;
+        }
+        $res .= "</blockquote></td></tr>\n";
+    }
+    
+    $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+    $res .= "<tr><td colspan=6><input type='submit' name='ExploitAction' value='Vulnerability Check'></td></tr>\n";
+    $res .= "<tr><td colspan=6><input type='submit' name='ExploitAction' value='Launch Exploit'></td></tr>\n";
+    $res .= "</form>\n";
+    $res .= "</table>\n";  
+    return $res;
+}
+
+sub ExploitExec
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    
+    if (! exists($exploits->{$module}))
+    {
+        return "<b>Invalid Module</b>";
+    }
+
+    my $x = $exploits->{$module};
+    my $p = $payloads->{$state->{'PAYLOAD'}};
+    
+    my $o = StateToOptions($state);
+    
+    if ($state->{"ExploitAction"} eq "Vulnerability Check")
+    {
+        $res .= "\n<form action='/' method='GET'>\n";
+        foreach (keys(%{$state}))
+        {
+            if ($_ ne "MODE")
+            {
+                $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
+            } else {
+                $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
+            }
+        }   
+        $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit'>\n";
+        $res .= "</form>\n";
+        $res .= "<hr><br><br>\n";
+        $res .= "<b>Check Results</b>: " . $x->Check($o) . "<br>\n";
+        return $res;
+    }
+    
+    
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
+        
+    if (defined($x->Payload) && ! $state->{"PAYLOAD"})
+    {
+        $res .=  "<tr><td>Payload must be selected first!</td></tr></table>\n";
+        return $res;
+    }
+    
+    
+    # we hijack the socket from the web service
+    my $cli = $state->{'client'};
+    
+    $cli->send("HTTP/1.1 200 OK\r\nConnection: Close\r\nContent-type: text/html\r\n\r\n");
+    $cli->send(HTML_Header());
+    
+    $cli->send("<b>Processing exploit request (".$x->Name.")...</b><br>\n");
+    
+  
+    my $p = $state->{'PAYLOAD'};
+
+    if ($x->Payload && ! $p)
+    {
+        print STDERR "msfconsole: exploit: a payload must be specified first: 'set payload <payloadname>'\n";
+        return;
+    }
+    
+    if ($x->Payload && ! exists($payloads->{$p}))
+    {
+        print STDERR "msfconsole: exploit: invalid payload specified: $p\n";
+        return;
+    }
+    
+    $p = $payloads->{$p};
+
+
+    # validate exploit module options
+    if (! $x->Validate($o) )
+    {
+        $cli->send("msfweb: exploit option: " . $x->Error() . "\n");
+        exit(0);
+    }
+    
+    # validate payload module options
+    if ($x->Payload)
+    {
+        # validate payload options
+        if (! $p->Validate($o))
+        {
+            $cli->send("msfweb: payload option: " . $p->Error() . "\n");
+            exit(0);  
+        }
+    }
+    
+    # process any AutoOpts set by the exploit module
+    # this allows certain exploits to provide default
+    # configuration options to payloads
+    foreach my $k (keys(%{$x->AutoOpts}))
+    {
+        if (! exists($o->{$k}))
+        {
+            $o->{$k} = $x->AutoOpts->{$k};
+        } 
+    }
+    
+    # generate the shellcode from the payload
+    if ($x->Payload)
+    {
+        my $shellcode = Pex::Encoder::Encode($x, $p, $o);
+        if (! $shellcode)
+        {
+            $cli->send("msfweb: exploit: error creating shellcode: " . $p->Error() . "\n");
+            exit(0);
+        }
+
+        if (length($shellcode) != $x->Payload->{'Size'})
+        {
+            $cli->send("msfweb: exploit: error creating shellcode: wrong length!\n");
+            exit(0);
+        }
+
+        # set the payload
+        $o->{"SHELLCODE"} = $shellcode;
+    }
+
+    $o->{"HCALLBACK"} = sub {  };
+    $o->{"OUTPUT"} = $state->{'client'};
+
+
+    # map standard i/o to the client socket
+
+    Pex::Unblock($cli);
+    
+    $cli->send("<pre>\n");
+    open(STDOUT, ">&=" . fileno($cli));
+    open(STDERR, ">&=" . fileno($cli));
+
+
+    $| = 1;    
+    
+    my $handler = Pex::HandlerWeb->new();
+    my ($phand, $chand, $phcode, $chcode);
+    if ($p && $handler->can($p->Type))
+    {
+        $phand = $p->Type;
+        $chand = $phand . "_exp";
+        
+        # create the link between the child and parent processes
+        if ($handler->can($phand) && $handler->can($chand))
+        {
+            my ($csock, $psock);
+            $o->{'HANDLER'} = $handler;
+            $o->{'HCFUNC'}  = $chand;
+            
+            print STDERR "msfweb: creating link between child and parent process\n";
+            
+            socketpair($o->{'HCSOCK'}, $o->{'HPSOCK'},  AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
+            || die "msfweb: exploit: socketpair: $!";
+        }
+        
+    }
+
+    my $child = fork();
+    if ($child)
+    {
+        if ($x->Payload)
+        {
+            if ($phand)
+            {
+                $o->{'BROWSER'} = $cli;
+                $cli->send("<b>msfweb: starting handler $phand...</b><br>\n");
+                my $res = $handler->$phand($p, $o, $child);
+                $cli->send("<b>msfweb: handler $phand is finished...</b>\n");
+                kill('TERM', $child);
+
+                if (! $res)
+                {
+                    $cli->send("<b>msfweb: handler errror ". $handler->Error() ."</b>\n");
+                    kill('TERM', $child);
+                }
+
+            } else {
+                $cli->send("<b>msfweb: no handler for type ". $p->Type() ."</b>\n");
+            }
+        }
+        
+        while (waitpid($child, WNOHANG) == 0) { sleep(1) }
+        
+    } else {
+        select(undef, undef, undef, 0.5);
+        $x->setPrint(\&webPrint);
+        $x->Exploit($o); 
+        exit(0);
+    }
+    
+    $cli->send("\n</pre><br>");
+    
+    $cli->send(HTML_Footer());
+    $cli->shutdown(2);
+    $cli->close();
+    exit(0);
+}
+
+
+sub HandlerCallback
+{
+    # print STDERR "CALLBACK: " . join(" | ", @_) . "\n";
+}
+
+sub webPrint
+{
+    my $self = shift;
+    $| = 1;
+    $cli->send(join('', @_, '<br>'));
+}
+
+package MSFWeb;
+use base "HTTP::Daemon";
+
+sub product_tokens { return "Metasploit" }

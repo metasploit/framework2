@@ -1,0 +1,98 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfpayload
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Purpose: Command line interface for generating payloads
+#      Version: $Revision$
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use strict;
+
+use FindBin qw{$Bin};
+use POSIX;
+
+use lib "$Bin/lib";
+use Pex;
+
+my $payloads = Pex::LoadPayloads("$Bin/pay");
+my $sel = shift();
+
+my $p = $payloads->{$sel};
+Usage() if ! $p;
+
+my $opt = {};
+my $idx = 0;
+
+while ( my ($k, $v) = split(/\=/, shift()) )
+{
+    if (! defined($v))
+    {
+        $opt->{"ARG".$idx} = uc($k);
+        $idx++;
+    } else {
+        $opt->{uc($k)} = $v;
+    }   
+}
+
+my $action = uc($opt->{'ARG0'});
+
+if (! $action || $action =~ /^S/)
+{
+    print "\n";
+    print "        Name: $sel\n";
+    print "     Version: " . $p->Vers . "\n";
+    print "      Author: " . $p->Auth . "\n";
+    print "Architecture: " . $p->Arch . "\n";
+    print "  Privileged: " . ($p->Priv ? "Yes" : "No") . "\n";
+    print "Supported OS: " . join(" ", $p->OS()) . "\n";
+    print "Handler Type: " . $p->Type . "\n";
+    print "  Total Size: " . $p->Size . "\n\n";
+    
+    if (scalar(keys(%{$p->Opts})))
+    {
+        foreach my $o (keys(%{$p->Opts}))
+        {
+            print "\t" . $o . (" " x (20 - length($o))) . ($p->Opts->{$o}->[0] ? "Y" : "N") .
+                  "\t" . $p->Opts->{$o}->[1] . "\t" . $p->Opts->{$o}->[2] . "\n";
+        }
+    }
+    print "\n";
+    exit(0);
+}
+
+Usage() if $action !~ /^C|^P|^R/;
+
+my $s = $p->Build($opt);
+if (! $s)
+{
+    print "Error: " . $p->Error() . "\n";
+    exit(0);
+}
+
+if ($action =~ /^R/) { print $s; exit; }
+
+my $r = $action =~ /^C/ ? Pex::Utils::BufferC($s) : Pex::Utils::BufferPerl($s);
+
+print $r;
+exit(0);
+
+sub Usage
+{
+    print STDERR "   Usage: $0 <payload> [var=val] <S|C|P>\n";
+    print STDERR "Payloads: \n";
+    foreach my $p (sort(keys(%{$payloads})))
+    {
+        print STDERR "\t$p" . (" " x (20 - length($p))) . $payloads->{$p}->Desc . "\n";
+    }
+    exit(0);
+}

@@ -1,0 +1,20 @@
+1) Start up the web server
+
+hdm@pagefault framework $ ./msfweb 
+[*] Starting Metasploit Web Interface on 192.168.0.247:55555..
+
+
+2) Open up your favorite browser to http://192.168.0.247:55555
+
+3) Select your exploit from the available list
+
+4) Select the appropriate payload for your target
+
+5) Specify all required options and choose the correct target
+
+6) Click the "Vulnerability Test" button to check for the vulnerability
+
+7) Click the "Launch Exploit" button to actually exploit the target
+
+8) Wait until the exploit completes, click the link to the proxied shell
+

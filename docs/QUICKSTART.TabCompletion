@@ -1,0 +1,13 @@
+To enable tab-completion on standard Unix systems, simply install the
+Term::ReadLine::Gnu perl module. This module can be found at 
+http://search.cpan.org as well as the "extras" subdirectory of this
+package. To install this module:
+
+# cd extras
+# tar -zxf Term-ReadLine-Gnu-1.14.tar.gz
+# cd Term-ReadLine-Gnu-1.14
+# perl Makefile.PL && make && make install
+# cd .. && rm -rf Term-ReadLine-Gnu-1.14
+
+Tab completion does not work correctly under ActiveState or Cygwin
+installations.

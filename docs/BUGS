@@ -1,0 +1,19 @@
+This document lists the current known bugs for version 2.0 of the
+Metasploit Exploit Framework. If you run across an issue that is
+not included, please send the following information to
+bugs[at]metasploit.com.
+
+1) What operating system, version, and service pack you are running.
+2) The 'Revision' number found in the header of the problem script.
+3) A description of the problem and how it can reproduced.
+4) The complete output of perl -V.
+
+
+
+Known bugs for v2.0
+====================
+
+ - Tab completion does not work correctly under Cygwin
+ - Only the bsdx86reverse payload works when exploiting Samba on FreeBSD
+ - The TARGET parameter is not validated prior to being used
+ - The msfweb interface does not show incremental output from the exploit
