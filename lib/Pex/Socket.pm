@@ -62,8 +62,8 @@ sub SetOptions {
   my $self = shift;
   my $hash = shift;
 
-  if(exists($hash->{'UseSSL'})) {
-    my $use = $hash->{'UseSSL'};
+  if(exists($hash->{'SSL'})) {
+    my $use = $hash->{'SSL'};
     if($SSL_SUPPORT == 0 && $use) {
       $self->SetError('UseSSL option is set, but Net::SSLeay has not been installed.');
       return;
