@@ -217,6 +217,10 @@ sub send
 {
     my ($self, $data, $delay) = @_;
     my $res;
+
+    $delay = ($delay) ? $delay : 0.1;
+
+    my $failed = 0;
     
     while (length($data) && $res != length($data))
     {    
@@ -230,7 +234,11 @@ sub send
         }
         
         if ($res) { $data = substr($data, $res) }
-        select(undef, undef, undef, $delay) if defined($delay);
+        select(undef, undef, undef, $delay);
+        
+        # give up after five failed socket writes
+        $failed++ if ! defined($res);
+        return if $failed > 5;
     }
 
     return($res);
