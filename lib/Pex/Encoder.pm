@@ -657,4 +657,94 @@ LOOP:
   return(@keys);
 }
 
+# Some sort of bad attempted at a feedback key scanner
+# -spoon
+sub KeyScanXorDwordFeedback {
+  my $data = shift;
+  my $badChars = shift;
+
+  my %badChars;
+  my @dataFreq;
+  my @badKeys;
+  my @keys;
+
+  my $i = 0;
+  foreach my $c (split('', $data)) {
+    $dataFreq[$i++ % 4]->{ord($c)}++;
+  }
+
+  foreach my $c (split('', $badChars)) {
+    $badChars{ord($c)}++;
+    for my $i (0 .. 3) {
+      foreach my $d (keys(%{$dataFreq[$i]})) {
+        $badKeys[$i]->{ord($c) ^ $d}++;
+      }
+    }
+  }
+
+  my @r;
+LOOP:
+  for my $d (0 .. 3) {
+    $r[$d] = int(rand(254));
+    for my $c ($r[$d] .. $r[$d] + 254) {
+      $c = ($c % 255) + 1;
+      next if($badKeys[$d]->{$c} || $badChars{$c});
+      $keys[$d] = $c;
+      next LOOP;
+    }
+    # shit.
+#    print "Damn on $d\n";
+    return;
+  }
+#  print "1 SUCCESS! " . join('-', @keys) . "\n";
+
+  while(1) {
+    my $pos = XorDwordFeedbackCheck(unpack('V', pack('C4', @keys)), $data, $badChars);
+    last if($pos == -1);
+#    print "Bad at $pos\n";
+    $pos = $pos % 4;
+    my $stop = (($r[$pos] + 254) % 255) + 1;
+#    print "Stop at $stop\n";
+    return if($keys[$pos] == $stop);
+    $keys[$pos]  = ($keys[$pos] % 254) + 1;
+#    print "$pos -> " . $keys[$pos] . "\n";
+  }
+
+#  print "2 SUCCESS! " . join('-', @keys) . "\n";
+  return(unpack('V', pack('C4', @keys)));
+}
+
+sub XorDwordFeedback {
+  my ($xor, $buffer) = @_;
+  my $res;
+
+#  printf("New xor key 0x%08x $xor\n", $xor);
+
+  for(my $c = 0; $c < length($buffer); $c += 4) {
+    my $chunk = substr($buffer, $c, 4);
+    my $spacing = 4 - length($chunk);
+    $chunk .= "\x00" x $spacing;
+    my $clean = unpack('V', $chunk);
+    $chunk = $clean ^ $xor;
+    $xor = DWordAdd($xor, $clean);
+#    printf("New xor key 0x%08x $xor\n", $xor);
+    $res .= substr(pack('V', $chunk), 0, 4 - $spacing);
+  }
+  return($res);
+}
+
+sub XorDwordFeedbackCheck {
+  my $key = shift;
+  my $data = shift;
+  my $badChars = shift;
+  return(Pex::Text::BadCharIndex($badChars, XorDwordFeedback($key, $data)));
+}
+
+sub DWordAdd {
+  my $num1 = shift;
+  my $num2 = shift;
+  return(($num1 + $num2) % 4294967296);
+}
+
+
 1;
