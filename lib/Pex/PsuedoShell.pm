@@ -28,6 +28,7 @@ sub new {
       __PACKAGE__.'term' => $term,
       __PACKAGE__.'prompt' => shift,
       __PACKAGE__.'useEnv' => @_ ? shift : 1,
+      __PACKAGE__.'parseCmd' => @_ ? shift : 1,
       __PACKAGE__.'env' => { },
     }, $class)
   );
@@ -52,6 +53,11 @@ sub _useEnv {
   my $self = shift;
   $self->{__PACKAGE__.'useEnv'} = shift if(@_);
   return($self->{__PACKAGE__.'useEnv'});
+}
+sub _parseCmd {
+  my $self = shift;
+  $self->{__PACKAGE__.'parseCmd'} = shift if(@_);
+  return($self->{__PACKAGE__.'parseCmd'});
 }
 
 sub getEnv {
@@ -79,6 +85,7 @@ sub readCommand {
     my $line = $self->_term->readline($self->_prompt);
     return if(!defined($line));
     next if(length($line) == 0);
+    return($line) if(!$self->_parseCmd);
     $line =~ s/^\s+|\s+$//g;
     my ($command, @args) = $self->parseCommands($line);
     if($self->_useEnv && $command eq 'set') {
