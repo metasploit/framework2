@@ -33,7 +33,7 @@ sub new {
 
 sub _newSSL {
   my $self = shift;
-  return(Pex::Socket::SSLTcp(@_));
+  return(Pex::Socket::SSLTcp->new(@_));
 }
 
 

@@ -20,7 +20,7 @@ use base 'Msf::Socket::SocketBase';
 
 sub Init {
   my $self = shift;
-  $self->SUPER::Init;
+#  $self->SUPER::Init;
 
   my $proxies = $self->GetVar('Proxies');
   if ($proxies) {

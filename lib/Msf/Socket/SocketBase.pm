@@ -17,18 +17,6 @@
 package Msf::Socket::SocketBase;
 use strict;
 
-sub Init {
-  my $self = shift;
-  $self->SUPER::Init;
-
-  my $proxies = $self->GetVar('Proxies');
-  if ($proxies) {
-    foreach (split(',', $proxies)) {
-      $self->AddProxy(split(':', $_));
-      return if($self->IsError);
-    }
-  }
-}
 
 #sub SSL {
 #  my $self = shift;

@@ -15,7 +15,6 @@
 
 package Pex;
 
-use Pex::Socket;
 use Pex::Utils;
 
 use Pex::MSSQL;

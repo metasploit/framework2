@@ -70,6 +70,11 @@ sub SetOptions {
   my $self = shift;
   my $hash = shift;
 
+  # Setup defaults
+  $self->Timeout(30);
+  $self->RecvTimeout(10);
+  $self->RecvLoopTimeout(.5);
+
   my @options = ('Timeout', 'RecvTimeout', 'RecvLoopTimeout', 'PeerAddr', 'PeerPort', 'LocalPeerPort');
   foreach my $option (@options) {
     $self->$option($hash->{$option}) if(exists($hash->{$option}));
@@ -196,6 +201,7 @@ sub Recv {
   my $data;
   if($length == -1) {
     $data = $self->RemoveBuffer . $self->_RecvGobble($timeout);
+#    print "Gobble returned\n";
   }
   else {
     my $buffer = $self->RemoveBuffer($length);
@@ -213,6 +219,8 @@ sub _RecvGobble {
   my $self = shift;
   my $timeout = shift;
 
+#  print "Gobble called - $timeout\n";
+
   my $selector = IO::Select->new($self->Socket);
   my $data;
 
@@ -222,6 +230,8 @@ sub _RecvGobble {
     $self->SetError("Timeout $timeout reached."); # there could be data from buffer anyway
     return($data);
   }
+
+#  print "Gobble got data.\n";
 
   my $timeoutLoop = $self->RecvLoopTimeout;
   while(1) {
