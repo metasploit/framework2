@@ -841,7 +841,10 @@ sub xTabCompletion
         }
     }
         
-    if (lc($cmd) eq "set" || lc($cmd) eq "setg")
+    if (
+        ($state->{'Mode'} eq "Main"    && lc($cmd) eq "setg") ||
+        ($state->{'Mode'} eq "Exploit" && lc($cmd) eq "set")
+       )
     {
         # display variables if no args are specified
         if (! $args[0] || (! $args[1] && ($args[0] && $text)))
