@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::cmd_sol_bind;
+package Msf::Payload::cmd_irix_bind;
 use strict;
 use base 'Msf::PayloadComponent::CommandPayload';
 sub load {
