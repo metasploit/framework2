@@ -124,6 +124,7 @@ my $payload = $validPayloads->{$payloadName};
 
 
 # Mmmmm, candy
+$ui->SetTempEnv('_UI', $ui);
 $ui->SetTempEnv('_Exploits', $exploits);
 $ui->SetTempEnv('_Payloads', $payloads);
 $ui->SetTempEnv('_Exploit', $exploit);
