@@ -1,0 +1,76 @@
+This file contains a list of all known security issues affecting the Framework.
+If you run into something which is not listed here, please contact us at 
+msfdev@metasploit.com.
+
+
+[security tips]
+
+	- We recommend that you use a robust, secure terminal emulator when
+    utilizing the command-line interfaces. Please see the references at the
+    bottom of this document for more information.
+    
+    - We do not recommend that the msfweb component be used on untrusted
+    networks. Actually, we don't recommend that you use msfweb at all, it is
+    more of a proof-of-concept that a real tool.
+    
+    - We do not recommend that you install msfpayload.cgi on a web server that
+    is exposed to an untrusted network. It is possible to configure it in such a
+    way that it does not open any vulnerabilities, but we leave this as an
+    exercise to the user (Hint: symlink to cgi-bin and remove potentially
+    hazardous payloads).
+   
+    
+  
+
+[msfconsole]
+
+	- The console does not perform terminal escape sequence filtering, this
+    could allow a hostile network service to do Bad Things (TM) to your terminal
+    emulator when the exploit or check commands are used. We suggest that you
+    use a terminal emulator which limits the functionality available through
+    hostile escape sequences. Please see the bottom of this document for more
+    references on this subject.
+
+    
+[msfcli]
+
+	- The command line interface does not perform terminal escape sequence
+    filtering, this could allow a hostile network service to do Bad Things (TM)
+    to your terminal emulator when the exploit or check commands are used. We
+    suggest that you use a terminal emulator which limits the functionality
+    available through hostile escape sequences. Please see the bottom of this
+    document for more references on this subject.
+ 
+    
+[msfweb]
+
+	- The msfweb interface does not adequately filter the data recieved from
+    network services during the exploit or check commands. This can result in a
+    cross-site scripting attack on the msfweb user. 
+    
+	- The msfweb interface does not adequately filter certain arguments,
+    allowing a hostile web site operator to perform a cross-site scripting
+    attack on the msfweb user.
+    
+    - The msfweb interface does not provide any access control functionality. If
+    the service is configured to listen on a different interface (default is
+    loopback), a malicious attacker could abuse this to exploit remote systems
+    and potentially access local files. The local file access attack can be
+    accomplished by malicious arguments to the payloads which use a local file
+    as input and then exploiting a (fake) service to obtain the file contents.
+
+
+[msfpayload.cgi]
+
+	- The msfpayload.cgi script does not adequately filter certain arguments,
+    allowing a hostile web site operator to perform a cross-site scripting
+    attack against users of the web site hosting this script. 
+    
+    - The msfpayload.cgi script can be used to obtain information about files on
+    the system on which it is installed. This can be accomplished through the
+    user of certain payloads which accept a local file path as input.
+    
+    
+
+Terminal Emulator Security Issues
+	http://www.digitaldefense.net/labs/papers/Termulation.txt
