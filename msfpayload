@@ -53,29 +53,19 @@ $ui->SetTempEnv('_Payloads', $payloadsIndex);
 $ui->SetTempEnv('_Encoders', $encoders);
 $ui->SetTempEnv('_Nops', $nops);
 
-my $sel = shift();
+my $sel = shift(@ARGV);
 my $p = $payloads->{$sel};
 Usage() if ! $p;
 
-my $opt = {};
-my $idx = 0;
+my $action = uc(pop(@ARGV));
 
-while ( my ($k, $v) = split(/\=/, shift()) )
-{
-    if (! defined($v))
-    {
-        $opt->{"ARG".$idx} = uc($k);
-        $idx++;
-    } else {
-        $ui->SetTempEnv($k, $v);
-    }   
+foreach my $opt (@ARGV) {
+  $ui->SetTempEnv(split('=', $opt));
 }
 
 $ui->SetTempEnv('_Exploit', $exploits->{'Tester'});
 $ui->SetTempEnv('_PayloadName', $sel);
 $ui->SetTempEnv('_Payload', $p);
-
-my $action = uc($opt->{'ARG0'});
 
 if (! $action || $action =~ /^S/)
 {

@@ -165,41 +165,29 @@ sub DumpPayloadSummary {
   my $self = shift;
   my $p = shift;
   my $output;
+
+  $output .= "       Name: " . $p->Name . "\n";
+  $output .= "    Version: ".  $p->Version . "\n";
+  $output .= "     OS/CPU: " . join(", ", @{$p->OS}) . "/" . join(", ", @{$p->Arch}) . "\n"; 
+  $output .= "Needs Admin: " . ($p->Priv ? "Yes" : "No") . "\n";
+  $output .= " Multistage: " . ($p->Multistage ? "Yes" : "No") . "\n";
+  $output .= " Total Size: " . $p->Size . "\n";
+  $output .= "\n";
+
+  $output .= "Provided By:\n";
+  foreach (@{$p->Authors}) {
+    $output .= "    $_\n";
+  }
+  $output .= "\n";
   
-    $output .= "       Name: " . $p->Name . "\n";
-    $output .= "    Version: ".  $p->Version . "\n";
-    $output .= "     OS/CPU: " . join(", ", @{$p->OS}) . "/" . join(", ", @{$p->Arch}) . "\n"; 
-    $output .= "Needs Admin: " . ($p->Priv ? "Yes" : "No") . "\n";
-    $output .= " Multistage: " . ($p->Multistage ? "Yes" : "No") . "\n";
-    $output .= " Total Size: " . $p->Size . "\n";
-    $output .= "\n";
-    
-    $output .= "Provided By:\n";
-    foreach (@{$p->Authors}) {
-      $output .= "    $_\n";
-    }
-    $output .= "\n";
-    
-    $output .= "Available Options:\n";
-    my %mopts = %{$p->UserOpts};
-    foreach my $k (sort(keys(%mopts)))
-    {
-        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
-        $output .= "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
-    }
-    $output .= "\nAdvanced Options:\n";
-    my %aopts = %{$p->Advanced};
-    foreach my $k (sort(keys(%aopts)))
-    {
-        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
-        $output .= "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
-    }
-    
-    my $desc = $self->WordWrap($p->Description, 4, 60);
-    $desc =~ s/\n/\n    /g;
-    $output .= "\n";
-    $output .= "Description:\n    $desc\n";
-    return($output);
+  $output .= "Available Options:\n";
+  $output .= $self->DumpOptions(4, 'Options', $p);
+  $output .= "Advanced Options:\n";
+  $output .= $self->DumpAdvancedOptions(4, 'Advanced', $p);
+
+  my $desc = $self->WordWrap($p->Description, 4, 60);
+  $output .= "Description:\n$desc\n";
+  return($output);
 }
 
 
