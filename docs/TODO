@@ -1,6 +1,8 @@
 Pre-Release Tasks
 ==================
 
+ - Logging needs to be reimplemented!
+
  - Solaris, bsd, and cmd payloads need to be readded!
 
  - Nop generator needs to work within badchars
