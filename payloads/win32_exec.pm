@@ -11,7 +11,6 @@ my $info =
   'Version'      => '1.0',
   'Description'  => 'Execute an arbitrary command',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
-  'Multistage'   => 0,
   'UserOpts'     =>
     {
       'CMD' => [1, 'DATA', 'The command string to execute'],

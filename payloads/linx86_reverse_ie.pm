@@ -14,7 +14,6 @@ my $info =
   'Arch'         => [ 'x86' ],
   'Priv'         => 0,
   'OS'           => [ 'linux' ],
-  'Multistage'   => 0,
   'Size'         => 0,
 };
 

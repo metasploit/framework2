@@ -7,10 +7,10 @@ sub load {
 
 my $info =
 {
-    'Name'         => 'winbind_stg',
-    'Version'      => '1.0',
-    'Description'  => 'Listen for connection and spawn a shell',
-    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Name'         => 'winbind_stg',
+  'Version'      => '1.0',
+  'Description'  => 'Listen for connection and spawn a shell',
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
 };
 
 sub new {
@@ -21,3 +21,5 @@ sub new {
   my $self = $class->SUPER::new($hash, @_);
   return($self);
 }
+
+1;

@@ -14,7 +14,6 @@ my $info =
   'Size'         => '',
 };
 
-
 sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };

@@ -14,14 +14,16 @@ my $info =
   'Arch'         => [ 'x86' ],
   'Priv'         => 0,
   'OS'           => [ 'linux' ],
-  'Multistage'   => 0,
   'Size'         => 0,
 };
 
 sub new {
   load();
   my $class = shift;
-  my $self = $class->SUPER::new({'Info' => $info}, @_);
+  my $hash = @_ ? shift : { };
+  $hash = $class->MergeHash($hash, {'Info' => $info});
+  my $self = $class->SUPER::new($hash, @_);
+
   $self->{'Filename'} = $self->ScriptBase . '/payloads/external/linx86bind_ie.py';
   $self->_Info->{'Size'} = $self->_GenSize;
   return($self);
@@ -30,5 +32,7 @@ sub new {
 sub _GenSize {
   my $self = shift;
   my $bin = $self->Generate({'LPORT' => '4444',});
-  return length($bin);
+  return(length($bin));
 }
+
+1;

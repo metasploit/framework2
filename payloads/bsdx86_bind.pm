@@ -16,8 +16,11 @@ my $info =
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new({'Info' => $info}, @_);
-  $self->{'Info'}->{'Size'} = $self->_GenSize;
+  my $hash = @_ ? shift : { };
+  $hash = $class->MergeHash($hash, {'Info' => $info});
+  my $self = $class->SUPER::new($hash, @_);
+
+  $self->_Info->{'Size'} = $self->_GenSize;
   return($self);
 }
 
@@ -30,7 +33,7 @@ sub Generate {
   my $self = shift;
   my $port = shift;
   my $off_port = 11;
-  my $port_bin = pack("n", $port);
+  my $port_bin = pack('n', $port);
 
   my $shellcode = # lsd bsd bind shell
   # clear some stack space
@@ -134,3 +137,5 @@ sub _GenSize {
   my $bin = $self->Generate('4444');
   return(length($bin));
 }
+
+1;

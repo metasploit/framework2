@@ -4,17 +4,20 @@ use base 'Msf::PayloadComponent::NoConnection';
 
 my $info =
 {
-    'Name'         => 'Empty',
-    'Version'      => '$Revision$',
-    'Description'  => 'Empty payload (for testing)',
-    'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
-    'Priv'         => 0,
+  'Name'         => 'Empty',
+  'Version'      => '$Revision$',
+  'Description'  => 'Empty payload (for testing)',
+  'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
+  'Priv'         => 0,
+  'Size'         => 0,
 };
 
 sub new {
-    my $class = shift;
-    my $self = $class->SUPER::new({'Info' => $info}, @_);
-    return($self);
+  my $class = shift;
+  my $hash = @_ ? shift : { };
+  $hash = $class->MergeHash($hash, {'Info' => $info});
+  my $self = $class->SUPER::new($hash, @_);
+  return($self);
 }
 
 # bypass the size > 0 check

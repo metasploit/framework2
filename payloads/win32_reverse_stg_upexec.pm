@@ -7,11 +7,10 @@ sub load {
 
 my $info =
 {
-    'Name'         => 'winreverse_stg_upexec',
-    'Version'      => '1.0',
-    'Description'  => 'Connect back to attacker and spawn a shell',
-    'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
-
+  'Name'         => 'winreverse_stg_upexec',
+  'Version'      => '1.0',
+  'Description'  => 'Connect back to attacker and spawn a shell',
+  'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
 };
 
 sub new {
@@ -22,3 +21,5 @@ sub new {
   my $self = $class->SUPER::new($hash, @_);
   return($self);
 }
+
+1;
