@@ -1,13 +1,25 @@
 ;;
 ;
-;      Title: Generic macros for Linux
-;  Platforms: Linux 2.0/2.2/2.4/2.6 on IA32
-;    Authors: skape <mmiller [at] hick.org>
+;        Name: generic
+;        Type: Macro Set
+;   Qualities: None
+;     Authors: skape <mmiller [at] hick.org>
+;     Version: $Revision$
+;     License: 
+;
+;        This file is part of the Metasploit Exploit Framework
+;        and is subject to the same licenses and copyrights as
+;        the rest of this package.
+;
+; Description:
+;
+;        This file provides a generic API of macros that can be used
+;        by payloads.  No payloads are actually implemented within this
+;        file.
 ;
 ; Macro List:
 ;
-;    execve_binsh
-;
+;        execve_binsh - Executes a command shell with flags
 ;;
 BITS 32
 
@@ -16,13 +28,13 @@ BITS 32
 ;   Purpose: Execute a command shell with various options
 ; Arguments:
 ;
-;    Execution flags - Flags used for executing the command shell in a 
-;                      number of modes.
+;    Execution flags: Flags used for executing the command shell in a 
+;                     number of modes.
 ;
-;       EXECUTE_REDIRECT_IO      => Redirects stdin/stdout/stderr to the fd
-;                                   passed in 'edi'.
-;       EXECUTE_DISABLE_READLINE => Disables readline support.  This is 
-;                                   needed for redirection to UDP sockets.
+;        EXECUTE_REDIRECT_IO      => Redirects stdin/stdout/stderr to the fd
+;                                    passed in 'edi'.
+;        EXECUTE_DISABLE_READLINE => Disables readline support.  This is 
+;                                    needed for redirection to UDP sockets.
 ;;
 %define EXECUTE_REDIRECT_IO      0x0001
 %define EXECUTE_DISABLE_READLINE 0x0002
