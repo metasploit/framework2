@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::bsdsparc_reverse;
+package Msf::Payload::bsd_sparc_reverse;
 
 use base 'Msf::PayloadComponent::ReverseConnection';
 use strict;
@@ -15,7 +15,7 @@ use Pex::SPARC;
 
 my $info =
 {
-  'Name'         => 'BSD Reverse Shell',
+  'Name'         => 'BSD SPARC Reverse Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],
