@@ -48,7 +48,11 @@ foreach my $key (keys(%{$encodersIndex})) {
 
 $ui->SetTempEnv('_Encoders', $encodersIndex);
 
-getopts("i:a:o:t:b:e:s:l", \%opts);
+getopts("i:a:o:t:b:e:s:lh", \%opts);
+
+if ($opts{'h'}) {
+    Usage();
+}
 
 if ($opts{'i'} && ! -r $opts{'i'}) {
     Fatal('Invalid input file specified');
