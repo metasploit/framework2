@@ -269,7 +269,7 @@ sub DisplayPayloads {
              scalar(@{$pos}) == 0 || 
              ref($par) ne 'ARRAY' || 
              scalar(@{$par}) > 1  ||
-             scalar(@{$par}) == 0 || 
+             scalar(@{$par}) == 0
            ) {
             $ost->{'other'}->{'generic'}->{$p}++;
         } else {
