@@ -21,13 +21,12 @@ package Pex::RawSocket;
 use Socket;
 use strict;
 
-my $PROTO_IP   = defined(_IPPROTO_IP())     || 0;
-my $PROTO_RAW  = defined(_IPPROTO_RAW())    || 255;
-my $OPT_IPHDR  = defined(_IP_HDRINCL())     || 2;
+my $PROTO_IP   = defined(_IPPROTO_IP())  ? _IPPROTO_IP()  : 0;
+my $PROTO_RAW  = defined(_IPPROTO_RAW()) ? _IPPROTO_RAW() : 255;
+my $OPT_IPHDR  = defined(_IP_HDRINCL())  ? _IP_HDRINCL()  : 2;
 
 sub new {
     my $cls = shift;
-    
     socket(my $s, PF_INET, SOCK_RAW, $PROTO_RAW) || return undef;
     setsockopt($s, $PROTO_IP, $OPT_IPHDR, 1) || return undef;
     
@@ -47,6 +46,10 @@ sub send {
     my $dst = sockaddr_in(0, $addr);
     return send($self->{'SOCKET'}, $data, 0, $dst);
 }
+
+sub recv      { }
+sub blocking  { }
+sub autoflush { }
 
 sub handle {
     my $self = shift;

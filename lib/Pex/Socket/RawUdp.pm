@@ -16,6 +16,8 @@ use base "Pex::Socket::Socket";
 use strict;
 
 use IO::Socket;
+use Pex::RawSocket;
+use Pex::RawPackets;
 
 sub new {
   my $class = shift;
@@ -64,16 +66,16 @@ sub _MakeSocket {
 sub Init { 
     my $self = shift;
     if (! $self->LocalAddr) {
-        $self->LocalAddr(inet_ntoa(pack('N', rand * 0xffffffff)));
+        $self->LocalAddr(inet_ntoa(pack('N', rand() * 0xffffffff)));
     }
     if (! $self->LocalPort) {
-        $self->LocalPort(rand * 0xffff));
+        $self->LocalPort(rand() * 0xffff);
     }
     if (! $self->PeerAddr) {
-        $self->PeerAddr(inet_ntoa(pack('N', rand * 0xffffffff)));
+        $self->PeerAddr(inet_ntoa(pack('N', rand() * 0xffffffff)));
     }
     if (! $self->PeerPort) {
-        $self->PeerPort(rand * 0xffff));
+        $self->PeerPort(rand() * 0xffff);
     }
 }
 
