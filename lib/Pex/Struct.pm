@@ -9,7 +9,7 @@ my $types = {
   'l_u_32' => [ 'V', \&DefaultPack, \&DefaultUnpack, 4, ],
   'b_u_16' => [ 'n', \&DefaultPack, \&DefaultUnpack, 2, ],
   'b_u_32' => [ 'N', \&DefaultPack, \&DefaultUnpack, 4, ],
-  'string' => [ '', \&NoPack, \&Nopack, -1],
+  'string' => [ '', \&NoPack, \&NoPack, -1],
 };
 
 
