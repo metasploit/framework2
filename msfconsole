@@ -161,8 +161,7 @@ sub Load {
 }
 
 sub gSave {
-    $ui->Config->SaveConfig();
-    xMsg("save", "configuration has been written to " . $ui->Config->ConfigDir);
+    # Removed
 }
 
 sub gVersion { print "msfconsole version $VERSION\n" }
@@ -733,7 +732,6 @@ sub xGetAddressCache
 sub xAddAddressCache
 {
     my $addr = shift;
-    $ui->Config->AddrCacheAdd($addr);
     $state->{'CacheAddress'}->{$addr}++
 }
 
