@@ -22,7 +22,6 @@ use FindBin qw{$Bin};
 use lib "$Bin/lib";
 use IO::Socket;
 use POSIX;
-use Msf::HandlerCLI;
 use Msf::TextUI;
 
 Msf::UI::ActiveStateSucks();
