@@ -11,21 +11,34 @@ Our individual email address:
   H D Moore <hdm [at] metasploit.com>
   spoonm <ninjatools [at] hush.com>
 
+
+To get started, extract the tarball, cd into the directory, and read over
+the docs/QUICKSTART files. Pick an interface (cli, console, web) and start
+testing. If you have any trouble running the framework, please send us the
+complete output of 'perl -V' and any error messages you received.
+
+If there is an exploit that you think would be particularly useful to
+include, please let us know. Right now we are working on closing the gap
+in the wuftpd, proftpd, MS RPC, and MS Messenger bugs. 
+
+
 Some notes about the framework.
 
-- The framework should work fine on any little endian system, linux, bsd, osx,
-  and windows should all work.  Any reports on success/failure would be great.
-  Windows is a bit of a pain, tab completion also doesn't work.  Also, things
-  might work differently under cygwin.  ActiveState perl is NOT supported for
-  a number of really good reasons, please email us if you are curious about
-  what they are. 
+- The framework should work fine on any little endian system with a recent
+  version of perl installed. If you want to use the framework on Windows, it
+  must be run from inside Cygwin (www.cygwin.com). ActiveState perl is NOT 
+  supported for a number of really good reasons, please email us if you are
+  curious about what they are. Complete instructions for installing Cygwin
+  can be found in the docs directory.
 
 - Read docs/QUICKSTART.tabcompletion, this will make using msfconsole so much
   nicer.  Its all about the tab tab tab.
 
-- Read docs/QUICKSTART.ssl for SSL support in any exploits that support it.
+- Read docs/QUICKSTART.ssl to enable SSL support in any exploits that support it. 
+  The Cygwin instructions for installing Net::SSLeay are actually invalid, 
+  compiling Net::SSLeay actually involves rebuilding perl and openssl first :(
 
-- The Pex nop generator is currently set to return a slide of \x90.  It supports
+- The Pex nop generator is currently set to return a slide of 0x90.  It supports
   random nop sleds, and seems to work most of the time.  We have had some cases
   where the sled caused trouble during exploitation (and its really annoying
   when developing/debugging stuff).  If you want to give random sleds a shot,
@@ -43,14 +56,51 @@ Some notes about the framework.
 - The nop generators and encoders are currently not selectable through an
   interface, but they are configurable.  The Nop and Encoder variables
   are a comma set list of what to try first.  It must be the fully qualified
-  name.  For example, to use the Fnstenv encoder,
-  "setg Encoder Msf::Encoder::Fnstenv".  There is also Pex, and None.
+  name.  For example, to specify the default FnstenvMov encoder,
+  "setg Encoder Msf::Encoder::PexFnstenvMov".  There is also Pex, PexAlphaNum,
+  and PexFnstenvSub.
 
 - The following components are disabled in this release.
-    + msfweb
-    + msfconsole session logging
     + win32 prefork capability
     
 - The following is a list of known bugs:
     + BSD bind and findsock payloads are buggy
-    + The TARGET parameter is not validated prior to being used
+
+- The current exploit list:
+    + PoPToP Negative Read Overflow
+    + Apache Win32 Chunked Encoding
+    + Exchange 2000 MS03-46 Heap Overflow
+    + Frontpage fp30reg.dll Chunked Encoding
+    + IA WebMail 3.x Buffer Overflow
+    + IIS 5.0 nsiislog.dll POST Overflow
+    + IIS 5.0 Printer Buffer Overflow
+    + IIS 5.0 WebDAV ntdll.dll Overflow
+    + Microsoft RPC DCOM MSO3-026 NT 2K/XP
+    + Microsoft RPC DCOM MSO3-026 NT 4.0
+    + MSSQL 2000 Resolution Overflow
+    + RealServer Describe Buffer Overflow
+    + Samba trans2open Overflow
+    + Sambar 6 Search Results Buffer Overflow
+    + Solaris sadmind Remote Execution
+    + War-FTPD 1.65 PASS Overflow
+
+- The current payload list:
+    + bsdx86bind
+    + bsdx86findsock
+    + bsdx86reverse
+    + cmd_generic
+    + cmd_sol_bind
+    + cmd_unix_reverse
+    + linx86bind
+    + linx86bind_ie
+    + linx86findsock
+    + linx86reverse
+    + linx86reverse_ie
+    + linx86reverse_imp
+    + linx86reverse_xor
+    + solx86bind
+    + solx86findsock
+    + solx86reverse
+    + winadduser
+    + winbind
+    + winreverse
