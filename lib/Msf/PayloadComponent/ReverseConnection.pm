@@ -134,6 +134,7 @@ sub NinjaSetupHandler {
 
 sub NinjaCheckHandler {
   my $self = shift;
+  my $dontKill = $self->GetVar('NinjaDontKill');
 
   my @ready = $self->NinjaSelector->can_read(.5);
   if(@ready) {
@@ -142,7 +143,8 @@ sub NinjaCheckHandler {
     return if(!length($data));
 
     if($data =~ /Added server/) {
-      $self->PrintLine('[*] socketNinja has new connection.');
+      $self->PrintLine('[!] socketNinja has new connection.');
+      return(0) if($dontKill);
       return(1);
     }
   }
