@@ -24,7 +24,8 @@ my %UUIDS =
     "SYSACT"    => "\xa0\x01\x00\x00\x00\x00\x00\x00\xC0\x00\x00\x00\x00\x00\x00\x46",
 );
 
-my $DCEXFERSYNTAX = "\x04\x5d\x88\x8a\xeb\x1c\xc9\x11\x9f\xe8\x08\x00\x2b\x10\x48\x60";
+sub UUID { return $UUIDS{shift()} }
+sub DCEXFERSYNTAX { return "\x04\x5d\x88\x8a\xeb\x1c\xc9\x11\x9f\xe8\x08\x00\x2b\x10\x48\x60" }
 
 sub Bind {
     return if scalar(@_) != 4;
@@ -33,7 +34,7 @@ sub Bind {
     my ($imaj, $imin) = split(/\./, $iver);
     $imin = defined($imin) ? $imin : 0;
 
-    return pack('CCCCNvvNvvNVvvA16vvA16V', 
+    return pack('CCCCNvvVvvVVvvA16vvA16V', 
         5,      # major version 5
         0,      # minor version 0
         11,     # bind type
@@ -42,8 +43,8 @@ sub Bind {
         72,     # frag length
         0,      # auth length
         0,      # call id
-        16384,  # max xmit frag
-        16384,  # max recv frag
+        5840,   # max xmit frag
+        5840,   # max recv frag
         0,      # assoc group
         1,      # num ctx items
         0,      # context id
@@ -84,7 +85,7 @@ sub TestInterfaceDump {
     my $s = Pex::Socket->new();
     return if ! $s->Tcp($host, $port);
 
-    my $bind = Bind($UUIDS{'REMACT'}, '0.0', $DCEXFERSYNTAX, '2');
+    my $bind = Bind($UUIDS{'REMACT'}, '0.0', DCEXFERSYNTAX, '2');
     $s->Send($bind);
     $res = $s->Recv(60);
     $rpc = DecodeResponse($res);
