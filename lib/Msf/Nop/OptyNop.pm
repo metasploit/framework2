@@ -129,6 +129,7 @@ my $table = [
   [ "\x83\xd8",           3, $reg1, [ $reg ] ], # /* sbbl $imm8,%reg1 */
   [ "\x81\xd8",           6, $reg1, [ $reg ] ], # /* sbbl $imm32,%reg1 */
   [ "\x1e",               1, $none, [ $esp ] ], # /* push %ds */
+
 # added by spoon...
   # xchg eax, eax == 0x90 == nop... fancy
   [ "\x90",               1, $reg1, [ $eax, $reg ] ], # /* # xchg eax,reg1 */
@@ -142,74 +143,273 @@ my $table = [
   [ "\xd6",               1, $none, [ $eax ] ], # /* # salc */
   [ "\x9b",               1, $none, [ ] ], # /* # wait */
   [ "\x58",               1, $reg1, [ $esp, $reg ] ], # /* # pop reg1 */
+  [ "\x9c",               1, $none, [ $esp ] ], # /* # pushf */
+  [ "\x60",               1, $none, [ $esp ] ], # /* # pusha */
+
+# jmpy jmp jmp
+  [ "\xeb",               2, $none, [ ], \&_InsHandlerJmp ], # jmp byte offset
+  [ "\x70",               2, $none, [ ], \&_InsHandlerJmp ], # jo
+  [ "\x71",               2, $none, [ ], \&_InsHandlerJmp ], # jno
+  [ "\x72",               2, $none, [ ], \&_InsHandlerJmp ], # jc
+  [ "\x73",               2, $none, [ ], \&_InsHandlerJmp ], # jnc
+  [ "\x74",               2, $none, [ ], \&_InsHandlerJmp ], # jz
+  [ "\x75",               2, $none, [ ], \&_InsHandlerJmp ], # jnz
+  [ "\x76",               2, $none, [ ], \&_InsHandlerJmp ], # jna
+  [ "\x77",               2, $none, [ ], \&_InsHandlerJmp ], # ja
+  [ "\x78",               2, $none, [ ], \&_InsHandlerJmp ], # js
+  [ "\x79",               2, $none, [ ], \&_InsHandlerJmp ], # jns
+  [ "\x7a",               2, $none, [ ], \&_InsHandlerJmp ], # jpe
+  [ "\x7b",               2, $none, [ ], \&_InsHandlerJmp ], # jpo
+  [ "\x7c",               2, $none, [ ], \&_InsHandlerJmp ], # jl
+  [ "\x7d",               2, $none, [ ], \&_InsHandlerJmp ], # jnl
+  [ "\x7e",               2, $none, [ ], \&_InsHandlerJmp ], # jng
+  [ "\x7f",               2, $none, [ ], \&_InsHandlerJmp ], # jg
 ];
 
-# XXX
-# there is kinda a bug maybe to be fixed... last 2 bytes are always single
-# byte nops, and they don't have to be... it's the way the pos stuff is done
-
-sub _GenerateSled {
-  my $self = shift;
-  my $len = shift;
-
-  my $data = "\x00" x $len;
-  my $pos = $len - 1;
-
-  my $badChars = $self->_BadChars;
-
-  while($pos >= 0) {
-    my $index = int(rand(@{$table}));
-
-    next if($self->_SmashCheck($index));
-
-    my $code = $table->[$index]->[0];
-    my $codeLen = length($code);
-    my $insLen = $table->[$index]->[1];
-
-    next if(Pex::Text::BadCharCheck($badChars, $code));
-
-recheck:
-    # instruction would run off the end
-    next if($insLen > ($len - $pos));
-
-    
-    # instruction would run off the front
-    next if(($codeLen - 1) > $pos);
-
-    if($codeLen == 1) {
-      if(substr($data, $pos, 1) ne "\x00") {
-        $pos--;
-        goto recheck;
-      }
-
-      substr($data, $pos, 1, $self->_SetRegs(substr($code, -1, 1), $index));
-      next;
-    }
-
-    $codeLen--;
-
-    next if(!$self->_ValidReg(
-      substr($data, $pos, 1),
-      substr($table->[$index]->[0], $codeLen, 1),
-      $index)
-    );
-
-    $pos -= $codeLen;
-    substr($data, $pos, $codeLen + 1, $table->[$index]->[0]);
-  }
-
-  return($data);
-}
 
 sub _BadRegs {
-  return([$ebp, $esp]);
 #  return([ ]);
+  return([$ebp, $esp]);
 }
 
 sub _BadChars {
   return('');
 }
 
+sub _GenerateSled {
+  my $self = shift;
+  my $len = shift;
+
+  return if($len <= 0);
+
+  my $data = "\x00" x $len;
+  my $pos = $len - 1;
+
+  while(1) {
+    my $index = int(rand(@{$table}));
+    
+    # lie a bit, generate the first instruction, single byte only.
+    next if(!$self->_CheckIns($index, $pos, $len - 1));
+
+    my $code = $table->[$index]->[0];
+    substr($data, $pos, 1, $self->_SetRegs(substr($code, -1, 1), $index));
+    last;
+  }
+
+  # Now the first instruction is generated, all should be good...
+  while($pos > 0) {
+    my $index = int(rand(@{$table}));
+
+    next if(!$self->_CheckIns($index, $pos, $len));
+
+    my $code = $table->[$index]->[0];
+    my $codeLen = length($code);
+    my $insLen = $table->[$index]->[1];
+
+    # Check to see if it's a one byte codelen type that wants SetRegs called
+    if($self->_InsHandler(0, $index, $pos, $len, $data)) {
+      $pos--;
+      substr($data, $pos, 1, $self->_SetRegs(substr($code, -1, 1), $index));
+      next;
+    }
+
+    # Check to see if the byte that already exists will make for a valid
+    # ending byte to our current instruction
+    next if(!$self->_InsHandler(1, $index, $pos, $len, $data));
+
+    $pos -= $codeLen;
+    substr($data, $pos, $codeLen, $code);
+  }
+
+  return($data);
+}
+
+
+sub _CheckIns {
+  my $self = shift;
+  my $index = shift;
+  my $pos = shift;
+  my $len = shift;
+
+  my $code = $table->[$index]->[0];
+  my $codeLen = length($code);
+  my $insLen = $table->[$index]->[1];
+
+
+  my $type = $table->[$index]->[2];
+
+  # instruction would run off the end
+  return(0) if(($insLen - 1) > ($len - $pos));
+
+  # instruction would run off the front
+  return(0) if($codeLen > $pos);
+  # test to see if the instruction always modifies a bad register.
+  return(0) if($self->_SmashCheck($index));
+
+  if($type == $reg2) {
+    return($self->_CheckInsReg2($index, $pos, $len));
+  }
+  elsif($type == $reg1) {
+    return($self->_CheckInsReg1($index, $pos, $len));
+  }
+  else {
+    return($self->_CheckInsNone($index, $pos, $len));
+  }
+  # ...
+  return(1);
+}
+
+
+sub _CheckInsNone {
+  my $self = shift;
+  my $index = shift;
+
+  my $code = $table->[$index]->[0];
+  my $codeLen = length($code);
+
+  # make sure the instruction doesn't have any bad characters
+  return(0) if(Pex::Text::BadCharCheck($self->_BadChars, $code));
+  return(1);
+}
+
+sub _CheckInsReg2 {
+  my $self = shift;
+  my $index = shift;
+
+  my $code = $table->[$index]->[0];
+  my $codeLen = length($code);
+
+
+  # Make sure the static portion of the instruction doesn't have bad bytes
+  return(0) if(Pex::Text::BadCharCheck(
+    $self->_BadChars,
+    substr($code, $codeLen - 2, $codeLen - 1)
+  ));
+
+  # check to make sure that a generation is possible w/ current constraints
+  return(0) if(!$self->_CheckReg2Possible(substr($code, -1, 1)));
+  return(1);
+}
+
+sub _CheckInsReg1 {
+  my $self = shift;
+  my $index = shift;
+
+  my $code = $table->[$index]->[0];
+  my $codeLen = length($code);
+
+  # Make sure the static portion of the instruction doesn't have bad bytes
+  return(0) if(Pex::Text::BadCharCheck(
+    $self->_BadChars,
+    substr($code, $codeLen - 2, $codeLen - 1)
+  ));
+
+  # check to make sure that a generation is possible w/ current constraints
+  return(0) if(!$self->_CheckReg1Possible(substr($code, -1, 1)));
+  return(1);
+}
+
+# Make sure that for a given byte of a two register instruction, there is
+# atleast one generation possible.
+sub _CheckReg2Possible {
+  my $self = shift;
+  my $byte = shift;
+
+  for(my $i = 0; $i < 8; $i++) {
+    next if($self->_BadRegCheck($i));
+    return(1) if($self->_CheckReg1Possible($byte + chr($i << 3)));
+  }
+  return(0);
+}
+
+# Make sure that given a byte for a single register instruction, there is a 
+# generation possible.
+sub _CheckReg1Possible {
+  my $self = shift;
+  my $byte = shift;
+
+  my $badChars = $self->_BadChars;
+
+  for(my $i = 0; $i < 8; $i++) {
+    next if($self->_BadRegCheck($i));
+    return(1) if(!Pex::Text::BadCharCheck($badChars, $byte + chr($i)));
+  }
+  return(0);
+}
+
+
+
+# Types:
+# 0 = Are you a single byte (maybe plus immediate), ie should I call SetRegs?
+# 1 = 
+
+sub _InsHandler {
+  my $self = shift;
+  my $type = shift;
+  my $index = shift;
+
+  my $handler = $table->[$index]->[4];
+  # call default handler
+  if(!defined($handler)) {
+    return($self->_InsHandlerDefault($type, $index, @_));
+  }
+  else {
+    return(&{$handler}($self, $type, $index, @_));
+  }
+}
+
+sub _InsHandlerDefault {
+  my $self = shift;
+  my $type = shift;
+  my $index = shift;
+  my $pos = shift;
+  my $len = shift;
+  my $data = shift;
+
+  my $code = $table->[$index]->[0];
+  my $codeLen = length($code);
+
+  # The general case of codeLen == 1 is that we want to call SetRegs, since the
+  # operands are part of the opcode, n such
+  if($type == 0) {
+    return(1) if($codeLen == 1);
+    return(0);
+  }
+
+  # Is instruction valid?
+  elsif($type == 1) {
+    return($self->_ValidReg(
+      substr($data, $pos, 1),
+      substr($code, $codeLen - 1, 1),
+      $index
+    ));
+  }
+}
+
+sub _InsHandlerJmp {
+  my $self = shift;
+  my $type = shift;
+  my $index = shift;
+  my $pos = shift;
+  my $len = shift;
+  my $data = shift;
+
+  # we aren't the normal type, we never want SetRegs called...
+  if($type == 0) {
+    return(0);
+  }
+  elsif($type == 1) {
+    my $byte = substr($data, $pos, 1);
+
+    return(0) if(ord($byte) > 0x7f);
+    return(0) if(ord($byte) > ($len - $pos - 1));
+
+    return(1);
+  }
+}
+
+
+# Check to see if a instruction always modifies a BadRegs
 sub _SmashCheck {
   my $self = shift;
   my $index = shift;
@@ -219,6 +419,9 @@ sub _SmashCheck {
   }
   return(0);
 }
+
+# check to see if an instruction has a $reg smash, and if so if the passed
+# register is in BadRegs
 sub _SmashCheckReg {
   my $self = shift;
   my $index = shift;
@@ -230,6 +433,7 @@ sub _SmashCheckReg {
   return(0);
 }
 
+# Check to see if an aribitrary register number is in BadRegs
 sub _BadRegCheck {
   my $self = shift;
   my $r = shift;
@@ -241,29 +445,43 @@ sub _BadRegCheck {
   return(0);
 }
 
+# You must have checked (with say, _CheckIns) that a valid generation is
+# actually possible, otherwise you could get stuck in a loop...
+# XXX this could be made a lot more efficent...
 sub _SetRegs {
   my $self = shift;
   my $byte = shift;
   my $index = shift;
 
   my $flags = $table->[$index]->[2];
-  my $r = 0;
+
   if($flags == $reg2) {
-    $r = int(rand(8)) << 3;
-    $flags = $reg1;
-  }
-
-  if($flags == $reg1) {
-    my $rr;
+    my ($r1, $r2, $r) = (0, 0, 0);
     do {
-      $rr = int(rand(8));
-    } while($self->_BadRegCheck($rr));
+      $r2 = int(rand(8));
+      $r1 = int(rand(8));
+      $r = $r2 << 3 + $r1;
+    } while($self->_BadRegCheck($r1)
+        || $self->_BadRegCheck($r2)
+        || Pex::Text::BadCharCheck($byte | chr($r)));
 
-    $r += $rr;
+    return($byte | chr($r));
   }
 
-  return($byte | chr($r));
+  elsif($flags == $reg1) {
+    my $r = 0;
+    do {
+      $r = int(rand(8));
+    } while($self->_BadRegCheck($r)
+        || Pex::Text::BadCharCheck($byte | chr($r)));
+
+    return($byte | chr($r));
+  }
+
+  return($byte);
 }
+
+
 sub _ValidReg {
   my $self = shift;
   my $byte = shift;
