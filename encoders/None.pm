@@ -8,7 +8,7 @@ my $info = {
   'Authors' => [ 'spoonm <ninjatools [at] hush.com> [Artistic License]', ],
   'Arch'  => [ 'x86' ],
   'OS'    => [ ],
-  'Desc'  =>  'This encoder does not encode',
+  'Description'  =>  'This encoder does not encode',
   'Refs'  => [ ],
 };
 

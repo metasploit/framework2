@@ -12,7 +12,7 @@ my $info = {
   'Authors' => [ 'spoonm <ninjatools [at] hush.com> [Artistic License]', ],
   'Arch'  => [ 'x86' ],
   'OS'    => [ ],
-  'Desc'  =>  'Pex Double Word Xor Encoder',
+  'Description'  =>  'Variable-length fnstenv/sub dword xor encoder',
   'Refs'  => [ ],
 };
 

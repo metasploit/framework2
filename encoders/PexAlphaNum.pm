@@ -13,7 +13,7 @@ my $info = {
   'Authors' => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
   'Arch'  => [ 'x86' ],
   'OS'    => [ ],
-  'Desc'  =>  "Skylined's alphanumeric encoder ported to perl",
+  'Description'  =>  "Skylined's alphanumeric encoder ported to perl",
   'Refs'  => [ ],
 };
 
@@ -28,7 +28,7 @@ sub EncodePayload {
   my $badChars = shift;
   
   my $type = $self->GetVar('GETPCTYPE');
-  if (! $type && grep {/win32/} @{ $self->GetVar('_Payload')->OS})
+  if (! $type && $self->GetVar('_Payload') && grep {/win32/} @{ $self->GetVar('_Payload')->OS})
   {
     $type = 'win32';
   }
