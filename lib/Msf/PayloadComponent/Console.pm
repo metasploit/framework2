@@ -35,7 +35,7 @@ sub HandleConsole {
   $stdin->blocking(1);
   $stdin->autoflush(1);
 
-  my $selector = IO::Select->new($stdin, $sock);
+  my $selector = IO::Select->new($stdin, $sockIn);
 
 LOOPER:
   while($loop) {
@@ -45,7 +45,7 @@ LOOPER:
         my $data = $self->SendFilter($stdin->getline);
         $sockOut->send($data);
       }
-      elsif($ready == $sock) {
+      elsif($ready == $sockIn) {
         my $data;
         $sockIn->recv($data, 4096);
         last LOOPER if(!length($data));
