@@ -37,7 +37,7 @@ sub _Init {
     $self->{'IMPORT'}      = { };
     $self->{'EXPORT'}      = { };
     $self->{'RESOURCE'}    = { };
-    
+    $self->{'VERSION'}     = { };
     
     $self->LoadImage($args);
     return $self;
@@ -495,6 +495,7 @@ sub _ParseResourceEntry {
     $res->{'Name'} = $self->_ParseResourceName($rdata, $rname);
     $res->{'Data'} = $entry;
     $res->{'Code'} = $dcode;
+    $res->{'RVA'}  = $drva;
     return $res;
 }
 
@@ -554,6 +555,39 @@ sub _ParseResourceDirectory {
     }
 }
 
+
+sub _ResID2Name {
+    my $self = shift;
+    my $tid  = shift;
+    
+    my %tmap =
+    (
+        '1'      => 'CURSOR',
+        '2'      => 'BITMAP',
+        '3'      => 'ICON',
+        '4'      => 'MENU',
+        '5'      => 'DIALOG',
+        '6'      => 'STRING',
+        '7'      => 'FONTDIR',
+        '8'      => 'FONT',
+        '9',     => 'ACCELERATORS',
+        '10'     => 'RCDATA',
+        '11'     => 'MESSAGETABLE',
+        '12'     => 'GROUP_CURSOR',
+        '14'     => 'GROUP_ICON',
+        '16'     => 'VERSION',
+        '32767'  => 'ERROR',
+        '8192'   => 'NEWRESOURCE',
+        '8194'   => 'NEWBITMAP',
+        '8196'   => 'NEWMENU',
+        '8197'   => 'NEWDIALOG',
+        
+    );
+    
+    return ($tid) if $tid !~ /^\d/;
+    return $tmap{$tid} || $tid;
+}
+
 sub _LoadVersionData {
     my $self = shift;
     my $resource = $self->Rva('resource');
@@ -564,9 +598,121 @@ sub _LoadVersionData {
     
     # XXX - Only read first section right now
     my $vblock = $vdata->{'/VERSION/0/0'}->{'Data'};
+    my $vblock_rva = $vdata->{'/VERSION/0/0'}->{'RVA'};
+    
+    my ($vinf_wlen, $vinf_vlen, $vinf_type) = unpack('v3', $vblock);
+    my $vinf_wkey = $self->_UNI2ANSI(substr($vblock, 6));
+    my $vinf_xpad = (length($vinf_wkey) * 2) + 2 + 6;
+    
+    # Pad it up to the VS_FIXEDFILEINFO structure
+    while (($vblock_rva + $vinf_xpad) % 4 != 0) {
+        $vinf_xpad++;
+    }
+    
+    if ($vinf_vlen != 0) {
+        my $vfixed_ptr = index($vblock, pack('V', 0xfeef04bd));
+        
+        if ($vfixed_ptr != $vinf_xpad) {
+            print STDERR "PEInfo::_LoadVersionData: mismatch of VS_FIXEDFILEINFO start offsets\n";
+        }
+        
+        my @vfixed = unpack('VVv8V*', substr($vblock, $vfixed_ptr, $vinf_vlen));   
+        my $versionFile = join(".", ( $vfixed[3], $vfixed[2], $vfixed[5], $vfixed[4]));
+        my $versionProd = join(".", ( $vfixed[7], $vfixed[6], $vfixed[9], $vfixed[8]));
+    }
+    
+    # Add the length of the VS_FIXEDFILEINFO structure
+    $vinf_xpad += $vinf_vlen;
+    
+    # Pad it up to the first StringFileInfo structure
+    while (($vblock_rva + $vinf_xpad) % 4 != 0) {
+        $vinf_xpad++;
+    }
+    
+    # Read and parse the StringFileInfo structure
+    my ($sinf_wlen) = unpack('v', substr($vblock, $vinf_xpad, 2));
+    my $sinf_wkey = $self->_UNI2ANSI(substr($vblock, $vinf_xpad + 6, 256));
+    my $sinf_xpad = $vinf_xpad + (length($sinf_wkey) * 2) + 2 + 6;
+    
+    if ($sinf_wkey ne 'StringFileInfo') {
+        print STDERR "PEInfo::_LoadVersionData: StringFileInfo not found first in VERSION_INFO\n";
+        print STDERR "DATA: ".unpack("H*", substr($vblock, $vinf_xpad + 6, 64))."\n";
+    }
+    
+    # Pad it up to the StringArray structure
+    while (($vblock_rva + $sinf_xpad) % 4 != 0) {
+        $sinf_xpad++;
+    }
 
+    # Determine the maximum byte length of the array
+    my $sinf_size = $sinf_wlen - ($sinf_xpad - $vinf_xpad );
     
+    my $sfi = $self->_ParseStringTableArray($vblock, $vblock_rva, $sinf_xpad, $sinf_size);
     
+    $self->{'VERSION'} = $sfi;
+    
+    # Point this to the next structure (VarFileInfo)
+    $vinf_xpad += $sinf_wlen;
+    
+    # XXX VarFileInfo not implemented yet
+}
+
+sub _ParseStringTableArray {
+    my $self = shift;
+    my ($vblock, $vblock_rva, $sinf_xpad, $sinf_size) = @_;
+    my $sinf_xptr = $sinf_xpad;
+    my $res = { };
+    
+    while ($sinf_xptr < $sinf_xpad + $sinf_size) {
+            
+        my ($ainf_wlen) = unpack('v', substr($vblock, $sinf_xptr, 2));
+        my $ainf_wkey = $self->_UNI2ANSI(substr($vblock, $sinf_xptr + 6, 256));
+        my $ainf_xpad = $sinf_xptr + (length($ainf_wkey) * 2) + 2 + 6;
+        
+        # Pad it up to the String structure array
+        while (($vblock_rva + $ainf_xpad) % 4 != 0) {
+            $ainf_xpad++;
+        }
+        
+        # Create a stub hash for strings in this language
+        $res->{$ainf_wlen} = {};
+        
+        # This is getting repetitive...
+        my $ainf_size = $ainf_wlen - ($ainf_xpad - $sinf_xpad);
+        my $ainf_xptr = $ainf_xpad;
+        
+        while ($ainf_xptr < $ainf_xpad + $ainf_size) {
+
+            my ($binf_wlen, $binf_vlen) = unpack('v2', substr($vblock, $ainf_xptr, 4));
+            my $binf_wkey = $self->_UNI2ANSI(substr($vblock, $ainf_xptr + 6, 256));
+            my $binf_xpad = $ainf_xptr + (length($binf_wkey) * 2) + 2 + 6;
+
+            # Pad it up to the actual String structure
+            while (($vblock_rva + $binf_xpad) % 4 != 0) {
+                $binf_xpad++;
+            }
+            
+            # Store the unicode string value...
+            $res->{$ainf_wlen}->{$binf_wkey} = $self->_UNI2ANSI(substr($vblock, $binf_xpad, 256));        
+
+            # Push the ptr to the next structure
+            $ainf_xptr += $binf_wlen;
+            
+            # Align the ptr if needed
+            while (($ainf_xptr + $vblock_rva) % 4 != 0) {
+                $ainf_xptr++;
+            }
+        }
+        
+        # Push the ptr to the next structure
+        $sinf_xptr += $ainf_wlen;   
+        
+        # Align the ptr if needed
+        while (($sinf_xptr + $vblock_rva) % 4 != 0) {
+            $sinf_xptr++;
+        }
+    }
+    return $res;
 }
 
 sub FindPEOffset {
@@ -633,125 +779,9 @@ sub _O2RV {
 sub _UNI2ANSI {
     my $self = shift;
     my $data = shift;
+    ($data) = split(/\x00\x00/, $data);
     $data =~ s/\x00//g;
     return $data;
 }
 
-sub _ResID2Name {
-    my $self = shift;
-    my $tid  = shift;
-    
-    my %tmap =
-    (
-        '1'      => 'CURSOR',
-        '2'      => 'BITMAP',
-        '3'      => 'ICON',
-        '4'      => 'MENU',
-        '5'      => 'DIALOG',
-        '6'      => 'STRING',
-        '7'      => 'FONTDIR',
-        '8'      => 'FONT',
-        '9',     => 'ACCELERATORS',
-        '10'     => 'RCDATA',
-        '11'     => 'MESSAGETABLE',
-        '12'     => 'GROUP_CURSOR',
-        '14'     => 'GROUP_ICON',
-        '16'     => 'VERSION',
-        '32767'  => 'ERROR',
-        '8192'   => 'NEWRESOURCE',
-        '8194'   => 'NEWBITMAP',
-        '8196'   => 'NEWMENU',
-        '8197'   => 'NEWDIALOG',
-        
-    );
-    
-    return ($tid) if $tid !~ /^\d/;
-    return $tmap{$tid} || $tid;
-}
-
 1;
-
-__END__
-4.12 Version Resources. 
- 
-Version resources specify information that can be used by setup 
-programs to discover which of several versions of a program or 
-dynamic link library to install into the system.  There is also a set 
-of api's to query the version resources.  There are three major types 
-of information stored in version resources:  the main information in 
-a VS_FIXEDFILEINFO structure, Language information data in a variable 
-file information structure (VarFileInfo), and user defined string 
-information in StringFileInfo structures.  For Windows 32, the 
-strings within the version information resource is stored in Unicode, 
-providing localization of the resoruces.  Each block of information 
-is dword aligned. 
- 
-The structure of a version resource is depicted by the 
-VS_VERSION_INFO structure. 
- 
-VS_VERSION_INFO { 
-    WORD wLength;             /* Length of the version resource */ 
-    WORD wValueLength;        /* Length of the value field for this block */ 
-    WORD wType;               /* type of information:  1==string, 0==binary */ 
-    WCHAR szKey[];            /* Unicode string KEY field */ 
-    [WORD Padding1;]          /* possible word of padding */ 
-    VS_FIXEDFILEINFO Value;   /* Fixed File Info Structure */ 
-    BYTE Children[];      /* position of VarFileInfo or StringFileInfo data */ 
-}; 
- 
-The Fixed File Info structure contains basic information about the 
-version, including version numbers for the product and file, and type 
-of the file. 
- 
-typedef struct tagVS_FIXEDFILEINFO { 
-    DWORD dwSignature;        /* signature - always 0xfeef04bd */ 
-    DWORD dwStrucVersion;     /* structure version - currently 0 */ 
-    DWORD dwFileVersionMS;    /* Most Significant file version dword */ 
-    DWORD dwFileVersionLS;    /* Least Significant file version dword */ 
-    DWORD dwProductVersionMS; /* Most Significant product version */ 
-    DWORD dwProductVersionLS; /* Least Significant product version */ 
-    DWORD dwFileFlagMask;     /* file flag mask */ 
-    DWORD dwFileFlags;        /*  debug/retail/prerelease/... */ 
-    DWORD dwFileOS;           /* OS type.  Will always be Windows32 value */ 
-    DWORD dwFileType;         /* Type of file (dll/exe/drv/... )*/ 
-    DWORD dwFileSubtype;      /* file subtype */ 
-    DWORD dwFileDateMS;       /* Most Significant part of date */ 
-    DWORD dwFileDateLS;       /* Least Significant part of date */ 
-} VS_FIXEDFILEINFO; 
- 
-The user defined string information is contained within the 
-StringFileInfo structure, which is a set of two strings:  the key and 
-the information itself. 
- 
-StringFileInfo { 
-    WCHAR       szKey[];      /* Unicode "StringFileInfo" */ 
-    [WORD        padding;]    /* possible padding */ 
-    StringTable Children[]; 
-}; 
- 
-StringTable { 
-    WCHAR      szKey[];   /* Unicode string denoting the language - 8 bytes */ 
-    String Children[];    /* array of children String structures */ 
-} 
- 
-String { 
-    WCHAR   szKey[];          /* arbitrary Unicode encoded KEY string */ 
-                         /* note that there is a list of pre-defined keys */ 
-    [WORD   padding;]         /* possible padding */ 
-    WCHAR Value[];            /* Unicode-encoded value for KEY */ 
-} String; 
- 
-The variable file info (VarFileInfo) block contains a list of 
-languages supported by this version of the application/dll. 
- 
-VarFileInfo { 
-    WCHAR szKey[];            /* Unicode "VarFileInfo" */ 
-    [WORD padding;];          /* possible padding */ 
-    Var        Children[];    /* children array */ 
-}; 
- 
-Var { 
-    WCHAR szKey[];       /* Unicode "Translation" (or other user key) */ 
-    [WORD padding;]      /* possible padding */ 
-    WORD  Value[];       /* one or more values, normally language id's */ 
-}; 
