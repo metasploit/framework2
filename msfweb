@@ -495,12 +495,9 @@ sub SessionCommand {
 	if ($cmd) {
 		$cmd .= "\n";
 		$ipc->printflush("CMD $sid ".unpack("H*", $cmd)."\n");
-		$cmd = XSS_Filter($cmd);
-		$cmd_data .= "<div class='textBold'>&gt;&gt; $cmd</div>\n";
 		my $raw = $ipc->getline;
 		
 		if ($raw =~ /ERROR/) {
-			$cmd_data.= "<div class='textBold'>!!! Session Closed !!!</div>\n";
 			$ipc->printflush("SHUTDOWN $sid\n");
 		}
 	}
@@ -1408,6 +1405,8 @@ qq[
 			}
 		}
 		
+		$cache->printflush("<div class='textBold'>&gt;&gt; Session is shutting down...</div>\n");
+
 		# Shut down the service...
 		$eout->close;
 		$pout->close;
