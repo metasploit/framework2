@@ -13,6 +13,7 @@ use IO::Socket;
 use IO::Select;
 use POSIX;
 
+my $VERSION = '$Revision$';
 
 my $UPDATE_HOST = "metasploit.com";
 my $UPDATE_PATH = "/projects/Framework/updates";
@@ -33,10 +34,25 @@ BEGIN
     }
 }
 
+my %opts;
+getopts('hvmru', \%opts);
+
+if ($opts{v}) {
+    print "Msfupdate Version: $VERSION\n";
+    exit(0);
+}
+
+if ($opts{h} || (! $opts{m} && ! $opts{r} && ! $opts{u})) {
+    Usage();
+}
+
 chdir($RealBin);
 
-my $old_data;
-my $now_data = ScanFiles('.');
+my ($old_data, $now_data, $new_data);
+my ($old, $now, $new);
+
+$now_data = ScanFiles('.');
+
 if (! -r '.current') {
     WriteFile('.current', $now_data);
     $old_data = $now_data;
@@ -45,22 +61,59 @@ else {
     $old_data = ReadFile('.current');
 }
 
-my $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.txt");
+if ($opts{r}) {
+    print "[*] The local file hash has been rebuilt\n";
+    WriteFile('.current', $now_data);
+    exit(0);
+}
 
-my $now = Hashit($now_data);
-my $old = Hashit($old_data);
-my $new = Hashit($new_data);
+if ($opts{u}) {
+    if (! $SSL_SUPPORT) {
+        select(STDOUT); $|++;
+        print "[*] WARNING: The Net::SSLeay module is not installed.\n";
+        print "    The update process will fall back to plain HTTP,\n";
+        print "    this opens up the possibility of someone being\n";
+        print "    able to inject malicious code into your system.\n";
+        print "\n";
+        print "Continue anyways (yes or no) ";
+        my $resp;
+        while ($resp !~ /yes|no/i) {
+            print "> ";
+            $resp = <STDIN>;
+            chomp($resp);
+        }
+        print "\n";
+        
+        if ($resp !~ /yes/i) {
+            print "[*] The update process has been cancelled\n";
+            exit(0);
+        }
+    }
+    
+    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.txt");
+}
+
+$now = Hashit($now_data);
+$old = Hashit($old_data);
+$new = Hashit($new_data);
 
 my $mod = Diff($old, $now);
 my $upx = Diff($old, $new);
 my $upd = Diff($now, $new);
 
-print "Changes since last update\n";
-print "==========================\n\n";
-foreach (keys(%{$mod})) {
-    print "\t".$mod->{$_}."\t$_\n";
+if ($opts{m}) {
+    if (! keys(%{$mod})) {
+        print "[*] No modifications since the last update\n";
+        exit(0);
+    }
+    
+    print "[*] Modifications since the last update:\n";
+    foreach (keys(%{$mod})) {
+        print "\t".$mod->{$_}."\t$_\n";
+    }
+    print "\n";
+    exit(0);
 }
-print "\n\n";
 
 
 if ($new_data) {
@@ -78,6 +131,11 @@ if ($new_data) {
         print "\t".$upx->{$_}."\t$_\n";
     }
     print "\n\n";
+}
+
+sub Usage { 
+    print STDERR "Usage: $0 <-r | -m | -u | -v>\n";
+    exit(0);
 }
 
 sub ScanFiles {
@@ -212,6 +270,14 @@ sub ProcessHTTP {
     my $body = join("\r\n\r\n", @chunks);
     return if $head !~ /HTTP\/1.. 200\s+/;
     return $body;
+}
+
+sub WriteFile {
+    my $file = shift;
+    my $data = shift;
+    open (my $out, ">$file") || return;
+    print $out $data;
+    close ($out);
 }
 
 sub ReadFile {
