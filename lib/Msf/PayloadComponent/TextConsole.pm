@@ -11,6 +11,9 @@ sub Log {
 	return($self->{'Log'});
 }
 
+sub LoadConsole {
+}
+
 sub _HandleConsole {
 	my $self = shift;
 	my $loop = 1;
