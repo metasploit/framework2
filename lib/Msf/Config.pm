@@ -24,7 +24,7 @@ my $defaults = {
   'Encoder' => 'Msf::Encoder::PexFnstenvMov',
   'Nop'     => 'Msf::Nop::Pex',
   'DebugLevel' => 0,
-  'Logging' => 'Enabled',
+  'Logging' => 'Disabled',
 };
 
 sub PopulateConfig {
