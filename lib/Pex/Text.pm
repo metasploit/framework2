@@ -146,6 +146,28 @@ sub AlphaNumText {
   return($data);
 }
 
+sub LowerCaseText {
+  my $size = shift;
+  my @chars = @_ ? split('', shift) : ('a' .. 'z');
+
+  my $data;
+  while($size--) {
+    $data .= $chars[int(rand(@chars))];
+  }
+  return($data);
+}
+
+sub UpperCaseText {
+  my $size = shift;
+  my @chars = @_ ? split('', shift) : ('A' .. 'Z');
+
+  my $data;
+  while($size--) {
+    $data .= $chars[int(rand(@chars))];
+  }
+  return($data);
+}
+
 # inverse a string of chars, include all the bytes it doesn't include...
 # inverse of 0x00 .. 0x80 = 0x81 .. 0xff, etc
 sub InverseChars {
