@@ -65,7 +65,7 @@ read:
 	mov  al, 0x3
 	mov  dh, 0xc
 	int  0x80
-	push byte 0x18
+	push byte 0x1c
 	pop  edx
 	add  ecx, edx
 	jmp  ecx
