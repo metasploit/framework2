@@ -32,20 +32,31 @@ sub EncodePayload {
   my $rawshell = shift;
   my $badChars = shift;
 
-  my $xorkey = Pex::Encoder::KeyScanXorDwordFeedback($rawshell, $badChars);
+  my $bm = $self->_BuildBM(length($rawshell));
+  my $decoder = $bm->Build;
+  my $delta = Pex::Poly::DeltaKing->new;
+  $delta->AddData($decoder);
+  $decoder = $delta->Build;
 
+  my $end = substr($decoder, -4, 4, '');
+  $rawshell = $end . $rawshell;
+
+  my $xorkey = Pex::Encoder::KeyScanXorDwordFeedback($rawshell, $badChars);
   if(!$xorkey) {
     $self->PrintDebugLine(3, 'Failed to find xor key');
     return;
   }
 
   my $xordat = Pex::Encoder::XorDwordFeedback($xorkey, $rawshell);
-  my $decoder = $self->_BuildDecoder($xorkey, length($xordat));
+
+  $xorkey = pack('V', $xorkey);
+  $decoder =~ s/XORK/$xorkey/s;
+
   my $shellcode = $decoder . $xordat;
 
   my $pos = Pex::Text::BadCharIndex($badChars, $shellcode);
   if($pos != -1) {
-#    print Pex::Text::BufferC($shellcode);
+    print Pex::Text::BufferC($shellcode);
     $self->PrintDebugLine(3, 'Bad char at pos ' . $pos);
     $self->PrintDebugLine(3, sprintf('Bad byte %i', ord(substr($shellcode, $pos, 1))));
     return;
@@ -54,27 +65,16 @@ sub EncodePayload {
   return($shellcode);
 }
 
-
-sub _BuildDecoder {
-  my $self = shift;
-  my $bm = $self->_BuildBM(@_);
-
-  my $delta = Pex::Poly::DeltaKing->new;
-  $delta->AddData($bm->Build);
-  return($delta->Build)
-}
-
   # spoon's variable length dword xor add feedback whoozle codez
 sub _BuildBM {
   my $self = shift;
-  my $xor = shift;
   my $len = shift;
-  my $xorkey = pack('V', $xor);
+  $len += 4;
   my $l = Pex::Encoder::PackLength($len);
 
   my $fpuins = $bmb->new('fpuIns');
 
-  foreach my $fpu ($self->_MakeFPUs) {
+  foreach my $fpu ($self->_BuildFPUs) {
     $fpuins->AddBlock('[>0 fpu<]' . $fpu);
   }
 
@@ -93,7 +93,7 @@ sub _BuildBM {
     $mov->AddBlock("\x66\xb9" . $l->{'lengthWord'}); # mov cx, WORD xorlen
   }
 
-  my $movkey = $bmb->new('movXorkey', "\xb8" . $xorkey); # mov eax, xorkey
+  my $movkey = $bmb->new('movXorkey', "\xb8" . 'XORK'); # mov eax, xorkey
   my $loopXor = $bmb->new('loopBlock');
 
   $loopXor->AddBlock(
@@ -135,7 +135,7 @@ sub _BuildBM {
   return($block);
 }
 
-sub _MakeFPUs {
+sub _BuildFPUs {
   my $self = shift;
   my @fpus;
 
