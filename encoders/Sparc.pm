@@ -21,10 +21,10 @@ my $advanced =
 my $info = {
     'Name'    => 'Sparc DWord Xor Encoder',
     'Version' => '$Revision$',
-    'Authors' => [ 'optyx <optyx@uberhax0r.net>' ],
+    'Authors' => [ 'optyx <optyx [at] uberhax0r.net>' ],
     'Arch'    => [ 'sparc' ],
     'OS'      => [ ],
-    'Description'  =>  "<optyx> fucking xor decoder 48 bytes, cache safe",
+    'Description'  =>  "optyx's 48 byte XOR decoder",
     'Refs'    => [ ],
 };
 

@@ -209,7 +209,7 @@ sub ProcessWebRequest {
 
         $res .= "<table width=100% bgcolor='black'>\n";
 		$res .= "<tr><td class='modHead'>Module: $mname</td></tr>\n";
-		$res .= "</table><br>\n";
+		$res .= "</table><br/>\n";
     }
 
     $state->{'client'} = $cli;
@@ -259,7 +259,7 @@ sub HTML_Header {
 [<html>
     <head>
         <title>Metasploit Framework Web Console v$VERSION</title>
-		<link type="text/css" rel="stylesheet" href="/RESOURCE?ID=STYLE">
+		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
     </head>
     <body bgcolor='white' text='black'>
 <a name='Top'></a>
@@ -419,7 +419,7 @@ sub ModuleList
 	foreach my $kname (	sort( keys %{ $moduleMerge }) ) {
 	
 		$mList .= qq[
-<a name='$kname'><br></a>        
+<a name='$kname'><br/></a>        
 <table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' bgcolor='black'>        
 	<tr><td>
     <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' bgcolor='white'>
@@ -450,6 +450,134 @@ sub ModuleList
     return $mList;
 }
 
+sub ModuleInfo {
+	my $module = shift;
+	my $res;
+	
+	my $desc = $module->Description();
+    $desc =~ s/\</\&lt;/g;
+    $desc =~ s/\>/\&gt;/g;
+    
+    $res = "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
+    $res .= "<tr><td align='left' width=80><b>Name:</b></td><td>" . $module->Name() . "</td></tr>\n";
+    my ($rev)   = $module->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
+    $res .= "<tr><td align='left' width=80><b>Version:</b></td><td>" . $rev . "</td></tr>\n";
+
+    my @authors = @{$module->Authors()};
+    my $author = shift(@authors);
+    $author =~ s/</&lt;/g;
+    $author =~ s/>/&gt;/g;
+    $res .= "<tr><td align='left' width=80><b>Authors:</b></td><td>$author</td></tr>\n";
+    
+	foreach my $author (@authors) {
+        $author =~ s/</&lt;/g;
+        $author =~ s/>/&gt;/g;
+        $res .= "<tr><td align='left' width=80></td><td>$author</td></tr>\n";
+    }
+    
+    $res .= "<tr><td colspan=2>";
+    $res .= "<br/>$desc<br/><br/>";
+
+    foreach my $ref (@{$module->RefLinks}) { $res .= "<li> <a href='$ref'>$ref</a><br/>\n" }
+	
+    $res .= "<br/></td></tr></table>\n";
+	return $res;
+}
+
+sub PayloadOptions
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+
+    if (! exists($payloads->{$module})) {
+        return "<b>Invalid Module</b>";
+    }
+
+    my $p = $payloads->{$module};
+    
+	$res .= ModuleInfo($p);	 
+	  
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";    
+    $res .= "<form action='$burl' method='GET'>\n";
+    foreach (keys(%{$state})) {
+        next if $_ eq 'client';
+        if ($_ ne "MODE") {
+            $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
+        } else {
+            $res .= "<input type='hidden' name='MODE' value='GENERATE'>\n";
+        }
+    }
+  
+    my $popts =  $p->UserOpts();
+
+    foreach my $popt (sort(keys(%{$popts}))) {
+
+        my $dflt = $popts->{$popt}->[3];
+        my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
+        
+        $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
+        
+        $res .= "<tr><td><b>$popt</b></td>".
+                "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
+                "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
+                "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
+    }
+    
+    $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+    $res .= "<tr><td colspan=6><input type='submit' name='ACTION' value='GENERATE'></td></tr>\n";
+    $res .= "</form>\n";
+    $res .= "</table>\n";  
+    return $res;
+}
+
+sub EncoderOptions
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+
+    if (! exists($encoders->{$module})) {
+        return "<b>Invalid Module</b>";
+    }
+
+    my $p = $encoders->{$module};
+    
+	$res .= ModuleInfo($p);	 
+	  
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";    
+    $res .= "<form action='$burl' method='GET'>\n";
+    foreach (keys(%{$state})) {
+        next if $_ eq 'client';
+        if ($_ ne "MODE") {
+            $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
+        } else {
+            $res .= "<input type='hidden' name='MODE' value='GENERATE'>\n";
+        }
+    }
+  
+    my $popts =  $p->UserOpts();
+
+    foreach my $popt (sort(keys(%{$popts}))) {
+
+        my $dflt = $popts->{$popt}->[3];
+        my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
+        
+        $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
+        
+        $res .= "<tr><td><b>$popt</b></td>".
+                "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
+                "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
+                "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
+    }
+    
+    $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+    $res .= "<tr><td colspan=6><input type='submit' name='ACTION' value='GENERATE'></td></tr>\n";
+    $res .= "</form>\n";
+    $res .= "</table>\n";  
+    return $res;
+}
+
 sub ExploitPayload
 {
     my ($state) = @_;
@@ -462,32 +590,7 @@ sub ExploitPayload
     
     my $x = $exploits->{$module};
     
-    my $desc = $x->Description();
-    $desc =~ s/\</\&lt;/g;
-    $desc =~ s/\>/\&gt;/g;
-    
-    $res = "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
-    $res .= "<tr><td align='left' width=80><b>Name:</b></td><td>" . $x->Name() . "</td></tr>\n";
-    my ($rev)   = $x->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
-    $res .= "<tr><td align='left' width=80><b>Version:</b></td><td>" . $rev . "</td></tr>\n";
-
-    my @authors = @{$x->Authors()};
-    my $author = shift(@authors);
-    $author =~ s/</&lt;/g;
-    $author =~ s/>/&gt;/g;
-    $res .= "<tr><td align='left' width=80><b>Authors:</b></td><td>$author</td></tr>\n";
-    foreach my $author (@authors) {
-        $author =~ s/</&lt;/g;
-        $author =~ s/>/&gt;/g;
-        $res .= "<tr><td align='left' width=80></td><td>$author</td></tr>\n";
-    }
-    
-    $res .= "<tr><td colspan=2>";
-    $res .= "<br>$desc<br><br>";
-
-    foreach my $ref (@{$x->RefLinks}) { $res .= "<li> <a href='$ref'>$ref</a><br>\n" }
-	
-    $res .= "</td></tr></table>\n";
+	$res .= ModuleInfo($x);
 
 	# Display available payloads
 
@@ -571,9 +674,9 @@ sub ExploitOptions
     
     if (scalar($x->TargetsList)) {
         my $tidx = 0;
-        $res .= "<tr><td colspan=6><br><b>Available Targets:</b><blockquote>\n";
+        $res .= "<tr><td colspan=6><br/><b>Available Targets:</b><blockquote>\n";
         foreach my $tgt ($x->TargetsList) {
-            $res .= "<input type='radio' name='OPT_TARGET' value='$tidx'> $tgt<br>\n";
+            $res .= "<input type='radio' name='OPT_TARGET' value='$tidx'> $tgt<br/>\n";
             $tidx++;
         }
         $res .= "</blockquote></td></tr>\n";
@@ -632,9 +735,9 @@ sub ExploitExec
 
         $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit'>\n";
         $res .= "</form>\n";
-        $res .= "<hr><br><br>\n";
-        $res .= "<br><b>Check Results:</b> " . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "<br>\n";
-        $res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
+        $res .= "<hr><br/><br/>\n";
+        $res .= "<br/><b>Check Results:</b> " . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "<br/>\n";
+        $res .= "<br/>". join("<br/>\n", @{$ui->DumpLines}) . "<br/>\n";
         return $res;
     }
     $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
@@ -658,8 +761,8 @@ sub ExploitExec
     $Browser->Send($out);
 	
 	$out = HTML_Header().
-          "<b>Processing exploit request (".$exploit->Name.")...</b><br>\n".
-          "<b>Using payload: " . $payloadName . "<br>\n".
+          "<b>Processing exploit request (".$exploit->Name.")...</b><br/>\n".
+          "<b>Using payload: " . $payloadName . "<br/>\n".
           "<pre>\n";
 	
 	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
@@ -667,7 +770,7 @@ sub ExploitExec
     $ui->SetTempEnv('_BrowserSocket', $Browser);
     $ui->Exploit();
 
-	$out = "\n</pre><br>". HTML_Footer();
+	$out = "\n</pre><br/>". HTML_Footer();
 	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 
 	$out = "";
