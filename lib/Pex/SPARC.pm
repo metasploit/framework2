@@ -30,53 +30,53 @@ my %registers =	(
 );
 
 
-sub sethi {
-  my $constant = shift;
-  my $dst = shift;
+sub Sethi {
+	my $constant = shift;
+	my $dst = shift;
 
 # [ 0 ] [ register ] [ 4 ] [ imm22 ]
 # 31    29           24    21      0
-  return pack('N', (($registers{$dst} << 25) | (4 << 22) | ($constant >> 10)));
+	return pack('N', (($registers{$dst} << 25) | (4 << 22) | ($constant >> 10)));
 }
 
-sub ori {
-  my $src = shift;
-  my $constant = shift;
-  my $dst = shift;
+sub Ori {
+	my $src = shift;
+	my $constant = shift;
+	my $dst = shift;
 
 # [ 2 ] [ dst register ] [ 2 ] [ src register ] [ 1 ] [ simm13 ]
 # 31    29               24    18               13    12       0
-  return pack('N', ((2 << 30) | ($registers{$dst} << 25) | (2 << 19) | ($registers{$src} << 14) | (1 << 13) | ($constant & 0x1fff)));
+	return pack('N', ((2 << 30) | ($registers{$dst} << 25) | (2 << 19) | ($registers{$src} << 14) | (1 << 13) | ($constant & 0x1fff)));
 }
 
 # Acts as set/mov, does size optimizations where possible.
-sub set {
-  my $constant = shift;
-  my $dst = shift;
+sub Set {
+	my $constant = shift;
+	my $dst = shift;
 
 # XXX: Add support for signedness
-  if($constant <= 8191 && $constant >= 0)
-  {
-    return ori("g0", $constant, $dst)
-  }
-  elsif($constant & 0x3ff)
-  {
-    return(SetDword($constant, $dst));
-  }
-  else
-  {
-    return sethi($constant, $dst);
-  }
+	if($constant <= 8191 && $constant >= 0)
+	{
+		return Ori("g0", $constant, $dst)
+	}
+	elsif($constant & 0x3ff)
+	{
+		return(SetDword($constant, $dst));
+	}
+	else
+	{
+		return Sethi($constant, $dst);
+	}
 }
 
 # set a full dword, using sethi and ori
 # DO NOT CHANGE THE BEHAVIOR OF THIS FUNCTION,
 # it should be set in stone that it will always be a sethi . ori.
 sub SetDword {
-  my $constant = shift;
-  my $dst = shift;
+	my $constant = shift;
+	my $dst = shift;
 
-  return(sethi($constant, $dst) . ori($dst, $constant & 0x3ff, $dst));
+	return(Sethi($constant, $dst) . Ori($dst, $constant & 0x3ff, $dst));
 }
 
 1;

