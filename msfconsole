@@ -154,7 +154,6 @@ sub Load {
         $name =~ s/.*:://g; # Remove package prefix
         $exploits->{$name} = $exploitsIndex->{$key};
         $exploitsIndex->{$name} = $key;
-        # print "$name:\t" . $exploits->{$name}->{'Info'}->{'Payload'}->{'Size'} . "\n"
     }
     
     # Generate payloads index

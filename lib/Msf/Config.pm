@@ -7,6 +7,8 @@ use File::Basename;
 my $defaults = {
   'Encoder' => 'Msf::Encoder::Pex',
   'Nop'     => 'Msf::Nop::Pex',
+  'DebugLevel' => 0,
+  'Logging' => 'Enabled',
 };
 
 sub PopulateConfig {
@@ -25,6 +27,7 @@ sub PopulateConfig {
   $self->LoadTempEnv('_Save');
   $self->DeleteTempEnv('_Save');
 }
+
 sub SaveConfig {
   my $self = shift;
   my $configFile = shift;
@@ -53,6 +56,7 @@ sub ReadConfig {
   close(INFILE);
   return($globalEnv, $tempEnvs);
 }
+
 #fixme needs to be updated for temp envs
 sub WriteConfig {
   my $self = shift;

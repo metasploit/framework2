@@ -67,7 +67,7 @@ sub XorDecoderDword {
     my ($arch, $xor, $len) = @_;
     if(! $len) { $len = 0x200 }
 
-    # this xor decoder was written by hdm[at]metasploit.com
+    # this xor decoder was written by spoonm[at]ghettohackers.net
     if (lc($arch) eq "x86")
     {
 	my $smallVersion = 0;
@@ -85,6 +85,7 @@ sub XorDecoderDword {
             $xorlen = substr($xorlen, 0, 1);
         }
 
+# hdm's old encoder
 #        my $decoder =
 #            "\xeb\x19".                     # jmp 804809b <xor_end>
 #            "\x5e".                         # pop %esi
@@ -96,7 +97,7 @@ sub XorDecoderDword {
 #            "\xeb\x05".                     # jmp 80480a0 <xor_don>
 #            "\xe8\xe2\xff\xff\xff";         # call 8048082 <xor_beg>
 
-#spn
+# spoon's smaller variable-length encoder
         my $decoder;
         if($smallVersion) {
             # 26 bytes
