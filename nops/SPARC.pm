@@ -139,11 +139,13 @@ sub Nops {
 # DEBUG DEBUG DEBUG
 #  $nop = "\x91\xd0\x20\x01";
 
+# XXX: single nop mode needs to take badChars into account too
   if(! $random)
   {
     return Inssethi() x ($length / 4);			# XXX: Lame.
   }
 
+# XXX: add a maximum iteration counter to prevent restrictive badChars from looping...
   while(length($nop) < $length)
   {
     $random = int(rand(scalar(@{$table})));
