@@ -381,11 +381,24 @@ sub SelfName {
   return($self->ModuleName($self));
 }
 
+sub SelfEndName {
+  my $self = shift;
+  return($self->ModuleEndName($self));
+}
+
 sub ModuleName {
   my $self = shift;
   my $module = shift;
   my ($name) = split('=HASH', $module);
   return($name);
+}
+
+sub ModuleEndName {
+  my $self = shift;
+  my $module = shift;
+  my $name = $self->ModuleName($module);
+  my @parts = split('::', $name);
+  return($parts[-1]);
 }
 
 sub ScriptPath {
