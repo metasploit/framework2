@@ -28,23 +28,23 @@ my %SECTIONS;
 
 sub new {
     my ($class, $args) = @_;
-    my $selfect = bless {}, $class;
-    return($selfect->LoadImage($args));
+    my $self = bless {}, $class;
+    return($self->LoadImage($args));
 }
 
 sub LastError {
-    my $selfect = shift;
+    my $self = shift;
     if (@_) { $LastErrorVal = shift }
     return ($LastErrorVal);
 }
 
 sub Raw {
-    my $selfect = shift;
+    my $self = shift;
     return $RAW;
 }
 
 sub ImageHeader {
-    my $selfect = shift;
+    my $self = shift;
     my $name = shift;
     if (exists($IMAGE_HDR{$name}))
     {
@@ -54,12 +54,12 @@ sub ImageHeader {
 }
 
 sub ImageHeaders {
-    my $selfect = shift;
+    my $self = shift;
     return keys(%IMAGE_HDR);
 }
 
 sub OptImageHeader {
-    my $selfect = shift;
+    my $self = shift;
     my $name = shift;
     if (exists($OPT_IMAGE_HDR{$name}))
     {
@@ -69,12 +69,12 @@ sub OptImageHeader {
 }
 
 sub OptImageHeaders {
-    my $selfect = shift;
+    my $self = shift;
     return keys(%OPT_IMAGE_HDR);
 }
 
 sub Rva {
-    my $selfect = shift;
+    my $self = shift;
     my $name = shift;
     if (exists($RVA{$name}))
     {
@@ -84,12 +84,12 @@ sub Rva {
 }
 
 sub Rvas {
-    my $selfect = shift;
+    my $self = shift;
     return keys(%RVA);
 }
 
 sub Section {
-    my $selfect = shift;
+    my $self = shift;
     my $name = shift;
     if (exists($SECTIONS{$name}))
     {
@@ -99,24 +99,24 @@ sub Section {
 }
 
 sub Sections {
-    my $selfect = shift;
+    my $self = shift;
     return keys(%SECTIONS);
 }
 
 sub ImageBase {
-    my $selfect = shift;
+    my $self = shift;
     $OPT_IMAGE_HDR{"ImageBase"} = hex(shift()) if @_;
     return $OPT_IMAGE_HDR{"ImageBase"};
 }
 
 sub LoadImage {
-    my ($selfect, $fn) = @_;
+    my ($self, $fn) = @_;
     my $data;   
     local *X;
     
     if (! open(X, "<$fn"))
     {
-        $selfect->LastError("Could not open file: $!");
+        $self->LastError("Could not open file: $!");
         return(undef);
     }
     
@@ -125,10 +125,10 @@ sub LoadImage {
     
     $RAW = $data;
     
-    my $peo = $selfect->FindPEOffset(\$data);
+    my $peo = $self->FindPEOffset(\$data);
     if (! $peo)
     {
-        $selfect->LastError("Could not find PE header");
+        $self->LastError("Could not find PE header");
         return(undef);
     }
     
@@ -237,17 +237,17 @@ sub LoadImage {
     #foreach (keys(%IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $IMAGE_HDR{$_}); }
     #foreach (keys(%OPT_IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $OPT_IMAGE_HDR{$_}); }
     #foreach (keys(%RVA)) { printf("%s\t0x%.8x [0x%.8x]\n", $_ , $RVA{$_}->[0], $RVA{$_}->[1] ); }
-    #foreach (keys(%SECTIONS)) 
-    #{ 
-    #    printf("%s\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\n",
-    #           $_ , $SECTIONS{$_}->[0], $SECTIONS{$_}->[1], $SECTIONS{$_}->[2], $SECTIONS{$_}->[3], $SECTIONS{$_}->[4]);
-    #}
+    foreach (keys(%SECTIONS)) 
+    { 
+        printf("%s\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\n",
+               $_ , $SECTIONS{$_}->[0], $SECTIONS{$_}->[1], $SECTIONS{$_}->[2], $SECTIONS{$_}->[3], $SECTIONS{$_}->[4]);
+    }
     
-    return($selfect);    
+    return($self);    
 }
 
 sub OffsetToVirtual {
-    my ($selfect, $offset) = @_;
+    my ($self, $offset) = @_;
 
     # if this image has no optional header and defined image base,
     # just return zero since we can't calculate the virtual
@@ -269,21 +269,23 @@ sub OffsetToVirtual {
 }
 
 sub VirtualToOffset {
-    my ($selfect, $virtual) = @_;
+    my ($self, $virtual) = @_;
     if (! $virtual) { return(0) }
+    
+    $virtual -= $OPT_IMAGE_HDR{"ImageBase"};
     
     foreach (keys(%SECTIONS)) 
     {
-       if ($virtual > $SECTIONS{$_}->[1] && $virtual < ($SECTIONS{$_}->[0] + $SECTIONS{$_}->[1]))
+       if ($virtual >= $SECTIONS{$_}->[1] && $virtual <= ($SECTIONS{$_}->[0] + $SECTIONS{$_}->[1]))
        {
             return $virtual - $SECTIONS{$_}->[4];
        }
     }   
-    return(0);
+    return;
 }
 
 sub FindPEOffset {
-    my ($selfect, $data_ref) = @_;
+    my ($self, $data_ref) = @_;
     my $peo = unpack("V", substr(${$data_ref}, 0x3c, 4));
     if (substr(${$data_ref}, 0, 2) ne "MZ"  || substr(${$data_ref}, $peo, 2) ne "PE") { return undef } 
     return($peo);

@@ -173,7 +173,7 @@ if(exists($opts{'x'})) {
 elsif(exists($opts{'a'})) {
   my $address = hex($opts{'a'});
   my $length = exists($opts{'l'}) ? $opts{'l'} : 1;
-  my $loc = $address - $pe->OffsetToVirtual(0);
+  my $loc = $pe->VirtualToOffset($address);
   my $found = substr($data, $loc, $length);
   printf("0x%.8x   %s\n", $pe->OffsetToVirtual($loc), hexOutput($found));
 }
