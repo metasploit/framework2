@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: Handler.pm
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Version: $Revision$
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+package Msf::Handler;
+use base 'Msf::Base';
+use IO::Socket;
+use IO::Select;
+
+sub new { return bless {}, shift }
+
+sub Error { my $obj = shift; return $obj->{ERROR} }
+sub set_error { my ($obj, $msg) = @_; $obj->{ERROR} = $msg }
+
+sub DataPump
+{
+    my ($obj, $cli, $svr, $callback) = @_;
+    my $interrupt = 0;
+
+    if (ref($callback) ne "CODE") { $callback = sub { }; }
+
+    $SIG{"PIPE"} = 'IGNORE';
+    $SIG{"INT"}  = sub { $interrupt++ };
+
+    my $con;
+    my $sel = IO::Select->new();
+
+    $sel->add($cli);
+    $sel->add($svr);
+
+    while (fileno($svr) && $interrupt == 0)
+    {
+        my $fd;
+        my @fds = $sel->can_read(0.5);
+        foreach $fd (@fds)
+        {
+	    my $rdata;
+            my $bytes = sysread($fd, $rdata, 2048);
+
+            if(! defined($bytes) || $bytes == 0)
+            {
+                close($svr);
+    		$interrupt++;
+                $callback->("CLOSED");
+            } else {
+                # pass data between socket and console
+                my $dataq = $rdata;
+                if ($fd eq $svr)
+                {
+                    $callback->("DATA", "SERVER", $rdata);
+                    while (length($dataq) && (my $x = syswrite($cli, $dataq, 2048)))
+                    {
+                        # print STDERR "[*] Wrote to client $x of " . length($dataq) . "\n";
+                        $dataq = substr($dataq, $x);
+                    }
+                } else {
+                    $callback->("DATA", "CLIENT", $rdata);
+                    while (length($dataq) && (my $x = syswrite($svr, $dataq, 2048)))
+                    {
+                        # print STDERR "[*] Wrote to server $x of " . length($dataq) . "\n";
+                        $dataq = substr($dataq, $x);
+                    }
+                }
+            }
+        }
+    }
+
+    $callback->("FINISHED");
+    return(1);
+}
+
+
+sub DataPumpXor
+{
+    my ($obj, $cli, $svr, $callback, $key) = @_;
+    my $interrupt = 0;
+
+    if (ref($callback) ne "CODE") { $callback = sub { }; }
+
+    $SIG{"PIPE"} = 'IGNORE';
+    $SIG{"INT"}  = sub { $interrupt++ };
+
+    my $con;
+    my $sel = IO::Select->new();
+
+    $sel->add($cli);
+    $sel->add($svr);
+
+    while (fileno($svr) && $interrupt == 0)
+    {
+        my $fd;
+        my @fds = $sel->can_read(0.5);
+        foreach $fd (@fds)
+        {
+	        my $rdata;
+            my $bytes = sysread($fd, $rdata, 2048);
+
+            if(! defined($bytes) || $bytes == 0)
+            {
+                close($svr);
+    		    $interrupt++;
+                $callback->("CLOSED");
+            } else {
+                # pass data between socket and console
+                my $dataq = $rdata;
+                my $dxorq;
+                
+                foreach my $c (split(//, $dataq))
+                {
+                    $dxorq .= chr(ord($c) ^ $key);
+                }
+                
+                if ($fd eq $svr)
+                {
+                    $callback->("DATA", "SERVER", $dxorq);
+                    while (length($dataq) && (my $x = syswrite($cli, $dxorq, 2048)))
+                    {
+                        # print STDERR "[*] Wrote to client $x of " . length($dataq) . "\n";
+                        $dataq = substr($dataq, $x);
+                    }
+                } else {
+                    $callback->("DATA", "CLIENT", $dxorq);
+                    while (length($dataq) && (my $x = syswrite($svr, $dxorq, 2048)))
+                    {
+                        # print STDERR "[*] Wrote to server $x of " . length($dataq) . "\n";
+                        $dataq = substr($dataq, $x);
+                    }
+                }
+            }
+        }
+    }
+
+    $callback->("FINISHED");
+    return(1);
+}
+1;
