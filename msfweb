@@ -47,7 +47,7 @@ my $VERSION = $ui->Version;
 
 $ui->SetGlobalEnv('_Console', 'Msf::PayloadComponent::WebConsole');
 
-my @sections = qw{ EXPLOITS PAYLOADS ADMIN LOGS };
+my @sections = qw{ EXPLOITS PAYLOADS SESSIONS ADMIN LOGS };
 my $exploits = { };
 my $payloads = { };
 my $encoders = { };
@@ -148,13 +148,62 @@ sub ProcessResRequest {
 }
 
 
-sub ProcessIPCRequest { 
-	my $ipc = shift;
-	print "IPC: $ipc\n";
-	print Carp::longmess("IPC Request? WTF")."\n";
+sub ProcessIPCRequest {
+	my $self	= shift;
+	my $ipc		= shift;
+
+	my $req = $ipc->getline || return;
+	chomp($req);
+	
+	my ($cmd, @args) = split(/\s+/, $req);
+	return if ! $cmd;
+	
+	print "[ $ipc ] $cmd ($args[0] | $args[1])\n";
+	
+	if ($cmd eq 'SESSION') {
+		my $sid = $self->SessionNew($ipc);
+		$ipc->printflush("SID $sid\n");
+	}
+	
+	# NEW <sid> <pid of exploit pipe handler>
+	if ($cmd eq 'NEW') {
+		$self->SessionPipePID(@args);
+		$ipc->printflush("SHELL\n");
+	}
+	
+	if ($cmd eq 'SHUTDOWN') {
+		$ipc->printflush("SHUTDOWN\n");
+	}
+	
+	if ($cmd eq 'GET') {
+		my $resp = $self->SessionDataGet($args[0]);
+		$ipc->printflush("GET ".unpack("H*", $resp)."\n");
+	}
+	
+	if ($cmd eq 'PUT') {
+		my $resp = $self->SessionDataPut($args[0], pack("H*", $args[1]));
+		$ipc->printflush("PUT $resp\n");
+	}
+	
+	if ($cmd eq 'CMD') {
+		my $out = $self->SessionIPC($args[0]);
+		if ($out) {
+			$out->printflush("CMD ".$args[1]."\n");
+			$ipc->printflush("CMD OK\n");
+		}
+		else {
+			$ipc->printflush("CMD ERROR ($out)\n");
+		}
+
+	}
+	
+	if ($cmd eq 'LIST') {
+		$ipc->printflush("LIST 1,2,3,4,5,6,7,8,9\n");
+	}
 }
 
 sub ProcessWebRequest {
+	my $self = shift;
 	my ($req, $cli, $ipc) = @_;
     my $state = $req->{'params'};
 	my $mbase = $req->{'base'};
@@ -200,9 +249,10 @@ sub ProcessWebRequest {
     }
 
     $state->{'client'} = $cli;
-
-	if ($req->{'base'} eq 'EXPLOITS') {
+	$state->{'parent'} = $ipc;
 	
+	if ($req->{'base'} eq 'EXPLOITS') {
+		
     	if ($state->{'MODE'} eq 'MAIN')    { $res .= ExploitList($state) }
 		if ($state->{'MODE'} eq 'SELECT')  { $res .= ExploitTarget($state) }
     	if ($state->{'MODE'} eq 'PAYLOAD') { $res .= ExploitPayload($state) }
@@ -211,7 +261,9 @@ sub ProcessWebRequest {
     	if ($state->{'MODE'} eq 'CHECK')   { $res .= ExploitCheck($state) }
 
     	# ExploitExec doesn't return on success
-    	if ($state->{'MODE'} eq 'EXPLOIT') { $res .= ExploitExec($state) }    
+    	if ($state->{'MODE'} eq 'EXPLOIT') { $res .= ExploitExec($state) }
+
+		$res .= HTML_Footer();  
 	}
 
 	if ($req->{'base'} eq 'PAYLOADS') {
@@ -219,9 +271,18 @@ sub ProcessWebRequest {
     	if ($state->{'MODE'} eq 'MAIN')      { $res .= PayloadList($state) }
 		if ($state->{'MODE'} eq 'SELECT')    { $res .= PayloadOptions($state) }
 		if ($state->{'MODE'} eq 'GENERATE')  { $res .= PayloadGenerate($state) }
+		$res .= HTML_Footer();
 	}
+	
+	if ($req->{'base'} eq 'SESSIONS') {
+	
+    	if ($state->{'MODE'} eq 'MAIN')      { $res .= SessionList($state) }
+		if ($state->{'MODE'} eq 'LOAD')      { $res = SessionLoad($state) }
+		if ($state->{'MODE'} eq 'COMMAND')   { $res = SessionCommand($state) }
+		if ($state->{'MODE'} eq 'UPDATE')    { $res = SessionUpdate($state) }
+	}	
 			
-    $res .= HTML_Footer();
+    
 	
     $cli->Send(HTTPResponse(200, $res));
     $cli->Close();
@@ -327,6 +388,147 @@ sub StateToOptions {
     }
     return $res;
 }
+
+sub SessionList { 
+	my $state	= shift;
+	my $ipc		= $state->{'parent'}; 
+	my $res;
+	
+	my @slist;
+	$ipc->printflush("LIST\n");
+	
+	if ( defined(my $raw = $ipc->getline) ) {
+		chomp($raw);
+		my ($cmd, $list) = split(/\s+/, $raw);
+		@slist = split(/,/, $list);
+	}
+
+	$res .= "<p class='textBold'>Session List:<br\></p>\n";
+    $res .= "<table align='center' cellpadding=0 border=0 cellspacing=0 width='95%'>\n";
+	$res .= "<tr><td colspan=2><br\></td></tr>\n";
+
+	foreach my $sid (@slist) {
+        $res .= "<tr><td class='textNormal'><a href='/SESSIONS?MODE=LOAD&SID=$sid' target='_blank'>Session $sid</a></td></tr>";
+	}
+	
+    $res .= "</table>\n";
+	return $res;
+}
+
+sub SessionLoad { 
+	my $state	= shift;
+	my $sid		= $state->{'SID'} + 0;
+	my $res		= qq
+[<html>
+<frameset rows="*, 45" border=0 frameborder=0 framespacing=0>
+  <frame src="/SESSIONS?MODE=UPDATE&SID=$sid" name="update">
+  <frame src="/SESSIONS?MODE=COMMAND&SID=$sid" name="command">
+  <noframes><body>This feature requires frames...</body></noframes>
+</frameset>
+];
+	
+	return $res;
+}
+
+# Quick command bar to send commands to the shell
+sub SessionCommand { 
+	my $state	= shift;
+	my $sid		= $state->{'SID'} + 0;
+	my $res		= qq
+[<html>
+<body bgcolor='white' text='black'>
+
+<form action='/SESSIONS#END' target='update'>
+<input type='hidden' name='MODE' value='UPDATE'>
+<input type='hidden' name='SID' value='$sid'>
+<input type='text' name='CMD' size=80>
+<input type='submit' name='submit' onsumbit='javascript:document.form.CMD="";' value='Send Command'>
+<input type='submit' name='clear' value='Clear'>
+</form>
+</body>
+</html>
+];
+	return $res;
+}
+
+sub SessionUpdate { 
+	my $state	= shift;
+	my $ipc		= $state->{'parent'};
+	my $sid		= $state->{'SID'} + 0;
+	my $cmd		= $state->{'CMD'};
+
+	my $res		= qq
+[<html>
+    <head>
+        <title>Metasploit Framework Web Console v$VERSION</title>
+		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+		<meta http-equiv='refresh' content='10;URL=/SESSIONS?MODE=UPDATE&SID=$sid#END'>
+    </head>
+    <body bgcolor='white' text='black'>
+	<pre>
+];
+
+	# Check for the cache file, open if needed
+	my $cache_file = sprintf("$RealBin/data/msfweb/cache%.4x.dat", $sid);
+	my $cache_data;
+	
+	if ($state->{'clear'}) {
+		unlink($cache_file);
+	}
+	
+	if (open(CACHE, "<$cache_file")) {
+		while (<CACHE>) { $cache_data .= $_ }
+		close(CACHE);
+	}
+
+	my $raw;
+
+	# Ask the server for any pending data for this session
+	$ipc->printflush("GET $sid\n");
+	$raw = $ipc->getline;
+	
+	if ($raw =~ m/GET (\w+)$/) {
+		my $data = pack("H*", $1);
+		$data = XSS_Filter($data);
+		$cache_data .= $data;
+	}
+	
+	if (open(CACHE, ">$cache_file")) {
+		print CACHE $cache_data;
+		close(CACHE);
+	}
+	
+	if ($cmd) {
+		$cmd .= "\n";
+		$ipc->printflush("CMD $sid ".unpack("H*", $cmd)."\n");
+		$cmd = XSS_Filter($cmd);
+		$cache_data .= "<div class='textBold'>&gt;&gt; $cmd</div>";
+		$raw = $ipc->getline;
+	}
+	
+	# Give us time to execute the command and load the response
+	sleep(1);
+
+	# Ask the server for any pending data for this session
+	$ipc->printflush("GET $sid\n");
+	$raw = $ipc->getline;
+	
+	if ($raw =~ m/GET (\w+)$/) {
+		my $data = pack("H*", $1);
+		$data = XSS_Filter($data);
+		$cache_data .= $data;
+	}
+	
+	if (open(CACHE, ">$cache_file")) {
+		print CACHE $cache_data;
+		close(CACHE);
+	}
+
+	$res .= $cache_data;
+	$res .= "</pre><br\><br\><a name='END'></a></body></html>";
+	return $res;
+}
+
 
 sub PayloadList {
 	my $mtype = 'payloads';
@@ -458,7 +660,7 @@ sub ModuleInfo {
     $res .= "<tr><td colspan=2 class='textNormal'>";
     $res .= "<br/>$desc<br/><br/>";
 
-    foreach my $ref (@{$module->RefLinks}) { $res .= " -  <a href='$ref'>$ref</a><br/>\n" }
+    foreach my $ref (@{$module->RefLinks}) { $res .= " -  <a href='$ref' target='_blank'>$ref</a><br/>\n" }
 	
     $res .= "<br/></td></tr></table>\n";
 	return $res;
@@ -814,7 +1016,7 @@ sub ExploitOptions
     $res .= "<tr><td colspan=6><input type='submit' name='ExploitAction' value='Vulnerability Check'></td></tr>\n";
     $res .= "<tr><td colspan=6><input type='submit' name='ExploitAction' value='Launch Exploit'></td></tr>\n";
     $res .= "</form>\n";
-    $res .= "</table>\n";  
+    $res .= "</table>\n";
     return $res;
 }
 
@@ -902,37 +1104,138 @@ qq[
 ];
 
 
-
-
+	# Close out the main table and prepare for incremental output
 	$out .=
-	
-	"<br\><hr size=1 width='80%'>".
-	"<div align='center' class='navHead'> Exploit Output </div>\n".
-	"<hr size=1 width='80%'><br\>".	
-	"<div align='left' class='moduleOutput' bgcolor='#dddddd'>\n".
-	"<blockquote><blockquote>\n".
-	"\n";
-	
+		"<br\><hr size=1 width='80%'>".
+		"<div align='center' class='navHead'> Exploit Output </div>\n".
+		"<hr size=1 width='80%'><br\>".	
+		"<div align='left' class='moduleOutput' bgcolor='#dddddd'>\n".
+		"<blockquote><blockquote>\n\n";
 	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
-    $ui->SetTempEnv('_BrowserSocket', $Browser);
+	
+	# Ask the parent for a session ID
+	$state->{'parent'}->printflush("SESSION\n");
+	my $raw = $state->{'parent'}->getline;
+	
+	if (! $raw || $raw !~ /SID ([0-9]{0,16})/ ) {
+		$out = "<div class='textBold'>msfweb: unable to obtain session...</div>";
+		$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
+		exit(0);
+	}
+	
+	my ($sid) = $raw =~ m/SID ([0-9]{0,16})/g;
+
+	# debugging
+	$out = "[*] msfweb starting with session $sid<br/>\n";
+	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
+	
+	# Setup a false stdio for the child process
+	my ($einp, $eout, $einp_sock, $eout_sock);
+	
+	socketpair($einp_sock, $eout_sock, AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+	
+	my $einp = IO::Handle->new_from_fd(fileno($einp_sock), "a+");
+	my $eout = IO::Handle->new_from_fd(fileno($eout_sock), "a+");
+	
+	# Configure the environment...
+	$ui->SetTempEnv('_PipeInput',  $einp);
+	$ui->SetTempEnv('_PipeOutput', $einp);
+	$ui->SetTempEnv('_GhettoIPC',  $state->{'parent'});
+	$ui->SetTempEnv('_SessionID',  $sid);
+    $ui->SetTempEnv('_BrowserSocket', $Browser);	
+	
+	# Save the parent pid
+	my $top = $$;
+	
+	# Now things get interesting :-)
+	my $epid = fork();
+	
+	# The main process will keep our IPC open as long as we stay alive
+	if ($epid) {
+
+		my $pout = $state->{'parent'};
+				
+		# Wait for the go-ahead message from the parent
+		my $ok = $pout->getline;
+		exit if ! $ok;
+		chomp($ok);
+
+		if ($ok eq 'SHUTDOWN') {
+			print STDERR "Shutting down the shell server...\n";
+			exit(0);
+		}
+		
+		if ($ok ne 'SHELL') {
+			print STDERR "Unknown starting command: $ok\n";
+			exit(0);
+		}
+
+		my $keepRunning = 1;
+		
+		while ($keepRunning) {
+			my $sel = IO::Select->new();
+			
+			foreach ($eout, $pout) {
+				$_->autoflush(1);
+				$_->blocking(0);
+				$sel->add($_);
+			}
+
+			my @rdy = $sel->can_read(0.25);
+			foreach my $fd (@rdy) {
+				
+				# Output from the shell
+				if ($fd eq $eout) {
+					my ($data, $buff);
+					while ($eout->read($buff, 1024)) { $data .= $buff }
+					$pout->printflush("PUT $sid ".unpack("H*", $data)."\n");
+				}
+				
+				# Request from the server
+				if ($fd eq $pout) {
+					my $data = $pout->getline;
+					chomp ($data);
+					
+					if ($data eq 'SHUTDOWN') {
+						$eout->close;
+						$pout->close;
+						$keepRunning = 0;
+						next;
+					}
+					
+					if ($data =~ m/CMD\s+(.*)/) {
+						my $bytes = pack("H*", $1);
+						print STDERR "Writing command $1 to shell\n";
+						$eout->printflush($bytes);	
+						next;
+					}
+					
+					print STDERR "Unknown server request: $data\n";
+				}
+			}
+		}
+		
+		exit(0);
+	}
+	
+	# Feel the magic o_0
     $ui->Exploit();
-
-	$out = "\n</blockquote></blockquote>".
-	       "</div><br/></body></html>\n";
-		   
-	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
-
 	
-	$Browser->Close;
-    
+	if (! $ui->GetTempEnv('_ShellServer')) {
+		$state->{'parent'}->printflush("SHUTDOWN $sid\n");
+		print STDERR "Shutting down the shell server process...\n";
+	}	
+
+	print STDERR "Exiting exploit loop\n";
     exit(0);
 }
 
 # Primitive HTTP request parser
 sub HTTPRequest {
-    my $cli = shift;
-	my $opt = shift;
+	my $self	= shift;
+    my $cli		= shift;
+	my $opt		= shift;
 	
 	my $timeout	= exists($opt->{'Timeout'}) ? $opt->{'Timeout'} : 30;
 	my $raw		= $cli->Recv(-1, $timeout);
@@ -960,15 +1263,15 @@ sub HTTPRequest {
 			$headers{lc($1)} = $3;	
 		}
 	}
-	
+
+	# Convert URI encoding to hex encoding
+    $uri =~ s/\+/%20/g;
+		
 	# Split out the path from the query string
 	if ($uri =~ m/^([^\?]+)(\?(.*)|)$/) {
 		$path	= $1;
 		$query	= $3;
 	}
-	
-	# Convert URI encoding to hex encoding
-    $path =~ s/\+/%20/g;
 	
 	# Convert hex encoding to plain text
 	$path =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
@@ -998,7 +1301,7 @@ sub HTTPRequest {
 		$val =~ s/\x00|\x0a|\x0d//g;
 		
 		# avoid cheesy xss attacks
-        $val =~ s/\<|\>//g;        
+        $val = XSS_Filter($val);      
         
         if (! length($val)) { delete($params{$var}) }
     }
@@ -1012,31 +1315,6 @@ sub HTTPRequest {
 		'path'		=> $path,
 	};
 
-	
-	# XXX Deprecated
-	if ( 0 )  {
-	
-		# Extract the session ID
-		my ($sid) = $headers{'cookie'} =~ m/SID=(.*)$/;
-		my $vid = GenerateSID(inet_aton($cli->PeerAddr));
-
-		# Redirect the user if the SID does not match
-		if ($sid ne $vid) {
-
-			my $rdir =
-				"HTTP/1.1 302 Rejected\r\n".
-				"Set-Cookie: SID=$vid; path=/;\r\n".
-				"Location: ". $res->{'path'} ."\r\n".
-				"Date: ". HTTPDate() ."\r\n".
-				"Connection: Close\r\n".
-				"Content-Length: 0\r\n\r\n";
-
-			$cli->Send($rdir);
-			$cli->Close;
-			return;
-		}
-	}
-	
 	# Process the URL
 	($res->{'base'}) = $path =~ m/^\/([^\?]+)/;
 	if (! $res->{'base'}) {
@@ -1085,6 +1363,15 @@ sub CharsToBytes {
 		}
 	}
 	return $badChars;
+}
+
+# XXX - not complete
+sub XSS_Filter {
+	my $data = shift;
+	
+	$data =~ s/\</\&lt;/g;
+	$data =~ s/\>/\&gt;/g;
+	return $data;
 }
 
 sub LoadAllModules {
@@ -1170,8 +1457,9 @@ use Pex;
 sub new {
 	my $name	= shift;
 	my $self	= bless {}, $name;
-	
 	$self->_config(@_);
+	$self->{'_Session'} = { };
+	$self->{'_LastSession'} = 0;	
 	return $self;
 }
 
@@ -1182,6 +1470,68 @@ sub _config {
 		$self->{'_Config'}->{$_} = $args{$_};
 	}
 };
+
+sub SessionNext {
+	my $self = shift;
+	my $curr = $self->{'_LastSession'};
+	$self->{'_LastSession'} = $curr + 1;
+
+	return $self->{'_LastSession'};
+}
+
+sub SessionNew {
+	my $self	= shift;
+	my $ipc		= shift;
+	my $sid 	= $self->SessionNext;
+	
+	$self->{'_Session'}->{$sid} =
+	{
+		'IPC'	=> $ipc,
+		'PID'	=> 0,
+		'Data'	=> '',
+	};
+	return $sid;
+}
+
+sub SessionDataGet {
+	my $self = shift;
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+
+	my $data = $self->{'_Session'}->{$sid}->{'Data'};
+	$self->{'_Session'}->{$sid}->{'Data'} = '';
+	return $data;	
+}
+
+sub SessionDataPut {
+	my $self = shift;
+	my $sid  = shift;
+	my $data = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+
+	$self->{'_Session'}->{$sid}->{'Data'} .= $data;
+	return length($self->{'_Session'}->{$sid}->{'Data'});
+}
+
+sub SessionPipePID {
+	my $self = shift;
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+	$self->{'_Session'}->{$sid}->{'PID'} = shift if @_;
+	return $self->{'_Session'}->{$sid}->{'PID'};
+}
+
+sub SessionIPC {
+	my $self = shift;
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+	$self->{'_Session'}->{$sid}->{'IPC'} = shift if @_;
+	return $self->{'_Session'}->{$sid}->{'IPC'};
+}
 
 sub IsError {
     my $self = shift;
@@ -1305,7 +1655,7 @@ sub Run {
 			# A new HTTP request
 			if ($socketInfo{$s}->[2] eq 'client') {
 				my $cli = Msf::Socket::Tcp->new_from_socket($s);
-				my $res = $fnHRP->($cli);
+				my $res = $fnHRP->($self, $cli);
 
 				if ($res) {
 					my ($par, $chi);
@@ -1316,8 +1666,11 @@ sub Run {
 					# Spawn off the child process
 					my $pid = fork();
 					if (! $pid) {
-						$self->Log(3,  "fnWeb called with pid $$...");
-						$fnWeb->($res, $cli, $chi);
+						
+						# Close the http listener inside the child
+						$httpd->close;
+						$self->Log(3,  "fnWeb called with pid $$...");						
+						$fnWeb->($self, $res, $cli, $chi);
 						exit(0);
 					}
 
@@ -1336,9 +1689,8 @@ sub Run {
 
 			# A new IPC request
 			if ($socketInfo{$s}->[2] eq 'ipc') {
-				my $cli = Msf::Socket::Tcp->new_from_socket($s);
 				$self->Log(3,  "fnIPC called with pid $$ ($s)...");
-				$fnIPC->($cli);
+				$fnIPC->($self, $s);
 				next;
 			}
 

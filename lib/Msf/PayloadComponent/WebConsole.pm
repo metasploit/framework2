@@ -26,64 +26,45 @@ sub _HandleConsole {
   # Get handle to browser
   my $bs = $self->GetVar('_BrowserSocket');
   
-  # Create listener socket
-  my $sock = IO::Socket::INET->new(
-    'Proto'     => 'tcp',
-    'ReuseAddr' => 1,
-    'Listen'    => 5,
-    'Blocking'  => 0,
-  );  
+  # Get handles to stdio
+  my $pipeIn  = $self->GetVar('_PipeInput');
+  my $pipeOut = $self->GetVar('_PipeOutput');
   
-  if (! $sock) {
-      $out = "WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!<br\>\n";
-	  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
-	  return;
-  }
+  # Get handle to parent web server
+  my $gIPC = $self->GetVar('_GhettoIPC');
   
-  # Display listener link to browser
-  my $addr = Pex::Utils::SourceIP($bs->PeerAddr);
+  # Get our session IO
+  my $sid = $self->GetVar('_SessionID');
 
-  $out = "[*] Proxy shell started on ".
-	     "<a href='telnet://$addr:".$sock->sockport."'>".
-	     "$addr:".$sock->sockport."</a><br\>\n";
-	
+  # XXX dirty
+  my $cache_file = sprintf("$RealBin/data/msfweb/cache%.4x", $sid);
+  unlink($cache_file);
+
+
+  $out = "[*] Shell started on ".
+         "<a href='/SESSIONS?MODE=LOAD&SID=$sid' target='_blank'>".
+		 "session $sid</a><br>\n";
   $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
+  
 	
-
-  # Accept connection from user
-  my $sel = IO::Select->new($sock);
-  my $clock = time();
-  my $mwait = 300;
-  my $csock;
-  
-  while (! $csock && time < ($clock+$mwait))
-  {
-    foreach ($sel->can_read(0.25)) { $csock = $sock->accept() }
-  }
-  
-  if (! $csock) {
-      $out = "[*] Shutting down proxy shell due to timeout<br\>\n";
-	  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
-	  return;
-  }
-  
-  my $cs = Pex::Socket::Tcp->new_from_socket($csock);
-
-  $out = "[*] Connection to proxy shell from ".$csock->peerhost.":".$csock->peerport."<br\>\n";
-  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
-	  
-  $cs->Send("\r\nMetasploit Web Interface Shell Proxy\r\n\r\n");
- 
-  # Map connected socket to PipeLocal(In|Out);
-  $self->{'WebShell'} = $csock;  
-
   # Configure the Pipes
-  $self->PipeLocalOut	($csock);
-  $self->PipeLocalIn	($csock);
-  $self->PipeLocalName	($csock->sockhost);
+  $self->PipeLocalOut	($pipeIn);
+  $self->PipeLocalIn	($pipeOut);
+  $self->PipeLocalName	($bs->PeerAddr);
 
-  # Call upwards to TextConsole's _HandleConsole
+  # Shut down web browser socket
+  $out = "\n</blockquote></blockquote>".
+	       "</div><br/></body></html>\n";
+  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
+  $bs->Close;
+
+  # Kick off the shell server  
+  $gIPC->printflush("NEW $sid $$\n");
+
+  # Call upwards to TextConsole's _HandleConsole	
   $self->SUPER::_HandleConsole;
+  print STDERR "Exiting from _HandleConsole...\n";
+  return;
 }
 
 1;
