@@ -53,8 +53,9 @@ sub Size {
 sub Build {
     my $self = shift;
     my $stage  = $self->{'Win32StagedPayload'}->[ $self->{'STAGE'} ];
-    my $payload  = $stage->{'Payload'};
-    my $generated = $payload;
+    return if ! $stage;
+    
+    my $generated = $stage->{'Payload'};
 
     $self->PrintDebugLine(3, "Win32StagedPayload: generated code: " . length($generated) . " bytes\n");
 
