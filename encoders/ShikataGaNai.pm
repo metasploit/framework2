@@ -240,9 +240,18 @@ sub _OutcomeTest {
   my $outcomes = { };
   my $bm = $class->_BuildBM(0, 0);
   for(my $i = 0; $i < $times; $i++) {
+    my $decoder = $bm->Build;
+    my $assassin = Pex::Poly::RegAssassin->new;
+    $assassin->AddData($decoder);
+    # no ecx, ebp, or esp
+    $assassin->AddSet(['KEYREG', 'ADDRREG'], [0, 2, 3, 6, 7]);
+    $decoder = $assassin->Build;
+
     my $delta = Pex::Poly::DeltaKing->new;
-    $delta->AddData($bm->Build);
-    $outcomes->{Digest::MD5::md5($delta->Build)}++;
+    $delta->AddData($decoder);
+    my $decoder = $delta->Build;
+
+    $outcomes->{Digest::MD5::md5($decoder)}++;
   }
   return(scalar(keys(%{$outcomes})));
 }
