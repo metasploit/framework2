@@ -26,9 +26,9 @@ my $info =
                         'Jarkko Turkulainen <jt@klake.org> [Unknown License]',
                     ],
   'UserOpts'     => { 
-                        'DLL'     => [1, 'PATH', 'The full path the VNC service dll', "$RealBin/data/vncdll.dll"],
+                        'VNCDLL'  => [1, 'PATH', 'The full path the VNC service dll', "$RealBin/data/vncdll.dll"],
                         'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
-                        'AUTOVNC' => [1, 'BOOL', 'Automatically launch vncviewer', 0],
+                        'AUTOVNC' => [1, 'BOOL', 'Automatically launch vncviewer', 1],
                     },
                 
 };
@@ -44,7 +44,7 @@ sub new {
 
 sub _InjectDLL {
   my $self = shift;
-  return $self->GetVar('DLL');
+  return $self->GetVar('VNCDLL');
 }
 
 
