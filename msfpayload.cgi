@@ -25,7 +25,7 @@ use Pex;
 use CGI qw/:standard/;
 
 my $query = new CGI; 
-print $query->header(),
+print $query->header();
 
 my $ui = Msf::TextUI->new($RealBin);
 
