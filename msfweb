@@ -20,7 +20,10 @@
 #	1. IP-based access control
 #	2. Basic HTTP authentication
 #	3. SSL mode support
-
+#	4. Payloads
+#	5. Encoders
+#	6. Nops
+#	7. Logs
 
 
 require 5.6.0;
@@ -43,23 +46,29 @@ my $VERSION = $ui->Version;
 
 $ui->SetGlobalEnv('_Console', 'Msf::PayloadComponent::WebConsole');
 
+my @sections = qw{ EXPLOITS PAYLOADS ENCODERS NOPS LOGS };
 my $exploits = { };
 my $payloads = { };
 my $exploitsIndex;
 my $payloadsIndex;
 my $encoders;
 my $nops;
-my $skey = 0;
-my $ubase;
 
+my $exploitKeys	= {};
+my $exploitArch	= {};
+my $exploitOS	= {};
 
-my ($x, $opt, $verbose, $cli);
+my $exploitList;
+
+my $burl;
+my $skey;
+
 
 my %args = ();
 getopts("vha:hr", \%args);
 
 if ($args{h}) { Usage() }
-if ($args{v}) { $verbose++ }
+# if ($args{v}) { $verbose++ }
 
 my ($host, $port) = ("127.0.0.1", 55555);
 if ($args{a})
@@ -68,13 +77,6 @@ if ($args{a})
     if (! $port) { $port = 55555 }
 }
 
-my $httpd = IO::Socket::INET->new 
-(
-    LocalAddr => $host,
-    LocalPort => $port,
-    ReuseAddr => 1,
-    Listen    => 5,
-) || die "socket: $!";
 
 print "[*] Starting Metasploit v$VERSION Web Interface on $host:$port...\n";
 
@@ -89,110 +91,86 @@ for (1 .. (rand() * 128) + 128) {
 	$skey ^= ($skey * rand() * 0xffff) + $$;
 }
 
-$SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
 
 # Create the inital list of modules
-$exploitsIndex = $ui->LoadExploits;
-$payloadsIndex = $ui->LoadPayloads;
-$encoders = $ui->LoadEncoders;
-$nops     = $ui->LoadNops;
+LoadAllModules();
 
-foreach my $key (keys(%{$exploitsIndex})) {
-	$exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
+my $ghettoWeb = GhettoWeb->new
+(
+	'host'	=> $host,
+	'port'	=> $port,
+	'fnWeb'	=> \&ProcessWebRequest,
+	'fnIPC'	=> \&ProcessIPCRequest,
+	'fnHRP'	=> \&HTTPRequest,
+);
+
+$ghettoWeb->Run();
+
+if ($ghettoWeb->IsError) {
+	print STDERR "[*] Error: ".$ghettoWeb->GetError."\n";
 }
 
-foreach my $key (keys(%{$payloadsIndex})) {
-	$payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
+
+
+exit(0);
+
+
+######################################################################
+######################################################################
+######################################################################
+
+
+sub ProcessIPCRequest { 
+	my $ipc = shift;
+	print "IPC: $ipc\n";
 }
 
-$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
-$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
-$ui->SetTempEnv('_Encoders', $encoders);
-$ui->SetTempEnv('_Nops', $nops);
-
-
-# XXX - figure out logging...
-    
-while (1)
-{
-    my ($cs, $add) = $httpd->accept();
-    next if ! $cs;
-    
-    my $child = fork();
-    next if $child;
-
-	# Wrap the new socket inside a Msf::Socket object
-	my $cli = Msf::Socket::Tcp->new_from_socket($cs);
+sub ProcessWebRequest {
+	my ($req, $cli, $ipc) = @_;
+    my $state =  $req->{'params'};
+	my $res;
 	
-    # Parse the HTTP request
-    my $state = HTTPRequest($cli);
-    
 	# Generate the base URL
-	$ubase = "/msf".GenerateSID(inet_aton($cli->PeerAddr))."/";
-	
-    # Socket was closed
-    exit(0) if ! defined($state);
-    
-    # Request was invalid
-    if ($state == -1) {
-        $cli->Send(HTTPResponse(501, 'Not Implemented'));
-        $cli->Close();
-        exit(0);
-    }
-
-
-    my $res;
+	$burl = '/'.$req->{'base'}.'?';
 	
 	# Reload all modules only when the -r option has been specified
 	if (exists($args{'r'})) {
-		$exploitsIndex = $ui->LoadExploits;
-		$payloadsIndex = $ui->LoadPayloads;
-		$encoders = $ui->LoadEncoders;
-		$nops     = $ui->LoadNops;
-		
-		foreach my $key (keys(%{$exploitsIndex})) {
-			$exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
-		}
-		
-		foreach my $key (keys(%{$payloadsIndex})) {
-			$payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
-		}
-		
-		$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
-		$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
-		$ui->SetTempEnv('_Encoders', $encoders);
-		$ui->SetTempEnv('_Nops', $nops);
+		LoadAllModules();
 	}
+	
+	# Start with a standard header
+	$res .= HTML_Header($req);
 	
     my $logaction;
     if ($state->{'MODULE'}) {
         my $mname = exists($exploits->{$state->{'MODULE'}}) 
                     ? $exploits->{$state->{'MODULE'}}->Name() : "Invalid Module";
 
-        $res = "<table width=100% bgcolor='black'><tr><td>".
-               "<font color='white'><b>Module: $mname</b></font></td></tr></table><br>\n";
-        $logaction = "$mname";
-        
-        if($state->{'PAYLOAD'}) {
-            $logaction .= " PAYLOAD=".$state->{'PAYLOAD'};
-        }
-        
-        if ($state->{'OPT_RHOST'}) {
-            $logaction .= " HOST=".$state->{'OPT_RHOST'};
-        }
-        
-        if ($state->{'OPT_RPORT'}) {
-            $logaction .= " PORT=".$state->{'OPT_RPORT'};
-        }       
+        $res .= "<table width=100% bgcolor='black'><tr><td>".
+                "<font color='white'><b>Module: $mname</b></font></td></tr></table><br>\n";
+        $logaction = "$mname";  
     }
 
     $state->{'client'} = $cli;
-    vprint($cli->PeerAddr.":".$cli->PeerPort."  ".$state->{'MODE'}."  $logaction\n");
-    
-    $res .= ProcessRequest($cli, $state);
 
+	if ($req->{'base'} eq 'EXPLOITS') {
+	
+    	if ($state->{'MODE'} eq 'MAIN')    { $res .= ExploitList($state) }
+    	if ($state->{'MODE'} eq 'SUMMARY') { $res .= ExploitSummary($state) }
+    	if ($state->{'MODE'} eq 'PAYLOAD') { $res .= ExploitPayload($state) }
+    	if ($state->{'MODE'} eq 'OPTIONS') { $res .= ExploitOptions($state) }
+    	if ($state->{'MODE'} eq 'TARGETS') { $res .= ExploitTargets($state) }
+    	if ($state->{'MODE'} eq 'CHECK')   { $res .= ExploitCheck($state) }
+
+    	# ExploitExec doesn't return on success
+    	if ($state->{'MODE'} eq 'EXPLOIT') { $res .= ExploitExec($state) }    
+	}
+	
+    $res .= HTML_Footer();
+	
     $cli->Send(HTTPResponse(200, $res));
     $cli->Close();
+	
     exit(0);
 }
 
@@ -201,33 +179,11 @@ sub Usage {
     exit(0);
 }
 
-sub vprint {
-    my ($msg) = @_;
-    if ($verbose) { print $msg }
-}
-
-sub ProcessRequest {
-    my ($cli, $state) = @_;
-    my ($html, $body);
-   
-    $body = "Default Response";
-
-    if ($state->{'MODE'} eq 'MAIN')    { $body = ExploitList($state) }
-    if ($state->{'MODE'} eq 'SUMMARY') { $body = ExploitSummary($state) }
-    if ($state->{'MODE'} eq 'PAYLOAD') { $body = ExploitPayload($state) }
-    if ($state->{'MODE'} eq 'OPTIONS') { $body = ExploitOptions($state) }
-    if ($state->{'MODE'} eq 'TARGETS') { $body = ExploitTargets($state) }
-    if ($state->{'MODE'} eq 'CHECK')   { $body = ExploitCheck($state) }
-    
-    # ExploitExec doesn't return on success
-    if ($state->{'MODE'} eq 'EXPLOIT') { $body = ExploitExec($state) }    
-    
-    $html = HTML_Header() . $body . HTML_Footer();
-    return($html);
-}
 
 sub HTML_Header {
-    return qq
+	my $req = shift;
+	
+    my $header = qq
 [<html>
     <head>
         <title>Metasploit Framework Web Console v$VERSION</title>
@@ -246,22 +202,101 @@ sub HTML_Header {
             A:visited       { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
             A:hover         { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
 
+			.tabDark {
+				background:		#dddddd;
+				font-size:		12pt;
+				font-weight:	bold;
+			}
+			
+			.tabLight {
+				background:		#ffffff;
+				font-size:		12pt;
+				font-weight:	bold;
+			}
+			
+			.tabActive {
+				background:		#feff9c;
+				color:			black;
+				font-size:		12pt;
+				font-weight:	bold;
+			}
+			
+			.sectionTitle {
+				color:			black;
+				font-size:		14pt;
+				font-weight:	bold;
+			}
+
+			
+			.listBody {
+				background:		white;
+				color:			black;
+				font-size:		12pt;
+			}
+			
+			A.nav {
+				font-size:		11pt;
+				font-weight:	bold;
+				font-variant:	small-caps;
+			}
+			
+			.nav { 
+				font-size:		13pt;
+				font-variant:	small-caps;
+				font-weight:	normal;
+				font-weight:	bold;
+			}
+			
+			.navHead { 
+				font-size:		11pt;
+				font-weight:	bold;
+			}
+		
         </style>
     </head>
     <body bgcolor='white' text='black'>
+<a name='Top'></a>
+<br/>
+
+<table align='center' cellpadding=0 border=0 cellspacing=0 width='98%' bgcolor='#000000'>
+<tr><td>
+<table align='center' cellpadding=8 border=0 cellspacing=1 width='100%'>
+<tr>
 ];
+
+	my $lastTab = 'tabLight';
+	my $currTab;
+	
+	foreach my $section (@sections) {
+		$lastTab = ($lastTab eq 'tabLight') ? 'tabDark' : 'tabLight';
+		$currTab = ($section eq $req->{'base'}) ? 'tabActive' : $lastTab;
+		
+		$header .= qq[
+                <td class='$currTab' width='20%' align='center'> <a href='/$section'>$section</a> </td>		
+		];
+	}
+	$header .= qq[
+        </tr>
+
+        <tr>
+                <td colspan=5 bgcolor='#ffffff'>
+                <br/>
+	];
+	
+	return $header;
+
 }
 
 sub HTML_Footer {
-    return "
-    <br>
-    <center>
-        <a href='$ubase'>Exploit Listing</a> |
-        <a href='http://metasploit.com/'>Metasploit.com</a> |
-        <a href='http://s1.amazon.com/exec/varzea/pay/T2FKAC37FCOAYS/103-6224645-8776633'>Donate!</a>
-    </center>
-    </body>
-    </html>";
+    return qq[
+		<br/>
+		</td>
+	</tr>
+</table></td></tr></table>
+<br/>
+</body>
+</html>
+	];
 }
 
 sub URLEncode {
@@ -275,7 +310,7 @@ sub URLEncode {
 sub StateToURL {
     my ($mode, $state) = @_;
     my (%tmp, $res);
-    $res = $ubase."?";
+    $res = $burl;
 	
     foreach (keys(%{$state})) {
         next if $_ eq "client";
@@ -298,21 +333,79 @@ sub StateToOptions {
 
 sub ExploitList
 {
-    my $res;
+    my $eList;
+	my @links;
+	my $exploitMerge = {};
+	
+	# Cache the generated page for speed
+	if (! $args{'r'} && defined($exploitList) ) {
+		return $exploitList;
+	}
+	
+	# Navigation header
+	$eList = "<div align='center' class='navHead'>Navigation Keys<br/><br/>\n";
+	
+	# List of exploitKeys
+	foreach my $kname  (sort( keys %{ $exploitKeys }) ) {
+		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+		$exploitMerge->{$kname} = $exploitKeys->{$kname};
+	}
+	$eList .= join(" | ", @links) . "<br/><br/>\n";
+	@links = ();
+		
+	# List of exploitOS
+	foreach my $kname (sort( keys %{ $exploitOS }) ) {
+		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+		$exploitMerge->{$kname} = $exploitOS->{$kname};
+	}
+	$eList .= join(" | ", @links) . "<br/><br/>\n";
+	@links = ();
 
-    $res .= "<table align='center' padding=6 border=0 cellspacing=0 width=750>\n";
-    $res .= "<tr><td colspan=2 align='left'><b><h2>Metasploit v$VERSION Exploit Index</h2></b></td></tr>\n";
+	# List of exploitArch
+	foreach my $kname (sort( keys %{ $exploitArch}) ) {
+		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+		$exploitMerge->{$kname} = $exploitArch->{$kname};		
+	}
+	$eList .= join(" | ", @links) . "<br/><br/>\n";
+	@links = ();
+	$eList .= "</div><br\>\n";
 
-    foreach my $x (sort(keys(%{$exploits}))) {
-        $res .= "<tr><td> <li> </td><td>".
-                "<a href='".$ubase."MODE=SUMMARY&MODULE=".
-                URLEncode($x)."'>". 
-                $exploits->{$x}->Name. 
-                "</a></td></tr>\n";
-    }
 
-    $res .= "</table>\n";
-    return $res;
+	# Generate a frame for each unique key, os, and arch
+	foreach my $kname (	sort( keys %{ $exploitMerge }) ) {
+	
+		$eList .= qq[
+<a name='$kname'><br></a>        
+<table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' bgcolor='black'>        
+	<tr><td>
+    <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' bgcolor='white'>
+    <tr>
+		<td class='nav' align='left'> $kname </td>
+    	<td class='listBody' align='right'><a href='#Top'>Top</a></td>
+	</tr>
+	<tr><td class='listBody' align='center' colspan=2>
+		<blockquote>
+		<table align='center' padding=6 border=0 cellspacing=0 width='100%'>
+];
+
+	# Dump out all of the matching exploits for this key, os, or arch
+	foreach my $ename (sort @{ $exploitMerge->{$kname} }) {
+		$eList .= "<tr><td> <li> </td><td><a href='".$burl."MODE=SUMMARY&";
+		$eList .= "MODULE=".URLEncode($ename)."'>".$exploits->{$ename}->Name."</a>";
+		$eList .= "</td></tr>\n";
+	}
+	
+	$eList .= qq[
+		</table>
+		</blockquote>
+</td></tr></table>
+</td></tr></table>
+];
+
+	}
+	
+	$exploitList = $eList;
+    return $eList;
 }
 
 sub ExploitSummary
@@ -409,7 +502,7 @@ sub ExploitOptions
         return $res;
     }
  
-    $res .= "<form action='$ubase' method='GET'>\n";
+    $res .= "<form action='$burl' method='GET'>\n";
     foreach (keys(%{$state})) {
         next if $_ eq 'client';
         if ($_ ne "MODE") {
@@ -496,7 +589,7 @@ sub ExploitExec
    
     
     if ($state->{"ExploitAction"} eq "Vulnerability Check") {
-        $res .= "\n<form action='$ubase' method='GET'>\n";
+        $res .= "\n<form action='$burl' method='GET'>\n";
         foreach (keys(%{$state})) {
             if ($_ ne "MODE")  {
                 $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
@@ -556,80 +649,119 @@ sub ExploitExec
 # Primitive HTTP request parser
 sub HTTPRequest {
     my $cli = shift;
-    my ($url, $state);
+	my $opt = shift;
 	
-    my $res = $cli->Recv(-1, 20);
-    ($res) = split(/\n/, $res);
+	my $timeout	= exists($opt->{'Timeout'}) ? $opt->{'Timeout'} : 30;
+	my $raw		= $cli->Recv(-1, $timeout);
+	return {} if ! $raw;
+		
+	my ($meth, $uri, $path, $query);
+	my %headers;
+	my %params;
 
-	# Extract the URI
-    if ($res =~ m/^GET\s+(.*)\s+HTTP\/1\.[01]/) { $url = $1 }
-    else {
-		print STDERR "Invalid request from ".$cli->PeerAddr()."\n";
-		return(-1);
-    }
+	my @lines	= split(/\n/, $raw);
+	my $rmeth	= shift(@lines);
+		
+	# Parse the request method and URI
+	if ($rmeth =~ m/^([^\s]+)\s+([^\s]+)\s+/) {
+		$meth	= lc($1);
+		$uri	= $2;
+	} 
+	else { return; }
 	
+	# Read the HTTP request headers
+	foreach my $line (@lines) {
+		$line =~ s/\r|\n//g;
+		last if $line eq '';
+		if ($line =~ m/^([^:]+):(\s+|)(.*)$/) {
+			$headers{lc($1)} = $3;	
+		}
+	}
+	
+	# Split out the path from the query string
+	if ($uri =~ m/^([^\?]+)(\?(.*)|)$/) {
+		$path	= $1;
+		$query	= $3;
+	}
+	
+	# Convert URI encoding to hex encoding
+    $path =~ s/\+/%20/g;
+	
+	# Convert hex encoding to plain text
+	$path =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+	
+	# Remove some garbage from the request
+	$path =~ s/\x00|\x0a|\x0d|\<|\>|\s+$//g;
+	
+	# Remove parent paths and other bad joojoo
+	$path =~ s/\/\.\.\/|\/\.\/|\\//g;
+	
+	# Convert multiple forward slashes to a single
+	$path =~ s/\/+/\//g;
+
+	# Break the invidual variables into chunks
+    my @chunks = split(/&/, $query);
+    
+	# Process the chunks and place into %params
+	foreach my $chunk (@chunks) {
+        my ($var, $val) = split(/=/, $chunk);
+        $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+        $params{$var} = $val;
+
+        # ignore empty values
+        $val =~ s/^\s+|\s+$//g;
+        
+		# strip out some hostile chars
+		$val =~ s/\x00|\x0a|\x0d//g;
+		
+		# avoid cheesy xss attacks
+        $val =~ s/\<|\>//g;        
+        
+        if (! length($val)) { delete($params{$var}) }
+    }
+    
+    # Create a nice big hash of the request
+	my $res  =
+	{
+		'method'	=> $meth,
+		'headers'	=> \%headers,
+		'params'	=> \%params,
+		'path'		=> $path,
+	};
+
 	
 	# Extract the session ID
-	my ($sid) = $url =~ m/^\/msf([^\/]+)\//;
+	my ($sid) = $headers{'cookie'} =~ m/SID=(.*)$/;
 	my $vid = GenerateSID(inet_aton($cli->PeerAddr));
 	
 	# Redirect the user if the SID does not match
-	if (0 && $sid ne $vid) {
-		
-		if ($sid) {
-			print STDERR "Invalid session ID ($sid != $vid)\n";
-		}
+	if ($sid ne $vid) {
 		
 		my $rdir =
 			"HTTP/1.1 302 Rejected\r\n".
-			"Location: /msf$vid/\r\n".
+			"Set-Cookie: SID=$vid; path=/;\r\n".
+			"Location: ". $res->{'path'} ."\r\n".
 			"Date: ". HTTPDate() ."\r\n".
 			"Connection: Close\r\n".
 			"Content-Length: 0\r\n\r\n";
 
-		print STDERR "Redirecting to /msf$vid\n";
 		$cli->Send($rdir);
 		$cli->Close;
 		return;
 	}
 	
-	# Strip some things from the URI
-    $url =~ s/^\/+msf[^\/]+\///g;
-    $url =~ s/^\?//g;
+	# Process the URL
+	($res->{'base'}) = $path =~ m/^\/([^\?]+)/;
+	if (! $res->{'base'}) {
+		$res->{'base'} = 'EXPLOITS';
+	}
+
+	# Default to main mode
+	if (! $res->{'params'}->{'MODE'}) {
+		$res->{'params'}->{'MODE'} = 'MAIN';
+	}
 	
-	# Convert URI encoding to hex encoding
-    $url =~ s/\+/%20/g;
-	
-	# Remove some hostile bits from the request
-    $url =~ s/\x00|\x0A|\x0D//g;
-
-		
-	# Break the invidual variables into chunks
-    my @chunks = split(/&/, $url);
-    foreach my $chunk (@chunks) {
-        my ($var, $val) = split(/=/, $chunk);
-        $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-        $state->{$var} = $val;
-
-        # ignore empty values
-        $val =~ s/^\s+|\s+$//g;
-        
-        # remove any < or >'s (silly XSS monkies,there are worse problems here)
-        $val =~ s/\<|\>//g;        
-        
-        if (! length($val)) { delete($state->{$var}) }
-    }
-    
-    if (! $state->{'MODE'}) {
-        $state->{'MODE'} = "MAIN";
-    }
-    
-    return $state;
-}
-
-sub GenerateSID {
-	my $data = shift;
-	return unpack("H*", pack('N', $skey) ^ $data);
+	return $res;
 }
 
 sub HTTPResponse {
@@ -652,52 +784,249 @@ sub HTTPDate {
 	return strftime("%a, %e %b %Y %H:%M:%S GMT", gmtime());
 }
 
-# Primitive HTTP request parser
-sub HTTPRequestNEW {
-    my $cli = shift;
-	my $opt = shift;
+sub GenerateSID {
+	my $data = shift;
+	return unpack("H*", pack('N', $skey) ^ $data);
+}
+
+sub LoadAllModules {
+	$exploitsIndex	= $ui->LoadExploits;
+	$payloadsIndex	= $ui->LoadPayloads;
+	$encoders		= $ui->LoadEncoders;
+	$nops			= $ui->LoadNops;
+	$exploitKeys	= {};
+	$exploitOS		= {};
+	$exploitArch	= {};
 	
-	my $timeout = exists($opt->{'Timeout'}) ? $opt->{'Timeout'} : 30;
+	foreach my $key (keys(%{$exploitsIndex})) {
+		my $exploit = $exploitsIndex->{$key};
+		
+		$exploits->{$exploit->SelfEndName} = $exploit;
+		
+		foreach my $kname ( @{ $exploit->Keys } ) {
+			push @{ $exploitKeys->{ $kname } }, $exploit->SelfEndName;
+		}
+
+		foreach my $kname ( @{ $exploit->OS } ) {
+			push @{ $exploitOS->{ $kname } }, $exploit->SelfEndName;
+		}
+		
+		foreach my $kname ( @{ $exploit->Arch } ) {
+			push @{ $exploitArch->{ $kname } }, $exploit->SelfEndName;
+		}				
+	}
+
+	foreach my $key (keys(%{$payloadsIndex})) {
+		$payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
+	}
+
+	$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+	$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+	$ui->SetTempEnv('_Encoders', $encoders);
+	$ui->SetTempEnv('_Nops', $nops);
 	
-	while ( (my $raw = $cli->getline) !~ /^[\r\n]+$/ ) {
-		$raw =~ s/[\r\n]+$//g;
-		print "RAW: $raw\n";
+	
+}
+
+
+
+####################
+package GhettoWeb; #
+####################
+
+use POSIX;
+use IO::Socket;
+use IO::Select;
+use Pex;
+
+sub new {
+	my $name	= shift;
+	my $self	= bless {}, $name;
+	
+	$self->_config(@_);
+	return $self;
+}
+
+sub _config {
+	my $self = shift;
+	my %args = @_;
+	foreach (keys %args) {
+		$self->{'_Config'}->{$_} = $args{$_};
+	}
+};
+
+sub IsError {
+    my $self = shift;
+    return 1 if exists($self->{'_Error'});
+    return;
+}
+
+sub GetError {
+    my $self = shift;
+    return if ! exists($self->{'_Error'});
+    return $self->{'_Error'};
+}
+
+sub SetError {
+    my $self = shift;
+    my $boom = shift;
+    $self->{'_Error'} = $boom;
+    return $self->{'_Error'};
+}
+
+sub ClearError {
+    my $self = shift;
+    delete($self->{'_Error'});
+}
+
+sub LogFile {
+	my $self = shift;
+	$self->{'_LogFile'} = shift() if @_;
+	return $self->{'_LogFile'};
+}
+
+sub Log {
+    my $self	= shift;
+	my $lvl		= shift;
+	my $msg		= @_ ? shift() : return;
+	
+	if ( open(X, ">>".$self->LogFile) ) {
+    	print X scalar(localtime())." <$lvl> $msg\n";
+    	close(X);
+	}
+}
+
+
+
+sub Run {
+	my $self = shift;
+	my $args = $self->{'_Config'};
+
+	my $host  = $args->{'host'};
+	my $port  = $args->{'port'};
+	my $fnWeb = $args->{'fnWeb'} || sub { };
+	my $fnIPC = $args->{'fnIPC'} || sub { };
+	my $fnHRP = $args->{'fnHRP'} || sub { };
+	
+	my $httpd = IO::Socket::INET->new 
+	(
+    	LocalAddr => $host,
+    	LocalPort => $port,
+    	ReuseAddr => 1,
+    	Listen    => 5,
+	);
+	
+	if (! $httpd) {
+		$self->SetError("Failed to start listener: $!");
+		return;
 	}
 	
-	return;
-
-	my  ($url, $state);
+	$httpd->blocking(0);
 	
-	# Strip some things from the URI
-    $url =~ s/^\/+msf[^\/]+\///g;
-    $url =~ s/^\?//g;
-	
-	# Convert URI encoding to hex encoding
-    $url =~ s/\+/%20/g;
-	
-	# Remove some hostile bits from the request
-    $url =~ s/\x00|\x0A|\x0D//g;
+	$SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
 
-		
-	# Break the invidual variables into chunks
-    my @chunks = split(/&/, $url);
-    foreach my $chunk (@chunks) {
-        my ($var, $val) = split(/=/, $chunk);
-        $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-        $state->{$var} = $val;
+	my %socketInfo = 
+	(
+		$httpd	=> [$httpd, 0, 'listener'],
+	);
 
-        # ignore empty values
-        $val =~ s/^\s+|\s+$//g;
-        
-        # remove any < or >'s (silly XSS monkies,there are worse problems here)
-        $val =~ s/\<|\>//g;        
-        
-        if (! length($val)) { delete($state->{$var}) }
-    }
-    
-    if (! $state->{'MODE'}) {
-        $state->{'MODE'} = "MAIN";
-    }
-    
-    return $state;
+	my $keepRunning = 1;
+	
+	# The main event loop
+	while ($keepRunning) {
+
+		my $sel = IO::Select->new();
+
+		foreach my $s (keys %socketInfo) {
+			# Process all but child-side sockets
+			if ($socketInfo{$s}->[2] ne 'ipc_child') {
+				my $sd = $socketInfo{$s}->[0];
+
+				if (! $sd) {
+					$self->Log(1, "socketInfo{ $s } is invalid");
+					delete($socketInfo{$s});
+					next;
+				}
+
+				$sd->blocking(0);
+				$sd->autoflush(1);
+				$sel->add($sd);
+			}
+		}
+
+		# Select for new connections and data
+		my @ready = $sel->can_read(10);
+
+		# Process each flagged socket
+		foreach my $s (@ready) {
+
+			# A new connection
+			if ($s eq $httpd) {
+				my ($client) = $httpd->accept;
+				
+				if (! $client) {
+					$self->Log(1,  "Accept failed on primary listener socket: $@");
+					next;
+				}
+
+				$socketInfo{$client} = [$client, 0, 'client'];
+				$self->Log(3, "New client connection from ".$client->peerhost);
+				next;
+			}
+
+			# A new HTTP request
+			if ($socketInfo{$s}->[2] eq 'client') {
+				my $cli = Msf::Socket::Tcp->new_from_socket($s);
+				my $res = $fnHRP->($cli);
+
+				if ($res) {
+					my ($par, $chi);
+
+					# Create the comm channel between parent and child
+					socketpair($par, $chi, AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+
+					# Spawn off the child process
+					my $pid = fork();
+					if (! $pid) {
+						$self->Log(3,  "fnWeb called with pid $$...");
+						$fnWeb->($res, $cli, $chi);
+						exit(0);
+					}
+
+					$socketInfo{$par} = [$par, $pid, 'ipc'];
+					$socketInfo{$chi} = [$chi, $pid, 'ipc_child'];
+				} 
+				else {
+					eval { $s->shutdown(2); };
+					eval { $s->close; };
+				}
+
+				# XXX - local cleanup up the original socket?
+				delete($socketInfo{$s});
+				next;
+			}
+
+			# A new IPC request
+			if ($socketInfo{$s}->[2] eq 'ipc') {
+				my $cli = Msf::Socket::Tcp->new_from_socket($s);
+				$self->Log(3,  "fnIPC called with pid $$...");
+				$fnIPC->($cli);
+				next;
+			}
+
+			# Unknown socket type...
+			$self->Log(1, "Unknown socket type ".$socketInfo{$s}->[2]);
+		}
+
+		# Remove sockets attach to dead processes
+		foreach my $s (keys %socketInfo) {
+			my $spid = $socketInfo{$s}->[1];
+			if ($spid && ! kill(0, $spid)) {
+				$self->Log(3, "Removed $s ($spid) of type ".$socketInfo{$s}->[2]);
+				eval { $socketInfo{$s}->[0]->shutdown(2); };
+				eval { $socketInfo{$s}->[0]->close; };
+				delete($socketInfo{$s});
+			}
+		}
+	}
 }

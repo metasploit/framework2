@@ -43,32 +43,34 @@ sub new {
 # as needed
 sub PrintLine {
     my $self = shift;
-    my $msg = shift;
+    my $data = shift;
+
 
     # ignore empty messages
-    return(0) if ! length($msg);
+    return(0) if ! length($data);
 	
-	# XXX XSS checks go here
+	# strip out bad web joojoo
+	$data = XSS_Filter($data);
 	
     # If we are in exploit mode, write output to browser
     if (my $s = $self->GetTempEnv('_BrowserSocket')) {
-		$msg .= "\n";
-		$s->Send(sprintf("%x\r\n%s\r\n", length($msg), $msg));
+		$data .= "\n";
+		$s->Send(sprintf("%x\r\n%s\r\n", length($data), $data));
         return;
     }
     
     my @buffer = @{$self->GetEnv('_PrintLineBuffer')};
-    push @buffer, $msg;
+    push @buffer, $data;
     $self->SetTempEnv('_PrintLineBuffer', \@buffer);
     return(1);
 }
 
 sub PrintError {
 	my $self = shift;
-    my $msg  = shift;
-    return(0) if ! length($msg);
+    my $data  = shift;
+    return(0) if ! length($data);
     return(0) if ! $self->IsError;
-    $self->PrintLine("Error: $msg");
+    $self->PrintLine("Error: $data");
     $self->ClearError;
     return(1);
 }
@@ -79,6 +81,15 @@ sub DumpLines {
     my @res  = @{$self->GetEnv('_PrintLineBuffer')};
     $self->SetTempEnv('_PrintLineBuffer', [ ]);
     return \@res;
+}
+
+# XXX - not complete
+sub XSS_Filter {
+	my $data = shift;
+	
+	$data =~ s/\</\&lt;/g;
+	$data =~ s/\>/\&gt;/g;
+	return $data;
 }
 
 1;
