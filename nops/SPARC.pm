@@ -29,7 +29,6 @@ sub new {
 }
 
 my $table = [
-# XXX: call, stbar, flush?
   [ \&Inssethi, [ ], ],					# sethi
   [ \&Insarithmetic, [ 1, 0 ], ],			# add
   [ \&Insarithmetic, [ 1, 1 ], ],			# and
