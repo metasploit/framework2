@@ -166,9 +166,10 @@ sub Usage {
     exit(0);
 }
 sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
     print STDERR qq{
    Framework Version:  $FRAMEVERSION
-      Msfcli Version:  $VERSION
+      Msfcli Version:  $ver
 
 };
   exit(0);

@@ -240,8 +240,9 @@ Options:
 
 }
 sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
     print STDERR qq{
-   Msfpescan Version:  $VERSION
+   Msfpescan Version:  $ver 
 
 };
   exit(0);

@@ -80,6 +80,10 @@ sub HandleConsole {
 
   # Map connected socket to ConsoleIn, ConsoleOut
   $self->{'WebShell'} = $csock;  
+  
+  $brow->send("</body></html>\n");
+  $brow->shutdown(2);
+  $brow->close;
 
   # Call upwards to TextConsole's HandleConsole
   $self->SUPER::HandleConsole;

@@ -212,9 +212,10 @@ Options:
     exit(0);
 }
 sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
     print STDERR qq{
    Framework Version:  $FRAMEVERSION
-   Msfencode Version:  $VERSION
+   Msfencode Version:  $ver
 
 };
   exit(0);

@@ -24,7 +24,7 @@ my $info = {
                    'H D Moore <hdm [at] metasploit.com>' ],
     'Arch'    => [ 'ppc' ],
     'OS'      => [ 'osx' ],
-    'Description'  =>  "This is optyx's nifty ppc decoder",
+    'Description'  =>  "This is optyx's nifty ppc decoder with coherency tweaks by hdm",
     'Refs'    => [ ],
 };
 
@@ -69,6 +69,7 @@ sub EncodePayload {
         my $size = 8191 - length($payload);
         $enc = $encoder;
         
+        # happy fun time opcode patching
         substr($enc, 14, 2, pack('n', -$size -4 + (16 * 4)));
         substr($enc, 18, 2, pack('n', $scale * $icount));
         substr($enc, 26, 2, pack('n', -$size + (16 * 4)));

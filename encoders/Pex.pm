@@ -26,7 +26,7 @@ my $info = {
     ],
   'Arch'    => [ 'x86' ],
   'OS'      => [ ],
-  'Description'  =>  'Dynamically generated double xor encoder (jmp/call)',
+  'Description'  =>  'Dynamically generated dword xor encoder (jmp/call)',
   'Refs'    => [ ],
 };
 

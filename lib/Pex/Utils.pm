@@ -395,4 +395,10 @@ sub _DataTreeHash {
   return($text);
 }
 
+sub Rev2Ver {
+  my $ver = shift;
+  my ($rev) = $ver =~ m/\$Revisio.:\s+([^\$]+)/;
+  return ($rev) ? $rev : '0.0';  
+}
+
 1;

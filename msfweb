@@ -307,11 +307,9 @@ sub ExploitSummary
     $desc =~ s/\>/\&gt;/g;
     
     $res = "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
-    
-    foreach my $item (qw(Name Version))
-    {
-        $res .= "<tr><td align='left' width=80><b>$item:</b></td><td>" . $x->$item() . "</td></tr>\n";
-    }
+    $res .= "<tr><td align='left' width=80><b>Name:</b></td><td>" . $x->Name() . "</td></tr>\n";
+    my ($rev)   = $x->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
+    $res .= "<tr><td align='left' width=80><b>Version:</b></td><td>" . $rev . "</td></tr>\n";
 
     my @authors = @{$x->Authors()};
     my $author = shift(@authors);
@@ -512,7 +510,7 @@ sub ExploitExec
     
     
     # we hijack the socket from the web service
-	my $cli = $state->{'client'};
+    my $cli = $state->{'client'};
     $cli->blocking(0);
     $cli->autoflush(1);
     

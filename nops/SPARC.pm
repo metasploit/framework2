@@ -17,7 +17,7 @@ my $info = {
   'Version' => '$Revision$',
   'Authors' => [ 'H D Moore <hdm [at] metasploit.com>', ],
   'Arch'    => [ 'sparc' ],
-  'Desc'    =>  'Pex Nop Generator',
+  'Desc'    =>  'Sparc nop generator based on ADMutate nop sleds',
   'Refs'    => [ ],
 };
 

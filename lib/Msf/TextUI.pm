@@ -75,6 +75,30 @@ sub DumpPayloads {
   return($col->GetOutput);
 }
 
+sub DumpEncoders {
+  my $self = shift;
+  my $indent = shift;
+  my $encoders = shift;
+  my $col = Msf::ColPrint->new(2, 4);
+  foreach my $key (sort(keys(%{$encoders}))) {
+    $col->AddRow($key,
+      $encoders->{$key}->Name);
+  }
+  return($col->GetOutput);
+}
+
+sub DumpNops {
+  my $self = shift;
+  my $indent = shift;
+  my $nops = shift;
+  my $col = Msf::ColPrint->new(2, 4);
+  foreach my $key (sort(keys(%{$nops}))) {
+    $col->AddRow($key,
+      $nops->{$key}->Name);
+  }
+  return($col->GetOutput);
+}
+
 sub DumpOptions {
   my $self = shift;
   my $indent = shift;

@@ -17,7 +17,7 @@ my $info = {
   'Version' => '$Revision$',
   'Authors' => [ 'spoonm <ninjatools [at] hush.com>', ],
   'Arch'    => [ 'x86' ],
-  'Desc'    =>  'Pex Nop Generator',
+  'Desc'    =>  'The Pex library\'s x86 nop generator',
   'Refs'    => [ ],
 };
 

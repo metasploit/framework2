@@ -17,7 +17,7 @@ my $info = {
   'Version' => '$Revision$',
   'Authors' => [ 'H D Moore <hdm [at] metasploit.com>', ],
   'Arch'    => [ 'ppc' ],
-  'Desc'    =>  'Pex Nop Generator',
+  'Desc'    =>  'This is a very minimal PPC nop generator',
   'Refs'    => [ ],
 };
 
@@ -36,6 +36,7 @@ sub Nops {
   my $random  = $self->GetLocal('RandomNops');
   my $badChars = $exploit->PayloadBadChars;
 
+  # Much room for future improvement :(
   return(pack('N',0x60606060) x ($length / 4));
   
 }

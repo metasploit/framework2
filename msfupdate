@@ -14,7 +14,7 @@ use IO::Select;
 use POSIX;
 
 my $VERSION = '$Revision$';
-
+my ($REV)   = $VERSION =~ m/\$Revisio.:\s+([^\$]+)/;
 my $UPDATE_HOST = "metasploit.com";
 my $UPDATE_PATH = "/projects/Framework/updates";
 my $SSL_VERIFIED = 0;
@@ -40,7 +40,7 @@ my %opts;
 getopts('hrvusmaxf', \%opts);
 
 if ($opts{v}) {
-    print "Msfupdate Version: $VERSION\n";
+    print "Msfupdate Version: $REV\n";
     exit(0);
 }
 
@@ -258,7 +258,7 @@ sub Usage {
     print STDERR "  Usage: $0 [options]>\n";
     print STDERR "Options:\n";
     print STDERR "         -h             You're looking at me baby\n";
-    print STDERR "         -v             List version information\n";
+    print STDERR "         -v             Display version information\n";
     print STDERR "         -u             Perform an online update via metasploit.com\n";
     print STDERR "         -s             Only display update tasks, do not actually download\n";
     print STDERR "         -m             Show any files locally modified since last update\n";
@@ -267,6 +267,7 @@ sub Usage {
     print STDERR "         -f             Disable ssl support entirely, use with -x to avoid warnings\n";
     # Developer options
     # print STDERR "         -r             Rebuild the local version database\n";
+    print "\n";
     exit(0);
 }
 
@@ -323,8 +324,7 @@ sub DownloadFile {
         exit(0);
     }
 
-    my ($vnum) = $VERSION =~ m/\$Revisio.:\s+([^\$]+)/;
-    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$vnum\r\n\r\n";
+    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
         # Reset the verified flag

@@ -66,9 +66,9 @@ sub Usage {
 }
 
 sub Version {
+    my $ver = Pex::Utils::Rev2Ver($ver);
     print STDERR qq{
-   Framework Version:  Doesn't use Msf Framework
-  Msflogdump Version:  $VERSION
+  Msflogdump Version:  $ver
 
 };
   exit(0);

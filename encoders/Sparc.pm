@@ -40,7 +40,7 @@ sub EncodePayload {
 
     my $xor_key   = Pex::Encoder::KeyScanXorDwordFeedback($payload, $badchars);
 
-	# Check for a null dword in the payload first, this will break the decoder
+    # Check for a null dword in the payload first, this will break the decoder
     my $check = $payload;
     while (length($check)) {
     	my $word = substr($check, 0, 4);
@@ -51,7 +51,7 @@ sub EncodePayload {
         $check = substr($check, 4);
     }
 
-	# Append a null to the payload, this becomes the end tag
+    # Append a null to the payload, this becomes the end tag
     $payload .= pack('N', 0);
     my $xor_data  = Pex::Encoder::XorDwordFeedback($xor_key, $payload, 'N');
 
@@ -86,7 +86,7 @@ sub EncodePayload {
     substr($encoder, 16, 4, pack('N', $loData));
   
     # XXX - We do not check to see if the split bitshifted key is a badchar!
-	return $encoder . $xor_data;
+    return $encoder . $xor_data;
 }
 
 1;
