@@ -7,15 +7,15 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::irix_execve;
+package Msf::Payload::irix_mips_execve;
 use strict;
 use base 'Msf::PayloadComponent::FindConnection';
 
 my $info =
 {
-  'Name'         => 'irix_execve',
+  'Name'         => 'IRIX MIPS Execute Shell',
   'Version'      => '$Revision$',
-  'Description'  => 'Connect back to attacker and spawn a shell',
+  'Description'  => 'Execute a shell on the default file descriptors',
   'Authors'      => [ 'LSD [Unknown License]', ],
   'Arch'         => [ 'mips' ],
   'Priv'         => 0,
