@@ -1,5 +1,11 @@
 Pre-Release Tasks
 ==================
+ 
+ - DCOM exploit needs to be fixed so it works on XP again!
+ 
+ - DCOM exploit needs vulnerability check mode
+ 
+ - msfweb needs rewritten handlers to work correctly
 
  - Solaris, bsd, and cmd payloads need to be readded!
 
