@@ -62,9 +62,14 @@ sub SessionPrint {
 sub CreateLogDir {
   my $self = shift;
   my $dir = $self->GetEnv('LogDir');
+
+  # This is a hack, but since Logging can't import _DotMsfDir...
   if(!defined($dir)) {
-    $dir = defined($ENV{'HOME'}) ? $ENV{'HOME'} : $self->ScriptBase;
-    $dir .= '/.msflogs';
+    $dir = (($ENV{'HOME'}) ? $ENV{'HOME'} : $self->ScriptBase).'/.msf';
+    if (! -d $dir && ! mkdir($dir, 0700)) {
+    	return;
+    }
+    $dir .= '/logs';
   }
 
   return if(! -d $dir && !mkdir($dir, 0700));
