@@ -18,7 +18,7 @@ my $info = {
 sub new {
   my $class = shift;
   my $self = $class->SUPER::new(@_);
-  $self->_Info($self->MergeHash($info, $self->_Info));
+  $self->_Info($self->MergeHashRec($info, $self->_Info));
   return($self);
 }
 

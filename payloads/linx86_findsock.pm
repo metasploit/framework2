@@ -34,7 +34,7 @@ my $info =
 sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };
-  $hash = $class->MergeHash($hash, {'Info' => $info, 'Advanced' => $advanced,});
+  $hash = $class->MergeHashRec($hash, {'Info' => $info, 'Advanced' => $advanced,});
   my $self = $class->SUPER::new($hash, @_);
 
   $self->_Info->{'Size'} = $self->_GenSize;

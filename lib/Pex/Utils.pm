@@ -35,7 +35,7 @@ sub Nops {
 
   my $length = shift;
   my $opts = @_ ? shift : { };
-  $opts = MergeHash($opts, $defaultOpts);
+  $opts = MergeHashRec($opts, $defaultOpts);
   my $arch = $opts->{'Arch'};
   my $random = $opts->{'RandomNops'};
   my $badRegs = $opts->{'BadRegs'};
@@ -198,8 +198,8 @@ sub Rol
 }
 
 
-#fixme MergeHashRec
-sub MergeHash {
+#fixme MergeHashRecRec
+sub MergeHashRec {
   my $hash1 = shift || { };
   my $hash2 = shift || { };
   my %hash = %{$hash1};
@@ -209,7 +209,7 @@ sub MergeHash {
     }
     # recurse if both are has ref's
     elsif(ref($hash1->{$_}) eq 'HASH' && ref($hash2->{$_}) eq 'HASH') {
-      $hash{$_} = MergeHash($hash1->{$_}, $hash2->{$_});
+      $hash{$_} = MergeHashRec($hash1->{$_}, $hash2->{$_});
     }
   }
   return(\%hash);

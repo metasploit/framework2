@@ -37,7 +37,7 @@ sub PopulateConfig {
   my $self = shift;
   my $configFile = shift;
   my ($globalEnv, $tempEnvs) = $self->ReadConfig($configFile);
-  $self->SetGlobalEnv(%{$self->MergeHash($globalEnv, $defaults)});
+  $self->SetGlobalEnv(%{$self->MergeHashRec($globalEnv, $defaults)});
 
   foreach my $tempEnv (keys %{$tempEnvs}) {
     $self->SetSavedTempEnv($tempEnv, %{$tempEnvs->{$tempEnv}});

@@ -61,7 +61,7 @@ sub new {
   load();
   my $class = shift;
   my $hash = @_ ? shift : { };
-  $hash = $class->MergeHash($hash, {'Info' => $info});
+  $hash = $class->MergeHashRec($hash, {'Info' => $info});
   my $self = $class->SUPER::new($hash, @_);
   return($self);
 }

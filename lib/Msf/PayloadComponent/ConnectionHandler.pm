@@ -8,7 +8,7 @@ use POSIX;
 #sub new {
 #  my $class = shift;
 #  my $hash = @_ ? shift : { };
-#  $hash = $self->MergeHash($hash, {
+#  $hash = $self->MergeHashRec($hash, {
 #    'ChildPid' => '',
 #    'StopHandling' => 0,
 #   });

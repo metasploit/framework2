@@ -386,6 +386,7 @@ sub MergeHash {
     }
   }
   return(\%hash);
+}
 sub MergeHashRec {
   my $self = shift;
   my $hash1 = shift || { };
@@ -401,17 +402,6 @@ sub MergeHashRec {
     }
   }
   return(\%hash);
-}
-
-sub MergeArray {
-  my $self = shift;
-  my @arrays = @_;
-
-  my @array;
-  foreach (@arrays) {
-    push(@array, @{$_});
-  }
-  return(\@array);
 }
 
 sub SelfName {

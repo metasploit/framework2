@@ -37,7 +37,7 @@ sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };
   my $self = bless($hash, $class);
-  $self->SetDefaults($self->MergeHash($self->_InfoDefaults, $defaults));
+  $self->SetDefaults($self->MergeHashRec($self->_InfoDefaults, $defaults));
   return($self);
 }
 
@@ -64,7 +64,7 @@ sub _InfoDefaults {
 sub SetDefaults {
   my $self = shift;
   my $hash = shift;
-  $self->_Info($self->MergeHash($self->_Info, $hash));
+  $self->_Info($self->MergeHashRec($self->_Info, $hash));
 }
 
 sub Info {
