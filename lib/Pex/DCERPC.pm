@@ -150,7 +150,7 @@ sub MGMT_INQ_IF_IDS {
     my ($host, $port) = @_;
     my ($res, $rpc, %ints);
     
-    my $s = Msf::Socket::Tcp->new
+    my $s = Pex::Socket::Tcp->new
     (
         'PeerAddr'  => $host,
         'PeerPort'  => $port,
