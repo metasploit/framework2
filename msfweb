@@ -574,7 +574,7 @@ sub HTTPRequest {
 	my $vid = GenerateSID(inet_aton($cli->PeerAddr));
 	
 	# Redirect the user if the SID does not match
-	if ($sid ne $vid) {
+	if (0 && $sid ne $vid) {
 		
 		if ($sid) {
 			print STDERR "Invalid session ID ($sid != $vid)\n";

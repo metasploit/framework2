@@ -19,30 +19,6 @@ use IO::Handle;
 use IO::Select;
 use base 'Msf::PayloadComponent::TextConsole';
 
-sub PipeLocalIn {
-    my $self = shift;
-    return $self->{'WebShell'} if exists($self->{'WebShell'});
-    return $self->SUPER::PipeLocalIn;
-}
-
-sub PipeLocalOut {
-    my $self = shift;
-    return $self->{'WebShell'} if exists($self->{'WebShell'});
-    return $self->SUPER::PipeLocalOut;
-}
-
-sub PipeLocalName {
-	my $self = shift;
-	
-	if ($self->{'WebShell'}) {
-		my $name;
-		eval { $name = $self->{'WebShell'}->sockhost };
-		$self->SUPER::PipeLocalName($name);
-	}
-		
-	return $self->SUPER::PipeLocalName;
-}
-
 sub _HandleConsole {
   my $self = shift;
   my $out;
@@ -100,6 +76,11 @@ sub _HandleConsole {
  
   # Map connected socket to PipeLocal(In|Out);
   $self->{'WebShell'} = $csock;  
+
+  # Configure the Pipes
+  $self->PipeLocalOut	($csock);
+  $self->PipeLocalIn	($csock);
+  $self->PipeLocalName	($csock->sockhost);
 
   # Call upwards to TextConsole's _HandleConsole
   $self->SUPER::_HandleConsole;
