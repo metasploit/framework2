@@ -191,14 +191,13 @@ sub DecodeResponse {
 
 sub MGMT_INQ_IF_IDS {
     my ($host, $port) = @_;
-    my ($res, $rpc);
+    my ($res, $rpc, %ints);
 
     my $s = Pex::Socket->new();
     return if ! $s->Tcp($host, $port);
 
-    my $bind = Bind(UUID('MGMT'), '1.0', DCEXFERSYNTAX(), '2');
-    $s->Send($bind);
-    $res = $s->Recv(60);
+    $s->Send(Bind(UUID('MGMT'), '1.0', DCEXFERSYNTAX(), '2'));
+    $res = $s->Recv(60, 5);
     $rpc = DecodeResponse($res);
     
     if ($rpc->{'AckResult'} != 0) {
@@ -206,9 +205,8 @@ sub MGMT_INQ_IF_IDS {
         return;
     }
 
-    my $dump = Request(0);
-    $s->Send($dump);
-    $res = $s->Recv(-1);
+    $s->Send(Request(0));
+    $res = $s->Recv(-1, 5);
     $rpc = DecodeResponse($res);
     
     if ($rpc->{'Type'} eq 'fault') {
@@ -222,7 +220,6 @@ sub MGMT_INQ_IF_IDS {
     my $ifstats = substr($rpc->{'StubData'}, 12, 4 * $ifcount);
     my $iflist  = substr($rpc->{'StubData'}, 12 + (4 * $ifcount));
     
-    my %ints = ();
     while (length($iflist) >= 20) {   
         my $if = Bin_to_UUID($iflist);
         $ints{$if}=unpack('v',substr($iflist, 16)).".".unpack('v',substr($iflist, 18));
