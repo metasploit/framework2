@@ -1583,7 +1583,7 @@ sub ExploitExec
 				return $res;
 		} 
 		else {
-			$res .= "<br><div class='textBold'>Check Results: ".
+			$res .= "<br><div class='textBold'>Check Results: ";
 			$res .= (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br>\n";
         	$res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
 		}
