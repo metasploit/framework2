@@ -29,7 +29,7 @@ use Pex;
 
 Msf::UI::ActiveStateSucks();
 
-my $ui = Msf::TextUI->new($Bin);
+my $ui = Msf::TextUI->new($RealBin);
 my $FRAMEVERSION = $ui->Version;
 my $VERSION = '$Revision$';
 

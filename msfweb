@@ -29,7 +29,7 @@ use Getopt::Std;
 
 Msf::UI::ActiveStateSucks();
 
-my $ui = Msf::WebUI->new($Bin);
+my $ui = Msf::WebUI->new($RealBin);
 my $VERSION = $ui->Version;
 
 $ui->SetGlobalEnv('Console', 'Msf::PayloadComponent::WebConsole');
