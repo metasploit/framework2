@@ -30,6 +30,11 @@ use File::Spec::Functions;
 
 my $envDebug = 0;
 
+
+sub Version {
+    return "2.0";
+}
+
 sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };

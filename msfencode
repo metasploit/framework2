@@ -31,6 +31,8 @@ my %opts = ();
 Msf::UI::ActiveStateSucks();
 
 my $ui = Msf::TextUI->new($Bin);
+my $VERSION = $ui->Version;
+
 my $payloadArch = ['x86'];
 my $payloadOS = ['linux'];
 my $badChars = '\x00';

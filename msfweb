@@ -29,9 +29,8 @@ use Getopt::Std;
 
 Msf::UI::ActiveStateSucks();
 
-my $VERSION = "2.0";
-
 my $ui = Msf::WebUI->new($Bin);
+my $VERSION = $ui->Version;
 
 my $exploits = { };
 my $payloads = { };

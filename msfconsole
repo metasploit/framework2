@@ -24,8 +24,6 @@ use vars qw($VERSION);
 use IO::Socket;
 use POSIX;
 
-$VERSION = "2.0";
-
 use lib "$Bin/lib";
 
 use Pex::PsuedoShell;
@@ -35,6 +33,7 @@ use Pex;
 Msf::UI::ActiveStateSucks();
 
 my $ui = Msf::TextUI->new($Bin);
+my $VERSION = $ui->Version;
 
 $SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
 

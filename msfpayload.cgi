@@ -26,12 +26,12 @@ use CGI qw/:standard/;
 
 Msf::UI::ActiveStateSucks();
 
-my $VERSION = "2.0";
+my $ui = Msf::TextUI->new($RealBin);
+my $VERSION = $ui->Version;
+$ui->SetTempEnv('_MsfPayload', 1);
+
 my $query = new CGI; 
 print $query->header();
-
-my $ui = Msf::TextUI->new($RealBin);
-$ui->SetTempEnv('_MsfPayload', 1);
 
 my $opt = { };
 my $exploits = { };

@@ -27,8 +27,9 @@ use Pex;
 
 Msf::UI::ActiveStateSucks();
 
-
 my $ui = Msf::TextUI->new($Bin);
+my $VERSION = $ui->Version;
+
 $ui->SetTempEnv('_MsfPayload', 1);
 
 my $exploits = { };

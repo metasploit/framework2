@@ -16,7 +16,7 @@
 ##
 
 require 5.6.0;
-$VERSION = "2.0";
+
 use strict;
 use FindBin qw{$Bin};
 use lib "$Bin/lib";
@@ -31,6 +31,7 @@ Msf::UI::ActiveStateSucks();
 
 
 my $ui = Msf::TextUI->new($Bin);
+my $VERSION = $ui->Version;
 
 my %opts;
 my $exploits = { };
