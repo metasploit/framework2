@@ -452,7 +452,7 @@ sub FormatOverwrite {
 sub DwordAdd {
   my $num1 = shift;
   my $num2 = shift;
-  print "Add: $num1 $num2\n";
+#  print "Add: $num1 $num2\n";
   return(($num1 + $num2) % 4294967296);
 }
 
