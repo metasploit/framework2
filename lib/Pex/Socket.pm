@@ -20,9 +20,18 @@ use IO::Select;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw();
+our @EXPORT = qw(socks_setup);
+our @EXPORT_OK = qw(socks_setup);
 
 my $SSL_SUPPORT;
+my $SOCKS_SUPPORT;
+
+my %_socks_config = (
+    enable => 0,
+    host => '127.0.0.1',
+    port => 8888,
+    version => 4,
+);
 
 # Determine if SSL support is enabled
 BEGIN
@@ -35,7 +44,28 @@ BEGIN
         Net::SSLeay::randomize(time() + $$);
         $SSL_SUPPORT++;
     }
-    
+    if (eval "require Net::SOCKS")
+    {
+        Net::SOCKS->import();
+        $SOCKS_SUPPORT++;
+    }
+}
+
+sub socks_setup {
+    my ($key, $value) = @_;
+    if ($key eq 'socks') {
+        if ($value) {
+            $_socks_config{'enable'} = 1;
+        } else {
+            $_socks_config{'enable'} = 0;
+        }
+    } elsif ($key eq 'socks_host') {
+        $_socks_config{'host'} = $value;
+    } elsif ($key eq 'socks_port') {
+        $_socks_config{'port'} = $value;
+    } elsif ($key eq 'socks_version') {
+        $_socks_config{'version'} = $value;
+    }
 }
 
 sub new
@@ -47,6 +77,11 @@ sub new
     if ($SSL_SUPPORT == 0 && $self->{"USE_SSL"})
     {
         print STDERR "Pex::Socket Error: SSL option has been set but Net::SSLeay has not been installed.\n";
+        return undef;
+    }
+
+    if ($SOCKS_SUPPORT == 0 && $_socks_config{'enable'} == 1) {
+        print STDERR "Pex::Socket Error: SOCKS option has been set but Net::SOCKS has not been installed.\n";
         return undef;
     }
     return $self;
@@ -117,31 +152,47 @@ sub tcp
     
     delete($self->{'SOCKET'});
     delete($self->{'ERROR'});
-    
-    my %sconfig =
-    (
-        PeerAddr  => $host,
-        PeerPort  => $port,
-        Proto     => 'tcp',
-        ReuseAddr => 1,
-        Type      =>, SOCK_STREAM
-    );
-    
-    if ($lport) { $sconfig{LocalPort} = $lport }
-      
-    my $s = IO::Socket::INET->new(%sconfig);
 
-    if (! $s || ! $s->connected())
-    {
-        
-        $self->set_error("connection failed: $!");
-        return(undef);
+    my $s;
+
+    if ($_socks_config{'enable'} == 1) {
+        my $sock = new Net::SOCKS(
+            socks_addr => $_socks_config{'host'},
+            socks_port => $_socks_config{'port'}, 
+            protocol_version => $_socks_config{'version'}
+        );
+        $s = $sock->connect(peer_addr => $host, peer_port => $port);
+        # print STDERR "Connecting through $_socks_config{'host'} and $_socks_config{'port'} to $host:$port\n";
+        if (!$s) {
+            $self->set_error("connection failed: $!");
+            return(undef);
+        }
+    } else {
+        my %sconfig =
+        (
+            PeerAddr  => $host,
+            PeerPort  => $port,
+            Proto     => 'tcp',
+            ReuseAddr => 1,
+            Type      =>, SOCK_STREAM
+        );
+
+        if ($lport) { $sconfig{LocalPort} = $lport }
+
+        $s = IO::Socket::INET->new(%sconfig);
+
+        if (! $s || ! $s->connected())
+        {
+            $self->set_error("connection failed: $!");
+            return(undef);
+        }
+
+        #print "Socket: ($lport) " . join(" ", keys(%sconfig)) ."\n";
+        #print STDERR $s->sockhost . ":" . $s->sockport . " -> " .
+        #             $s->peerhost . ":" . $s->peerport . "\n";
+
     }
 
-    #print "Socket: ($lport) " . join(" ", keys(%sconfig)) ."\n";
-    #print STDERR $s->sockhost . ":" . $s->sockport . " -> " .
-    #             $s->peerhost . ":" . $s->peerport . "\n";
-                 
     if ($self->{"USE_SSL"})
     {
         # Create SSL Context
