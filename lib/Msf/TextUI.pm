@@ -152,7 +152,7 @@ sub DumpExploitSummary {
     $output .= "    Avoid: " . length($exploit->PayloadBadChars) . " characters\n\n";
   }
 
-  my $desc = $self->WordWrap($exploit->Description, 4, 60);
+  my $desc = $self->WordWrap($exploit->Description, 4, 66);
   $output .= "Description:\n$desc\n";
   
   $output .= "References:\n";
