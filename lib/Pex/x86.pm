@@ -29,6 +29,9 @@ sub RelNumber {
   if(substr($number, 0, 2) eq '$+') {
     $number = substr($number, 2);
   }
+  elsif(substr($number, 0, 2) eq '$-') {
+    $number = -1 * substr($number, 2);
+  }
   else {
     $delta = 0;
   }
