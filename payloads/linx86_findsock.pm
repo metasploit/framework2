@@ -5,7 +5,7 @@ use base 'Msf::PayloadComponent::FindConnection';
 my $info =
 {
   'Name'         => 'linx86findsock',
-  'Version'      => '1.0',
+  'Version'      => '$Revision$',
   'Description'  => 'Spawn a shell on the established connection',
   'Authors'      => [ 'LSD [Unknown License]', ],
   'Arch'         => [ 'x86' ],

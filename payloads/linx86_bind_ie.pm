@@ -8,7 +8,7 @@ sub load {
 my $info =
 {
   'Name'         => 'linx86bind_ie',
-  'Version'      => '1.0',
+  'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
   'Arch'         => [ 'x86' ],

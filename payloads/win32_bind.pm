@@ -8,7 +8,7 @@ sub load {
 my $info =
 {
   'Name'         => 'winbind',
-  'Version'      => '2.0',
+  'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
   'Arch'         => [ 'x86' ],

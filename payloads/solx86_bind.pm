@@ -5,7 +5,7 @@ use base 'Msf::PayloadComponent::BindConnection';
 my $info =
 {
   'Name'         => 'solx86bind',
-  'Version'      => '1.0',
+  'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'bighawk [Unknown License]', ],
   'Arch'         => [ 'x86' ],

@@ -8,7 +8,7 @@ sub load {
 my $info =
 {
   'Name'         => 'linx86reverse_xor',
-  'Version'      => '1.0',
+  'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn an encrypted shell',
   'Authors'      => [ 'gera[at]corest.com [InlineEgg License]', ],
   'Arch'         => [ 'x86' ],

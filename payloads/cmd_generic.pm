@@ -8,7 +8,7 @@ sub load {
 my $info =
 {
   'Name'         => 'cmd_generic',
-  'Version'      => '1.0',
+  'Version'      => '$Revision$',
   'Description'  => 'Run a specific command on the remote system',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
   'Arch'         => [  ],

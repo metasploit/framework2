@@ -8,17 +8,17 @@ my $advanced = {
 };
 
 my $info = {
-  'Name'  => 'Pex Jmp/Call Double Word Xor Encoder',
-  'Version'  => '1.0',
+  'Name'    => 'Pex Jmp/Call Double Word Xor Encoder',
+  'Version' => '$Revision$',
   'Authors' =>
     [
       'H D Moore <hdm [at] metasploit.com> [Artistic License]',
       'spoonm <ninjatools [at] hush.com> [Artistic License]',
     ],
-  'Arch'  => [ 'x86' ],
-  'OS'    => [ ],
+  'Arch'    => [ 'x86' ],
+  'OS'      => [ ],
   'Description'  =>  'Dynamically generated double xor encoder (jmp/call)',
-  'Refs'  => [ ],
+  'Refs'    => [ ],
 };
 
 sub new {

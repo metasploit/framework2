@@ -3,13 +3,13 @@ use strict;
 use base 'Msf::Encoder';
 
 my $info = {
-  'Name'  => 'None Encoder',
-  'Version'  => '$Revision$',
+  'Name'    => 'None Encoder',
+  'Version' => '$Revision$',
   'Authors' => [ 'spoonm <ninjatools [at] hush.com> [Artistic License]', ],
-  'Arch'  => [ 'x86' ],
-  'OS'    => [ ],
+  'Arch'    => [ 'x86' ],
+  'OS'      => [ ],
   'Description'  =>  'This encoder does not encode',
-  'Refs'  => [ ],
+  'Refs'    => [ ],
 };
 
 sub new {

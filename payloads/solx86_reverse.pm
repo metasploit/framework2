@@ -5,7 +5,7 @@ use base 'Msf::PayloadComponent::ReverseConnection';
 my $info =
 {
   'Name'         => 'solx86reverse',
-  'Version'      => '1.0',
+  'Version'      => '$Revision$',
   'Description'  => 'Connect back to attacker and spawn a shell',
   'Authors'      => [ 'bighawk [Unknown License]', ],
   'Arch'         => [ 'x86' ],

@@ -8,7 +8,7 @@ sub load {
 my $info =
 {
   'Name'         => 'cmd_unix_reverse',
-  'Version'      => '1.0',
+  'Version'      => '$Revision$',
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
   'Arch'         => [  ],

@@ -7,13 +7,13 @@ my $advanced = {
 };
 
 my $info = {
-  'Name'  => 'Pex Variable Length Fnstenv/mov Double Word Xor Encoder',
-  'Version'  => '1.0',
+  'Name'    => 'Pex Variable Length Fnstenv/mov Double Word Xor Encoder',
+  'Version' => '$Revision$',
   'Authors' => [ 'spoonm <ninjatools [at] hush.com> [Artistic License]', ],
-  'Arch'  => [ 'x86' ],
-  'OS'    => [ ],
+  'Arch'    => [ 'x86' ],
+  'OS'      => [ ],
   'Description'  =>  'Variable-length fnstenv/mov dword xor encoder',
-  'Refs'  => [ ],
+  'Refs'    => [ ],
 };
 
 sub new {

@@ -8,13 +8,13 @@ my $advanced = {
 };
 
 my $info = {
-  'Name'  => 'Pex Alphanumeric Encoder',
-  'Version'  => '1.0',
+  'Name'    => 'Pex Alphanumeric Encoder',
+  'Version' => '1.0',
   'Authors' => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
-  'Arch'  => [ 'x86' ],
-  'OS'    => [ ],
+  'Arch'    => [ 'x86' ],
+  'OS'      => [ ],
   'Description'  =>  "Skylined's alphanumeric encoder ported to perl",
-  'Refs'  => [ ],
+  'Refs'    => [ ],
 };
 
 sub new {
