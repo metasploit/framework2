@@ -49,7 +49,7 @@ sub new {
 sub InitWin32 {
     my $self = shift;
 #    $self->{'Win32Payload'} = $self->{'Info'}->{'Win32Payload'};
-    $self->{'Info'}->{'UserOpts'}->{'EXITFUNC'} = [0, 'DATA', 'Exit technique: "process", "thread", "seh"', 'seh'];
+    $self->{'Info'}->{'UserOpts'}->{'EXITFUNC'} = [1, 'DATA', 'Exit technique: "process", "thread", "seh"', 'seh'];
 }
 
 sub Size {

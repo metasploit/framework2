@@ -24,7 +24,6 @@
 #	5. Encoders
 #	6. Admin
 #	7. Logs
-#   AutoOpts override!!!
 
 require 5.6.0;
 
@@ -814,6 +813,11 @@ sub ExploitOptions
     foreach my $mopt (sort(keys(%{$mopts}))) {
         my $dflt = $mopts->{$mopt}->[3];
         my $reqd = $mopts->{$mopt}->[0] ? "Required" : "Optional";
+		
+		if (exists($x->AutoOpts->{$mopt})) {
+			$dflt = $x->AutoOpts->{$mopt};
+		}
+		
         $res .= "<tr><td><b>$mopt</b></td>".
                 "<td>$reqd</td><td>". $mopts->{$mopt}->[1] ."</td>".
                 "<td><input type='text' name='OPT_$mopt' value='$dflt'></td>".
@@ -826,7 +830,11 @@ sub ExploitOptions
         my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
         
         $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
-        
+ 
+ 		if (exists($x->AutoOpts->{$popt})) {
+			$dflt = $x->AutoOpts->{$popt};
+		}
+		       
         $res .= "<tr><td><b>$popt</b></td>".
                 "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
                 "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
