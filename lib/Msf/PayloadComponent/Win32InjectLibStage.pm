@@ -163,7 +163,7 @@ sub new {
 
 sub HandleConnection {
 	my $self = shift;
-	my $sock = $self->SocketOut;
+	my $sock = $self->PipeRemoteOut;
 	my $path = $self->_InjectDLL;
 	my $name = $self->_InjectDLLName;
 	my $upload;

@@ -57,7 +57,7 @@ sub _InjectDLLName
 
 sub HandleConnection {
   my $self = shift;
-  my $sock = $self->SocketOut;
+  my $sock = $self->PipeRemoteOut;
   $self->SUPER::HandleConnection;
   sleep(1);
 

@@ -60,17 +60,17 @@ sub _InjectDLLName
 sub HandleConnection 
 {
 	my $self = shift;
-	my $sock = $self->SocketOut;
+	my $sock = $self->PipeRemoteOut;
 
 	$self->SUPER::HandleConnection;
 	sleep(1);
 
 	# Start the meterpreter client
 	my $client = Pex::Meterpreter::Client->new(
-			consoleIn  => \*STDIN, # XXX
-			consoleOut => \*STDOUT, # XXX
-			socketIn   => $self->SocketIn,
-			socketOut  => $self->SocketOut);
+			consoleIn  => $self->PipeLocalIn,
+	 		consoleOut => $self->PipeLocalOut,
+			socketIn   => $self->PipeRemoteIn,
+			socketOut  => $self->PipeRemoteOut);
 
 	# Did it succeed?
 	if (not defined($client))

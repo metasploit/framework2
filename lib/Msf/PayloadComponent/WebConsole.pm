@@ -19,16 +19,28 @@ use IO::Handle;
 use IO::Select;
 use base 'Msf::PayloadComponent::TextConsole';
 
-sub ConsoleIn {
+sub PipeLocalIn {
     my $self = shift;
     return $self->{'WebShell'} if exists($self->{'WebShell'});
-    return $self->SUPER::ConsoleIn;
+    return $self->SUPER::PipeLocalIn;
 }
 
-sub ConsoleOut {
+sub PipeLocalOut {
     my $self = shift;
     return $self->{'WebShell'} if exists($self->{'WebShell'});
-    return $self->SUPER::ConsoleOut;
+    return $self->SUPER::PipeLocalOut;
+}
+
+sub PipeLocalName {
+	my $self = shift;
+	
+	if ($self->{'WebShell'}) {
+		my $name;
+		eval { $name = $self->{'WebShell'}->sockhost };
+		$self->SUPER::PipeLocalName($name);
+	}
+		
+	return $self->SUPER::PipeLocalName;
 }
 
 sub _HandleConsole {
@@ -48,7 +60,7 @@ sub _HandleConsole {
   
   if (! $sock) {
       $out = "WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!\n";
-	  $bs->Send(sprintf("%x\n%s", length($out), $out));
+	  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	  return;
   }
   
@@ -59,7 +71,7 @@ sub _HandleConsole {
 	     "<a href='telnet://$addr:".$sock->sockport."'>".
 	     "$addr:".$sock->sockport."</a>\n";
 	
-  $bs->Send(sprintf("%x\n%s", length($out), $out));
+  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
 
   # Accept connection from user
@@ -75,18 +87,18 @@ sub _HandleConsole {
   
   if (! $csock) {
       $out = "[*] Shutting down proxy shell due to timeout\n";
-	  $bs->Send(sprintf("%x\n%s", length($out), $out));
+	  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	  return;
   }
   
   my $cs = Pex::Socket::Tcp->new_from_socket($csock);
 
   $out = "[*] Connection to proxy shell from ".$csock->peerhost.":".$csock->peerport."\n";
-  $bs->Send(sprintf("%x\n%s", length($out), $out));
+  $bs->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	  
   $cs->Send("\r\nMetasploit Web Interface Shell Proxy\r\n\r\n");
  
-  # Map connected socket to ConsoleIn, ConsoleOut
+  # Map connected socket to PipeLocal(In|Out);
   $self->{'WebShell'} = $csock;  
 
   # Call upwards to TextConsole's _HandleConsole

@@ -53,7 +53,7 @@ sub PrintLine {
     # If we are in exploit mode, write output to browser
     if (my $s = $self->GetTempEnv('_BrowserSocket')) {
 		$msg .= "\n";
-		$s->Send(sprintf("%x\n%s", length($msg), $msg));
+		$s->Send(sprintf("%x\r\n%s\r\n", length($msg), $msg));
         return;
     }
     

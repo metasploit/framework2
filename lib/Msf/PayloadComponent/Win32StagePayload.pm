@@ -19,7 +19,7 @@ sub Win32StagePayload {
 sub HandleConnection {
   my $self = shift;
   $self->SUPER::HandleConnection;
-  my $sock = $self->SocketOut;
+  my $sock = $self->PipeRemoteOut;
   my $blocking = $sock->blocking;
   $sock->blocking(1);
 

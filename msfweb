@@ -16,6 +16,13 @@
 
 # This is a really ghetto proof-of-concept for a web-based exploit interface
 
+# XXX TODO
+#	1. IP-based access control
+#	2. Basic HTTP authentication
+#	3. SSL mode support
+
+
+
 require 5.6.0;
 
 use strict;
@@ -128,7 +135,7 @@ while (1)
     
     # Request was invalid
     if ($state == -1) {
-        $cli->Send(HTTPResponse(500, 'Request Failed'));
+        $cli->Send(HTTPResponse(501, 'Not Implemented'));
         $cli->Close();
         exit(0);
     }
@@ -221,8 +228,7 @@ sub ProcessRequest {
 
 sub HTML_Header {
     return qq
-    [
-    <html>
+[<html>
     <head>
         <title>Metasploit Framework Web Console v$VERSION</title>
         <style>
@@ -243,7 +249,7 @@ sub HTML_Header {
         </style>
     </head>
     <body bgcolor='white' text='black'>
-    ];
+];
 }
 
 sub HTML_Footer {
@@ -519,9 +525,10 @@ sub ExploitExec
 
 	# Use chunked transfer mode to return partial responses
 	my $out = "HTTP/1.1 200 OK\r\n".
-	          "Connection: Close\r\n".
+	          "Connection: close\r\n".
+			  "Date: ". HTTPDate()."\r\n".
 			  "Content-Type: text/html\r\n".
-			  "Transfer-Encoding: Chunked\r\n\r\n";
+			  "Transfer-Encoding: chunked\r\n\r\n";
 	
     $Browser->Send($out);
 	
@@ -530,16 +537,16 @@ sub ExploitExec
           "<b>Using payload: " . $payloadName . "<br>\n".
           "<pre>\n";
 	
-	$Browser->Send(sprintf("%x\n%s", length($out), $out));
+	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
     $ui->SetTempEnv('_BrowserSocket', $Browser);
     $ui->Exploit();
 
 	$out = "\n</pre><br>". HTML_Footer();
-	$Browser->Send(sprintf("%x\n%s", length($out), $out));
+	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 
 	$out = "";
-	$Browser->Send(sprintf("%x\n%s", length($out), $out));
+	$Browser->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
 	
 	$Browser->Close;
     
@@ -561,6 +568,7 @@ sub HTTPRequest {
 		return(-1);
     }
 	
+	
 	# Extract the session ID
 	my ($sid) = $url =~ m/^\/msf([^\/]+)\//;
 	my $vid = GenerateSID(inet_aton($cli->PeerAddr));
@@ -575,6 +583,7 @@ sub HTTPRequest {
 		my $rdir =
 			"HTTP/1.1 302 Rejected\r\n".
 			"Location: /msf$vid/\r\n".
+			"Date: ". HTTPDate() ."\r\n".
 			"Connection: Close\r\n".
 			"Content-Length: 0\r\n\r\n";
 
@@ -629,8 +638,9 @@ sub HTTPResponse {
 	my $type = @_ ? shift() : 'text/html';
 	my $data;
 	
-	$data = "$code HTTP/1.1\r\n".
-			"Connection: Close\r\n".
+	$data = "HTTP/1.1 $code\r\n".
+			"Connection: close\r\n".
+			"Date: ". HTTPDate() ."\r\n".
 	        "Content-Length: ".length($body)."\r\n".
 			"Content-Type: $type\r\n".
 			"\r\n". $body;
@@ -638,3 +648,56 @@ sub HTTPResponse {
 	return $data;
 }
 
+sub HTTPDate {
+	return strftime("%a, %e %b %Y %H:%M:%S GMT", gmtime());
+}
+
+# Primitive HTTP request parser
+sub HTTPRequestNEW {
+    my $cli = shift;
+	my $opt = shift;
+	
+	my $timeout = exists($opt->{'Timeout'}) ? $opt->{'Timeout'} : 30;
+	
+	while ( (my $raw = $cli->getline) !~ /^[\r\n]+$/ ) {
+		$raw =~ s/[\r\n]+$//g;
+		print "RAW: $raw\n";
+	}
+	
+	return;
+
+	my  ($url, $state);
+	
+	# Strip some things from the URI
+    $url =~ s/^\/+msf[^\/]+\///g;
+    $url =~ s/^\?//g;
+	
+	# Convert URI encoding to hex encoding
+    $url =~ s/\+/%20/g;
+	
+	# Remove some hostile bits from the request
+    $url =~ s/\x00|\x0A|\x0D//g;
+
+		
+	# Break the invidual variables into chunks
+    my @chunks = split(/&/, $url);
+    foreach my $chunk (@chunks) {
+        my ($var, $val) = split(/=/, $chunk);
+        $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+        $state->{$var} = $val;
+
+        # ignore empty values
+        $val =~ s/^\s+|\s+$//g;
+        
+        # remove any < or >'s (silly XSS monkies,there are worse problems here)
+        $val =~ s/\<|\>//g;        
+        
+        if (! length($val)) { delete($state->{$var}) }
+    }
+    
+    if (! $state->{'MODE'}) {
+        $state->{'MODE'} = "MAIN";
+    }
+    
+    return $state;
+}

@@ -42,8 +42,8 @@ sub CheckHandler {
   if($sock && $sock->connected) {
     $sock->autoflush(1);
 #    $self->PrintLine('$sock->connected returned true. ' . $sock->peerhost . $sock->peerport);
-    $self->SocketIn($sock);
-    $self->SocketOut($sock);
+    $self->PipeRemoteIn($sock);
+    $self->PipeRemoteOut($sock);
     return(1);
   }
 

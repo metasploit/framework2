@@ -104,7 +104,7 @@ sub _GenSize {
 sub HandleConnection {
   my $self = shift;
   $self->SUPER::HandleConnection;
-  my $sock = $self->SocketOut;
+  my $sock = $self->PipeRemoteOut;
   my $blocking = $sock->blocking;
 
   if(!open(INFILE, '<' . $self->GetVar('PEXEC'))) {

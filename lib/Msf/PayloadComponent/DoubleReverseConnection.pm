@@ -46,11 +46,11 @@ sub CheckHandler {
 
     if ($data =~ /foo/ && $data !~ /echo foo/ && $ready[0] eq $sock1) 
     {
-      $self->SocketIn($sock1);
-      $self->SocketOut($sock2);
+      $self->PipeRemoteIn($sock1);
+      $self->PipeRemoteOut($sock2);
     } else {
-      $self->SocketIn($sock2);
-      $self->SocketOut($sock1);
+      $self->PipeRemoteIn($sock2);
+      $self->PipeRemoteOut($sock1);
     }
     
     # flush any pending data on both sockets, this is

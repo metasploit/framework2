@@ -81,8 +81,8 @@ sub CheckHandler {
   my @ready = $self->ListenerSelector->can_read(.5);
   if(@ready) {
     my $sock = $ready[0]->accept();
-    $self->SocketIn($sock);
-    $self->SocketOut($sock);
+    $self->PipeRemoteIn($sock);
+    $self->PipeRemoteOut($sock);
     return(1);
   }
 

@@ -16,17 +16,6 @@ use POSIX;
 #  return($self);
 #}
 
-sub SocketIn {
-  my $self = shift;
-  $self->{'SocketIn'} = shift if(@_);
-  return($self->{'SocketIn'});
-}
-sub SocketOut {
-  my $self = shift;
-  $self->{'SocketOut'} = shift if(@_);
-  return($self->{'SocketOut'});
-}
-
 sub ChildPid {
   my $self = shift;
   $self->{'ChildPid'} = shift if(@_);
@@ -62,12 +51,12 @@ sub ParentHandler {
 
   while(!$self->StopHandling) {
     if($self->CheckHandler) {
-      if($self->SocketIn) { 
-        if($self->SocketIn == $self->SocketOut) {
-          $self->PrintLine('[*] Got connection from ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport);
+      if($self->PipeRemoteIn) { 
+        if($self->PipeRemoteIn eq $self->PipeRemoteOut) {
+          $self->PrintLine('[*] Got connection from ' . $self->PipeRemoteIn->peerhost . ':' . $self->PipeRemoteIn->peerport);
         }
         else {
-          $self->PrintLine('[*] Got connection IN: ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport . ' OUT: ' . $self->SocketOut->peerhost . ':' . $self->SocketOut->peerport);
+          $self->PrintLine('[*] Got connection IN: ' . $self->PipeRemoteIn->peerhost . ':' . $self->PipeRemoteIn->peerport . ' OUT: ' . $self->PipeRemoteOut->peerhost . ':' . $self->PipeRemoteOut->peerport);
         }
       }
       $self->KillChild;
@@ -99,15 +88,16 @@ sub SetupHandler {
 }
 
 sub ShutdownHandler {
-  my $self = shift;
-  if($self->SocketIn) {
-    $self->SocketIn->shutdown(2);
-    $self->SocketIn->close;
-  }
-  if($self->SocketOut) {
-    $self->SocketOut->shutdown(2);
-    $self->SocketOut->close;
-  }
+	my $self = shift;
+
+	if($self->PipeRemoteIn) {
+		$self->PipeRemoteIn->shutdown(2);
+		$self->PipeRemoteIn->close;
+	}
+	if($self->PipeRemoteOut) {
+		$self->PipeRemoteOut->shutdown(2);
+		$self->PipeRemoteOut->close;
+	}
 }
 
 sub CheckHandler {

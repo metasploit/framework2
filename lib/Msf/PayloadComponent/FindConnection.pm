@@ -44,8 +44,8 @@ sub ChildHandler {
   
   goto DONE if(!length($data));
   if($data =~ /ABCDE/) {
-    $self->SocketIn($ready[0]);
-    $self->SocketOut($ready[0]);
+    $self->PipeRemoteIn($ready[0]);
+    $self->PipeRemoteOut($ready[0]);
     $self->PrintLine('[*] Findsock found shell...');
     $self->HandleConsole;
     exit(0);
