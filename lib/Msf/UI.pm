@@ -248,7 +248,7 @@ sub Encode {
       $self->PrintDebugLine(4, "encoderOS: " . join(',', @{$encoderOS}));
       next;
     }
-    if(!Pex::Utils::CheckChecks($exploit->EncoderKeys, $encoder->Keys, $exploit->EncoderKeysType)) {
+    if(!Pex::Utils::CheckKeys($exploit->EncoderKeys, $encoder->Keys, $exploit->EncoderKeysType)) {
       $self->PrintDebugLine(2, "$encoderName failed Keys check");
     }
     
