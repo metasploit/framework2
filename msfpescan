@@ -222,18 +222,18 @@ sub Usage
     print STDERR
 qq{  Usage: $0 <input> <mode> <options>
 Inputs:
-         -f  <file>   Read in PE file
-         -d  <dir>    Skape foo
+         -f  <file>    Read in PE file
+         -d  <dir>     Process memdump output
 Modes:
-         -j  <reg>    Search for jump equivalent instructions
-         -s           Search for pop+pop+ret combinations
-         -x  <regex>  Search for regex match
-         -a  <address> Find code at VMA adress
+         -j  <reg>     Search for jump equivalent instructions
+         -s            Search for pop+pop+ret combinations
+         -x  <regex>   Search for regex match
+         -a  <address> Show code at this VMA address
 Options:
-         -A  <count>  Number of bytes to show after match
-         -B  <count>  Number of bytes to show before match
-         -I  address  Use this ImageBase address instead of one from file
-         -n           Print ndisasm output of data
+         -A  <count>   Number of bytes to show after match
+         -B  <count>   Number of bytes to show before match
+         -I  address   Specify an alternate ImageBase
+         -n            Print disassembly of matched data
 
 };
   exit(0);
@@ -241,7 +241,6 @@ Options:
 }
 sub Version {
     print STDERR qq{
-   Framework Version:  Doesn't use Msf Framework
    Msfpescan Version:  $VERSION
 
 };
