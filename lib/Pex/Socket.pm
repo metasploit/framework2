@@ -492,21 +492,24 @@ sub ConnectProxies {
     foreach my $proxy (@proxies)  
     {
         if ($lastproxy->[0] eq 'http') {
-            $sock->send("CONNECT ".$proxy->[1].":".$proxy->[2]." HTTP/1.0\r\n\r\n");
+            my $res = $sock->send("CONNECT ".$proxy->[1].":".$proxy->[2]." HTTP/1.0\r\n\r\n");
         }
         
         if ($lastproxy->[0] eq 'socks4') {
             $sock->send("\x04\x01".pack('n',$proxy->[2]).gethostbyname($proxy->[1])."\x00");
             $sock->recv(my $res, 8);
-            if ($res && ord(substr($res,1,1)) != 90) {
-                $self->SetError("Socks4 server at $lastproxy->[1] denied our request");
+            if (! $res || ($res && ord(substr($res,1,1)) != 90)) {
+                $self->SetError("Socks4 proxy at $lastproxy->[1]:$lastproxy->[2] failed to connect to ".join(":",@{$proxy}));
                 $sock->close;
                 return;
             }
         }
         
+        # half a second between each proxy
+        select(undef, undef, undef, 0.5);
+        
         if (! $sock->connected) {
-            $self->SetError("Proxy server type $lastproxy->[0] at $lastproxy->[1] closed connection");
+            $self->SetError("Proxy type $lastproxy->[0] at $lastproxy->[1] closed connection");
             return;
         }
         
