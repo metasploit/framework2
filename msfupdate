@@ -205,16 +205,13 @@ sub SSLVerify {
     return;
 }
 
-
 sub ProcessHTTP {
     my $http = shift;
-    
-    if ($http =~ m/(.*[^\r\n\r\n]+)\r\n\r\n(.*)/sm) {
-        my ($head, $body) = ($1, $2);
-        return if $head !~ /HTTP\/1.. 200\s+/;
-        return $body;
-    }
-    return;
+    my @chunks = split(/\r\n\r\n/, $http);
+    my $head = shift(@chunks);
+    my $body = join("\r\n\r\n", @chunks);
+    return if $head !~ /HTTP\/1.. 200\s+/;
+    return $body;
 }
 
 sub ReadFile {
