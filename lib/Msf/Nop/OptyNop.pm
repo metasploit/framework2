@@ -363,9 +363,10 @@ my $table = [
   # \xd8 -> fdivr
   # ... more fpu stuff
 
-  # \xe0 loopne
-  # \xe1 loope
-  # \xe2 loop
+  # loops...
+  [ "\xe0\x00",       2, $osize | $none, [ $ecx ], \&_InsHandlerJmp ], # loopne
+  [ "\xe1\x00",       2, $osize | $none, [ $ecx ], \&_InsHandlerJmp ], # loope
+  [ "\xe2\x00",       2, $osize | $none, [ $ecx ], \&_InsHandlerJmp ], # loop
 
   [ "\xe3\x00",             2, $osize | $none, [ ], \&_InsHandlerJmp ], # jecxz
   # \xe4 -> \xe7 in/out
