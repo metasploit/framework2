@@ -192,7 +192,7 @@ Options:
          -a <arch>      The target CPU architecture for the payload
          -o <os>        The target operating system for the payload
          -t <type>      The output type: perl, c, or raw
-         -b <chars>     The characters to avoid: '\x00\xFF'
+         -b <chars>     The characters to avoid: '\\x00\\xFF'
          -s <size>      Maximum size of the encoded data
          -e <encoder>   Try to use this encoder first
          -l             List all available encoders
