@@ -18,6 +18,7 @@
 
 package Msf::Base;
 use strict;
+use Pex::Text;
 
 use FindBin qw {$Bin $RealBin $Script $RealScript};
 
@@ -426,6 +427,5 @@ sub ScriptBase {
   my $Self = shift;
   return $RealBin;
 }
-
 
 1;
