@@ -190,20 +190,28 @@ sub BadCharCheck {
 # This code is a port of Skylined's awesome alpha encoder
 #
 sub EncodeAlphaNum {
-    my ($rawshell, $xbadc) = @_;
-    my $type = shift;
+    my ($rawshell, $xbadc, $type) = @_;
     my $prepend = "";
     
     if (! $type)
     {
-        $type    = '[esp]';
-        $prepend = 
-        "\xeb\x46\xeb\x49\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46".
-        "\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46".
-        "\x49\x46\x49\x46\x49\x46\x49\x46\x46\x49\x46\x49\x49\x46\x49\x46".
-        "\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x49\x46\x46\x49\x46\x49".
-        "\x49\x46\x49\x46\x46\x49\x46\x49\xe8\xb5\xff\xff\xff";
-
+        # the prepend chunks leave ecx=end of code
+        $type    = 'ecx';
+        
+        # use a somewhat sane small encoder first
+        $prepend = "\xeb\x03\x59\xeb\x05\xe8\xf8\xff\xff\xff";
+        
+        # if it doesnt work, use this behemoth with minimized chars
+        if (Pex::Utils::CharsInBuffer($prepend, $xbadc))
+        {
+            $prepend = 
+            "\xeb\x59\x59\x59\x59\xeb\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59".
+            "\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59".
+            "\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59".
+            "\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59".
+            "\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59".
+            "\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\x59\xe8\xa4\xff\xff\xff";
+        }
     }
 
     # the decoder in all its glory (hardcoded for 9 byte baseaddr)
@@ -229,12 +237,11 @@ sub EncodeAlphaNum {
     $baseaddr{'ebp'}    = 'UZJJJJJRY';
     $baseaddr{'esi'}    = 'VZJJJJJRY';
     $baseaddr{'edi'}    = 'WZJJJJJRY';
-    $baseaddr{'[esp]'}  = 'OZJJJJJRY';
     $baseaddr{'win32'}  = $baseaddr{'ecx'};
 
     if (! exists($baseaddr{$type}))
     {
-        print "Encoder failed: invalid type specified\n";
+        print "Encoder failed: invalid type specified ($type)\n";
         return;
     }
 

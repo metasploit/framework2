@@ -29,6 +29,7 @@ sub EncodePayload {
     $type = 'win32';
   }
   
+  print "Using type: $type\n";
   return(Pex::Encoder::EncodeAlphaNum($rawshell, $badChars, $type));
 }
 
