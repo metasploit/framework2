@@ -27,7 +27,8 @@ sub new {
   $self->SetOptions($hash);
   $self->Init;
 
-  return if(!$self->_MakeSocket);
+  $self->_MakeSocket;
+#  return if(!$self->_MakeSocket);
   return($self)
 }
 
@@ -113,14 +114,14 @@ sub _MakeSocket {
   return if($self->GetError);
 
   my $sock = $self->TcpConnectSocket($self->PeerAddr, $self->PeerPort, $self->LocalPort);
-  return if($self->GetError || !$sock);
+  return if($self->IsError || !$sock);
 
   $self->Socket($sock);
 
   $sock->blocking(0);
   $sock->autoflush(1);
 
-  return($sock->fileno);
+  return($sock);
 }
 
 # hd did it.

@@ -23,7 +23,8 @@ sub new {
   $self->SetOptions($hash);
   $self->Init;
 
-  return if(!$self->_MakeSocket);
+  $self->_MakeSocket;
+#  return if(!$self->_MakeSocket);
   return($self)
 }
 
@@ -67,7 +68,7 @@ sub _MakeSocket {
   $sock->autoflush(1);
 
   $self->Socket($sock);
-  return($sock->fileno);
+  return($sock);
 }
 
 1;
