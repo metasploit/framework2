@@ -57,7 +57,7 @@ sendto:
 	mov  al, 0x66
 	int  0x80
 
-recvfrom:
+read:
 	pop  ebx
 	mov  al, 0x3
 	mov  dh, 0xc
