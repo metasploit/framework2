@@ -723,7 +723,7 @@ sub NTUnicode {
     return $res;
 }
 
-sub NBName {
+sub NBNameEncode {
     my $self = shift();
     my $name = shift() || $self;
     my $res;
@@ -735,6 +735,19 @@ sub NBName {
             my $o = ord(uc(substr($name, $_)));
             $res .= pack('CC', ($o / 16) + 0x41, ($o % 16) + 0x41);
         }
+    }
+    return $res;
+}
+
+sub NBNameDecode {
+    my $self = shift;
+    my $name = shift;
+    my $res;
+    
+    while (length($name)) {
+        my ($cA, $cB) = unpack('CC', substr($name, 0, 2));
+        $name = substr($name, 2);
+        $res .=  chr((($cA - 0x41) * 16) + $cB - 0x41);
     }
     return $res;
 }
@@ -774,7 +787,7 @@ sub SMBSessionRequest {
     my $name = shift;
     my $sock = $self->Socket;
       
-    my $data = "\x20".$self->NBName($name)."\x00".
+    my $data = "\x20".$self->NBNameEncode($name)."\x00".
                "\x20".$self->NBRedir."\x00";
     
     my $ask = $STSession->copy;
