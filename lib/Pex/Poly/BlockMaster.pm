@@ -52,7 +52,7 @@ sub _BlockIndex {
   my $self = shift;
   my $block = shift;
   my $i = 0;
-  foreach my $b(@{$self->_Blocks}) {
+  foreach my $b (@{$self->_Blocks}) {
     return($i) if($block eq $b);
     $i++;
   }
@@ -65,10 +65,17 @@ sub _IsBlockLeft {
   }
   return(0);
 }
+sub _ClearState {
+  my $self = shift;
+  $self->_ClearDoneBlocks;
+  foreach my $b (@{$self->_Blocks}) {
+    $b->_ClearState;
+  }
+}
 
 sub Build {
   my $self = shift;
-  $self->_ClearDoneBlocks;
+  $self->_ClearState;
   my $data;
   while($self->_IsBlockLeft) {
     my $block = $self->RandBlock;

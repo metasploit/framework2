@@ -4,9 +4,17 @@ use strict;
 sub new {
   my $class = shift;
   my $self = bless({ }, $class);
-  $self->_Done(0);
+  $self->_ClearState;
   $self->AddBlock(@_) if(@_);
   return($self);
+}
+
+sub _ClearState {
+  my $self = shift;
+  $self->_Done(0);
+  foreach my $dep (@{$self->_Depers}) {
+    $dep->_ClearState;
+  }
 }
 
 sub _Deps {
