@@ -198,7 +198,7 @@ sub EncodeAlphaNum {
         # the prepend chunks leave ecx=end of code
         $type    = 'ecx';
         
-        # use a somewhat sane small encoder first
+        # use a somewhat sane small prepend first
         $prepend = "\xeb\x03\x59\xeb\x05\xe8\xf8\xff\xff\xff";
         
         # if it doesnt work, use this behemoth with minimized chars
