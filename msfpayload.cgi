@@ -73,7 +73,7 @@ if (! $action)
 
     if (scalar(keys(%{$p->UserOpts})))
     {
-        my $subtable = "<table cellspacing=0 cellpadding=4 border=0>\n".
+        my $subtable = "<table cellspacing=0 cellpadding=4 border=0>\n";
 
         my $popts = $p->UserOpts;
         foreach my $popt (sort(keys(%{$popts})))
