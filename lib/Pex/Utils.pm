@@ -225,5 +225,23 @@ sub FisherYates {
   }
 }
 
+sub WriteFile {
+  my $filename = shift;
+  my $data = shift;
+  my $append = @_ ? shift : 0;
+  my $prefix = $append ? '>>' : '>';
+
+  open(OUTFILE, $prefix . $filename) or return;
+  print OUTFILE $data;
+  close(OUTFILE);
+}
+sub ReadFile {
+  my $filename = shift;
+  open(INFILE, '<' . $filename) or return;
+  local $/;
+  my $data = <INFILE>;
+  close(INFILE);
+  return($data);
+}
 
 1;
