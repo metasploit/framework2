@@ -17,7 +17,7 @@ sub _Load {
 
 my $info =
 {
-  'Name'         => 'Irix Inetd Bind Shell Command',
+  'Name'         => 'IRIX Inetd Bind Shell Command',
   'Version'      => '$Revision$',
   'Description'  => 'Use inetd to create a persistent bindshell',
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],

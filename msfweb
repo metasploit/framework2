@@ -21,7 +21,9 @@
 #		+ Build out the 'admin' pages
 #		+ Build out the 'logs' pages
 #		+ Add an option for HTTP authentication
-#
+#		+ Add Advanced options selection
+#		+ Show current payload in option page
+#		+ Add more fields to the module info display
 #
 
 
