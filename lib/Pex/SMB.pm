@@ -449,12 +449,15 @@ sub SMBNegotiateClear {
 
     my $smb_res = $STSMB->copy;
     
-    print "length: ".$smb->Length."\n";
+    print "length: ".$smb_res->Length."\n";
     print "length: ".$ses_res->Get('requestLen')."\n";
+    
     $smb_res->SetSize('request' => $ses_res->Get('requestLen') - $smb->Length);
     $smb_res->Fill($ses_res->Get('request'));
-    print "length: ".$smb->Length."\n";
-    print "leftover: ".length($smb->{'LeftOver'})."\n";
+    
+    print "length: ".$smb_res->Length."\n";
+    print "leftover: ".length($smb_res->{'LeftOver'})."\n";
+    print "request: ".length($smb_res->Get('request'))."\n";
     
     if ($smb_res->Get('error_class') != 0) {
         $self->SetError('Negotiate returned NT status '.$smb_res->Get('error_class'));
