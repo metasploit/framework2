@@ -35,7 +35,7 @@ sub HandleConsole {
   my $self = shift;
 
   # Get handle to browser
-  my $brow = $self->GetVar('BROWSER');
+  my $brow = $self->GetVar('_BrowserSocket');
 
   # Create listener socket
   my $sock = IO::Socket::INET->new(

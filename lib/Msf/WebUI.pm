@@ -49,7 +49,7 @@ sub PrintLine {
     return(0) if ! length($msg);
     
     # If we are exploit mode, write output to browser
-    if (my $s = $self->GetEnv('BROWSER')) {
+    if (my $s = $self->GetEnv('_BrowserSocket')) {
     	if ($s->connected) {
 	        $s->send("$msg\n");
         }

@@ -530,7 +530,7 @@ sub ExploitExec
 
     $|++;
     
-    $ui->SetTempEnv('BROWSER', $cli);
+    $ui->SetTempEnv('_BrowserSocket', $cli);
     $ui->Exploit();
 
     $Browser->Send(join("<br>\n", @{$ui->DumpLines}));
