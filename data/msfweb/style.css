@@ -12,10 +12,33 @@ body
     margin:         0;
 }
 
-A:link          { font-size: 10pt; text-decoration: none; color: navy; font-weight: bold;}
-A:active        { font-size: 10pt; text-decoration: none; color: navy; font-weight: bold;}
-A:visited       { font-size: 10pt; text-decoration: none; color: navy; font-weight: bold;}
-A:hover         { font-size: 10pt; text-decoration: none; color: navy; font-weight: bold;}
+A:link { 
+	font-size: 10pt;
+	text-decoration: none; 
+	color: navy; 
+	font-weight: bold;
+}
+
+A:active { 
+	font-size: 10pt;
+	text-decoration: none; 
+	color: navy; 
+	font-weight: bold;
+}
+
+A:visited { 
+	font-size: 10pt;
+	text-decoration: none; 
+	color: navy; 
+	font-weight: bold;
+}
+
+A:hover { 
+	font-size: 10pt;
+	text-decoration: none; 
+	color: navy; 
+	font-weight: bold;
+}
 
 .tabDark {
 	background:		#dddddd;
@@ -41,7 +64,6 @@ A:hover         { font-size: 10pt; text-decoration: none; color: navy; font-weig
 	font-size:		10pt;
 	font-weight:	bold;
 }
-
 
 .listBody {
 	background:		white;
@@ -96,4 +118,15 @@ A.nav {
 .moduleInfo {
 	font-size:		10pt;
 	color:			black;
+}
+
+.textNormal {
+	font-size:		10pt;
+	color:			black;
+}
+
+.textBold {
+	font-size:		10pt;
+	color:			black;
+	font-weight: 	bold;
 }

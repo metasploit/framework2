@@ -193,24 +193,6 @@ CHECK:
       }
     }
 
-    # If the exploit has any keys set, we need to make sure that the
-    # matched payload also has the same keys. This allows us to create
-    # specific payloads for weird exploit scenarios (for instance, where
-    # the process doesn't have a valid heap (hdm)
-#    foreach my $key (@{$exploit->Keys}) {
-#      if(!scalar(grep { $_ eq $key } @{$payload->Keys})) {
-#        $self->PrintDebugLine(3, $payload->SelfEndName . " failed, keys do not match");
-#        next CHECK;
-#      }
-#    }
-#
-#    # If the exploit has not Keys but the payload does, ignore it.
-#    if (! scalar(@{$exploit->Keys}) && scalar(@{$payload->Keys}))
-#    {
-#        next CHECK;
-#    }
-
-    # New key foo (spn)
     if(!Pex::Utils::CheckKeys(
       $exploit->PayloadKeysParsed,
       $payload->Keys,

@@ -19,7 +19,8 @@ my $info =
     'OS'           => [ 'win32' ],
     'Multistage'   => 1,
     'Size'         => '',
-
+    'Keys'         => ['+ws2ord'],
+	
     # win32 specific code
     'Win32Payload' =>
     {

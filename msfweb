@@ -20,10 +20,10 @@
 #	1. IP-based access control
 #	2. Basic HTTP authentication
 #	3. SSL mode support
-#	5. Encoders
-#	6. Admin
-#	7. Logs
-#	8. All text to CSS
+#	4. Admin
+#	5. Logs
+#   6. ShikataGaNai != random via msfweb payload encoder? !?!?!!
+#	7. web-based shell console
 
 require 5.6.0;
 
@@ -36,6 +36,8 @@ use POSIX;
 use IO::Socket;
 use Getopt::Std;
 
+use Carp;
+
 no utf8;
 
 Msf::UI::ActiveStateSucks();
@@ -45,7 +47,7 @@ my $VERSION = $ui->Version;
 
 $ui->SetGlobalEnv('_Console', 'Msf::PayloadComponent::WebConsole');
 
-my @sections = qw{ EXPLOITS PAYLOADS ENCODERS ADMIN LOGS };
+my @sections = qw{ EXPLOITS PAYLOADS ADMIN LOGS };
 my $exploits = { };
 my $payloads = { };
 my $encoders = { };
@@ -61,7 +63,6 @@ my $moduleOS	= { };
 my $moduleList	= { };
 my $modules	    = { };
 my $burl;
-my $skey;
 
 
 my %args = ();
@@ -79,17 +80,6 @@ if ($args{a})
 
 
 print "[*] Starting Metasploit v$VERSION Web Interface on $host:$port...\n";
-
-
-# Only provides some level of protection when the following conditions are met:
-# 1. Access controls prevent a malicious user from obtaining the session key
-# 2. Hostile service responses are stripped from remote data
-
-# Go Go Ghetto PRNG!
-srand();
-for (1 .. (rand() * 128) + 128) {
-	$skey ^= ($skey * rand() * 0xffff) + $$;
-}
 
 
 # Create the inital list of modules
@@ -161,6 +151,7 @@ sub ProcessResRequest {
 sub ProcessIPCRequest { 
 	my $ipc = shift;
 	print "IPC: $ipc\n";
+	print Carp::longmess("IPC Request? WTF")."\n";
 }
 
 sub ProcessWebRequest {
@@ -193,22 +184,18 @@ sub ProcessWebRequest {
 		        
 		if ($mbase eq 'EXPLOITS' && exists($exploits->{$mid}) ) {
 			$mname = $exploits->{$mid}->Name;
-		} 
+		}
 		
 		if ($mbase eq 'PAYLOADS' && exists($payloads->{$mid}) ) {
 			$mname = $payloads->{$mid}->Name;
-		} 
-		
-		if ($mbase eq 'ENCODERS' && exists($encoders->{$mid}) ) {
-			$mname = $encoders->{$mid}->Name;
-		} 
+		}
 		
 		if (! defined($mname)) {
 			$mname = 'Invalid Module';
 		}						
 
         $res .= "<table width=100% bgcolor='black'>\n";
-		$res .= "<tr><td class='modHead'>Module: $mname</td></tr>\n";
+		$res .= "<tr><td class='textBold'>Module: $mname</td></tr>\n";
 		$res .= "</table><br/>\n";
     }
 
@@ -232,12 +219,6 @@ sub ProcessWebRequest {
     	if ($state->{'MODE'} eq 'MAIN')      { $res .= PayloadList($state) }
 		if ($state->{'MODE'} eq 'SELECT')    { $res .= PayloadOptions($state) }
 		if ($state->{'MODE'} eq 'GENERATE')  { $res .= PayloadGenerate($state) }
-	}
-	
-	if ($req->{'base'} eq 'ENCODERS') {
-	
-    	if ($state->{'MODE'} eq 'MAIN')    { $res .= EncoderList($state) }
-		if ($state->{'MODE'} eq 'SELECT')  { $res .= EncoderOptions($state) }
 	}
 			
     $res .= HTML_Footer();
@@ -279,12 +260,13 @@ sub HTML_Header {
 	my $lastTab = 'tabLight';
 	my $currTab;
 	
+	my $width = int( 100 / scalar(@sections) ) .'%';
 	foreach my $section (@sections) {
 		$lastTab = ($lastTab eq 'tabLight') ? 'tabDark' : 'tabLight';
 		$currTab = ($section eq $req->{'base'}) ? 'tabActive' : $lastTab;
 		
 		$header .= qq[
-                <td class='$currTab' width='20%' align='center'> <a href='/$section'>$section</a> </td>		
+                <td class='$currTab' width='$width' align='center'> <a href='/$section'>$section</a> </td>		
 		];
 	}
 	$header .= qq[
@@ -362,14 +344,6 @@ sub ExploitList {
 	return $moduleList->{$mtype};
 }
 
-sub EncoderList {
-	my $mtype = 'encoders';
-	if (! $args{'r'} || ! defined( $moduleList->{$mtype} )) {
-		$moduleList->{$mtype} = ModuleList($mtype);
-	} 
-	return $moduleList->{$mtype};
-}
-
 sub ModuleList
 {
 	my $mtype = shift;
@@ -436,7 +410,7 @@ sub ModuleList
 
 	# Dump out all of the matching modules for this key, os, or arch
 	foreach my $ename (sort @{ $moduleMerge->{$kname} }) {
-		$mList .= "<tr><td> <li> <a href='/". uc($mtype) ."?MODE=SELECT&";
+		$mList .= "<tr><td>  -  <a href='/". uc($mtype) ."?MODE=SELECT&";
 		$mList .= "MODULE=".URLEncode($ename)."'>".$modules->{$mtype}->{$ename}->Name."</a>";
 		$mList .= "</td></tr>\n";
 	}
@@ -460,32 +434,51 @@ sub ModuleInfo {
     $desc =~ s/\</\&lt;/g;
     $desc =~ s/\>/\&gt;/g;
     
-	$res .= "<div class='moduleInfo'>\n";
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
-    $res .= "<tr><td align='left' width=80><b>Name:</b></td><td>" . $module->Name() . "</td></tr>\n";
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";
+    $res .= "<tr><td align='left' width=80 class='textBold'>Name:</td>";
+	$res .= "<td class='textNormal'>" . $module->Name() . "</td></tr>\n";
+	
     my ($rev)   = $module->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
-    $res .= "<tr><td align='left' width=80><b>Version:</b></td><td>" . $rev . "</td></tr>\n";
+    $res .= "<tr><td align='left' width=80 class='textBold'>Version:</td>";
+	$res .= "<td class='textNormal'>" . $rev . "</td></tr>\n";
 
     my @authors = @{$module->Authors()};
     my $author = shift(@authors);
     $author =~ s/</&lt;/g;
     $author =~ s/>/&gt;/g;
-    $res .= "<tr><td align='left' width=80><b>Authors:</b></td><td>$author</td></tr>\n";
+    $res .= "<tr><td align='left' width=80 class='textBold'>Authors:</td>";
+	$res .= "<td class='textNormal'>$author</td></tr>\n";
     
 	foreach my $author (@authors) {
         $author =~ s/</&lt;/g;
         $author =~ s/>/&gt;/g;
-        $res .= "<tr><td align='left' width=80></td><td>$author</td></tr>\n";
+        $res .= "<tr><td align='left' width=80 class='textNormal'></td><td>$author</td></tr>\n";
     }
     
-    $res .= "<tr><td colspan=2>";
+    $res .= "<tr><td colspan=2 class='textNormal'>";
     $res .= "<br/>$desc<br/><br/>";
 
-    foreach my $ref (@{$module->RefLinks}) { $res .= "<li> <a href='$ref'>$ref</a><br/>\n" }
+    foreach my $ref (@{$module->RefLinks}) { $res .= " -  <a href='$ref'>$ref</a><br/>\n" }
 	
     $res .= "<br/></td></tr></table>\n";
-	$res .= "</div>\n";
 	return $res;
+}
+
+sub PayloadEncoders {
+	my $payloadArch	= shift;
+	my $payloadOS	= shift;
+	my %res;
+	
+	foreach my $encoderName (keys %{ $encodersIndex }) {
+		my $encoder		= $encodersIndex->{$encoderName};		
+		my $encoderArch	= $encoder->Arch;
+		my $encoderOS	= $encoder->OS;
+
+		next if ! $ui->ListCheck($payloadArch,	$encoderArch);
+		next if ! $ui->ListCheck($payloadOS,	$encoderOS);
+		$res{ $encoderName } = $encoder;
+	}
+	return %res;
 }
 
 sub PayloadOptions
@@ -495,14 +488,14 @@ sub PayloadOptions
     my $res; 
 
     if (! exists($payloads->{$module})) {
-        return "<b>Invalid Module</b>";
+        return "<div class='textBold'>Invalid Module</div>";
     }
 
     my $p = $payloads->{$module};
     
 	$res .= ModuleInfo($p);	 
 	  
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";    
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";    
     $res .= "<form action='$burl' method='GET'>\n";
     foreach (keys(%{$state})) {
         next if $_ eq 'client';
@@ -522,29 +515,42 @@ sub PayloadOptions
         
         $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
         
-        $res .= "<tr><td><b>$popt</b></td>".
-                "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
-                "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
-                "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
+        $res .= "<tr><td class='textBold'>$popt</td>".
+                "<td class='textBold'>$reqd</td>".
+				"<td class='textBold'>". $popts->{$popt}->[1] ."</td>".
+                "<td class='textBold'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+                "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
 	
     $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
 	
 	# Display encoding options only when an arch is set	
 	if (scalar( @{ $p->Arch } )) {
-		$res .= "<tr><td colspan=6>";
+		$res .= "<tr><td colspan=6 class='textBold'>";
 		$res .= "Max Size: ";
 		$res .= "<input type='text' size=10 name='MaxSize' value=''>";
 		$res .= "</td></tr>\n";
 		
 		$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
 		
-		$res .= "<tr><td colspan=6>";
+		$res .= "<tr><td colspan=6 class='textBold'>";
 		$res .= "Restricted Characters (format: 0x00 0x01)<br\> ";
-		$res .= "<input type='text' size=60 name='BadChars' value='0x00 '>";
+		$res .= "<input type='text' size=45 name='BadChars' value='0x00 '>";
 		$res .= "</td></tr>\n";
+
+		$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+
+		my %encoderList = PayloadEncoders($p->Arch, $p->OS);
 		
-		
+		$res .= "<tr><td colspan=6 class='textBold'>";
+		$res .= "Preferred Encoder:<br\> ";
+		$res .= "<select name='ENCODER' size=1>\n";
+		$res .= "<option value='default'> Default Encoder\n";
+		foreach my $encoderName (keys %encoderList) {
+			$res .= "<option> $encoderName\n";
+		}
+		$res .= "</select>\n";
+		$res .= "</td></tr>\n";		
 	}
 	
 	$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
@@ -554,6 +560,8 @@ sub PayloadOptions
     return $res;
 }
 
+
+
 sub PayloadGenerate
 {
     my ($state) = @_;
@@ -561,7 +569,7 @@ sub PayloadGenerate
     my $res; 
 
     if (! exists($payloads->{$module})) {
-        return "<b>Invalid Module</b>";
+        return "<div class='textBold'>Invalid Module</div>";
     }
 
     my $p = $payloads->{$module};
@@ -590,17 +598,23 @@ sub PayloadGenerate
 		$encodedPayload = Msf::EncodedPayload->new($rawShell, $rawShell);
 	}
 	
-	foreach my $encoderName (keys %{ $encodersIndex }) {
+	my %encoderList	= PayloadEncoders($payloadArch, $payloadOS);
+	my $encoderOpt	= $state->{'ENCODER'};
+	
+	if ($encoderOpt ne 'default' && ! exists($encoderList{$encoderOpt})) {
+		return "<div class='textBold'>Invalid encoder specified!</div>";
+	}
+	
+	# Shrink the list down to the single selected option
+	if ($encoderOpt ne 'default') {
+		%encoderList = ( $encoderOpt => $encoderList{ $encoderOpt } );
+	}
+	
+	foreach my $encoderName (keys %encoderList) {
 		next if ! $badChars;
 		
-		my $encoder		= $encodersIndex->{$encoderName};		
-		my $encoderArch	= $encoder->Arch;
-		my $encoderOS	= $encoder->OS;
-
-		next if ! $ui->ListCheck($payloadArch, $encoderArch);
-		next if ! $ui->ListCheck($payloadOS, $encoderOS);
-
-		my $encodedShell = $encoder->Encode($rawShell, $badChars);
+		my $encoder			= $encoderList{$encoderName};
+		my $encodedShell	= $encoder->Encode($rawShell, $badChars);
 
 		next if ! $encodedShell;
 
@@ -614,7 +628,6 @@ sub PayloadGenerate
 		$encodedPayload = Msf::EncodedPayload->new($rawShell, $encodedShell);
 
 		if (length($encodedPayload->Payload) > $maxSize) {
-			print STDERR "[*] $encoderName failed, encoded payload too large (".length($encodedPayload->Payload)." bytes)\n";
 			undef($encodedPayload);
 			next;
 		}
@@ -624,15 +637,15 @@ sub PayloadGenerate
 	}
 
 	if (! $encodedPayload) {
-    	$res .= "No encoders succeeded :(\n";
-		return;
+    	$res .= "<div class='textBold'>No encoders succeeded :( </div>\n";
+		return $res;
 	}	
 	
 	my $sC = Pex::Text::BufferC($encodedPayload->Payload);
 	my $sP = Pex::Text::BufferPerl($encodedPayload->Payload);
 
 	if ($p->Multistage) {
-		$res .= "<div class='boldText'>Warning: only the loading stage of multi-stage payloads will be displayed!</div>\n<br\>";	
+		$res .= "<div class='textBold'>Warning: only the loading stage of multi-stage payloads will be displayed!</div>\n<br\>";	
 	}
 
 
@@ -655,54 +668,6 @@ sub PayloadGenerate
 }
 
 
-
-sub EncoderOptions
-{
-    my ($state) = @_;
-    my $module = $state->{'MODULE'};
-    my $res; 
-
-    if (! exists($encoders->{$module})) {
-        return "<b>Invalid Module</b>";
-    }
-
-    my $p = $encoders->{$module};
-    
-	$res .= ModuleInfo($p);	 
-	  
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";    
-    $res .= "<form action='$burl' method='GET'>\n";
-    foreach (keys(%{$state})) {
-        next if $_ eq 'client';
-        if ($_ ne "MODE") {
-            $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
-        } else {
-            $res .= "<input type='hidden' name='MODE' value='GENERATE'>\n";
-        }
-    }
-  
-    my $popts =  $p->UserOpts();
-
-    foreach my $popt (sort(keys(%{$popts}))) {
-
-        my $dflt = $popts->{$popt}->[3];
-        my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
-        
-        $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
-        
-        $res .= "<tr><td><b>$popt</b></td>".
-                "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
-                "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
-                "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
-    }
-    
-    $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
-    $res .= "<tr><td colspan=6><input type='submit' name='ACTION' value='GENERATE'></td></tr>\n";
-    $res .= "</form>\n";
-    $res .= "</table>\n";  
-    return $res;
-}
-
 sub ExploitTarget
 {
     my ($state) = @_;
@@ -710,7 +675,7 @@ sub ExploitTarget
     my $res; 
     
     if (! exists($exploits->{$module})) {
-        return "<b>Invalid Module</b>";
+        return "<div class='textBold'>Invalid Module</div>";
     }
     
     my $x = $exploits->{$module};
@@ -720,8 +685,8 @@ sub ExploitTarget
 	# Display available targets
 
     if (scalar($x->TargetsList) ) {
-        $res .= "<table align='center' cellpadding=4 border=0 cellspacing=0 width=750>\n";
-		$res .= "<tr><td class='nav' align='left'  colspan=2>Select Target:</td></td>";
+        $res .= "<table align='center' cellpadding=2 border=0 cellspacing=0 width='95%'>\n";
+		$res .= "<tr><td class='textBold' align='left'  colspan=2>Select Target:</td></td>";
 
 		my $tidx = 0;
         foreach my $k ( $x->TargetsList )
@@ -733,7 +698,7 @@ sub ExploitTarget
 				$default = "(default)";
 			}
 			
-            $res .= "<tr><td align='right'>$tidx - </td><td><a href='".$u."OPT_TARGET=$tidx'> $k $default</a></td></tr>\n";
+            $res .= "<tr><td align='right' class='textBold'>$tidx - </td><td><a href='".$u."OPT_TARGET=$tidx'> $k $default</a></td></tr>\n";
 			$tidx++;
         }
         $res .= "</table>\n";
@@ -749,7 +714,7 @@ sub ExploitPayload
     my $res; 
     
     if (! exists($exploits->{$module})) {
-        return "<b>Invalid Module</b>";
+        return "<div class='textBold'>Invalid Module</div>";
     }
     
     my $x = $exploits->{$module};
@@ -759,18 +724,18 @@ sub ExploitPayload
     my $matches = $ui->MatchPayloads($x, $payloads) if($x->Payload);
 
     if (defined($x->Payload) ) {
-		$res .= "<p class='nav'>Select Payload:<br\></p>\n";
-        $res .= "<table align='center' cellpadding=0 border=0 cellspacing=0 width=750>\n";
-		$res .= "<tr><td class='nav' align='center'>Payload</td>";
-		$res .= "    <td class='nav' align='center'>Description</td></tr>\n";
+		$res .= "<p class='textBold'>Select Payload:<br\></p>\n";
+        $res .= "<table align='center' cellpadding=0 border=0 cellspacing=0 width='95%'>\n";
+		$res .= "<tr><td class='textBold' align='center'>Payload</td>";
+		$res .= "    <td class='textBold' align='center'>Description</td></tr>\n";
 		$res .= "<tr><td colspan=2><br\></td></tr>\n";
 				
         foreach my $k (sort(keys(%{ $matches })))
         {
             my $u = StateToURL('OPTIONS', $state);
             my $pname = $payloads->{$k}->Name();
-            $res .= "<tr><td><a href='".$u."PAYLOAD=" . $k . "'>$k</a></td>";
-            $res .= "<td>" .$pname . "</td></tr>\n";
+            $res .= "<tr><td class='textNormal'><a href='".$u."PAYLOAD=" . $k . "'>$k</a></td>";
+            $res .= "<td class='textNormal'>" .$pname . "</td></tr>\n";
         }
         $res .= "</table>\n";
     } else {
@@ -785,17 +750,17 @@ sub ExploitOptions
     my $res; 
     
     if (! exists($exploits->{$module})) {
-        return "<b>Invalid Module</b>";
+        return "<div class='textBold'>Invalid Module</div>";
     }
 
     my $x = $exploits->{$module};
     my $p = $payloads->{$state->{'PAYLOAD'}};
     
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";
         
     if (defined($x->Payload) && ! $state->{"PAYLOAD"})
     {
-        $res .=  "<tr><td>Payload must be selected first!</td></tr></table>\n";
+        $res .=  "<tr><td class='textBold'>Payload must be selected first!</td></tr></table>\n";
         return $res;
     }
  
@@ -820,10 +785,11 @@ sub ExploitOptions
 			$dflt = $x->AutoOpts->{$mopt};
 		}
 		
-        $res .= "<tr><td><b>$mopt</b></td>".
-                "<td>$reqd</td><td>". $mopts->{$mopt}->[1] ."</td>".
-                "<td><input type='text' name='OPT_$mopt' value='$dflt'></td>".
-                "<td>".$mopts->{$mopt}->[2]."</td></tr>\n";
+        $res .= "<tr><td class='textBold'>$mopt</td>".
+                "<td class='textBold'>$reqd</td>".
+				"<td class='textBold'>". $mopts->{$mopt}->[1] ."</td>".
+                "<td class='textBold'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
+                "<td class='textNormal'>".$mopts->{$mopt}->[2]."</td></tr>\n";
     }
     
     foreach my $popt (sort(keys(%{$popts}))) {
@@ -837,10 +803,11 @@ sub ExploitOptions
 			$dflt = $x->AutoOpts->{$popt};
 		}
 		       
-        $res .= "<tr><td><b>$popt</b></td>".
-                "<td>$reqd</td><td>". $popts->{$popt}->[1] ."</td>".
-                "<td><input type='text' name='OPT_$popt' value='$dflt'></td>".
-                "<td>".$popts->{$popt}->[2]."</td></tr>\n"; 
+        $res .= "<tr><td class='textBold'>$popt</td>".
+                "<td class='textBold'>$reqd</td>".
+				"<td class='textBold'>". $popts->{$popt}->[1] ."</td>".
+                "<td class='textBold'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+                "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
     
     $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
@@ -859,7 +826,7 @@ sub ExploitExec
     my $exploit = $exploits->{$module};
     
     if (! $exploit) {
-        return "<b>Invalid Module</b>";
+        return "<div class='textBold'>Invalid Module</div>";
     }
 
     my $o = StateToOptions($state);
@@ -897,14 +864,15 @@ sub ExploitExec
         $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit'>\n";
         $res .= "</form>\n";
         $res .= "<hr><br/><br/>\n";
-        $res .= "<br/><b>Check Results:</b> " . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "<br/>\n";
+        $res .= "<br/><div class='textBold'>Check Results:</div>";
+		$res .= "<div class='textNormal'>" . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br/>\n";
         $res .= "<br/>". join("<br/>\n", @{$ui->DumpLines}) . "<br/>\n";
         return $res;
     }
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";
     
     if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) ) {
-        $res .=  "<tr><td>Payload must be selected first!</td></tr></table>\n";
+        $res .=  "<tr><td class='textBold'>Payload must be selected first!</td></tr></table>\n";
         return $res;
     }
     
@@ -1101,11 +1069,6 @@ sub HTTPResponse {
 
 sub HTTPDate {
 	return strftime("%a, %e %b %Y %H:%M:%S GMT", gmtime());
-}
-
-sub GenerateSID {
-	my $data = shift;
-	return unpack("H*", pack('N', $skey) ^ $data);
 }
 
 sub CharsToBytes {
@@ -1374,7 +1337,7 @@ sub Run {
 			# A new IPC request
 			if ($socketInfo{$s}->[2] eq 'ipc') {
 				my $cli = Msf::Socket::Tcp->new_from_socket($s);
-				$self->Log(3,  "fnIPC called with pid $$...");
+				$self->Log(3,  "fnIPC called with pid $$ ($s)...");
 				$fnIPC->($cli);
 				next;
 			}

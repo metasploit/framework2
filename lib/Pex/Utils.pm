@@ -88,36 +88,40 @@ sub Rol
     return(unpack("N", pack("B32",  join('',@bits))));
 }
 
-
-#fixme MergeHashRecRec
 sub MergeHashRec {
-  my $hash1 = shift || { };
-  my $hash2 = shift || { };
-  my %hash = %{$hash1};
-  foreach (keys(%{$hash2})) {
-    if(!defined($hash1->{$_})) {
-      $hash{$_} = $hash2->{$_};
-    }
-    # recurse if both are has ref's
-    elsif(ref($hash1->{$_}) eq 'HASH' && ref($hash2->{$_}) eq 'HASH') {
-      $hash{$_} = MergeHashRec($hash1->{$_}, $hash2->{$_});
-    }
-  }
-  return(\%hash);
-}
+	my $hash1 = shift || { };
+	my $hash2 = shift || { };
+	my %hash = %{$hash1};
+	
+	foreach my $hk (keys(%{ $hash2 })) {
+		
+		# Merge empty values with new ones
+		if (! defined($hash1->{$hk})) {
+			$hash{$hk} = $hash2->{$hk};
+		}
+		# Handle hash -> hash merges
+		elsif (ref($hash1->{$hk}) eq 'HASH' && ref($hash2->{$hk}) eq 'HASH') {
+			$hash{$hk} = MergeHashRec($hash1->{$hk}, $hash2->{$hk});
+		}
+		# Handle array -> array merges
+		elsif (ref($hash1->{$hk}) eq 'ARRAY' && ref($hash2->{$hk}) eq 'ARRAY') {
 
-
-# Weee for moving code
-
-sub BufferC {
-  print STDERR "!!! Big ass ugly warning\nThis function has been moved to Pex::Text\n";
-  print STDERR "Called by " . join(' ', caller()) . "\n\n";
-  return(Pex::Text::BufferC(@_));
-}
-sub BufferPerl {
-  print STDERR "!!! Big ass ugly warning\nThis function has been moved to Pex::Text\n";
-  print STDERR "Called by " . join(' ', caller()) . "\n\n";
-  return(Pex::Text::BufferC(@_));
+			# Initial value is set to hash1
+			$hash{$hk} = $hash1->{$hk};
+			
+			# Attempt to preserve array order
+			my %uvals = ();
+			map { $uvals{$_}++ } @{ $hash{$hk} };
+			
+			# Add unique items in hash2 to the stack
+			foreach my $val ( @{ $hash2->{$hk} } ) {
+				if (! $uvals{$val}) {
+					push @{ $hash{$hk} }, $val;
+				}
+			}
+		}
+	}
+	return(\%hash);
 }
 
 # I stole this.
@@ -171,22 +175,18 @@ sub CheckKeys {
     my $first = substr($key, 0, 1);
     my $rest = substr($key, 1);
     if($first eq '+') {
-#      print "Need $rest\n";
       return(0) if(!ArrayContains($keys1, [ $rest ]));
       splice(@keys2, $i, 1, $rest);
     }
   }
 
-#  foreach my $key (@keys2) {
-#    print "++ $key\n";
-#  }
-
-  if($type eq 'or') {
-    return(ArrayContains(\@keys2, $keys1));
-  }
-  else {
-    return(ArrayContainsAll(\@keys2, $keys1));
-  }
+  # print "[ checkkeys ]\n";
+  # print "keys1: ".join(" ", @{ $keys1 })."\n";
+  # print "keys2: ".join(" ", @keys2)."\n";
+  
+  return ($type eq 'or') ?
+         ArrayContains(\@keys2, $keys1) :
+		 ArrayContainsAll(\@keys2, $keys1);
 }
 
 sub ParseKeys {
