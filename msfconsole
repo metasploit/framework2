@@ -195,14 +195,14 @@ sub Load {
         my $name = $key;
         $name =~ s/.*:://g;
         $encoders->{$name} = $encodersIndex->{$key};
-        $encodersIndex->{$name} = $key;
+        # $encodersIndex->{$name} = $key;
     } 
        
     foreach my $key (sort(keys(%{$nopsIndex}))) {
         my $name = $key;
         $name =~ s/.*:://g;
         $nops->{$name} = $nopsIndex->{$key};
-        $nopsIndex->{$name} = $key;
+        # $nopsIndex->{$name} = $key;
     }    
     
     # XXX - Migrate this back to package name once Name is fixed in payloads 
