@@ -757,7 +757,6 @@ sub _SetRegs {
   return($byte);
 }
 
-
 sub _ValidReg {
   my $self = shift;
   my $byte = shift;
