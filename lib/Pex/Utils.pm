@@ -259,10 +259,10 @@ sub ReadFile {
 }
 
 
-# KeysCheck(['foo'], ['bar', 'foo'], and/or) => 1
-# KeysCheck(['foo', 'bar'], ['foo'], or => 1, and => 0
+# CheckKeys(['foo'], ['bar', 'foo'], and/or) => 1
+# CheckKeys(['foo', 'bar'], ['foo'], or => 1, and => 0
 # if keys1 is empty, always 1
-# KeysCheck(['foo'], ['foo', '+waka'], and/or) => 0
+# CheckKeys(['foo'], ['foo', '+waka'], and/or) => 0
 # then if keys2 is empty, 0
 sub CheckKeys {
   # Need to come up with better names for this
@@ -273,26 +273,28 @@ sub CheckKeys {
   return(1) if(!@{$keys1});
   return(0) if(!@{$keys2});
 
-  for(my $i = 0; $i < @{$keys2}; $i++) {
-    my $key = $keys2->[$i];
+  my @keys2 = @{$keys2};
+
+  for(my $i = 0; $i < @keys2; $i++) {
+    my $key = $keys2[$i];
     my $first = substr($key, 0, 1);
     my $rest = substr($key, 1);
     if($first eq '+') {
 #      print "Need $rest\n";
       return(0) if(!ArrayContains($keys1, [ $rest ]));
-      splice(@{$keys2}, $i, 1, $rest);
+      splice(@keys2, $i, 1, $rest);
     }
   }
 
-#  foreach my $key (@{$keys2}) {
+#  foreach my $key (@keys2) {
 #    print "++ $key\n";
 #  }
 
   if($type eq 'or') {
-    return(ArrayContains($keys2, $keys1));
+    return(ArrayContains(\@keys2, $keys1));
   }
   else {
-    return(ArrayContainsAll($keys2, $keys1));
+    return(ArrayContainsAll(\@keys2, $keys1));
   }
 }
 
