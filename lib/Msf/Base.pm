@@ -60,6 +60,39 @@ sub _Error {
   return($self->{'Error'});
 }
 
+# Print Function Overrides
+sub _OverridePrint {
+  my $self = shift;
+  $Msf::Base::_OverridePrint = shift if(@_);
+  return($Msf::Base::_OverridePrint);
+}
+sub _OverridePrintLine {
+  my $self = shift;
+  $Msf::Base::_OverridePrintLine = shift if(@_);
+  return($Msf::Base::_OverridePrintLine);
+}
+sub _OverridePrintDebug {
+  my $self = shift;
+  $Msf::Base::_OverridePrintDebug = shift if(@_);
+  return($Msf::Base::_OverridePrintDebug);
+}
+sub _OverridePrintDebugLine {
+  my $self = shift;
+  $Msf::Base::_OverridePrintDebugLine = shift if(@_);
+  return($Msf::Base::_OverridePrintDebugLine);
+}
+sub _OverrideError {
+  my $self = shift;
+  $Msf::Base::_OverrideError = shift if(@_);
+  return($Msf::Base::_OverrideError);
+}
+sub _OverrideErrorLine {
+  my $self = shift;
+  $Msf::Base::_OverrideErrorLine = shift if(@_);
+  return($Msf::Base::_OverrideErrorLine);
+}
+
+
 sub GetEnv {
   my $self = shift;
   my $key = shift;
@@ -87,6 +120,7 @@ sub GetEnv {
 #}
 
 
+# Global Environment
 sub GetGlobalEnv {
   my $self = shift;
   my $key = shift;
@@ -124,6 +158,7 @@ sub UnsetGlobalEnv {
   }
 }
 
+# Temporary Environment
 sub GetTempEnv {
   my $self = shift;
   my $key = shift;
@@ -146,6 +181,18 @@ sub SetTempEnv {
     $env->{$pairs[$i]} = $pairs[$i + 1];
   }
   return($env);
+}
+
+sub UnsetTempEnv {
+  my $self = shift;
+  my $key = shift;
+  print "UnsetTempEnv $key\n" if($envDebug);
+  if(!defined($key)) {
+    $self->_TempEnv({ });
+  }
+  else {
+    delete($self->_TempEnv->{$key});
+  }
 }
 
 sub GetSavedTempEnv {
@@ -177,18 +224,6 @@ sub SetSavedTempEnv {
   return($env);
 }
 
-
-sub UnsetTempEnv {
-  my $self = shift;
-  my $key = shift;
-  print "UnsetTempEnv $key\n" if($envDebug);
-  if(!defined($key)) {
-    $self->_TempEnv({ });
-  }
-  else {
-    delete($self->_TempEnv->{$key});
-  }
-}
 
 sub DeleteTempEnv {
   my $self = shift;
@@ -224,6 +259,7 @@ sub LoadTempEnv {
   return($self->_TempEnv);
 }
 
+# Error Code
 sub IsError {
   my $self = shift;
   return(defined($self->GetError));
@@ -254,47 +290,69 @@ sub PrintError {
   return(1);
 }
 
-sub DebugLevel {
+# Print Foo
+sub Print {
   my $self = shift;
-  return($self->GetEnv('DebugLevel'));
+  if(defined($self->_OverridePrint)) {
+    return(&{$self->_OverridePrint}($self, @_));
+  }
+  print STDOUT @_;
+}
+
+sub PrintLine {
+  my $self = shift;
+  if(defined($self->_OverridePrintLine)) {
+    return(&{$self->_OverridePrintLine}($self, @_));
+  }
+  $self->Print(@_, "\n");
 }
 
 sub PrintDebug {
   my $self = shift;
   my $level = shift;
-  if(defined($self->{'PrintDebug'})) {
-    return(&{$self->{'PrintDebug'}}($self, @_));
+  if(defined($self->_OverridePrintDebug)) {
+    return(&{$self->_OverridePrintDebug}($self, $level. @_));
   }
   $self->Print(@_) if($self->DebugLevel >= $level);
 }
 sub PrintDebugLine {
   my $self = shift;
   my $level = shift;
-  if(defined($self->{'PrintDebugLine'})) {
-    return(&{$self->{'PrintDebugLine'}}($self, @_));
+  if(defined($self->_OverridePrintDebugLine)) {
+    return(&{$self->_OverridePrintDebugLine}($self, $level, @_));
   }
   $self->PrintLine(@_) if($self->DebugLevel >= $level);
 }
 
 sub Error {
   my $self = shift;
+  if(defined($self->_OverrideError)) {
+    return(&{$self->_OverrideError}($self, @_));
+  }
+  $self->Print(@_);
+}
+
+sub ErrorLine {
+  my $self = shift;
+  if(defined($self->_OverrideErrorLine)) {
+    return(&{$self->_OverrideErrorLine}($self, @_));
+  }
   $self->PrintLine(@_);
 }
 
-sub PrintLine {
+# fixme still used? add hooks?
+sub FatalError {
   my $self = shift;
-  if(defined($self->{'PrintLine'})) {
-    return(&{$self->{'PrintLine'}}($self, @_));
-  }
-  $self->Print(@_, "\n");
+  my $error = shift;
+  $self->SetError($error);
+  $self->PrintError;
+  exit(1);
 }
 
-sub Print {
+# Other stuff
+sub DebugLevel {
   my $self = shift;
-  if(defined($self->{'Print'})) {
-    return(&{$self->{'Print'}}($self, @_));
-  }
-  print STDOUT @_;
+  return($self->GetEnv('DebugLevel'));
 }
 
 sub MergeHash {
@@ -324,12 +382,5 @@ sub ScriptBase {
   return $Bin;
 }
 
-sub FatalError {
-  my $self = shift;
-  my $error = shift;
-  $self->SetError($error);
-  $self->PrintError;
-  exit(1);
-}
 
 1;
