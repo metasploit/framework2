@@ -58,7 +58,7 @@ sub _BlockIndex {
   }
   return(-1);
 }
-sub _BlockLeft {
+sub _IsBlockLeft {
   my $self = shift;
   foreach my $done (@{$self->_DoneBlocks}) {
     return(1) if(!$done);
@@ -70,7 +70,7 @@ sub Build {
   my $self = shift;
   $self->_ClearDoneBlocks;
   my $data;
-  while($self->_BlockLeft) {
+  while($self->_IsBlockLeft) {
     my $block = $self->RandBlock;
     next if($self->_BlockDone($block));
 #    print $block->RandBlock . "\n";

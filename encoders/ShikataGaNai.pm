@@ -114,3 +114,14 @@ sub _BuildDecoder {
   $delta->AddData($block->Build);
   return($delta->Build)
 }
+
+# This is a *really* bad method of doing this, temporary
+sub _OutcomeTest {
+  my $class = shift;
+  my $times = shift;
+  my $outcomes = { };
+  for(my $i = 0; $i < $times; $i++) {
+    $outcomes->{$class->_BuildDecoder(0, 0)}++;
+  }
+  return(scalar(keys(%{$outcomes})));
+}
