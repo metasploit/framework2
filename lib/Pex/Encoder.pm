@@ -4,7 +4,7 @@
 ##
 #         Name: Encoder.pm
 #       Author: H D Moore <hdm [at] metasploit.com>
-#       Author: spoonm <ninjatools [at] hush.com> (new shellcode, mods)
+#       Author: spoonm <ninjatools [at] hush.com>
 #      Version: $Revision$
 #      License:
 #
@@ -26,11 +26,137 @@ use strict;
 # dynamically generate and encode the encoder as well :)
 #
 
-sub Encode 
-{
-    my ($rawshell, $xbadc) = @_;
-        
-    my $xorkey = XorKeyScanDword($rawshell, $xbadc);
+my $encoders = {
+  'x86' => { 
+    'DWord Xor' => {
+      'Dispatcher'  => \&DWordXorDispatcher,
+      'JmpCall'     => ['Variable length 26/29 byte Jmp/Call encoder', \&XorDecoderDwordCall],
+      'Fnstenv Sub' => ['Variable length 26/29 byte Fnstenv encoder', \&XorDecoderDwordFnstenvSub],
+    },
+#    'Byte Xor' => {
+#      'Fnstenv Sub' => ['25 byte Fnstenv encoder', \&XorDecoderByte],
+#    },
+  },
+  'sparc' => {
+    'Fake' => {
+      'Tester' => ['Just testing baby, just testing', ],
+    },
+  },
+};
+
+# Returns array reference
+sub GetEncoders {
+  my $arch = shift;
+  my $type = shift;
+  my $name = shift;
+  my $dispatch = DispatchList($arch, $type, $name);
+  my $encs = [ ];
+  foreach my $encoder (@{$dispatch}) {
+    push(@{$encs}, [ @{$encoder->[2]}, $encoder->[1]->[0] ]);
+  }
+  return($encs);
+}
+
+# Yeah yeah, I'll get around to it
+sub GetEncodersHash {
+}
+
+sub Encode {
+  my $arch = shift;
+  my $type = shift;
+  my $name = shift;
+  my ($output, $rawshell, $badChars) = @_;
+  my @args = @_; # args (maybe encoder specific)
+
+
+  my $dispatch = DispatchList($arch, $type, $name);
+
+  foreach my $encoder (@{$dispatch}) {
+#    print $encoder->[1]->[1];
+#    print "\n" . join(' ', @{$encoder->[2]}) . "\n";
+    my @encoderName = @{$encoder->[2]};
+    print "Trying @encoderName\n" if($output);
+    my $encoded = &{$encoder->[0]}(@encoderName, $encoder->[1]->[1], @args);
+
+    # If you are using this with msf, this check will happen again inside of
+    # the framework, but the check remains for standalone pex usage
+    # sanity checking, this should never happen
+    if(BadCharCheck($encoded, $badChars)) {
+      print "Caught bad chars in @encoderName\n" if($output);
+    }
+    else {
+      return($encoded);
+    }
+  }
+  return;
+}
+
+sub DispatchList {
+  my $arch = shift;
+  my $type = shift;
+  my $name = shift;
+
+  my $dispatch;
+
+  # ugly, sorry
+  my $dispatcher = $encoders->{'Dispatcher'};
+  if($arch) {
+    my $earch = $encoders->{$arch} || { };
+    my $dispatcher = $earch->{'Dispatcher'} || $dispatcher;
+    if($type) {
+      my $etype = $earch->{$type} || { };
+      my $dispatcher = $etype->{'Dispatcher'} || $dispatcher;
+      if($name) {
+        return if(!$etype->{$name});
+        $dispatch = DispatchHelper({ $name, $etype->{$name} }, $dispatcher, $arch, $type);
+      }
+      else {
+        $dispatch = DispatchHelper($etype, $dispatcher, $arch, $type);
+      }
+    }
+    else {
+      $dispatch = DispatchHelper($earch, $dispatcher, $arch);
+    }
+  }
+  else {
+    $dispatch = DispatchHelper($encoders, $dispatcher);
+  }
+  return($dispatch);
+}
+
+sub DispatchHelper {
+  my $hash = shift;
+  my $dispatcher = shift;
+  my @args = @_;
+  my $dispatch = [ ];
+  foreach my $key (keys(%{$hash})) {
+    next if($key eq 'Dispatcher');
+    my $val = $hash->{$key};
+    my $dispatcher = $hash->{'Dispatcher'} || $dispatcher;
+
+    if(ref($val) eq 'HASH') {
+      push(@{$dispatch}, @{DispatchHelper($val, $dispatcher, @args, $key)});
+    }
+    else {
+      push(@{$dispatch}, [ $dispatcher, $val, [@args, $key] ]);
+    }
+  }
+  return($dispatch);
+}
+
+sub DWordXorDispatcher {
+  my $arch = shift;
+  my $type = shift;
+  my $name = shift;
+  my $encoder = shift;
+  my $output =  shift;
+  my $rawshell = shift;
+  my $badChars = shift;
+  my @extraArgs = @_;
+
+  print "Called to use $arch -> $type -> $name\n" if($output);
+
+  my $xorkey = XorKeyScanDword($rawshell, $badChars);
     
     if (! $xorkey)
     {
@@ -39,56 +165,23 @@ sub Encode
     }
     
     my $xordat = XorDword($xorkey, $rawshell);
-    my $encode = XorDecoderDword($xorkey, length($xordat), $xbadc);
+    my $encode = &{$encoder}($xorkey, length($xordat), $badChars, @extraArgs);
 
     my $shellcode = $encode . $xordat;
-
-    # If you are using this with msf, this check will happen again inside of
-    # the framework, but the check remains for standalone pex usage
-    # sanity checking, this should never happen
-    foreach my $c (split(//, $xbadc))
-    {
-        if (index($xordat, $c) != -1)
-        {
-            print "Encoder failed: caught character " . sprintf("0x%.2x", ord($c));
-            return;
-        }
-    }
 
 
     return($shellcode);
 }
 
-sub EncodeFnstenv 
-{
-    my ($rawshell, $xbadc) = @_;
-        
-    my $xorkey = XorKeyScanDword($rawshell, $xbadc);
-    if (! $xorkey)
-    {
-        print "Could not locate valid xor key\n";
-        return;   
+sub BadCharCheck {
+  my $badChars = shift;
+  my $string = shift;
+  foreach (split('', $badChars)) {
+    if(index($string, $_) != -1) {
+      return(1, $_);
     }
-    
-    my $xordat = XorDword($xorkey, $rawshell);
-    my $encode = XorDecoderDwordFnstenv($xorkey, length($xordat));
-
-    my $shellcode = $encode . $xordat;
-
-    # If you are using this with msf, this check will happen again inside of
-    # the framework, but the check remains for standalone pex usage
-    # sanity checking, this should never happen
-    foreach my $c (split(//, $xbadc))
-    {
-        if (index($xordat, $c) != -1)
-        {
-            print "Encoder failed: caught character " . sprintf("0x%.2x", ord($c));
-            return;
-        }
-    }
-
-
-    return($shellcode);
+  }
+  return(0);
 }
 
 
@@ -252,8 +345,9 @@ sub XorDecoderDwordAntiIds {
     }
 }
 
-
-sub XorDecoderDword {
+# Variable Length Decoder Using jmp/call 26/29 bytes.
+# Uses smaller encoder if payload is <= 512 bytes
+sub XorDecoderDwordCall {
   my $xor = shift;
   my $len = shift;
   my $xorkey = pack('L', $xor);

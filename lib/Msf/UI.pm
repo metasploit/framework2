@@ -403,7 +403,7 @@ sub BadCharCheck {
   my $string = shift;
   foreach (split('', $badChars)) {
     if(index($string, $_) != -1) {
-      return(1);
+      return(1, $_);
     }
   }
   return(0);
