@@ -88,7 +88,7 @@ elsif(exists($opts{'x'})) {
   $args->{'regex'} = $opts{'x'};
 }
 elsif(exists($opts{'a'})) {
-  $func = \&adress;
+  $func = \&address;
   $args->{'address'} = hex($opts{'a'});
 }
 
