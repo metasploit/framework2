@@ -110,7 +110,7 @@ sub DisplayPayloads {
 sub PrintRow {
     print "<tr>";
     print "<td align='right'><b>" . shift(@_) . ":</b></td>";
-    foreach my (@_) { print "<td>$_</td>" }
+    foreach (@_) { print "<td>$_</td>" }
     print "</tr>\n";
 }
 
