@@ -54,7 +54,7 @@ sub Base64Decode {
   $str =~ tr|A-Za-z0-9+/| -_|;            # convert to uuencoded format
 
   ## I guess this could be written as
-  #return unpack("u", join('', map( chr(32 + length($_)*3/4) . $_,
+  #return unpack("u", join('', map( chr(32 + int(length($_)*3/4)) . $_,
   #                   $str =~ /(.{1,60})/gs) ) );
   ## but I do not like that...
   my $uustr = '';
@@ -66,7 +66,7 @@ sub Base64Decode {
   $str = substr($str, $i);
   # and any leftover chars
   if ($str ne '') {
-      $uustr .= chr(32 + length($str)*3/4) . $str;
+    $uustr .= chr(32 + length($str)*3/4) . $str;
   }
   return unpack ('u', $uustr);
 }

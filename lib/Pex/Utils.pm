@@ -182,76 +182,6 @@ sub Rol
 }
 
 
-#
-# Data formatting routines
-#
-
-
-sub BufferPerl
-{
-    my ($data, $width) = @_;
-    my ($res, $count);
-
-    if (! $data) { return }
-    if (! $width) { $width = 16 }
-    
-    $res = '"';
-    
-    $count = 0;
-    foreach my $char (split(//, $data))
-    {
-        if ($count == $width)
-        {
-            $res .= '".' . "\n" . '"';
-            $count = 0;
-        }
-        $res .= sprintf("\\x%.2x", ord($char));
-        $count++;
-    }
-    if ($count) { $res .= '";' . "\n"; }
-    return $res;
-}
-
-sub BufferC
-{
-    my ($data, $width) = @_;
-    my $res = BufferPerl($data, $width);
-    if (! $res) { return }
-    
-    $res =~ s/\.//g;
-    return $res;
-}
-
-sub PadBuffer {
-  my $string = shift;
-  my $length = shift;
-  my $pad = @_ ? shift : "\x00";
-
-  return if($length <= 0);
-
-  return(substr($string, 0, $length) . ($pad x ($length - length($string))));
-}
-
-sub CharsInBuffer {
-    my $buff = shift;
-    my @char = split(//, shift());
-    for (@char) { return(1) if index($buff, $_) != -1 }
-    return(0);
-}
-
-sub EnglishText {
-  my $size = shift;
-  my $string;
-  my $start = 33;
-  my $stop = 126;
-
-  for(my $i = 0; $i < $size; $i++) {
-    $string .= chr(int(rand($stop - $start)) + $start);
-  }
-
-  return($string);
-}
-
 #fixme MergeHashRec
 sub MergeHash {
   my $hash1 = shift || { };
@@ -267,33 +197,6 @@ sub MergeHash {
     }
   }
   return(\%hash);
-}
-
-# Returns true if contains bad char
-# all take badChars, string
-sub BadCharCheck {
-  return(BadCharIndex(@_) == -1 ? 0 : 1);
-}
-
-sub BadCharIndex {
-  my @indexes = BadCharIndexes(@_);
-  return(-1) if(!@indexes);
-  return($indexes[0]);
-}
-
-sub BadCharIndexes {
-  my $badChars = @_ ? shift : return;
-  my $string = @_ ? shift : return;
-  my @indexes;
-
-  my $i = 0;
-  foreach (split('', $string)) {
-    if(index($badChars, $_) != -1) {
-      push(@indexes, $i);
-    }
-    $i++;
-  }
-  return(@indexes);
 }
 
 1;
