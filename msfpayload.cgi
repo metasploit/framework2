@@ -102,7 +102,7 @@ if (! $action)
     print "<input type='hidden' name='ACTION'  value='BUILD'>\n";
     
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
-    PrintRow("Name",            Encode($sel));
+    PrintRow("Name",            Encode($p->Name));
     PrintRow("Version",         $p->Version);
     PrintRow("Authors",         Encode(join(", ", @{$p->Authors})));
     PrintRow("Architecture",    join(", ", @{$p->Arch}));
@@ -178,8 +178,7 @@ if ($action eq "BUILD")
     }
 
     my $s = $ui->Encode;
-    if (! $s)
-    {
+    if (! $s)  {
         print "<b>Error</b>: Shellcode build error: " . $ui->Error() . "<br>\n";
         DisplayFooter();
         exit(0);
@@ -198,8 +197,7 @@ if ($action eq "BUILD")
 
     my ($sC, $sP) = (Pex::Text::BufferC($r), Pex::Text::BufferPerl($r));
     
-    if ($p->Multistage)
-    {
+    if ($p->Multistage)  {
         print "<b>Warning:</b> Multistage payloads only return first stage<br><br>\n";
     }
     
@@ -285,7 +283,7 @@ sub DisplayPayloads {
             foreach my $pay (sort(keys(%{$ost->{$arch}->{$proc}}))) {
                 print "<tr>\n";
                 print "<td align='left'>".sprintf("%.4d", $payloads->{$pay}->Size)." bytes </td>";
-                print "<td align='left'><a href='".$ENV{'SCRIPT_NAME'}."?PAYLOAD=$pay'>$pay</a> - ";
+                print "<td align='left'><a href='".$ENV{'SCRIPT_NAME'}."?PAYLOAD=$pay'>".$payloads->{$pay}->Name."</a> - ";
                 print $payloads->{$pay}->Description."</td>";
                 print "</tr>\n";
             }
