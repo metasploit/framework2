@@ -37,7 +37,7 @@ while( my($key, $val) = split('\=', shift())) {
     push(@ARG, $key);
   }
   else {
-    $ui->SetEnv($key, $val);
+    $ui->SetTempEnv($key, $val);
   }
 }
 
