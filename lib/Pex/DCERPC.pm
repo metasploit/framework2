@@ -92,55 +92,53 @@ sub Request {
     my $size = @_ ? shift : $dlen;
     my @res;
 
-
     my @frags;
     while (length($data)) {
-        my $chunk = substr($data, 0, ($size-24));
-        $data = substr($data, ($size-24));
+        my $chunk = substr($data, 0, $size);
+        $data = substr($data, $size);
         push @frags, $chunk;
     }
-    
-    # Flags: 1=First 2=Last 3=Both
-    
+
+    # Flags: 1=First 2=Last 3=Both  
     if (scalar(@frags) == 0) {
-        return (RequestBuild(3, 0, $opnum));
+        return (RequestBuild(3, $opnum));
     }
        
     if (scalar(@frags) == 1) {
-        return (RequestBuild(3, $dlen, $opnum, $frags[0]));
+        return (RequestBuild(3, $opnum, $frags[0]));
     }
 
     my $first = shift(@frags);
-    push @res, RequestBuild(1, $dlen, $opnum, $first);
+    push @res, RequestBuild(1, $opnum, $first);
 
     while (scalar(@frags) != 1) {
         my $next = shift(@frags);
-        push @res, RequestBuild(0, $dlen, $opnum, $next);
+        push @res, RequestBuild(0, $opnum, $next);
     }
     
     my $last = shift(@frags);
-    push @res, RequestBuild(2, $dlen, $opnum, $last);
+    push @res, RequestBuild(2, $opnum, $last);
     return(@res);
 }
 
 sub RequestBuild {
     my $flags = @_ ? shift : 3;
-    my $dlen  = @_ ? shift : 0;
     my $opnum = @_ ? shift : 0;
     my $data  = @_ ? shift : '';
     
-    my $flen = length($data);
-    
+    my $dlen = length($data);
+    my $flen = $dlen + 24;
+
     return pack('CCCCNvvVVvv', 
         5,      # major version 5
         0,      # minor version 0
         0,      # request type
         $flags, # flags
         0x10000000,     # data representation
-        $flen,  # frag length
+        $dlen+24,  # frag length
         0,      # auth length
         0,      # call id
-        $dlen+24,  # alloc hint
+        $dlen,  # alloc hint
         0,      # context id
         $opnum, # opnum
         ). $data;
