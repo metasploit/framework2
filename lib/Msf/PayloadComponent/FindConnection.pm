@@ -25,6 +25,7 @@ sub ChildHandler {
   my $sock = shift;
 
   my $s = Pex::Socket::Tcp->new_from_socket( $sock );
+  print $s->GetError."\n";
   return if $s->IsError;
   
   # Give the payload time to execute
@@ -38,6 +39,8 @@ sub ChildHandler {
 
   # Is three seconds long enough?
   my $resp = $s->Recv(-1, 3);
+  
+  print "sent, recv: $resp\n";
   
   if($resp =~ /ABCDEFG/) {
     $self->PipeRemoteIn($sock);

@@ -215,7 +215,7 @@ sub PipeRead {
 			return;
 		}
 	}
-	elsif ($type =~ /IO::Handle/) {
+	else {
 		$pipe->sysread($data, 4096);
 		if (length($data) == 0) {
 			return;
@@ -256,7 +256,7 @@ sub PipeWrite {
 			}
 		}
 	}
-	elsif ($type =~ /IO::Handle/) {
+	else {
 		my $block = $pipe->blocking;
 		$pipe->blocking(1);
 		$ret = $pipe->printflush($data);
@@ -299,13 +299,11 @@ sub PipeClose {
 	my $pType	= ref($pipe);
 	
 	if ($pType =~ /IO::Socket/) {
-		eval { $pipe->shutdown(2); };
-		$pipe->close;
+		eval { $pipe->shutdown(2) };
 	}
 	
-	if ($pType =! /IO::Handle/) {
-		$pipe->close;
-	}
+	eval { $pipe->close };
+	return;
 }
 
 1;
