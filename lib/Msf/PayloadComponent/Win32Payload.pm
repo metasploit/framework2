@@ -48,15 +48,12 @@ sub new {
 
 sub InitWin32 {
     my $self = shift;
-    $self->{'Win32Payload'} = $self->{'Info'}->{'Win32Payload'};
+#    $self->{'Win32Payload'} = $self->{'Info'}->{'Win32Payload'};
     $self->{'Info'}->{'UserOpts'}->{'EXITFUNC'} = [0, 'DATA', 'Exit technique: "process", "thread", "seh"', 'seh'];
 }
 
 sub Size {
     my $self = shift;
-#    my $size = 0;
-#    $size += length($self->{'Win32Payload'}->{'Payload'});
-#    $size++; # take into account the prepended clear direction instruction
     my $size = length($self->Build);
     $self->PrintDebugLine(3, "Win32Payload: returning Size of $size");
     return $size;
@@ -64,7 +61,7 @@ sub Size {
 
 sub Win32Payload {
   my $self = shift;
-  return($self->{'Win32Payload'});
+  return($self->_Info->{'Win32Payload'});
 }
 
 sub Build {

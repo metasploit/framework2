@@ -13,10 +13,23 @@ my $info =
     'OS'           => [ 'solaris' ],
     'Multistage'   => 1,
     'Size'         => '',
+};
 
-    'SolarisPayload' =>
-    {
-		# XXX - not functional yet
+sub new {
+    load();
+    my $class = shift;
+    my $hash = @_ ? shift : { };
+    $hash = $class->MergeHashRec($hash, {'Info' => $info});
+    my $self = $class->SUPER::new($hash, @_);
+    return($self);
+}
+
+# Could also override Build with a return($self->BuildSolaris(foo));
+# this is cleaner, maybe, still allows dynamic building of payload with
+# evn available.
+sub SolarisPayload {
+    my $self = shift;
+    my $hash = {
         Payload =>
             "\x90\x10\x20\x02".     # mov          2, %o0
             "\x92\x10\x20\x02".     # mov          2, %o1
@@ -52,15 +65,8 @@ my $info =
             "\x91\xd0\x20\x08".     # ta           0x8
             "\x9f\xc3\xbf\xe8".     # jmpl         %sp - 24, %o7
             "\xac\x1d\x80\x16",     # xor          %l6, %l6,%l6
-      
-    },
-};
-
-sub new {
-    load();
-    my $class = shift;
-    my $hash = @_ ? shift : { };
-    $hash = $class->MergeHashRec($hash, {'Info' => $info});
-    my $self = $class->SUPER::new($hash, @_);
-    return($self);
+    };
+    return($hash);
 }
+
+1;

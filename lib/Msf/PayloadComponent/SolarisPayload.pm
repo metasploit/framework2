@@ -34,36 +34,45 @@ sub new {
     my $class = shift;
     my $hash = @_ ? shift : { };
     my $self = $class->SUPER::new($hash);
-    $self->InitSol;
+    $self->InitSolaris;
     return($self);
 }
 
-sub InitSol {
+sub InitSolaris {
     my $self = shift;
-    $self->{'SolarisPayload'} = $self->{'Info'}->{'SolarisPayload'};
+#    $self->{'SolarisPayload'} = $self->{'Info'}->{'SolarisPayload'};
     $self->{'Info'}->{'UserOpts'}->{'FIXSTACK'} = [1, 'BOOL', 'Call mprotect to make the stack executable', 1];
+}
+
+sub SolarisPayload {
+  my $self = shift;
+  return($self->_Info->{'SolarisPayload'});
 }
 
 sub Size {
     my $self = shift;
-    my $size = 0;
-    $size += length($self->{'SolarisPayload'}->{'Payload'});
-	$size += length($self->FixStack) if $self->GetVar('FIXSTACK');
+    my $size = length($self->Build);
     $self->PrintDebugLine(3, "SolarisPayload: returning Size of $size");
     return $size;
 }
 
 sub Build {
+  my $self = shift;
+  return($self->BuildSolaris($self->SolarisPayload));
+}
+
+sub BuildSolaris {
     my $self = shift;
-    my $payload  = $self->{'SolarisPayload'}->{'Payload'};
+    my $solarisHash = shift;
+    my $payload  = $solarisHash->{'Payload'};
     my $generated = $payload;    
 
-    my $opts = $self->{'SolarisPayload'}->{'Offsets'};
+    my $opts = $solarisHash->{'Offsets'};
     
     foreach my $opt (keys(%{ $opts })) {
         next if $opt eq 'FIXSTACK';
         
-        my ($offset, $opack) = @{ $self->{'SolarisPayload'}->{'Offsets'}->{$opt} };
+        my ($offset, $opack) = @{ $solarisHash->{'Offsets'}->{$opt} };
         my $type = $opts->{$opt}->[1];    
         
         $self->PrintDebugLine(3, "SolarisPayload: opt=$opt type=$type");   
