@@ -22,8 +22,6 @@
 #		+ Build out the 'logs' pages
 #		+ Add an option for HTTP authentication
 #		+ Add Advanced options selection
-#		+ Show current payload in option page
-#		+ Add more fields to the module info display
 #
 
 
@@ -400,6 +398,11 @@ sub ProcessWebRequest {
 		        
 		if ($mbase eq 'EXPLOITS' && exists($exploits->{$mid}) ) {
 			$mname = $exploits->{$mid}->Name;
+
+			# append the payload name
+			if (exists($state->{'PAYLOAD'})) {
+				$mname .= ' ('.$state->{'PAYLOAD'}.')';
+			}
 		}
 		
 		if ($mbase eq 'PAYLOADS' && exists($payloads->{$mid}) ) {
@@ -1328,7 +1331,7 @@ sub ExploitOptions
     my $x = $exploits->{$module};
     my $p = $payloads->{$state->{'PAYLOAD'}};
     
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";
+    $res .= "<table align='center' cellpadding=2 border=0 cellspacing=0 width='95%'>\n";
         
     if (defined($x->Payload) && ! $state->{"PAYLOAD"})
     {
@@ -1351,6 +1354,7 @@ sub ExploitOptions
     my $mopts = $x->UserOpts();
     my $popts = defined($x->Payload) ? $p->UserOpts() : {};
 
+	# Standard exploit options
     foreach my $mopt (sort(keys(%{$mopts}))) {
         my $dflt = $mopts->{$mopt}->[3];
         my $reqd = $mopts->{$mopt}->[0] ? "Required" : "Optional";
@@ -1366,7 +1370,8 @@ sub ExploitOptions
                 "<td class='textNormal'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
                 "<td class='textNormal'>".$mopts->{$mopt}->[2]."</td></tr>\n";
     }
-    
+	
+	# Standard payload options
     foreach my $popt (sort(keys(%{$popts}))) {
 
         my $dflt = $popts->{$popt}->[3];
@@ -1385,7 +1390,54 @@ sub ExploitOptions
                 "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
                 "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
-    
+
+	# Advanced option processing    
+	my $mopts = $x->Advanced();
+    my $popts = defined($x->Payload) ? $p->Advanced() : {};
+
+	# Advanced exploit options	
+	foreach my $mopt (sort(keys(%{$mopts}))) {
+        my $dflt = $mopts->{$mopt}->[3];
+		my $colc = "textBoldDark";
+		
+		if (exists($x->AutoOpts->{$mopt})) {
+			$dflt = $x->AutoOpts->{$mopt};
+		}
+		
+		$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+        $res .= "<tr>".
+		        "<td class='textBoldDark'>* $mopt</td>".
+				"<td class='textBoldDark'>Optional</td>".
+				"<td class='textBoldDark'>DATA</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
+				"<td class='textNormal'>This is an advanced option</td>".
+				"</tr>".
+				"<tr>".
+                "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$mopts->{$mopt}->[1]."</td></tr>\n";
+    }
+	
+	# Advanced payload options	
+	foreach my $popt (sort(keys(%{$popts}))) {
+        my $dflt = $popts->{$popt}->[3];
+		my $colc = "textBoldDark";
+		
+		if (exists($x->AutoOpts->{$popt})) {
+			$dflt = $x->AutoOpts->{$popt};
+		}
+		
+		$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+        $res .= "<tr>".
+		        "<td class='textBoldDark'>* $popt</td>".
+				"<td class='textBoldDark'>Optional</td>".
+				"<td class='textBoldDark'>DATA</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+				"<td class='textNormal'>This is an advanced option</td>".
+				"</tr>".
+				"<tr>".
+                "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$popts->{$popt}->[1]."</td></tr>\n";
+    }
+	
+		
 	if ($p && @{ $p->Arch } ) {
 
     	$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
