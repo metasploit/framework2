@@ -65,7 +65,7 @@ sub HandleConnection {
   $self->PrintLine('[*] Sleeping before sending file.');
   sleep(2);
 
-  $self->PrintLine('[*] All stages sent, uploading file (' . length($upload) . '), Please wait...');
+  $self->PrintLine('[*] Uploading file (' . length($upload) . '), Please wait...');
   $sock->send(pack('V', length($upload)));
   $sock->send($upload);
   $self->PrintLine('[*] Executing uploaded file...');
