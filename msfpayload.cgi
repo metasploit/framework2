@@ -153,15 +153,15 @@ if ($action eq "BUILD")
         $s = $e;
     }
 
-    $optstr .= "Size=" . length($s);
+    $optstr .= " Size=" . length($s);
 
     my ($sC, $sP) = (Pex::Utils::BufferC($s), Pex::Utils::BufferPerl($s));
     print "<pre>\n";
     
-    print "/* $ctitle ($sel) [$optstr] http://metasploit.com /*\n";
+    print "/* $sel - $ctitle $optstr  http://metasploit.com /*\n";
     print "unsigned char scode[] =\n$sC\n\n\n";
     
-    print "# $ctitle ($sel) [$optstr] http://metasploit.com\n";
+    print "# $sel - $ctitle $optstr http://metasploit.com\n";
     print "my \$shellcode =\n$sP\n\n\n";
 
 
