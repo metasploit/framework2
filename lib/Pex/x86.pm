@@ -23,7 +23,7 @@ sub JmpShort {
 }
 
 sub call {
-  my $dist = RelNumber(shift, 0);
+  my $dist = RelNumber(shift, -5);
   return("\xe8" . PackDword($dist));
 }
 
