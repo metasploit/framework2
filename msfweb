@@ -72,11 +72,15 @@ my %config	=
 	'BindPort'	=> 55555,
 	'LogFile'	=> '-',
 	'LogLevel'	=> 0,
+	'Reload'	=> 0,
+	'Theme'		=> 'default',
+	'ThemeDir'	=> "$RealBin/data/msfweb/themes",
+	'CacheDir'	=> "$RealBin/data/msfweb/cache",
 );
 
 
 # Process the command line options
-getopts("a:l:v:p:h", \%args);
+getopts("a:l:v:p:t:T:C:r:h", \%args);
 
 # Show the help output
 if ($args{'h'}) { Usage() }
@@ -108,22 +112,54 @@ if (exists($args{'v'})) {
 	$config{'LogLevel'} = $args{'v'};
 }
 
+# Theme name
+if (exists($args{'t'})) {
+	$config{'Theme'} = $args{'t'};
+}
+
+# Theme directory
+if (exists($args{'T'})) {
+	$config{'ThemeDir'} = $args{'T'};
+}
+
+# Cache directory
+if (exists($args{'C'})) {
+	$config{'CacheDir'} = $args{'C'};
+}
+
+# Reload modules
+if (exists($args{'r'})) {
+	$config{'Reload'}++;
+}
+
+
 my $bindstr = $config{'BindAddr'}. ':' .$config{'BindPort'};
-print STDERR "+----=[ Metasploit Framework Web Interface ($bindstr)\n";
+print STDERR "+----=[ Metasploit Framework Web Interface ($bindstr)\n\n";
 
 
-# Set the cache directory
-$ui->SetTempEnv('_CacheDir', "$RealBin/data/msfweb");
+# Verify the cache directory exists and is writable
+if (! -d $config{'CacheDir'} || ! open(T, ">>".$config{'CacheDir'}.'/.test') ) {
+	print STDERR "ERROR: the specified cache directory is not accessible: $!\n";
+	exit(1);
+}
+unlink($config{'CacheDir'}.'/.test') && close(T);
+$ui->SetTempEnv('_CacheDir', $config{'CacheDir'} );
 
-# Set the theme directory
-$ui->SetTempEnv('_ThemeDir', "$RealBin/data/msfweb/themes/gblack");
+
+# Verify that the specified theme actually exists
+if (! -r  $config{'ThemeDir'} .'/'. $config{'Theme'} .'/style.css') {
+	print STDERR "ERROR: the specified theme does not exist\n";
+	exit(1);
+}
+$ui->SetTempEnv('_Theme', $config{'ThemeDir'} .'/'. $config{'Theme'} );
+
 
 
 # Create the inital list of modules
 LoadAllModules();
 
-# Cache these lists
-if (! $args{'r'}) {
+# Pre-generate the complete lists without any filters
+if (! $config{'Reload'} ) {
 	ExploitList();
 	PayloadList();
 }
@@ -172,6 +208,10 @@ Options:
 		-p	<tcp port>    Bind to this TCP port instead of 55555
 		-l	<log file>    The path name to use for a log file (stderr)
 		-v	<log level>   A number between 0 and 10 that controls log verbosity
+		-t	<theme name>  Select a specific theme for the web interface
+		-T	<theme dir>   Use an alternate directory for msfweb themes
+		-C	<cache dir>   Use a specific directory for session cache files
+		-r	<boolean>     Reload all modules with each new web request
 
 };
     exit(0);
@@ -181,7 +221,7 @@ Options:
 sub ProcessResRequest {
 	my ($req, $cli, $ipc) = @_;
 
-	my $theme = $ui->GetTempEnv('_ThemeDir') || "$RealBin/data/msfweb/themes/default";
+	my $theme = $ui->GetTempEnv('_Theme') || "$RealBin/data/msfweb/themes/default";
 
 	my %files =
 	(
@@ -211,9 +251,10 @@ sub ProcessIPCRequest {
 	chomp($req);
 	
 	my ($cmd, @args) = split(/\s+/, $req);
+	$self->Log(3, "IPC: $ipc $$ $cmd ($args[0] | $args[1])");
+	
 	return if ! $cmd;
 	
-	print "[ $ipc ] $cmd ($args[0] | $args[1])\n";
 	
 	if ($cmd eq 'SESSION') {
 		my $sid = $self->SessionNew($ipc);
@@ -264,7 +305,20 @@ sub ProcessWebRequest {
     my $state = $req->{'params'};
 	my $mbase = $req->{'base'};
 	my $res;
+		
+	my $cinfo = $cli->PeerAddr .':'. $cli->PeerPort;
+	my $log = "HTTP: $cinfo $$ ". $req->{'path'} ." ". $state->{'MODE'};
 	
+	if (exists($state->{'MODULE'})) {
+		$log .= " module=". $state->{'MODULE'};
+	}
+	
+	if ($req->{'base'} eq 'RESOURCE') {
+		$log .= " res=".$state->{'ID'};
+	}
+
+	$self->Log(3, $log);
+		
 	# Process resource requests
 	if ($req->{'base'} eq 'RESOURCE') {
 		ProcessResRequest($req, $cli, $ipc);
@@ -275,7 +329,7 @@ sub ProcessWebRequest {
 	$burl = "/$mbase?";
 	
 	# Reload all modules only when the -r option has been specified
-	if (exists($args{'r'})) {
+	if ($config{'Reload'}) {
 		LoadAllModules();
 	}
 	
@@ -307,6 +361,9 @@ sub ProcessWebRequest {
     $state->{'client'} = $cli;
 	$state->{'parent'} = $ipc;
 	
+
+	
+							
 	if ($req->{'base'} eq 'EXPLOITS') {
 		
     	if ($state->{'MODE'} eq 'MAIN')    { $res .= ExploitList($state) }
@@ -675,7 +732,7 @@ sub PayloadList {
 	my $mtype = 'payloads';
 	my $mfilt = exists($state->{'FILTER'}) ? $state->{'FILTER'} : 'ALL';
 	
-	if (! $args{'r'} || ! defined( $moduleList->{$mtype}->{$mfilt} )) {
+	if (! $config{'Reload'} || ! defined( $moduleList->{$mtype}->{$mfilt} )) {
 		$moduleList->{$mtype}->{$mfilt} = ModuleList($mtype, $mfilt);
 	} 
 	return $moduleList->{$mtype}->{$mfilt};
@@ -686,7 +743,7 @@ sub ExploitList {
 	my $mtype = 'exploits';
 	my $mfilt = exists($state->{'FILTER'}) ? $state->{'FILTER'} : 'ALL';
 	
-	if (! $args{'r'} || ! defined( $moduleList->{$mtype}->{$mfilt} )) {
+	if (! $config{'Reload'} || ! defined( $moduleList->{$mtype}->{$mfilt} )) {
 		$moduleList->{$mtype}->{$mfilt} = ModuleList($mtype, $mfilt);
 	} 
 	return $moduleList->{$mtype}->{$mfilt};
@@ -1782,7 +1839,7 @@ sub SessionNew {
 		'PID'	=> 0,
 		'Data'	=> '',
 	};
-	$self->Log(3, "Creating session $sid with IPC socket $ipc");	
+	$self->Log(1, "IPC: creating new session $sid with IPC socket $ipc");	
 	return $sid;
 }
 
@@ -1834,7 +1891,7 @@ sub SessionRemove {
 	
 	# shut down the pipe process
 	if ((my $pid = $self->SessionPipePID($sid))) {
-		$self->Log(3, "Removing session $sid with Pipe PID $pid");
+		$self->Log(3, "IPC: removing session $sid with Pipe PID $pid");
 		kill(9, $pid);
 	}
 	
@@ -1979,7 +2036,7 @@ sub Run {
 				my $sd = $socketInfo{$s}->[0];
 
 				if (! $sd) {
-					$self->Log(1, "socketInfo{ $s } is invalid");
+					$self->Log(1, "ERROR: socketInfo{ $s } is invalid");
 					delete($socketInfo{$s});
 					next;
 				}
@@ -2001,12 +2058,12 @@ sub Run {
 				my ($client) = $httpd->accept;
 				
 				if (! $client) {
-					$self->Log(1,  "Accept failed on primary listener socket: $@");
+					$self->Log(1,  "ERROR: accept failed on primary listener socket: $@");
 					next;
 				}
 
 				$socketInfo{$client} = [$client, 0, 'client'];
-				$self->Log(3, "Connection from ".$client->peerhost .':'. $client->peerport);
+				$self->Log(4, "NEW: ".$client->peerhost .':'. $client->peerport);
 				next;
 			}
 
@@ -2031,8 +2088,7 @@ sub Run {
 					if (! $pid) {
 						
 						# Close the http listener inside the child
-						$httpd->close;
-						$self->Log(3,  "Processing HTTP request for $cinfo with child $$");						
+						$httpd->close;					
 						$fnWeb->($self, $res, $cli, $chi);
 						exit(0);
 					}
@@ -2046,7 +2102,7 @@ sub Run {
 				} 
 				else {
 					# Invalid request, trash it for now
-					$self->Log(3,  "Invalid HTTP request from $cinfo");		
+					$self->Log(3,  "HTTP: invalid request from $cinfo");		
 					eval { $s->shutdown(2); $s->close; };
 				}
 
@@ -2058,20 +2114,20 @@ sub Run {
 			# A new IPC request
 			if ($socketInfo{$s}->[2] eq 'ipc') {
 				my $ipc_pid = $socketInfo{$s}->[1];
-				$self->Log(3,  "Processing IPC request for child $ipc_pid [ $s ]");
+				$self->Log(3,  "IPC: $ipc_pid $s");
 				$fnIPC->($self, $s);
 				next;
 			}
 
 			# Unknown socket type...
-			$self->Log(1, "Unknown socket type ".$socketInfo{$s}->[2]);
+			$self->Log(1, "ERROR: unknown socket type ".$socketInfo{$s}->[2]);
 		}
 
 		# Remove sockets attach to dead processes
 		foreach my $s (keys %socketInfo) {
 			my $spid = $socketInfo{$s}->[1];
 			if ($spid && ! kill(0, $spid)) {
-				$self->Log(4, "Removing socket $s for process $spid of type ".$socketInfo{$s}->[2]);
+				$self->Log(4, "DEL: $s $spid ".$socketInfo{$s}->[2]);
 				eval 
 				{ 
 					$socketInfo{$s}->[0]->shutdown(2); 
