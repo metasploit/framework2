@@ -1,31 +1,13 @@
 Pre-Release Tasks
 ==================
- 
+
+ - msfweb needs rewritten handlers to work correctly
+  
  - DCOM exploit needs to be fixed so it works on XP again!
  
  - DCOM exploit needs vulnerability check mode
- 
- - msfweb needs rewritten handlers to work correctly
 
- - Solaris, bsd, and cmd payloads need to be readded!
-
- - Nop generator needs to work within badchars
- 
- - Nop generator needs mode for PA-RISC, SPARC, etc
- 
- - Nop generator needs a no-mod-regs option to avoid nops which modify regs needed by exploit
-
- X Both send() and Send() truncate at 65k boundary for UDP
-
- - Fix /usr/bin/env errors for Solaris / perl 5.6
-
- - Finish writing msfencode 
- 
- - The msfweb interface does not work correctly on Mac OS X
-
- - Multiple return values of Check, not just 0/1, we need 0 for plain not vuln, 1 for looks vuln, 2 for confirmed, -1 for cant exploit, -2 for cant tell
-
- - Make the OS explicit. Remove win32, make it win2000, winxp, etc, etc for exploits and payloads
+ - msfencode needs to actually work
 
  - Determine the issue with the PREFORK code, it DOES work on some exploits
  
@@ -33,7 +15,7 @@ Pre-Release Tasks
 
  - Finish building out the basic development guides
 
- - Find a host for the mailing list, public CVS, bugzilla, etc. 
+ - Find a host for bugzilla 
  
  - Add documentation describing how the shared config file relates to msfcli and msfconsole
  
@@ -46,7 +28,20 @@ Pre-Release Tasks
  
 Post-Release Tasks
 ===================
+
+ - The msfweb interface does not work correctly on Mac OS X
+ 
+ - Multiple return values of Check, not just 0/1, we need 0 for plain not vuln, 1 for looks vuln, 2 for confirmed, -1 for cant exploit, -2 for cant tell
+
+ - Make the OS explicit. Remove win32, make it win2000, winxp, etc, etc for exploits and payloads
+
  - Rewrite BSD bind payload (SIGSYS error after listen call) [LSD one is also broken]
+
+ - Nop generator needs to work within badchars
+ - Nop generator needs mode for PA-RISC, SPARC, etc
+ - Nop generator needs a no-mod-regs option to avoid nops which modify regs needed by exploit
+
+ - Fix /usr/bin/env errors for Solaris / perl 5.6
 
  - Right now LoadTempEnv will set the TempEnv to the actual stored hash, so you are modifing the stored hash also,
    this is nice because you don't have to SaveTempEnv before you do a save, but it isn't really intended behavior.
