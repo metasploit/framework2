@@ -1,0 +1,58 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfencode
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Version: $Revision$
+#  Description: Command line interface for encoding payloads
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use strict;
+
+use FindBin qw{$Bin};
+use POSIX;
+
+use lib "$Bin/lib";
+use Msf::TextUI;
+use Pex;
+
+Msf::UI::ActiveStateSucks();
+
+
+my $ui = Msf::TextUI->new($Bin);
+$ui->SetTempEnv('_MsfPayload', 1);
+
+my $exploits = { };
+my $payloads = { };
+my $encoders = { };
+
+my $exploitsIndex = $ui->LoadExploits;
+my $payloadsIndex = $ui->LoadPayloads;
+my $encodersIndex = $ui->LoadEncoders;
+my $nopsIndex     = $ui->LoadNops;
+
+foreach my $key (keys(%{$payloadsIndex})) {
+    $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
+}
+
+foreach my $key (keys(%{$exploitsIndex})) {
+    $exploits->{$exploitsIndex->{$key}->Name} = $exploitsIndex->{$key};
+}
+
+foreach my $key (keys(%{$encodersIndex})) {
+    $encoders->{$encodersIndex->{$key}->Name} = $encodersIndex->{$key};
+}
+
+$ui->SetTempEnv('_Exploits', $exploitsIndex);
+$ui->SetTempEnv('_Payloads', $payloadsIndex);
+$ui->SetTempEnv('_Encoders', $encodersIndex);
+$ui->SetTempEnv('_Nops', $nopsIndex);
