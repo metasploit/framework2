@@ -43,11 +43,11 @@ sub _GenEncoder {
 
   # spoon's smaller variable-length fnstenv encoder
   my $decoder =
+    Pex::x86::sub(-((($len - 1) / 4) + 1), "ecx").
     "\xd9\xee".                         # fldz
     "\xd9\x74\x24\xf4".                 # fnstenv [esp - 12]
     "\x5b".                             # pop ebx
-    Pex::x86::sub(-((($len - 1) / 4) + 1), "ecx").
-    "\x81\x73\x18". $xorkey .           # xor_xor: xor DWORD [ebx + 24], xorkey
+    "\x81\x73\x13". $xorkey .           # xor_xor: xor DWORD [ebx + 22], xorkey
     "\x83\xeb\xfc".                     # sub ebx,-4
     "\xe2\xf4";                         # loop xor_xor
 
