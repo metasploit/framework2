@@ -43,7 +43,7 @@ sub Encode {
     my $chunk = substr($buffer, $c, 4);
     my $spacing = 4 - length($chunk);
     $chunk .= "\x00" x $spacing;
-    my $clean = unpack($pack, $chunk);
+    my $clean = unpack('V', $chunk);
 
     $chunk = $clean ^ $xor;
 
