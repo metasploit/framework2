@@ -213,12 +213,9 @@ sub Encode {
   return($encoder->Encode);
 }
 
-#fixme
-# I think the best way to do encoding is just to
-# Look at the environment and choose the encoder passed on that
 sub MakeEncoder {
     my $self = shift;
-    # Even though there is already a entry in default in Msf::ConfigFile
+    # Even though there is already a entry in default in Msf::Config
     # This is important enough to just default again anyway
     my $name = $self->GetEnv('Encoder') || 'Msf::Encoder::Pex';
     my $encoder = $name->new(@_);
@@ -227,7 +224,7 @@ sub MakeEncoder {
 }
 sub MakeNop {
     my $self = shift;
-    # Even though there is already a entry in default in Msf::ConfigFile
+    # Even though there is already a entry in default in Msf::Config
     # This is important enough to just default again anyway
     my $name = $self->GetEnv('Nop') || 'Msf::Nop::Pex';
     my $nop = $name->new(@_);
