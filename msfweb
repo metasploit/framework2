@@ -468,19 +468,21 @@ sub HTML_Header {
 	my $req = shift;
 	
     my $header = qq
-[<html>
+[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
     <head>
         <title>Metasploit Framework Web Console v$VERSION</title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+		 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
     </head>
     <body>
 <a name='Top'></a>
 
 <br/>
-<div align='center'><img src='/RESOURCE?ID=LOGO'></div>
+<div align='center'><img src='/RESOURCE?ID=LOGO' alt='msfweb'></div>
 <br/>
 
-<table align='center' cellpadding=1 border=0 cellspacing=0 width='98%' class='tblOuter'>
+<table align='center' cellpadding=1 border=0 cellspacing=0 width='98%' class='tblOuter'><tr><td>
 <table align='center' cellpadding=8 border=0 cellspacing=1 width='100%' class='tblInner'>
 <tr>
 ];
@@ -511,10 +513,12 @@ sub HTML_Footer {
 		<br/>
 		</td>
 	</tr>
-</table></td></tr></table>
-<br/>
+
+</table>
+</td></tr></table>
+
 <div align='center' class='copy'>
-	copyright &copy 2003-2005 metasploit.com<br/><br/>
+	<br/>copyright &copy 2003-2005 metasploit.com<br/><br/>
 </div>
 </body>
 </html>
@@ -622,8 +626,8 @@ sub SessionList {
 		my $s_target	= $ses->{'target'};
 		my $s_time		= scalar(localtime($ses->{'start'}));
 		
-		my $mlink = '/EXPLOITS?MODE=SELECT&MODULE='.URLEncode($s_module);
-		my $plink = ($s_payload ne 'unknown') ? '/PAYLOADS?MODE=SELECT&MODULE='.URLEncode($s_payload) : '#';
+		my $mlink = '/EXPLOITS?MODE=SELECT&amp;MODULE='.URLEncode($s_module);
+		my $plink = ($s_payload ne 'unknown') ? '/PAYLOADS?MODE=SELECT&amp;MODULE='.URLEncode($s_payload) : '#';
 		
         $res .= "<tr>";
 		$res .= "<td class='textNormal'>$s_time</td>";
@@ -902,7 +906,7 @@ sub ModuleList
 		$mList .= "</select>\n";
 	}
 	
-	$mList .= "</select><input type='submit' value=' Filter Modules '></div></form><br\>\n";
+	$mList .= "<input type='submit' value=' Filter Modules '></div></form><br\>\n";
 
 	if ($mfilt eq 'ALL') {
 		$moduleMerge->{'ALL'} = [ keys %{ $mALL } ];
@@ -920,7 +924,7 @@ sub ModuleList
 	</tr>
 	<tr><td class='listBody' align='center' colspan=2>
 		<blockquote>
-		<table align='center' padding=6 border=0 cellspacing=0 width='100%'>
+		<table align='center' border=0 cellspacing=0 width='100%'>
 ];
 
 	# Dump out all of the matching modules for this key, os, or arch
@@ -934,7 +938,7 @@ sub ModuleList
 		}
 
 		$mList .= "<tr>";
-		$mList .= "<td> - <a href='/". uc($mtype) ."?MODE=SELECT&MODULE=".URLEncode($ename)."'>";
+		$mList .= "<td> - <a href='/". uc($mtype) ."?MODE=SELECT&amp;MODULE=".URLEncode($ename)."'>";
 		$mList .= $mod->Name ." </a></td>";
 		$mList .= "<td align='center'>$icons</td>";
 		$mList .= "</tr>\n";
@@ -1351,8 +1355,8 @@ sub ExploitOptions
         }
     }
 
-    my $mopts = $x->UserOpts();
-    my $popts = defined($x->Payload) ? $p->UserOpts() : {};
+    my $mopts = $x->UserOpts;
+    my $popts = defined($x->Payload) ? $p->UserOpts : {};
 
 	# Standard exploit options
     foreach my $mopt (sort(keys(%{$mopts}))) {
@@ -1391,56 +1395,10 @@ sub ExploitOptions
                 "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
 
-	# Advanced option processing    
-	my $mopts = $x->Advanced();
-    my $popts = defined($x->Payload) ? $p->Advanced() : {};
-
-	# Advanced exploit options	
-	foreach my $mopt (sort(keys(%{$mopts}))) {
-        my $dflt = $mopts->{$mopt}->[3];
-		my $colc = "textBoldDark";
-		
-		if (exists($x->AutoOpts->{$mopt})) {
-			$dflt = $x->AutoOpts->{$mopt};
-		}
-		
-		$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
-        $res .= "<tr>".
-		        "<td class='textBoldDark'>* $mopt</td>".
-				"<td class='textBoldDark'>Optional</td>".
-				"<td class='textBoldDark'>DATA</td>".
-                "<td class='textNormal'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
-				"<td class='textNormal'>This is an advanced option</td>".
-				"</tr>".
-				"<tr>".
-                "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$mopts->{$mopt}->[1]."</td></tr>\n";
-    }
-	
-	# Advanced payload options	
-	foreach my $popt (sort(keys(%{$popts}))) {
-        my $dflt = $popts->{$popt}->[3];
-		my $colc = "textBoldDark";
-		
-		if (exists($x->AutoOpts->{$popt})) {
-			$dflt = $x->AutoOpts->{$popt};
-		}
-		
-		$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
-        $res .= "<tr>".
-		        "<td class='textBoldDark'>* $popt</td>".
-				"<td class='textBoldDark'>Optional</td>".
-				"<td class='textBoldDark'>DATA</td>".
-                "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
-				"<td class='textNormal'>This is an advanced option</td>".
-				"</tr>".
-				"<tr>".
-                "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$popts->{$popt}->[1]."</td></tr>\n";
-    }
-	
 		
 	if ($p && @{ $p->Arch } ) {
 
-    	$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+    	$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
 		my %encoderList = PayloadEncoders($p->Arch, $p->OS);
 
 		$res .= "<tr>\n";
@@ -1456,7 +1414,7 @@ sub ExploitOptions
 
 
 		my %nopList = PayloadNops($p->Arch, $p->OS);
-		$res .= "<td colspan=3 class='textBold'>";
+		$res .= "<td colspan=2 class='textBold'>";
 		$res .= "Nop Generator:<br\> ";
 		$res .= "<select name='NOP' size=1>\n";
 		$res .= "<option value='default'> Default Generator\n";
@@ -1466,14 +1424,65 @@ sub ExploitOptions
 		$res .= "</select>\n";
 		$res .= "</td>";
 		$res .= "</tr>\n";		
-
-    	$res .= "<td colspan=3>&nbsp;</td></tr>\n";	
 	}
-		
+	
+	$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+			
     $res .= "<tr>";
 	$res .= "<td colspan=3 align='right'> <input type='submit' name='ExploitAction' value='Check'> </td>";
-    $res .= "<td colspan=3 align='left'> <input type='submit' name='ExploitAction' value='Exploit'> </td>";
+    $res .= "<td colspan=2 align='left'> <input type='submit' name='ExploitAction' value='Exploit'> </td>";
 	$res .= "</tr>\n";
+	
+	$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+	$res .= "<td><td colspan=5 class='textBold'>Advanced Module Options</td></tr>\n";
+	
+	# Advanced option processing    
+	my $mopts = $x->Advanced();
+    my $popts = defined($x->Payload) ? $p->Advanced() : {};
+
+	# Advanced exploit options	
+	foreach my $mopt (sort(keys(%{$mopts}))) {
+        my $dflt = $mopts->{$mopt}->[0];
+		my $colc = "textBoldDark";
+		
+		if (exists($x->AutoOpts->{$mopt})) {
+			$dflt = $x->AutoOpts->{$mopt};
+		}
+		
+		$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+        $res .= "<tr>".
+		        "<td class='textBoldDark'>* $mopt</td>".
+				"<td class='textBoldDark'>Optional</td>".
+				"<td class='textBoldDark'>DATA</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
+				"<td class='textNormal'>Advanced exploit option</td>".
+				"</tr>".
+				"<tr>".
+                "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$mopts->{$mopt}->[1]."</td></tr>\n";
+    }
+	
+	# Advanced payload options	
+	foreach my $popt (sort(keys(%{$popts}))) {
+        my $dflt = $popts->{$popt}->[0];
+		my $colc = "textBoldDark";
+		
+		if (exists($x->AutoOpts->{$popt})) {
+			$dflt = $x->AutoOpts->{$popt};
+		}
+		
+		$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+        $res .= "<tr>".
+		        "<td class='textBoldDark'>* $popt</td>".
+				"<td class='textBoldDark'>Optional</td>".
+				"<td class='textBoldDark'>DATA</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+				"<td class='textNormal'>Advanced payload option</td>".
+				"</tr>".
+				"<tr>".
+                "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$popts->{$popt}->[1]."</td></tr>\n";
+    }
+	
+	
 	
     $res .= "</form>\n";
     $res .= "</table>\n";
