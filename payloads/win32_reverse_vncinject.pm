@@ -17,7 +17,7 @@ my $info =
   'UserOpts'     => { 
                         'DLL'     => [1, 'PATH', 'The full path the VNC service dll'],
                         'VNCPASS' => [1, 'DATA', 'The password to use with the VNC service', 'w00t'],
-                        'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  0],
+                        'VNCPORT' => [1, 'PORT', 'The local port to use for the VNC proxy',  5900],
                     },
                 
 };
@@ -45,6 +45,12 @@ sub HandleConnection {
 
   my $pass = substr($self->GetVar('VNCPASS'), 0, 8);
   $pass   .= "\x00" x (8-length($pass));
+
+  if (! $sock->connected) {
+    $self->PrintLine("[*] Connection closed before password could be sent");
+    $self->KillChild;    
+    return;    
+  }
 
   $self->PrintLine('[*] Sending password to VNC service');
   $sock->send($pass);
@@ -86,7 +92,10 @@ sub HandleConnection {
   $self->PrintLine('[*] VNC proxy started with password '.$self->GetVar('VNCPASS').'...');
   $self->VNCProxy($sock, $csock);
   $self->PrintLine('[*] VNC proxy finished');
-  $self->KillChild;    
+  
+  $sock->close;
+  $csock->close;
+  $self->KillChild;
   return;
 }
 
