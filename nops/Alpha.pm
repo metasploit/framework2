@@ -28,42 +28,11 @@ sub new {
 	return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
-# XXX: Operate: ct*?, */v?, ext*?, min*?, ms*?, max*?, s[48]*?
+# XXX: Operate: */v?
 # XXX: InsMemory (for lda and the like) 
-# XXX: InsFPU??
+# XXX: InsFPU
+# Bad: ct[lt]z, ctpop, ld[bw]u, sext[bw], st[bw], sqrt*, ftoi*, itof*, max*, min*, perr, (un)pk* 
 my $table = [
-	[ \&InsOperate,	[ 0, [ 0x10, 0x00 ] ], ],		# addl
-	[ \&InsOperate,	[ 0, [ 0x10, 0x09 ] ], ],		# subl
-	[ \&InsOperate,	[ 0, [ 0x10, 0x0f ] ], ],		# cmpbge
-	[ \&InsOperate,	[ 0, [ 0x10, 0x1d ] ], ],		# cmpult
-	[ \&InsOperate,	[ 0, [ 0x10, 0x20 ] ], ],		# addq
-	[ \&InsOperate,	[ 0, [ 0x10, 0x29 ] ], ],		# subq
-	[ \&InsOperate,	[ 0, [ 0x10, 0x2d ] ], ],		# cmpeq
-	[ \&InsOperate,	[ 0, [ 0x10, 0x3d ] ], ],		# cmpule
-	[ \&InsOperate,	[ 0, [ 0x10, 0x4d ] ], ],		# cmplt
-	[ \&InsOperate,	[ 0, [ 0x10, 0x6d ] ], ],		# cmple
-	[ \&InsOperate,	[ 0, [ 0x11, 0x00 ] ], ],		# and
-	[ \&InsOperate,	[ 0, [ 0x11, 0x08 ] ], ],		# bic (andnot)
-	[ \&InsOperate,	[ 0, [ 0x11, 0x14 ] ], ],		# cmovlbs
-	[ \&InsOperate,	[ 0, [ 0x11, 0x16 ] ], ],		# cmovlbc
-	[ \&InsOperate,	[ 0, [ 0x11, 0x20 ] ], ],		# bis (or)
-	[ \&InsOperate,	[ 0, [ 0x11, 0x24 ] ], ],		# cmoveq
-	[ \&InsOperate,	[ 0, [ 0x11, 0x26 ] ], ],		# cmovne
-	[ \&InsOperate,	[ 0, [ 0x11, 0x28 ] ], ],		# ornot
-	[ \&InsOperate,	[ 0, [ 0x11, 0x40 ] ], ],		# xor
-	[ \&InsOperate,	[ 0, [ 0x11, 0x44 ] ], ],		# cmovlt
-	[ \&InsOperate,	[ 0, [ 0x11, 0x46 ] ], ],		# cmovge
-	[ \&InsOperate,	[ 0, [ 0x11, 0x48 ] ], ],		# eqv (xornot)
-	[ \&InsOperate,	[ 0, [ 0x11, 0x64 ] ], ],		# cmovle
-	[ \&InsOperate,	[ 0, [ 0x11, 0x66 ] ], ],		# cmovgt
-	[ \&InsOperate,	[ 0, [ 0x12, 0x30 ] ], ],		# zap 
-	[ \&InsOperate,	[ 0, [ 0x12, 0x31 ] ], ],		# zapnot
-	[ \&InsOperate,	[ 0, [ 0x12, 0x34 ] ], ],		# srl
-	[ \&InsOperate,	[ 0, [ 0x12, 0x39 ] ], ],		# sll
-	[ \&InsOperate,	[ 0, [ 0x12, 0x3c ] ], ],		# sra
-	[ \&InsOperate,	[ 0, [ 0x13, 0x00 ] ], ],		# mull
-	[ \&InsOperate,	[ 0, [ 0x13, 0x20 ] ], ],		# mulq
-	[ \&InsOperate,	[ 0, [ 0x13, 0x30 ] ], ],		# umulh
 	[ \&InsBranch,	[ 0x30 ], ],				# br
 	[ \&InsBranch,	[ 0x31 ], ],				# fbeq
 	[ \&InsBranch,	[ 0x32 ], ],				# fblt
@@ -79,6 +48,71 @@ my $table = [
 	[ \&InsBranch,	[ 0x3d ], ],				# bne
 	[ \&InsBranch,	[ 0x3e ], ],				# bge
 	[ \&InsBranch,	[ 0x3f ], ],				# bgt
+
+	[ \&InsOperate,	[ 0, [ 0x10, 0x00 ] ], ],		# addl
+	[ \&InsOperate,	[ 0, [ 0x10, 0x02 ] ], ],		# s4addl
+	[ \&InsOperate,	[ 0, [ 0x10, 0x09 ] ], ],		# subl
+	[ \&InsOperate,	[ 0, [ 0x10, 0x0b ] ], ],		# s4subl
+	[ \&InsOperate,	[ 0, [ 0x10, 0x0f ] ], ],		# cmpbge
+	[ \&InsOperate,	[ 0, [ 0x10, 0x12 ] ], ],		# s8addl
+	[ \&InsOperate,	[ 0, [ 0x10, 0x1b ] ], ],		# s8subl
+	[ \&InsOperate,	[ 0, [ 0x10, 0x1d ] ], ],		# cmpult
+	[ \&InsOperate,	[ 0, [ 0x10, 0x20 ] ], ],		# addq
+	[ \&InsOperate,	[ 0, [ 0x10, 0x22 ] ], ],		# s4addq
+	[ \&InsOperate,	[ 0, [ 0x10, 0x29 ] ], ],		# subq
+	[ \&InsOperate,	[ 0, [ 0x10, 0x2b ] ], ],		# s4subq
+	[ \&InsOperate,	[ 0, [ 0x10, 0x2d ] ], ],		# cmpeq
+	[ \&InsOperate,	[ 0, [ 0x10, 0x32 ] ], ],		# s8addq
+	[ \&InsOperate,	[ 0, [ 0x10, 0x3b ] ], ],		# s8subq
+	[ \&InsOperate,	[ 0, [ 0x10, 0x3d ] ], ],		# cmpule
+	[ \&InsOperate,	[ 0, [ 0x10, 0x4d ] ], ],		# cmplt
+	[ \&InsOperate,	[ 0, [ 0x10, 0x6d ] ], ],		# cmple
+
+	[ \&InsOperate,	[ 0, [ 0x11, 0x00 ] ], ],		# and
+	[ \&InsOperate,	[ 0, [ 0x11, 0x08 ] ], ],		# bic (andnot)
+	[ \&InsOperate,	[ 0, [ 0x11, 0x14 ] ], ],		# cmovlbs
+	[ \&InsOperate,	[ 0, [ 0x11, 0x16 ] ], ],		# cmovlbc
+	[ \&InsOperate,	[ 0, [ 0x11, 0x20 ] ], ],		# bis (or)
+	[ \&InsOperate,	[ 0, [ 0x11, 0x24 ] ], ],		# cmoveq
+	[ \&InsOperate,	[ 0, [ 0x11, 0x26 ] ], ],		# cmovne
+	[ \&InsOperate,	[ 0, [ 0x11, 0x28 ] ], ],		# ornot
+	[ \&InsOperate,	[ 0, [ 0x11, 0x40 ] ], ],		# xor
+	[ \&InsOperate,	[ 0, [ 0x11, 0x44 ] ], ],		# cmovlt
+	[ \&InsOperate,	[ 0, [ 0x11, 0x46 ] ], ],		# cmovge
+	[ \&InsOperate,	[ 0, [ 0x11, 0x48 ] ], ],		# eqv (xornot)
+	[ \&InsOperate,	[ 0, [ 0x11, 0x64 ] ], ],		# cmovle
+	[ \&InsOperate,	[ 0, [ 0x11, 0x66 ] ], ],		# cmovgt
+
+	[ \&InsOperate,	[ 0, [ 0x12, 0x02 ] ], ],		# mskbl
+	[ \&InsOperate,	[ 0, [ 0x12, 0x06 ] ], ],		# extbl
+	[ \&InsOperate,	[ 0, [ 0x12, 0x0b ] ], ],		# insbl
+	[ \&InsOperate,	[ 0, [ 0x12, 0x12 ] ], ],		# mskwl
+	[ \&InsOperate,	[ 0, [ 0x12, 0x16 ] ], ],		# extwl
+	[ \&InsOperate,	[ 0, [ 0x12, 0x1b ] ], ],		# inswl
+	[ \&InsOperate,	[ 0, [ 0x12, 0x22 ] ], ],		# mskll
+	[ \&InsOperate,	[ 0, [ 0x12, 0x26 ] ], ],		# extll
+	[ \&InsOperate,	[ 0, [ 0x12, 0x2b ] ], ],		# insll
+	[ \&InsOperate,	[ 0, [ 0x12, 0x30 ] ], ],		# zap 
+	[ \&InsOperate,	[ 0, [ 0x12, 0x31 ] ], ],		# zapnot
+	[ \&InsOperate,	[ 0, [ 0x12, 0x32 ] ], ],		# mskql
+	[ \&InsOperate,	[ 0, [ 0x12, 0x34 ] ], ],		# srl
+	[ \&InsOperate,	[ 0, [ 0x12, 0x36 ] ], ],		# extql
+	[ \&InsOperate,	[ 0, [ 0x12, 0x39 ] ], ],		# sll
+	[ \&InsOperate,	[ 0, [ 0x12, 0x3b ] ], ],		# insql
+	[ \&InsOperate,	[ 0, [ 0x12, 0x3c ] ], ],		# sra
+	[ \&InsOperate,	[ 0, [ 0x12, 0x52 ] ], ],		# mskwh
+	[ \&InsOperate,	[ 0, [ 0x12, 0x57 ] ], ],		# inswh
+	[ \&InsOperate,	[ 0, [ 0x12, 0x5a ] ], ],		# extwh
+	[ \&InsOperate,	[ 0, [ 0x12, 0x62 ] ], ],		# msklh
+	[ \&InsOperate,	[ 0, [ 0x12, 0x67 ] ], ],		# inslh
+	[ \&InsOperate,	[ 0, [ 0x12, 0x6a ] ], ],		# extlh
+	[ \&InsOperate,	[ 0, [ 0x12, 0x72 ] ], ],		# mskqh
+	[ \&InsOperate,	[ 0, [ 0x12, 0x77 ] ], ],		# insqh
+	[ \&InsOperate,	[ 0, [ 0x12, 0x7a ] ], ],		# extqh
+
+	[ \&InsOperate,	[ 0, [ 0x13, 0x00 ] ], ],		# mull
+	[ \&InsOperate,	[ 0, [ 0x13, 0x20 ] ], ],		# mulq
+	[ \&InsOperate,	[ 0, [ 0x13, 0x30 ] ], ],		# umulh
 ];
 
 # Returns valid destination register number between 0 and 31 excluding $sp.
