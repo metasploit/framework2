@@ -125,9 +125,8 @@ A.nav {
 }
 
 .textBoldBright {
-	background:		black;
 	font-size:		10pt;
-	color:			white;
+	color:			black;
 	font-weight: 	bold;
 }
 
@@ -175,3 +174,33 @@ select {
 	font-weight:	bold;
 }
 
+.iconset 
+{
+	background: white;
+	padding: 2px 2px 2px 2px;
+	border: 1px solid white;
+}
+
+#moduleList
+{
+
+}
+
+#moduleName
+{
+	border-top: 1px solid #bbbbbb;
+	border-left: 1em solid #bbbbbb;
+	padding: 0.5em 0.5em 0.5em 1em;
+}
+	
+#moduleIcons
+{
+	border-top: 1px solid #bbbbbb;
+	padding: 0.5em 0.5em 0em 1em;
+}
+
+#moduleSpacer 
+{
+	padding: 10px 0px 0px 0px;
+	margin: 0;
+}

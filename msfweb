@@ -413,7 +413,7 @@ sub ProcessWebRequest {
 		}						
 
         $res .= "<table width='100%'>\n";
-		$res .= "<tr><td class='textBoldBright'>Module: $mname</td></tr>\n";
+		$res .=" <tr><td id='moduleName'><div class='textBoldBright'>$mname</div></td></tr>\n";
 		$res .= "</table><br>\n";
     }
 
@@ -913,20 +913,9 @@ sub ModuleList
 	}
 
 
-
-
-
 	$mList .= qq[ 
-<table align='center' cellpadding=1 border=0 cellspacing=0 width='100%' class='tblOuter'>        
-	<tr><td>
-    <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' class='tblInner'>
-    <tr>
-		<td class='nav' align='left'> Modules </td>
-    	<td class='listBody' align='right'><a href='#Top'>Top</a></td>
-	</tr>
-	<tr><td class='listBody' align='center' colspan=2>
-		<blockquote>
-		<table align='center' border=0 cellspacing=0 width='100%'>
+<table id='moduleList' width='100%' cellspacing=0 border=0>
+
 ];
 
 	# Dump out all of the matching modules for this key, os, or arch
@@ -936,21 +925,20 @@ sub ModuleList
 		my $icons;
 		
 		foreach ( KeysToIcons( @{ $mod->OS } ) ) {
-			$icons  .= "<img src='/RESOURCE?ICON=". $_ ."' border=0 alt='".$_."'> ";
+			$icons  .= "<img src='/RESOURCE?ICON=". $_ ."' border=0 class='iconset' alt='".$_."'> ";
 		}
-
 		$mList .= "<tr>";
-		$mList .= "<td> - <a href='/". uc($mtype) ."?MODE=SELECT&amp;MODULE=".URLEncode($ename)."'>";
-		$mList .= $mod->Name ." </a></td>";
-		$mList .= "<td align='center'>$icons</td>";
+		$mList .= "<td id='moduleName'><a href='/". uc($mtype) ."?MODE=SELECT&amp;MODULE=".URLEncode($ename)."'>";
+		$mList .= $mod->Name ."</a></td>";
+		$mList .= "<td id='moduleIcons' align='center'>$icons</td>";
 		$mList .= "</tr>\n";
+		
+		$mList .= "<tr><td id='moduleSpacer' colspan=2></tr>\n";
+		
 	}
 	
 	$mList .= qq[
-		</table>
-		</blockquote>
-</td></tr></table>
-</td></tr></table>
+</table>
 ];
 
     return $mList;
