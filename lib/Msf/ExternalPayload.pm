@@ -51,6 +51,7 @@ sub Generate {
     return;
   }
 
+  $self->PrintDebugLine(3, "Running: $prog $args");
   local $/;
   open(PROG, "$prog $args|") ||
   do 
