@@ -99,7 +99,7 @@ if (! $action)
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     PrintRow("Name",            $sel);
     PrintRow("Version",         $p->Version);
-    PrintRow("Authors",         join(" ", $p->Authors));
+    PrintRow("Authors",         join(" ", @{$p->Authors)});
     PrintRow("Architecture",    join(" ", @{$p->Arch}));
     PrintRow("Privileged",      ($p->Priv ? "Yes" : "No"));
     PrintRow("Multistage",      ($p->Multistage ? "Yes" : "No"));
