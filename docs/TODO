@@ -1,15 +1,12 @@
 Pre-Release Tasks
 ==================
 
- - Make msfcli do regex match against name, display multiple matches
-
  - Make some minor cosmetic improvements to msfweb, msfpayload.cgi
 
  - Flush out Pex::x86
  - Add raw mode support to Pex::Socket (spoof)
  
  - Exchange exploit sucks, remove it or fix it
- - DCOM exploit needs vulnerability check mode
 
  - msfencode needs to actually work
 
@@ -27,6 +24,7 @@ Pre-Release Tasks
  
 Post-Release Tasks
 ===================
+ - DCOM exploit needs vulnerability check mode
 
  - The msfweb interface does not work correctly on Mac OS X
  
