@@ -15,10 +15,12 @@ use POSIX;
 
 no utf8;
 
-my $VERSION = '$Revision$';
-my ($REV)   = $VERSION =~ m/\$Revisio.:\s+([^\$]+)/;
-my $UPDATE_HOST = "metasploit.com";
-my $UPDATE_PATH = "/projects/Framework/updates";
+my $VERSION      = '$Revision$';
+my $FRAMEWORK    = '2.3';
+my ($REV)        = $VERSION =~ m/\$Revisio.:\s+([^\s]+)/;
+
+my $UPDATE_HOST  = 'metasploit.com';
+my $UPDATE_PATH  = '/projects/Framework/updates/msfupdate.html';
 my $SSL_VERIFIED = 0;
 my $SSL_ISSUER   = '/C=US/ST=Texas/L=San Antonio/O=The Metasploit Project/OU=Development/CN=Metasploit CA/emailAddress=cacert@metasploit.com';
 my $SSL_CERTS    = "$RealBin/docs";
@@ -39,14 +41,15 @@ BEGIN
 }
 
 my %opts;
-getopts('hrvusmaxf', \%opts);
+getopts('hrvusmaxfU', \%opts);
 
 if ($opts{v}) {
     print "Msfupdate Version: $REV\n";
+    print "Framework Version: $FRAMEWORK\n";
     exit(0);
 }
 
-if ($opts{h} || (! $opts{m} && ! $opts{r} && ! $opts{u})) {
+if ($opts{h} || (! $opts{m} && ! $opts{r} && ! $opts{u} && ! $opts{U})) {
     Usage();
 }
 
@@ -56,7 +59,10 @@ my ($old_data, $now_data, $new_data);
 my ($old, $now, $new);
 my ($mod, $upx, $upd);
 
+
+print "[*] Calculating local file checksums...\n";
 $now_data = ScanFiles('.');
+print "\n";
 
 if (! -r '.current') {
     WriteFile('.current', $now_data);
@@ -78,12 +84,12 @@ if ($opts{f}) {
 }
 
 # Display a big nasty warning for non-SSL unless -x is specified
-if ($opts{u}) {
+if ($opts{u} || $opts{U}) {
     if (! $opts{x} && ! $SSL_SUPPORT) {
         print "[*] WARNING: The Net::SSLeay module is not installed.\n";
         print "    The update process will fall back to plain HTTP,\n";
-        print "    this opens up the possibility of someone being\n";
-        print "    able to inject malicious code into your system.\n";
+        print "    this may allow a malicious attacker to inject\n";
+        print "    hostile code into your system.\n";
         print "\n";
         print "Continue anyways (yes or no) ";
         my $resp;
@@ -100,7 +106,7 @@ if ($opts{u}) {
         }
     }
     
-    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.html/.current");
+    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/.current");
 }
 
 $now = Hashit($now_data);
@@ -136,6 +142,127 @@ if (! $new_data) {
     print "[*] Could not obtain the current version information from the update server\n";
     exit(0);
 }
+
+my $mver = CheckVersion();
+
+if ( ($opts{u} || $opts{U}) && ! $mver) {
+    print "[*] Could not determine the current Framework version.\n";
+    exit(0);
+}
+
+if ($mver && $mver ne $FRAMEWORK) {
+
+    if (! $opts{U}) {
+        print "[*] ATTENTION: A new version of the Framework is available (v$mver)!\n";
+        print "    To upgrade, execute msfupdate with the -U parameter.\n\n";
+    }
+    else {
+        print "[*] Starting upgrade process to version $mver...\n";
+    }
+}
+
+if ($opts{U} && $mver && $mver eq $FRAMEWORK) {
+    print "[*] No version upgrade is necessary.\n";
+    exit(0);
+}
+
+# Upgrade to a new major release version...
+if ($opts{U}) {
+ 
+  
+    my $backupdir = 'backup_'. $FRAMEWORK;
+    
+    print "[*] WARNING: You are about to upgrade to a new major version of the\n";
+    print "    Metasploit Framework. This process involves removing the current\n";
+    print "    installation and downloading the new version, one file at a time.\n";
+    print "    This process is slow and somewhat prone to failure. If you encounter\n";
+    print "    any problems during the download, you *should* be able to simply\n";
+    print "    restart msfupdate with the -u parameter\n\n";
+    
+    print "    If you have modified any of the files in the Framework directory,\n";
+    print "    these will be saved to $backupdir. The same applies for any modules\n";
+    print "    that you have added to this Framework installation. After the update\n";
+    print "    is complete, you should be able to copy these modules from the\n";
+    print "    backup directory ($backupdir) into the appropriate directories\n";
+    print "    in the new installation.\n\n";
+
+    print "    If you are using FreeBSD or any other operating that maintains\n";
+    print "    a package for the Framework, we recommend that you use the system\n";
+    print "    package manager to upgrade\n\n";
+    
+    print "    Please type 'yes' to initiate the upgrade process.\n";
+    
+    my $resp;
+    while ($resp !~ /yes|no/i) {
+        print "> ";
+        $resp = <STDIN>;
+        chomp($resp);
+    }
+    if ($resp =~ /no/i) {
+        exit(0);
+    }
+
+    
+    delete($now->{'./msfupdate'});
+    delete($new->{'./msfupdate'});
+    delete($mod->{'./msfupdate'});
+    delete($upd->{'./msfupdate'});
+
+    print "[*] Backing up modified files to $backupdir...\n";
+    
+    # Backup framework files that the user modified
+    foreach my $file (keys %{$mod} ) {
+        print "    --- MOD $file\n";
+        my $data = ReadFile($file);
+        WriteFile($backupdir .'/'. $file , $data);
+    }
+    
+    # Backup files that the user created
+    foreach my $file (keys %{$upd} ) {
+        next if $upd->{$file} ne 'Del';
+        print "    --- USR $file\n";
+        my $data = ReadFile($file);
+        WriteFile($backupdir .'/'. $file , $data);
+    }   
+    
+    print "[*] Removing the current installation...\n";
+
+    # Do not remove these files since we need them to update...
+    my %docs_save = ('./docs/7f8d5320.0' => 1, './docs/cacert.pem' => 1);
+
+    # Remove all files that are part of the framework
+    foreach my $file (keys %{$now}) {
+        next if exists($docs_save{$file});
+        unlink($file);
+    }
+
+    # Remove all directories but 'docs'
+    foreach my $dir (split(/\n/, ScanDirs('.', 0))) {
+        next if $dir eq './docs';
+        system("rm", "-rf", $dir);
+    }
+    
+    # Bump up the framework version
+    $FRAMEWORK = $mver;
+    
+    # Download the file list for the new framework version
+    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/.current");
+
+    # Rebuild the tables
+    $new = Hashit($new_data);
+    $now = {};
+    $old = {};
+
+    $mod = Diff($old, $now);
+    $upx = Diff($old, $new);
+    $upd = Diff($now, $new);
+    
+    # Configure some options
+    $opts{a}++;
+}
+
+
+
 
 # They modified something, ask them what they want to do with it
 if (! $opts{a} && keys(%{$mod})) {  
@@ -204,6 +331,8 @@ if (! keys(%{$upd})) {
 
 print "[*] Update Task Summary\n\n";
 foreach my $entry (keys(%{$upd})) {
+    next if $opts{U};
+    
     if ($mod->{$entry}) {
         print "\tIgnore $entry\n";
     }
@@ -229,11 +358,21 @@ if (! $opts{a}) {
     }
 }
 
-foreach my $entry (keys(%{$upd})) {
+my @tasks = sort(keys(%{$upd}));
+
+# Force msfupdate to downloaded first...
+if ($opts{U}) {
+    unshift(@tasks, './msfupdate');
+}
+
+my $upd_tot = scalar(@tasks);
+my $upd_cur = 0;
+
+foreach my $entry (@tasks) {
     if ($mod->{$entry}) {
         next;
     } 
-    my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current.html/$entry");
+    my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/$entry");
     if ($new->{$entry} ne md5_hex($data)) {
         print "$entry: ". $new->{$entry} ." != " .md5_hex($data)."\n";
         my $errmsg = $data ? 'checksum mismatch' : 'download failed';
@@ -247,7 +386,7 @@ foreach my $entry (keys(%{$upd})) {
     # set it executable since we dont track permissions
     chmod(0755, $entry);
     
-    print "[*] Successfully downloaded $entry (".length($data)." bytes)\n";
+    printf("[%.4d/%.4d - 0x%.6x bytes] $entry\n", ++$upd_cur, $upd_tot, length($data));
 }
 
 print "[*] Regenerating local file database\n";
@@ -289,11 +428,8 @@ sub ScanFiles {
         # ignore all leading dot files   
         next if $entry =~ /^\./;
         
-        # ignore cvs directories
-        next if $entry eq 'CVS';
-        
-        # ignore the development tools
-        next if $entry eq 'dev';
+        # ignore the backup directories
+        next if $entry =~ /^backup_/;
         
         # recurse into directories
         if (-d $path) {
@@ -307,6 +443,44 @@ sub ScanFiles {
     return $res;   
 }
 
+sub ScanDirs {
+    my $dir = shift;
+    my $dep = @_ ? shift() : 0;
+    my $res;
+    my $hwn;
+    
+    return if $dep == -1;
+    opendir ($hwn, $dir) || return;
+    
+    while (defined(my $entry = readdir($hwn))) {
+        my $path = "$dir/$entry";
+        
+        # ignore all symlinks
+        next if -l $path; 
+        
+        # ignore the backup directories
+        next if $entry =~ /^backup_/;
+        
+        # ignore all leading dot files   
+        next if $entry =~ /^\./;
+         
+        # recurse into directories
+        if (-d $path) {
+            $res .= "$path\n";
+            $res .= ScanDirs($path, $dep - 1);
+        }
+    }
+    closedir($hwn);
+    return $res;   
+}
+
+
+
+sub CheckVersion {
+    my $data = DownloadFile($UPDATE_HOST, $UPDATE_PATH);
+    my ($vers, $mtime) = split(/\s+/, $data);
+    return $vers;
+}
 
 sub DownloadFile {
     my $host = shift;
@@ -328,9 +502,10 @@ sub DownloadFile {
         exit(0);
     }
 
-    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV\r\n\r\n";
+    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV $FRAMEWORK\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
+    
         # Reset the verified flag
         $SSL_VERIFIED = 0;
 
