@@ -13,7 +13,7 @@
 DWORD open_tcp_channel(Remote *remote, LPCSTR remoteHost,
 		USHORT remotePort, Channel **outChannel)
 {
-	PortForwardClientContext *pcctx;
+	PortForwardClientContext *pcctx = NULL;
 	DWORD res = ERROR_SUCCESS;
 	Channel *channel = NULL;
 	struct sockaddr_in s;
