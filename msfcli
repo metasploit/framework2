@@ -36,7 +36,6 @@ my $encoders = $ui->LoadEncoders;
 my $nops     = $ui->LoadNops;
 
 
-# Grab the 0x00 style module index
 my $mod = shift;
 my @ARG;
 
@@ -50,7 +49,7 @@ my @ARG;
 my $i = 0;
 foreach my $key (sort(keys(%{$exploitsIndex})))
 {
-    $exploits->{sprintf("0x%.2x", $i++)} = $exploitsIndex->{$key};
+    $exploits->{@{[split(/::/,$key)]}[-1]} = $exploitsIndex->{$key};
 }
 
 # Generate payloads index
