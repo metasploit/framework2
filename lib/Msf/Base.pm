@@ -318,7 +318,7 @@ sub Print {
   }
   print STDOUT @_;
 }
-sub Print {
+sub PrintStderr {
   my $self = shift;
   if(defined($self->_OverridePrintStderr)) {
     return(&{$self->_OverridePrintStderr}($self, @_));
