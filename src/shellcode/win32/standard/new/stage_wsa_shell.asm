@@ -1,6 +1,6 @@
 ;      Title:  Win32 cmd.exe shell stage for WSA sockets
 ;  Platforms:  Windows NT 4.0, Windows 2000, Windows XP, Windows 2003
-;     Author:  hdm, spoonm, spoonm's sister
+;     Author:  hdm, spoonm, vlad902
 
 [BITS 32]
 
