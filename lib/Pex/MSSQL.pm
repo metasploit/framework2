@@ -121,7 +121,7 @@ sub Login
     $s->Send($login);
     $s->Send($p_lng);
     
-    my $r = $s->Recv(-1, 10);
+    $r = $s->Recv(-1, 10);
     $s->Close();
     
     if ($r && length($r) > 10 && substr($r, 8, 1) eq chr(0xe3)) { return(1) }

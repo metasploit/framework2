@@ -234,7 +234,7 @@ sub Tcp {
 
   return if($self->GetError);
 
-  $self->{'Socket'} == undef;
+  $self->{'Socket'} = undef;
   $self->SetError(undef);
 
   my $sock = $self->TcpConnectSocket($host, $port, $localPort);
