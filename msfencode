@@ -33,6 +33,7 @@ Msf::UI::ActiveStateSucks();
 
 my $ui = Msf::TextUI->new($Bin);
 my $VERSION = $ui->Version;
+$ui->SetTempEnv('DebugLevel', 0);
 
 my $payloadArch = ['x86'];
 my $payloadOS = ['linux'];
