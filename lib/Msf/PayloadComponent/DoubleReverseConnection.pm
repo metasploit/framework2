@@ -27,8 +27,8 @@ sub CheckHandler {
     $sock2 = $ready[0]->accept();
     $self->PrintLine('[*] Recieved second connection.');
 
-    $sock1->Send("echo foo;\n");
-    $sock2->Send("echo foo;\n");
+    $sock1->send("echo foo;\n");
+    $sock2->send("echo foo;\n");
     
     my $selector = IO::Select->new($sock1, $sock2);
     @ready = $selector->can_read(2);
@@ -40,11 +40,11 @@ sub CheckHandler {
     my $data;
     $ready[0]->recv($data, 4096);
 
-    if($data =~ /foo/) {
+    if ($data =~ /foo/ && $ready[0] eq $sock1) 
+    {
       $self->SocketIn($sock1);
       $self->SocketOut($sock2);
-    }
-    else {
+    } else {
       $self->SocketIn($sock2);
       $self->SocketOut($sock1);
     }
@@ -53,7 +53,6 @@ sub CheckHandler {
   }
 
   $self->PrintLine('[*] Failed to recieve second connection.');
-
   return(0);
 }
 
