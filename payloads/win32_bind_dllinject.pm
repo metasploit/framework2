@@ -20,8 +20,8 @@ my $info =
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and inject DLL into process memory',
   'Authors'      => [
-                        'Jarkko Turkulainen <jt@klake.org> [Unknown License]',
-                        'Matt Miller <mmiller@hick.org> [Unknown License]'
+                        'Matt Miller <mmiller [at] hick.org> [Unknown License]',
+                        'Jarkko Turkulainen <jt [at] klake.org> [Unknown License]',
                     ],
   'UserOpts'     => { 'DLL' => [1, 'PATH', 'The full path the DLL that should be injected'] },
                 
