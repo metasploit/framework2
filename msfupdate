@@ -52,6 +52,8 @@ my $old = Hashit($old_data);
 my $new = Hashit($new_data);
 
 my $mod = Diff($old, $now);
+my $upx = Diff($old, $new);
+my $upd = Diff($now, $new);
 
 print "Changes since last update\n";
 print "==========================\n\n";
@@ -60,21 +62,24 @@ foreach (keys(%{$mod})) {
 }
 print "\n\n";
 
-my $upd = Diff($now, $new);
-print "Changes against update set\n";
-print "==========================\n\n";
-foreach (keys(%{$upd})) {
-    print "\t".$upd->{$_}."\t$_\n";
-}
-print "\n\n";
 
-my $upx = Diff($old, $new);
-print "Changes between old and new\n";
-print "==========================\n\n";
-foreach (keys(%{$upx})) {
-    print "\t".$upx->{$_}."\t$_\n";
+if ($new_data) {
+
+    print "Changes against update set\n";
+    print "==========================\n\n";
+    foreach (keys(%{$upd})) {
+        print "\t".$upd->{$_}."\t$_\n";
+    }
+    print "\n\n";
+
+    print "Changes between old and new\n";
+    print "==========================\n\n";
+    foreach (keys(%{$upx})) {
+        print "\t".$upx->{$_}."\t$_\n";
+    }
+    print "\n\n";
 }
-print "\n\n";
+
 sub ScanFiles {
     my $dir = shift;
     my $res;
