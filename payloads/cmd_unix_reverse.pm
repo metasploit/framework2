@@ -6,7 +6,7 @@ my $info =
 {
     Name         => 'cmd_unix_reverse',
     Version      => '1.0',
-    Description  => 'Use telnet|/bin/sh|telnet to simulate reverse shell',
+    Description  => 'Use telnet|sh|telnet to simulate reverse shell',
     Author       => 'H D Mooore <hdm[at]metasploit.com> [Artistic License]',
     Arch         => [  ],
     Priv         => 0,
