@@ -19,13 +19,43 @@ use Pex;
 
 my %UUIDS =
 (
-    'MGMT'      => "\x80\xbd\xa8\xaf\x8a\x7d\xc9\x11\xbe\xf4\x08\x00\x2b\x10\x29\x89",
-    'REMACT'    => "\xb8\x4a\x9f\x4d\x1c\x7d\xcf\x11\x86\x1e\x00\x20\xaf\x6e\x7c\x57",
-    'SYSACT'    => "\xa0\x01\x00\x00\x00\x00\x00\x00\xC0\x00\x00\x00\x00\x00\x00\x46",
+    'MGMT'      => 'afa8bd80-7d8a-11c9-bef4-08002b102989',  # v2.0
+    'REMACT'    => '4d9f4ab8-7d1c-11cf-861e-0020af6e7c57',  # v0.0
+    'SYSACT'    => '000001a0-0000-0000-c000-000000000046',  # v0.0
+    'UNK001'    => '00000136-0000-0000-c000-000000000046',  # v0.0
+    'UNK002'    => '0b0a6584-9e0f-11cf-a3cf-00805f68cb1b',  # v1.1
+    'UNK003'    => '412f241e-c12a-11ce-abff-0020af6e7a17',  # v0.2 
+    'UNK004'    => '975201b0-59ca-11d0-a8d5-00a0c90d8051',  # v1.0
+    'UNK005'    => '99fcfec4-5260-101b-bbcb-00aa0021347a',  # v1.0
+    'UNK006'    => 'b9e79e60-3d52-11ce-aaa1-00006901293f',  # v0.2
+    'UNK008'    => 'c6f3ee72-ce7e-11d1-b71e-00c04fc3111a',  # v1.0
+    'UNK009'    => 'e1af8308-5d1f-11c9-91a4-08002b14a0fa',  # v3.0
+    'UNK010'    => 'e60c73e6-88f9-11cf-9af1-0020af6e72f4',  # v2.0   
 );
 
-sub UUID { return $UUIDS{shift()} }
-sub DCEXFERSYNTAX { return "\x04\x5d\x88\x8a\xeb\x1c\xc9\x11\x9f\xe8\x08\x00\x2b\x10\x48\x60" }
+sub UUID { return UUID_to_Bin($UUIDS{shift()}) }
+sub DCEXFERSYNTAX { return UUID_to_Bin('8a885d04-1ceb-11c9-9fe8-08002b104860') } # v2
+
+sub UUID_to_Bin {
+    my $uuid = shift || return;
+    my @chunks = split(/\-/, $uuid);
+    return 
+        pack('V', hex($chunks[0])).
+        pack('v', hex($chunks[1])).
+        pack('v', hex($chunks[2])).
+        pack('n', hex($chunks[3])).
+        pack('H*',$chunks[4]);
+}
+
+sub Bin_to_UUID {
+    my $data = shift || return;
+    return sprintf("%.8x-%.4x-%.4x-%.4x-%s",
+        unpack('V', substr($data, 0, 4)),
+        unpack('v', substr($data, 4, 2)),
+        unpack('v', substr($data, 6, 2)),
+        unpack('n', substr($data, 8, 2)),
+        unpack('H*',substr($data,10, 6)));
+}
 
 sub Bind {
     return if scalar(@_) != 4;
@@ -175,7 +205,7 @@ sub DumpInterfaces {
     my $s = Pex::Socket->new();
     return if ! $s->Tcp($host, $port);
 
-    my $bind = Bind($UUIDS{'MGMT'}, '1.0', DCEXFERSYNTAX(), '2');
+    my $bind = Bind(UUID('MGMT'), '1.0', DCEXFERSYNTAX(), '2');
     $s->Send($bind);
     $res = $s->Recv(60);
     $rpc = DecodeResponse($res);
@@ -201,16 +231,8 @@ sub DumpInterfaces {
     $data = substr($data, 56);
     
     my %ints = ();
-    while (length($data) >= 20) {
-    
-        my $if = sprintf("%.8x-%.4x-%.4x-%.4x-%s",
-            unpack('V', substr($data, 0, 4)),
-            unpack('v', substr($data, 4, 2)),
-            unpack('v', substr($data, 6, 2)),
-            unpack('n', substr($data, 8, 2)),
-            unpack('H*',substr($data,10, 6))
-        );
-            
+    while (length($data) >= 20) {   
+        my $if = Bin_to_UUID($data);
         $ints{$if}=unpack('v',substr($data, 16)).".".unpack('v',substr($data, 18));
         $data = substr($data, 20);
     }
