@@ -907,9 +907,8 @@ sub ModuleList
 
 
 
-	$mList .= qq[
-<a name='Modules'><br/></a>        
-<table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' class='tblOuter'>        
+	$mList .= qq[ 
+<table align='center' cellpadding=1 border=0 cellspacing=0 width='100%' class='tblOuter'>        
 	<tr><td>
     <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' class='tblInner'>
     <tr>
@@ -931,8 +930,6 @@ sub ModuleList
 			$icons  .= "<img src='/RESOURCE?ICON=". $_ ."' border=0 alt='".$_."'> ";
 		}
 
-
-		# Row 1: Module Name + Icons
 		$mList .= "<tr>";
 		$mList .= "<td> - <a href='/". uc($mtype) ."?MODE=SELECT&MODULE=".URLEncode($ename)."'>";
 		$mList .= $mod->Name ." </a></td>";
@@ -958,27 +955,54 @@ sub ModuleInfo {
     $desc =~ s/\</\&lt;/g;
     $desc =~ s/\>/\&gt;/g;
     
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";
-    $res .= "<tr><td align='left' width=80 class='textBold'>Name:</td>";
+    $res .= "<table align='center' cellpadding=6 border=0 cellspacing=0 width='95%'>\n";
+    $res .= "<tr><td align='right' width=80 class='textBold'>Name:</td>";
 	$res .= "<td class='textNormal'>" . $module->Name() . "</td></tr>\n";
 	
     my ($rev)   = $module->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
-    $res .= "<tr><td align='left' width=80 class='textBold'>Version:</td>";
+    $res .= "<tr><td align='right' width=80 class='textBold'>Version:</td>";
 	$res .= "<td class='textNormal'>" . $rev . "</td></tr>\n";
 
     my @authors = @{$module->Authors()};
     my $author = shift(@authors);
     $author =~ s/</&lt;/g;
     $author =~ s/>/&gt;/g;
-    $res .= "<tr><td align='left' width=80 class='textBold'>Authors:</td>";
+    $res .= "<tr><td align='right' width=80 class='textBold'>Authors:</td>";
 	$res .= "<td class='textNormal'>$author</td></tr>\n";
     
 	foreach my $author (@authors) {
         $author =~ s/</&lt;/g;
         $author =~ s/>/&gt;/g;
-        $res .= "<tr><td align='left' width=80></td><td class='textNormal'>$author</td></tr>\n";
+        $res .= "<tr><td align='right' width=80>&nbsp;</td><td class='textNormal'>$author</td></tr>\n";
     }
-    
+	
+	if ($module->can('Multistage') && $module->Multistage) {
+		$res .= "<tr><td align='right' width=80 class='textBold'> Multistage:</td>";
+		$res .= "<td class='textNormal'>Yes</td></tr>\n";
+	}
+	
+	if ($module->can('Size') && $module->Size) {
+		$res .= "<tr><td align='right' width=80 class='textBold'> Size:</td>";
+		$res .= "<td class='textNormal'>".$module->Size." bytes</td></tr>\n";
+	}	
+	
+	
+	if (scalar( @{ $module->Arch } )) {
+		$res .= "<tr><td align='right' width=80 class='textBold'>Arch:</td>";
+		$res .= "<td class='textNormal'>". join(", ", @{ $module->Arch }) ."</td></tr>\n";
+	}
+		
+	if (scalar( @{ $module->OS } )) {
+		my $icons;
+		foreach ( KeysToIcons( @{ $module->OS } ) ) {
+			$icons  .= "<img src='/RESOURCE?ICON=$_' border=0 alt='$_'> ";
+		}
+		
+		$res .= "<tr><td align='right' width=80 class='textBold'>OS:</td>";
+		$res .= "<td class='textNormal'> $icons (". join(", ", @{ $module->OS }) .")</td></tr>\n";
+		
+	}
+
     $res .= "<tr><td colspan=2 class='textNormal'>";
     $res .= "<br/>$desc<br/><br/>";
 
