@@ -85,7 +85,7 @@ sub TestInterfaceDump {
     my $s = Pex::Socket->new();
     return if ! $s->Tcp($host, $port);
 
-    my $bind = Bind($UUIDS{'REMACT'}, '0.0', DCEXFERSYNTAX, '2');
+    my $bind = Bind($UUIDS{'MGMT'}, '1.0', DCEXFERSYNTAX(), '2');
     $s->Send($bind);
     $res = $s->Recv(60);
     $rpc = DecodeResponse($res);
@@ -107,7 +107,23 @@ sub TestInterfaceDump {
         return;
     }
     
-    print STDERR Pex::Utils::BufferPerl($res)."\n"; 
+    my $data = $rpc->{'StubData'};
+    $data = substr($data, 56);
+    
+    my %ints = ();
+    while (length($data) >= 20)
+    {
+        $ints{unpack('H*',substr($data, 0, 16))}=unpack('v',substr($data, 16)).".".unpack('v',substr($data, 18));
+        $data = substr($data, 20);
+    }
+  
+    foreach (keys(%ints))
+    {
+        print "$_ -> ".$ints{$_}."\n";
+    }
+    
+    
+    print STDERR Pex::Utils::BufferPerl($rpc->{'StubData'})."\n"; 
 }
 
 
