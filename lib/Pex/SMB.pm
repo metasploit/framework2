@@ -448,17 +448,8 @@ sub SMBNegotiateClear {
     $ses_res->Fill($res);
 
     my $smb_res = $STSMB->copy;
-    
-    print "length: ".$smb_res->Length."\n";
-    print "length: ".$ses_res->Get('requestLen')."\n";
-    
-    $smb_res->SetSize('request' => $ses_res->Get('requestLen') - $smb->Length);
     $smb_res->Fill($ses_res->Get('request'));
-    
-    print "length: ".$smb_res->Length."\n";
-    print "leftover: ".length($smb_res->{'LeftOver'})."\n";
-    print "request: ".length($smb_res->Get('request'))."\n";
-    
+
     if ($smb_res->Get('error_class') != 0) {
         $self->SetError('Negotiate returned NT status '.$smb_res->Get('error_class'));
         return;
@@ -469,8 +460,9 @@ sub SMBNegotiateClear {
         return;
     }
 
+    # XXX - use leftover vs request because SetSize doesn't work right here...
     my $neg_res = $STNegRes->copy;
-    $neg_res->Fill($smb_res->Get('request'));
+    $neg_res->Fill($smb_res->{'LeftOver'});
     
     
     print Pex::Utils::BufferPerl($smb_res->Get('request'))."\n";
