@@ -4,6 +4,7 @@
 ##
 #         Name: Encoder.pm
 #       Author: H D Moore <hdm [at] metasploit.com>
+#       Author: spoonm <ninjatools [at] hush.com> (new shellcode, mods)
 #      Version: $Revision$
 #      License:
 #
@@ -104,7 +105,7 @@ sub XorDecoderDword {
     if (lc($arch) eq "x86")
     {
     
-        # this xor decoder was written by spoonm[at]ghettohackers.net
+        # this xor decoder was written by spoonm <ninjatools [at] hush.com>
 	    my $smallVersion = 0;
         # Pad to a 4 byte boundary, the xor data should already be padded
         # but just incase.
@@ -163,7 +164,7 @@ sub XorDecoderDword {
     
     
     
-        # this xor decoder was written by spoonm[at]ghettohackers.net
+        # this xor decoder was written by spoonm <ninjatools [at] hush.com>
 	    my $smallVersion = 0;
         # Pad to a 4 byte boundary, the xor data should already be padded
         # but just incase.
@@ -235,7 +236,7 @@ sub XorDecoderDwordFnstenv {
     my ($arch, $xor, $len) = @_;
     if(! $len) { $len = 0x200 }
 
-    # this xor decoder was written by spoonm[at]ghettohackers.net
+    # this xor decoder was written by spoonm <ninjatools [at] hush.com>
     if (lc($arch) eq "x86")
     {
 	my $smallVersion = 0;

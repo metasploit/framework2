@@ -4,7 +4,7 @@
 ##
 #         Name: Utils.pm
 #       Author: H D Moore <hdm [at] metasploit.com>
-#       Author: spoonm <spoonm [at] ghettohackers.net>
+#       Author: spoonm <ninjatools [at] hush.com>
 #      Version: $Revision$
 #      License:
 #
