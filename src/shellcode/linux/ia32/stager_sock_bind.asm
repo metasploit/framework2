@@ -78,5 +78,7 @@ read:
 	jmp  ecx
 
 %else
+	%ifdef FD_REG_EDI
 	mov  edi, ebx
+	%endif
 %endif

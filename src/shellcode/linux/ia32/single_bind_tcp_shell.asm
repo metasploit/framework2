@@ -17,9 +17,12 @@
 ;;
 BITS   32
 
-%include "generic.asm"
-
 %define  USE_SINGLE_STAGE 1
+%define  FD_REG_EBX
+%define  ASSUME_REG_EAX   0
+%define  ASSUME_REG_EDX   0
+
+%include "generic.asm"
 %include "stager_sock_bind.asm"
 
 shell:

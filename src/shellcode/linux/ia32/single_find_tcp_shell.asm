@@ -17,9 +17,10 @@
 ;;
 BITS   32
 
-%include "generic.asm"
 
 %define  USE_SINGLE_STAGE 1
+
+%include "generic.asm"
 %include "stager_sock_find.asm"
 
 shell:
