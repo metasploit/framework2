@@ -314,8 +314,8 @@ sub Check {
 
 sub Exploit {
   my $self = shift;
-  my $exploit = $self->GetTempEnv('_Exploit');
-  my $payload = $self->GetTempEnv('_Payload');
+  my $exploit = $self->ModuleName($self->GetTempEnv('_Exploit'))->new;
+  my $payload = $self->ModuleName($self->GetTempEnv('_Payload'))->new;
   my $payloadName = $self->GetTempEnv('_PayloadName');
 
   if($exploit->Payload && !defined($payloadName)) {
@@ -358,59 +358,30 @@ sub Exploit {
     $self->SetTempEnv('EncodedPayload', $encodedPayload);
   }
 
-  my $handler = Msf::HandlerCLI->new();
-  
-  my ($pHandler, $cHandler);
-  if($payload && $handler->can($payload->Type)) {
-    $pHandler = $payload->Type;
-    $cHandler = $pHandler . "_exp";
-    # create the link between the child and parent processes
-    if($handler->can($pHandler) && $handler->can($cHandler)) {
-      my ($cSock, $pSock);
-      $self->SetTempEnv('HANDLER', $handler);
-      $self->SetTempEnv('HCFUNC',  $cHandler);
-      $self->PrintDebugLine(3, 'Creating link between child and parent process.');
 
-      if(!socketpair($cSock, $pSock, AF_UNIX, SOCK_STREAM, PF_UNSPEC)) {
-        $self->PrintLine("[*] socketpair error: $!");
-        return;
-      }     
-      $self->SetTempEnv('HCSOCK', $cSock);
-      $self->SetTempEnv('HPSOCK', $pSock);
-    }
+#fixme
+  if(!defined($payload)) {
+    $exploit->Exploit;
   }
-
-  my $child = fork();
-
-  # Parent
-  if($child) {
-    if($exploit->Payload) {
-      if($pHandler) {
-        $self->PrintDebugLine(1, "[*] Starting handler $pHandler");
-        my $res = $handler->$pHandler($child);
-        kill('TERM', $child);
-
-        if($handler->Error) {
-          $self->PrintLine('Handler error: ' . $handler->Error);
-        }
-      }
-      else {
-        $self->PrintDebugLine(1, '[*] No handler for payload type: ' . $payload->Type);
-      }
-    }
-    while(waitpid($child, WNOHANG) == 0) {
-      sleep(1);
-    }
-  }
-  # Child
   else {
-    select(undef, undef, undef, 0.5);
-    $exploit->Exploit; 
-    exit(0);
+    $payload->SetupHandler;
+    return if($payload->PrintError);
+
+    my $child = fork();
+    if($child) {
+      $payload->ChildPid($child);
+      $payload->ParentHandler;
+    }
+    else {
+      $exploit->Exploit;
+      sleep(1);
+      exit(0);
+    }
   }
+
+
   print "\n";
 
-  # End of the ride
   return;
 }
 

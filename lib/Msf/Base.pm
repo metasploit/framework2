@@ -378,7 +378,13 @@ sub MergeHash {
 
 sub SelfName {
   my $self = shift;
-  my ($name) = split('=HASH', $self);
+  return($self->ModuleName($self));
+}
+
+sub ModuleName {
+  my $self = shift;
+  my $module = shift;
+  my ($name) = split('=HASH', $module);
   return($name);
 }
 
