@@ -174,7 +174,7 @@ CHECK:
       }
       if(!$valid) {
         # OS is not in payload
-        $self->PrintDebugLine(3, $payload->Name . " failed, didn't match OS");
+        $self->PrintDebugLine(3, $payload->SelfEndName . " failed, didn't match OS");
         next CHECK;
       }
     }
@@ -187,7 +187,7 @@ CHECK:
       }
       if(!$valid) {
         # Arch is not in payload
-        $self->PrintDebugLine(3, $payload->Name . " failed, didn't match Arch");
+        $self->PrintDebugLine(3, $payload->SelfEndName . " failed, didn't match Arch");
         next CHECK;
       }
     }
@@ -198,7 +198,7 @@ CHECK:
     # the process doesn't have a valid heap (hdm)
 #    foreach my $key (@{$exploit->Keys}) {
 #      if(!scalar(grep { $_ eq $key } @{$payload->Keys})) {
-#        $self->PrintDebugLine(3, $payload->Name . " failed, keys do not match");
+#        $self->PrintDebugLine(3, $payload->SelfEndName . " failed, keys do not match");
 #        next CHECK;
 #      }
 #    }
@@ -215,18 +215,18 @@ CHECK:
       $payload->Keys,
       $exploit->PayloadKeysType)) {
 
-      $self->PrintDebugLine(3, $payload->Name . " failed key check");
+      $self->PrintDebugLine(3, $payload->SelfEndName . " failed key check");
       next CHECK;
     }
     
     if($exploit->Priv < $payload->Priv) {
-      $self->PrintDebugLine(3, $payload->Name . " failed, payload needs more priviledge than exploit provides");
+      $self->PrintDebugLine(3, $payload->SelfEndName . " failed, payload needs more priviledge than exploit provides");
       next CHECK;
     }
 
     #fixme Eventually we should also factor in the Encoder Size, even though we will catch it in Encode
     if($exploit->PayloadSpace < $payload->Size) {
-      $self->PrintDebugLine(3, $payload->Name . " failed, payload is too large for exploit, Exploit: " . $exploit->PayloadSpace . " Payload: " . $payload->Size);
+      $self->PrintDebugLine(3, $payload->SelfEndName . " failed, payload is too large for exploit, Exploit: " . $exploit->PayloadSpace . " Payload: " . $payload->Size);
       next CHECK;
     }
 
