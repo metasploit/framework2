@@ -334,7 +334,7 @@ sub Recv {
     if(!$ready) {
       $self->SetError("Timeout $timeout reached.");
       $self->SetError("Socket disconnected.") if(!$self->GetSocket->connected);
-      return;
+      return($data);
     }
 
     # We gotz data y0
@@ -349,7 +349,7 @@ sub Recv {
       if(!length($tempData)) {
         if($timeout && !--$sslEmptyRead) {
           $self->SetError('Dry ssl read, out of tries');
-          return;
+          return($data);
         }
         select(undef, undef, undef, .1);
         next;
