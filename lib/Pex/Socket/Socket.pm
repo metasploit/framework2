@@ -220,7 +220,7 @@ sub Recv {
   my $length = shift;
   my $timeout = @_ ? shift : $self->RecvTimeout;
 
-  return if($self->GetError);
+  return if($self->IsError);
   return if($self->SocketError(1));
 
   my $data;
@@ -311,7 +311,7 @@ sub _DoRecv {
   my $length = shift;
   my $trys = shift;
   my $data;
-  $self->Socket->recv($data, $length);
+  eval { $self->Socket->recv($data, $length); };
   $self->SetError('Socket disconnected') if(!length($data));
   return($data);
 }
@@ -320,10 +320,12 @@ sub RecvLine {
   my $self		= shift;
   my $timeout	= @_ ? shift() : 10;
   my $timelim	= time() + $timeout;
-  my $data;
+  my $data      = $self->RemoveBuffer;
   
   while ( index($data, "\n") == -1 && time() < $timelim ) {
-  	if (defined(my $buff = $self->Recv(1, 1))) {
+    
+    # Read in 512 byte blocks and stuff extra data back as needed
+  	if (defined(my $buff = $self->Recv(512, 0.25))) {
 		$data .= $buff;
 	}
 	
@@ -331,8 +333,17 @@ sub RecvLine {
     last if($self->SocketError(1));
   }
 
-  if ( index($data, "\n") > -1 ) {
-  	return $data;
+  my $idx = index($data, "\n");
+  if ( $idx > -1 ) {
+    # Separate our line from the rest of the buffer
+    my $line = substr($data, 0, $idx + 1);
+	
+    # Stuff the rest of the data back into the recv buffer
+    my $buff = substr($data, $idx + 1);
+    $self->AddBuffer($buff) if $buff;
+	
+    # Return the line of data including the new-line
+    return $line;
   }
   
   # rebuffer the data if no new-line was found
@@ -375,4 +386,3 @@ sub RecvLineMulti {
 }
 
 1;
-
