@@ -218,6 +218,7 @@ sub TcpConnectSocket {
   my $sock;
   if ($proxies) {
     $sock = $self->ConnectProxies($host, $port);
+    return if ! $sock;
   } 
   else {
     my %config = (
@@ -228,11 +229,11 @@ sub TcpConnectSocket {
     );
     $config{'LocalPort'} = $localPort if($localPort);
     $sock = IO::Socket::INET->new(%config);  
-  }
-
-  if(!$sock || !$sock->connected) {
-    $self->SetError('Connection failed: ' . $!);
-    return;
+ 
+    if(!$sock || !$sock->connected) {
+      $self->SetError('Connection failed: ' . $!);
+      return;
+    }
   }
 
   return($sock)
@@ -493,10 +494,20 @@ sub ConnectProxies {
         
         if ($lastproxy->[0] eq 'socks4') {
             $sock->send("\x04\x01".pack('n',$proxy->[2]).gethostbyname($proxy->[1])."\x00");
-            $sock->recv(my $res, 8); # response always 8 bytes?
+            $sock->recv(my $res, 8);
+            if ($res && ord(substr($res,1,1)) != 90) {
+                # socks server denied our request :(
+                $sock->close;
+                $self->SetError("Socks server at $lastproxy->[1] denied our request");
+                return;
+            }
         }
         
-        return undef if ! $sock->connected;
+        if (! $sock->connected) {
+            $self->SetError("Proxy server type $lastproxy->[0] at $lastproxy->[1] closed connection");
+            return;
+        }
+        
         last if $proxy->[0] eq 'final';
         $lastproxy = $proxy;
     }
