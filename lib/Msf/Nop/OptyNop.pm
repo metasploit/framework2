@@ -19,6 +19,7 @@ use Pex::Text;
 # This is a synthetic weight to try to get more of these... the higher it
 # goes the more complicated instructions you should get, but also slower!
 my $synWeight = 3;
+my $synWeightJmp = 4;
 
 # Make sure to tune w/ bigger sleds, small sleds are hard to get complex
 # instructions for anyway...
@@ -658,6 +659,7 @@ sub _InsHandlerJmp {
     return(0);
   }
   elsif($type == 1) {
+    return(0) if(int(rand($synWeightJmp)) != 0);
     my $byte = substr($data, $pos, 1);
 
     return(1) if(ord($byte) == 0xff);
