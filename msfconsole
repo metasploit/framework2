@@ -225,6 +225,14 @@ sub eSet {
             print "$_: " . $ui->GetTempEnv($_) . "\n";
         }
     }
+    
+    my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
+    if ($ui->GetTempEnv('PAYLOAD'))
+    {
+        $prompt .= '('.$ui->GetTempEnv('PAYLOAD').')';
+    }
+    $prompt .= ' > ';
+    $console->_prompt($prompt);
 }
 
 sub eUnset
@@ -303,9 +311,16 @@ sub gUse
     $state->{'Exploit'}->{'Exploit'} = $exploit;
     $state->{'Exploit'}->{'Name'} = $args[0];
     $state->{'Exploit'}->{'Payloads'} = xValidPayloads($exploit);
-    
-    $console->_prompt("msf $args[0] > ");
+
     $ui->LoadTempEnv($args[0]);
+    
+    my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
+    if ($ui->GetTempEnv('PAYLOAD'))
+    {
+        $prompt .= '('.$ui->GetTempEnv('PAYLOAD').')';
+    }
+    $prompt .= ' > ';
+    $console->_prompt($prompt);
 }
 
 sub eBack
