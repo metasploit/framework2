@@ -151,7 +151,6 @@ sub crypt
 
 	for ($offset = 0; $offset < $length; $offset += 4)
 	{
-		#my $chunk = substr($buffer, $offset, 4);
 		my $chunk = substr($buffer, $offset);
 
 		# Pad nulls 

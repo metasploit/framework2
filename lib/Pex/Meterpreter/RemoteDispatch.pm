@@ -229,11 +229,21 @@ sub requestCoreChannelWrite
 		goto out;
 	}
 
-	# Write the supplied buffer to our local channel buffer
-	$$channel->writeToLocal(
-			buffer => $data,
-			length => length($data));
+	my $interactive = $client->getInteractiveChannel();
 
+	if (defined($interactive) and ($$interactive == $$channel))
+	{
+		$client->writeConsoleOutput(
+				text => $data);
+	}
+	else
+	{
+		# Write the supplied buffer to our local channel buffer
+		$$channel->writeToLocal(
+				buffer => $data,
+				length => length($data));
+	}
+	
 out:
 	return 1;
 }
