@@ -232,12 +232,10 @@ input.button {
 #CommandBarList li {
 	list-style: 	none;
 	margin: 		0;
-	padding:		1em 1em 1em 1em;
 	display: 		inline;
 }
 
 #CommandBarList li a {
-	padding: 		0px 0px 0px 0px
 }
 
 #CommandBarList li a:hover {
