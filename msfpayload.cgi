@@ -196,9 +196,6 @@ sub DisplayPayloads {
                          $payloads->{$p}->Description . $query->end_form);
     }
     print "</table><br>";
-    
-    print "<center><input type='submit' value='Select Payload'><br></center>\n";
-    print $query->end_form;
 }
 
 sub PrintRow {
