@@ -8,7 +8,7 @@ sub load {
 my $info =
 {
     'Name'         => 'winexec',
-    'Version'      => '2.0',
+    'Version'      => '1.0',
     'Description'  => 'Execute an arbitrary command',
     'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
     'Arch'         => [ 'x86' ],
@@ -32,11 +32,11 @@ sub new {
 sub Size {
     my $self = shift;
     $self->{WinExecCmd} = $self->GetVar('CMD');
-    return $self->SUPER::Size($self);
+    return $self->SUPER::Size;
 }
 
 sub Build {
     my $self = shift;
     $self->{WinExecCmd} = $self->GetVar('CMD');
-    return $self->SUPER::Build($self);
+    return $self->SUPER::Build;
 }
