@@ -39,7 +39,7 @@ sub Encode
     }
     
     my $xordat = XorDword($xorkey, $rawshell);
-    my $encode = XorDecoderDword("x86", $xorkey, length($xordat), $xbadc);
+    my $encode = XorDecoderDword($xorkey, length($xordat), $xbadc);
 
     my $shellcode = $encode . $xordat;
 
@@ -184,7 +184,7 @@ sub EncodeAlphaNum {
 # at the moment, but tend to meet the needs of most exploits.
 #
 
-sub XorDecoderDword {
+sub XorDecoderDwordAntiIds {
     my ($arch, $xor, $len, $xbadc) = @_;
     if(! $len) { $len = 0x200 }
 
@@ -202,6 +202,7 @@ sub XorDecoderDword {
         my $xorlen = pack("L", $loopCounter);
         my $xorkey = pack("L", $xor);
         
+
         # this anti-0xff encoder written by hdm [at] metasploit.com
         if (index($xbadc, "\xff") != -1)
         {
@@ -247,57 +248,46 @@ sub XorDecoderDword {
             }
             
             # Fuck!
-        } 
-    
-    
-    
-        # this xor decoder was written by spoonm <ninjatools [at] hush.com>
-	    my $smallVersion = 0;
-        # Pad to a 4 byte boundary, the xor data should already be padded
-        # but just incase.
-        my $loopCounter = int(($len - 1) / 4) + 1;
-        $loopCounter *= -1;
-
-        my $xorlen = pack("L", $loopCounter);
-        my $xorkey = pack("L", $xor);
-
-        # If encoded data is small enough, use the single byte sub version
-        if($loopCounter >= -128) {
-            $smallVersion = 1;
-            $xorlen = substr($xorlen, 0, 1);
         }
+    }
+}
 
 
+sub XorDecoderDword {
+  my $xor = shift;
+  my $len = shift;
+  my $xorkey = pack('L', $xor);
+  my $l = PackLength($len);
 
   # spoon's smaller variable-length encoder
   my $decoder;
-  if($smallVersion) {
+  if($l->{'negSmall'}) {
     # 26 bytes
     $decoder =
-      "\xeb\x13".                   # jmp SHORT 0x15 (xor_end)
-      "\x5e".                       # xor_begin: pop esi
-      "\x31\xc9".                   # xor ecx,ecx
-      "\x83\xe9". $xorlen .         # sub ecx, BYTE -xorlen
-      "\x81\x36". $xorkey .         # xor_xor: xor DWORD [esi],xorkey
-      "\x83\xee\xfc".               # sub $esi,-4
-      "\xe2\xf5".                   # loop 0x8 (xor_xor)
-      "\xeb\x05".                   # jmp SHORT 0x1a (xor_done)
-      "\xe8\xe8\xff\xff\xff";       # xor_end: call 0x2 (xor_begin)
-                                    # xor_done:
+      "\xeb\x13".                         # jmp SHORT 0x15 (xor_end)
+      "\x5e".                             # xor_begin: pop esi
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x83\xe9". $l->{'negLengthByte'} . # sub ecx, BYTE -xorlen
+      "\x81\x36". $xorkey .               # xor_xor: xor DWORD [esi],xorkey
+      "\x83\xee\xfc".                     # sub $esi,-4
+      "\xe2\xf5".                         # loop 0x8 (xor_xor)
+      "\xeb\x05".                         # jmp SHORT 0x1a (xor_done)
+      "\xe8\xe8\xff\xff\xff";             # xor_end: call 0x2 (xor_begin)
+                                          # xor_done:
   }
   else {
     # 29 bytes
     $decoder =
-      "\xeb\x16".                   # jmp SHORT 0x18 (xor_end)
-      "\x5e".                       # xor_begin: pop esi
-      "\x31\xc9".                   # xor ecx,ecx
-      "\x81\xe9". $xorlen .         # sub ecx, -xorlen
-      "\x81\x36". $xorkey .         # xor_xor: xor DWORD [esi],xorkey
-      "\x83\xee\xfc".               # sub $esi,-4
-      "\xe2\xf5".                   # loop 0xb (xor_xor)
-      "\xeb\x05".                   # jmp SHORT 0x1d (xor_done)
-      "\xe8\xe5\xff\xff\xff";       # xor_end: call 0x2 (xor_begin)
-                                    # xor_done:
+      "\xeb\x16".                         # jmp SHORT 0x18 (xor_end)
+      "\x5e".                             # xor_begin: pop esi
+      "\x31\xc9".                         # xor ecx,ecx
+      "\x81\xe9". $l->{'negLength'} .     # sub ecx, -xorlen
+      "\x81\x36". $xorkey .               # xor_xor: xor DWORD [esi],xorkey
+      "\x83\xee\xfc".                     # sub $esi,-4
+      "\xe2\xf5".                         # loop 0xb (xor_xor)
+      "\xeb\x05".                         # jmp SHORT 0x1d (xor_done)
+      "\xe8\xe5\xff\xff\xff";             # xor_end: call 0x2 (xor_begin)
+                                          # xor_done:
   }
     # hdm's old encoder
     #        my $decoder =
@@ -316,7 +306,7 @@ sub XorDecoderDword {
 # w00t http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0096.html
 # This is useful if you have a BadChar of say 0xff, and your payload is small (or insanely large)
 # enough to not have 0xff in your payload, which is realistic (<= 512 && > 4)
-sub XorDecoderDwordFnstenv {
+sub XorDecoderDwordFnstenvSub {
   my $xorkey = pack('L', shift());
   my $l = PackLength(shift());
 
