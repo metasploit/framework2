@@ -61,6 +61,7 @@ sub ParentHandler {
       }
       $self->KillChild;
       $killedChild = 1;
+      $self->LoadConsole;
       $self->HandleConnection;
       $self->HandleConsole;
       last;

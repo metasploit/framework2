@@ -16,11 +16,16 @@ sub _Import {
   }
 }
 
-sub HandleConsole {
+sub LoadConsole {
   my $self = shift;
   my $console = $self->GetVar('_Console');
   $console = 'Msf::PayloadComponent::TextConsole' if(!$console);
   __PACKAGE__->_Import($console);
+}
+
+sub HandleConsole {
+  my $self = shift;
+  $self->LoadConsole;
   $self->_HandleConsole;
 }
 
