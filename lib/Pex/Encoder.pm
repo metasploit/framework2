@@ -717,7 +717,9 @@ LOOP:
 }
 
 sub XorDwordFeedback {
-  my ($xor, $buffer) = @_;
+  my $xor = shift;
+  my $buffer = shift;
+  my $pack = @_ ? shift : 'V';
   my $res;
 
 #  printf("New xor key 0x%08x $xor\n", $xor);
@@ -726,7 +728,7 @@ sub XorDwordFeedback {
     my $chunk = substr($buffer, $c, 4);
     my $spacing = 4 - length($chunk);
     $chunk .= "\x00" x $spacing;
-    my $clean = unpack('V', $chunk);
+    my $clean = unpack($pack, $chunk);
     $chunk = $clean ^ $xor;
     $xor = DWordAdd($xor, $clean);
 #    printf("New xor key 0x%08x $xor\n", $xor);
