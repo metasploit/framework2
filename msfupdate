@@ -92,7 +92,7 @@ if ($opts{u}) {
         }
     }
     
-    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/.current");
+    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current/.current");
 }
 
 $now = Hashit($now_data);
@@ -197,8 +197,6 @@ foreach my $entry (keys(%{$upd})) {
 print "\n";
 
 exit(0) if $opts{s};
-
-
 
 if (! $opts{a}) {
     print "Continue? (yes or no) ";
