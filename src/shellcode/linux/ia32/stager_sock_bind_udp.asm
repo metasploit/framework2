@@ -61,5 +61,9 @@ recv:
 	                      ; edi for fd
 	jmp  ecx
 %else
-	mov  edi, ebx
+	%ifdef FD_REG_EBX
+	pop  ebx
+	%else
+	pop  edi
+	%endif
 %endif

@@ -63,7 +63,7 @@ dup:
 	pop  ecx
 dup_loop:
 %if ASSUME_REG_EAX == 0
-	mov  al, 0xb
+	mov  al, 0x3f
 %else
 	push byte 0x3f
 	pop  eax
