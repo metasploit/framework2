@@ -41,7 +41,6 @@ my %jmps =
         "\xff\xe2" => ["edx", "jmp" ],
         "\xff\xd3" => ["ebx", "call"],
         "\xff\xe3" => ["ebx", "jmp" ],
-        "\xff\xd4" => ["esp", "call"],
         "\xff\xe4" => ["esp", "jmp" ],
         "\xff\xd5" => ["ebp", "call"],
         "\xff\xe5" => ["ebp", "jmp" ],
