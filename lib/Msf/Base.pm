@@ -9,7 +9,7 @@ use Msf::Nop;
 use Msf::EncodedPayload;
 use File::Spec::Functions;
 
-my $envDebug = 0;
+my $envDebug = 1;
 
 sub new {
   my $class = shift;

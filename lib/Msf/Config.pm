@@ -7,7 +7,7 @@ use FindBin qw{$Bin};
 my $defaults = {
   'Encoder' => 'Msf::Encoder::Pex',
   'Nop'     => 'Msf::Nop::Pex',
-  'DebugLevel' => 0,
+  'DebugLevel' => 5,
   'Logging' => 'Enabled',
 };
 
@@ -80,7 +80,6 @@ sub LoadConfig {
                     # T     Msf::Exploit::NastyRemoteOverflow=Var   Value
                     if ($eType eq "T" && $eName =~ /^([^\=]*)=(.*)/) 
                     {
-                        print STDERR "Setting $1 = $2 = $eValue\n";
                         $tmpenv->{$1}->{$2} = $eValue;
                     }
                 }
