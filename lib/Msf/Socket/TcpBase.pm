@@ -23,7 +23,6 @@ sub Init {
   $self->_PexCall('Init');
   my $proxies = $self->GetVar('Proxies');
   if ($proxies) {
-    print "Proxies $proxies\n";
     foreach (split(',', $proxies)) {
       $self->AddProxy(split(':', $_));
       return if($self->IsError);
