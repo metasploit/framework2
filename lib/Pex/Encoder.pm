@@ -115,7 +115,7 @@ sub XorDecoderDword {
         my $xorlen = pack("L", $loopCounter);
         my $xorkey = pack("L", $xor);
         
-        # this anti-0xff encoder written by hdm[at]metasploit.com
+        # this anti-0xff encoder written by hdm [at] metasploit.com
         if (index($xbadc, "\xff") != -1)
         {
 
@@ -293,7 +293,7 @@ sub XorDecoderWord {
     my ($arch, $xor, $len) = @_;
     if(! $len) { $len = 0x200 }
 
-    # this xor decoder was written by hdm[at]metasploit.com
+    # this xor decoder was written by hdm [at] metasploit.com
     if (lc($arch) eq "x86")
     {
         my $div = $len / 2;
@@ -325,7 +325,7 @@ sub XorDecoderByte {
     my ($arch, $xor, $len) = @_;
     if(! $len) { $len = 0x200 }
 
-    # this xor decoder was written by hdm[at]metasploit.com
+    # this xor decoder was written by hdm [at] metasploit.com
     if (lc($arch) eq "x86")
     {
         $len = pack("S", 0xffff - $len);

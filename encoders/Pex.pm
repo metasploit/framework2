@@ -6,7 +6,7 @@ use Pex::Encoder;
 my $info = {
   'Name'  => 'Pex Double Word Xor Encoder',
   'Version'  => '1.0',
-  'Author'  => 'H D Mooore <hdm[at]metasploit.com> spoonm <ninjatools [at] hush.com> [Artistic License]',
+  'Author'  => 'H D Moore <hdm [at] metasploit.com> spoonm <ninjatools [at] hush.com> [Artistic License]',
   'Arch'  => [ 'x86' ],
   'OS'    => [ ],
   'Desc'  =>  'Pex Double Word Xor Encoder',
