@@ -98,6 +98,7 @@ sub EncodeFnstenv
 sub EncodeAlphaNum {
     my ($rawshell, $xbadc) = @_;
     my $type = shift;
+    my $prepend = "";
     
     if (! $type)
     {
@@ -111,16 +112,9 @@ sub EncodeAlphaNum {
 
     }
 
-    if (! exists($baseaddr{$type}))
-    {
-        print "Encoder failed: invalid type specified\n";
-        return;
-    }
-
     # the decoder in all its glory (hardcoded for 9 byte baseaddr)
     my $decoder = 'VTX630VX4A0B6HH0B30BCVX2BDBH4A2AD0ADTBDQB0ADAVX4Z8BDJOM';
     my $encoded;
-    my $prepend;
     
     my $allowed = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXY";
     
@@ -144,7 +138,13 @@ sub EncodeAlphaNum {
     $baseaddr{'[esp]'}  = 'OZJJJJJRY';
     $baseaddr{'win32'}  = $baseaddr{'ecx'};
 
-    my $win32getpc = 'VTX630VXH49HHHPhYAAQhZYYYYAAQQDDDd36FFFFTXVj0PPTUPPa301089'
+    if (! exists($baseaddr{$type}))
+    {
+        print "Encoder failed: invalid type specified\n";
+        return;
+    }
+
+    my $win32getpc = 'VTX630VXH49HHHPhYAAQhZYYYYAAQQDDDd36FFFFTXVj0PPTUPPa301089';
     
     if ($type eq 'win32' && ! Pex::Utils::CharsInBuffer($baseaddr{'win32'}.$win32getpc, $xbadc))
     {
@@ -176,7 +176,7 @@ sub EncodeAlphaNum {
         $encoded .= $nibL . $nibH;
     }
     $encoded .= "Z";
-    return($encoded);
+    return($prepend.$encoded);
 }
 
 #
@@ -438,9 +438,9 @@ sub XorDecoderByte {
 
 
 #
-# These routines take a buffer and xor encodes it with the given
-# given key value. The data is aligned to keysize blocks
-# and padded with xor'd null values (to prevent pad ^ key problems)
+# These routines take a buffer and xor encodes it with the given key
+# value. The data is aligned to keysize blocks and padded with xor'd
+# null values (to prevent pad ^ key problems)
 #
 
 sub XorDword {
@@ -533,6 +533,7 @@ sub XorKeyScanDword
                 for my $iD (1 .. 255)
                 {
                     next if (exists($lu[3]->{$iD}) || $avh{$iD});
+                    print STDERR "XorKeySCan: returning $iA $iB $iC $iD\n";
                     return unpack("L", pack("CCCC", $iA, $iB, $iC, $iD));
                 }
             }
