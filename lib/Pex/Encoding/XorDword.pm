@@ -146,7 +146,6 @@ sub _Check {
 
 sub _UnitTest {
   my $class = shift;
-  my $class = $class->new;
 
   my $string = "\x00\x01\x02AABBCCDD";
   my $badChars = "\x00A";
