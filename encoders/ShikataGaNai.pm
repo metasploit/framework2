@@ -29,6 +29,11 @@ sub new {
 
 sub EncodePayload {
   my $self = shift;
+  return($self->_EncodeSelfEnd(@_));
+}
+
+sub _EncodeSelfEnd {
+  my $self = shift;
   my $rawshell = shift;
   my $badChars = shift;
 
@@ -97,30 +102,30 @@ sub _BuildBM {
   my $loopXor = $bmb->new('loopBlock');
 
   $loopXor->AddBlock(
-    "\x31\x43[>1 chr(:end: - :fpu:)<]".     # xor [ebx+0x1b], eax
-    "\x03\x43[>1 chr(:end: - :fpu:)<]".     # add eax, [ebx+0x18]
+    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]".     # xor [ebx+0x1b], eax
+    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]".     # add eax, [ebx+0x18]
     "\x83\xeb\xfc",                         # sub ebx,-4
 
-    "\x31\x43[>1 chr(:end: - :fpu:)<]".     # xor [ebx+0x1b], eax
+    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]".     # xor [ebx+0x1b], eax
     "\x83\xeb\xfc".                         # sub ebx,-4
-    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]", # add eax, [ebx+0x18]
+    "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
 
     "\x83\xeb\xfc".                         # sub ebx,-4
-    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]". # xor [ebx+0x1b], eax
-    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]", # add eax, [ebx+0x18]
+    "\x31\x43[>1 chr(:end: - :fpu: - 8)<]". # xor [ebx+0x1b], eax
+    "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
 
 
-    "\x31\x43[>1 chr(:end: - :fpu:)<]".     # xor [ebx+0x1b], eax
-    "\x03\x43[>1 chr(:end: - :fpu:)<]".     # add eax, [ebx+0x18]
+    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]".     # xor [ebx+0x1b], eax
+    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]".     # add eax, [ebx+0x18]
     "\x83\xc3\x04",                         # add ebx, 4
 
-    "\x31\x43[>1 chr(:end: - :fpu:)<]".     # xor [ebx+0x1b], eax
+    "\x31\x43[>1 chr(:end: - :fpu - 4:)<]".     # xor [ebx+0x1b], eax
     "\x83\xc3\x04".                         # add ebx, 4
-    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]", # add eax, [ebx+0x18]
+    "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
 
     "\x83\xc3\x04".                         # add ebx, 4
-    "\x31\x43[>1 chr(:end: - :fpu: - 4)<]". # xor [ebx+0x1b], eax
-    "\x03\x43[>1 chr(:end: - :fpu: - 4)<]", # add eax, [ebx+0x18]
+    "\x31\x43[>1 chr(:end: - :fpu: - 8)<]". # xor [ebx+0x1b], eax
+    "\x03\x43[>1 chr(:end: - :fpu: - 8)<]", # add eax, [ebx+0x18]
   );
 
   my $loop = $bmb->new('loopIns', "\xe2\xf5[>0 end<]");# loop xor_xor
