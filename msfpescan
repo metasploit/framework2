@@ -23,6 +23,7 @@ use strict;
 use lib "$Bin/lib";
 use Pex::PEInfo;
 use Pex;
+use Pex::Nasm::Ndisasm;
 
 my $VERSION = '$Revision$';
 
@@ -70,7 +71,7 @@ my %pops =
 getopts("f:d:j:sx:a:B:A:I:nhv", \%opts);
 Usage()   if($opts{'h'});
 Version() if($opts{'v'});
-if ($opts{'h'} || (! defined($opts{'f'}) && ! defined($opts{'d'})) || (! defined($opts{'j'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { usage(); exit(0); }
+if ($opts{'h'} || (! defined($opts{'f'}) && ! defined($opts{'d'})) || (! defined($opts{'j'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { Usage(); exit(0); }
 
 my $func;
 my $args = { };
@@ -205,17 +206,18 @@ sub hexOutput {
   my $data = shift;
   my $string = unpack('H*', $data);
   if($opts{'n'}) {
-    my $tempString = $string;
-    $tempString =~ s/(..)/\\x$1/g;
+#    my $tempString = $string;
+#    $tempString =~ s/(..)/\\x$1/g;
     $string .= "\n--- ndisasm output ---\n";
-    $string .= `echo -ne "$tempString" | ndisasm -u /dev/stdin`;
+#    $string .= `echo -ne "$tempString" | ndisasm -u /dev/stdin`;
+    $string .= Pex::Nasm::Ndisasm->DisasData($data);
     $string .= "--- ndisasm output ---";
   }
   return($string);
 }
 
 
-sub usage 
+sub Usage 
 {
     print STDERR
 qq{  Usage: $0 <input> <mode> <options>
@@ -234,6 +236,7 @@ Options:
          -n           Print ndisasm output of data
 
 };
+  exit(0);
 
 }
 sub Version {
