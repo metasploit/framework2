@@ -23,7 +23,7 @@ sub ChildHandler {
 
   $ready[0]->send("echo ABCDE \r\n");
 
-  my @ready = $selector->can_read(.5);
+  @ready = $selector->can_read(.5);
 
   goto DONE if(!@ready);
 
