@@ -126,7 +126,10 @@ sub DumpExploitSummary {
   $output .=   "\n";
   
   $output .=   "Provided By:\n";
-  $output .=   "    " . $exploit->Author . "\n\n";
+  foreach (@{$exploit->Authors}) {
+    $output .= "    $_\n";
+  }
+  $output .= "\n";
   
   $output .=   "Available Targets:\n";
   foreach ($exploit->TargetsList) { $output .= "    " . $_ . "\n" }
@@ -164,7 +167,10 @@ sub DumpPayloadSummary {
     $output .= "\n";
     
     $output .= "Provided By:\n";
-    $output .= "    " . $p->Author . "\n\n";
+    foreach (@{$p->Authors}) {
+      $output .= "    $_\n";
+    }
+    $output .= "\n";
     
     $output .= "Available Options:\n";
     my %mopts = %{$p->UserOpts};

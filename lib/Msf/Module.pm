@@ -23,7 +23,7 @@ my $defaults =
 {
   'Name'        => 'No Name',
   'Version'     => '0.0',
-  'Author'      => 'No Author',
+  'Authors'     => [ 'No Author' ],
   'Arch'        => [ ],
   'OS'          => [ ],
   'Keys'        => [ ],
@@ -76,7 +76,7 @@ sub Info {
 # Generic Accessors
 sub Name        { my $self = shift; return($self->Info->{'Name'}); }
 sub Version     { my $self = shift; return($self->Info->{'Version'}); }
-sub Author      { my $self = shift; return($self->Info->{'Author'}); }
+sub Authors     { my $self = shift; return($self->Info->{'Authors'}); }
 sub Arch        { my $self = shift; return($self->Info->{'Arch'}); }
 sub OS          { my $self = shift; return($self->Info->{'OS'}); }
 sub Keys        { my $self = shift; return($self->Info->{'Keys'}); }

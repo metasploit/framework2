@@ -286,9 +286,20 @@ sub ExploitSummary
     $res = "<table align='center' padding=4 border=0 cellspacing=0 width=600>\n";
     
     
-    foreach my $item (qw(Name Author Version))
+    foreach my $item (qw(Name Version))
     {
         $res .= "<tr><td align='left' width=80><b>$item:</b></td><td>" . $x->$item() . "</td></tr>\n";
+    }
+
+    my @authors = @{$x->Authors()};
+    my $author = shift(@authors);
+    $author =~ s/</&lt;/g;
+    $author =~ s/>/&gt;/g;
+    $res .= "<tr><td align='left' width=80><b>Authors:</b></td><td>$author</td></tr>\n";
+    foreach my $author (@authors) {
+        $author =~ s/</&lt;/g;
+        $author =~ s/>/&gt;/g;
+        $res .= "<tr><td align='left' width=80></td><td>$author</td></tr>\n";
     }
     
     $res .= "<tr><td colspan=2>";
