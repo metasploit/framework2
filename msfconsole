@@ -158,6 +158,11 @@ sub Load {
     foreach my $key (keys(%{$payloadsIndex})) {
         $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
     }
+
+    # Important, reload the exploit object in state
+    if($state->{'Mode'} eq 'Exploit') {
+      $state->{'Exploit'}->{'Exploit'} = $exploits->{$state->{'Exploit'}->{'Name'}};
+    }
 }
 
 sub gSave {
@@ -363,7 +368,7 @@ sub gInfo
             xMsg("info", "payload: invalid payload name");
             return;
         }
-        print "\n".$ui->DumpPayloadSummary($payloads->{$args[1]});
+        print "\n" . $ui->DumpPayloadSummary($payloads->{$args[1]});
     }
 }
 
@@ -422,18 +427,13 @@ sub eShow
 sub ePayloads
 {
     my $exploit = $state->{'Exploit'}->{'Exploit'};
-    my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
+    my $exploitPayloads = xValidPayloads($exploit);
     
     if ($exploit->Payload)
     {
         print "\nMetasploit Framework Usable Payloads\n";
         print   "====================================\n\n";
-
-        foreach my $xp (sort(keys(%{$exploitPayloads})))
-        {
-            print "  $xp" . (" " x (30-length($xp))) . $exploitPayloads->{$xp}->Description . "\n";
-        }
-        print "\n";
+        print $ui->DumpPayloads(2, $exploitPayloads) . "\n";
     } else {
          xMsg("payloads", "this exploit does not require a payload");
     }
@@ -442,7 +442,7 @@ sub ePayloads
 sub eOptions
 {
     my $exploit = $state->{'Exploit'}->{'Exploit'};
-    my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
+    my $exploitPayloads = xValidPayloads($exploit);
 
     my $payload = $ui->GetEnv('PAYLOAD');
 
@@ -470,7 +470,7 @@ sub eOptions
 sub eAdvanced
 {
     my $exploit = $state->{'Exploit'}->{'Exploit'};
-    my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
+    my $exploitPayloads = xValidPayloads($exploit);
 
     my $payload = $ui->GetEnv('PAYLOAD');
 
@@ -530,7 +530,7 @@ sub eExploit
 {
     $ui->SaveTempEnv('_Save');
     my $exploit = $state->{'Exploit'}->{'Exploit'};
-    my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
+    my $exploitPayloads = xValidPayloads($exploit);
 
     my $payload = $ui->GetEnv('PAYLOAD');
 
@@ -716,7 +716,11 @@ sub xLogEntry
     return scalar(localtime()) . " '$info' $msg\n";
 }
 
-sub xValidPayloads { return $ui->MatchPayloads(shift, $payloads) }
+sub xValidPayloads
+{
+    $state->{'Exploit'}->{'Payloads'} = $ui->MatchPayloads(shift, $payloads);
+    return $state->{'Exploit'}->{'Payloads'};
+}
 
 sub xCheckSystemCommand
 {
