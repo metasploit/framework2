@@ -180,6 +180,11 @@ if ($opts{a}) {
 #   .current file and get ready for the next update.
 #
 
+if (! keys(%{$upd})) {
+    print "[*] No new updates are available\n";
+    exit(0);
+}
+
 print "[*] Update Task Summary\n\n";
 foreach my $entry (keys(%{$upd})) {
     if ($mod->{$entry}) {
@@ -193,10 +198,7 @@ print "\n";
 
 exit(0) if $opts{s};
 
-if (! keys(%{$upd})) {
-    print "[*] No new updates are available\n";
-    exit(0);
-}
+
 
 if (! $opts{a}) {
     print "Continue? (yes or no) ";
