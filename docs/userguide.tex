@@ -78,18 +78,19 @@ module for a complete listing of the people involved in the project.
 Installing the Framework is as easy as extracting the tarball, changing into the
 created directory, and executing your preferred user interface. We strongly
 recommend that you compile and install the Term::ReadLine::Gnu Perl module found
-in the 'extras' subdirectory. This package enables extensive tab-completion
+in the "extras" subdirectory. This package enables extensive tab-completion
 support in the msfconsole interface; msfconsole is the preferred UI for everyday
 use.  If SSL support is desired, you should install the Net::SSLeay Perl module
-as well, this can also be found in the 'extras' subdirectory.  
+as well, this can also be found in the "extras" subdirectory.  Please refer to 
+appendices \ref{REF-TAB} and \ref{REF-SSL} for detailed instructions.
 
 \par
 To perform a system-wide installation, we recommend that you copy the entire
 Framework directory into a globally accessible location (/usr/local/msf) and
 then create symbolic links from the msf* applications to a directory in the
 system path (/usr/local/bin). User-specific modules can be placed into
-\$HOME/.msf/\verb#<#TYPE\verb#># directory, where TYPE is one of exploits, payloads, nops, or
-encoders. 
+\$HOME/.msf/\verb#<#TYPE\verb#># directory, where TYPE is one of exploits,
+payloads, nops, or encoders. 
 
     \section{Installation on Windows}
     \label{INSTALL-WIN32}
@@ -186,7 +187,7 @@ command will be executed with the supplied arguments. This allows you to use
 your standard set of tools without having to leave the console. We highly
 recommend that you enable tab completion support, this is included by default in
 the Windows package, but may require software installation for other operating
-systems. For more information on tab completion, please refer to section
+systems. For more information on tab completion, please refer to appendix
 \ref{REF-TAB}.
 
 
@@ -921,17 +922,18 @@ components selected:
 \end{itemize}
 
 \par
-InlineEgg payloads require the python interpreter to function.
+If you would like to use the InlineEgg payloads, make sure that you install a
+recent version of Python as well.
 
 
 
 	\section{Configuration}
 \par
-ow that Cygwin is installed, you should install the perl modules in the extras
-subdirectory of this package. This can usually be accomplished by extracting
-each package via tar -zxf [file], changing into the directory, typing
+Now that Cygwin is installed, you should install the perl modules in the
+"extras" subdirectory of this package. This can usually be accomplished by
+extracting each package via tar -zxf [file], changing into the directory, typing
 perl Makefile.PL, make, and make install. Tab completion makes the msfconsole
-interface extremely efficient.
+interface extremely efficient. 
 
 \par
 If you have Visual Studio installed, you may need to "unset LIBS" before trying
@@ -982,6 +984,53 @@ directory with the following command:
 \begin{verbatim}
 $ ln -sf /cydrive/c/Framework framework
 \end{verbatim}
+
+\pagebreak
+\chapter{Licenses}
+
+\par
+The Metasploit Exploit Framework source code is dual-licensed under the GNU
+General Public License v2.0 and the Artistic License. The package is Copyright
+(c) 2003-2005 H D Moore and spoonm, contributions from others and their
+individual copyrights are marked at the top of each file. Copies of the GPL and
+Artistic licenses can be found in the "docs" subdirectory, named "COPYING.GNU"
+and "COPYING.Artistic" respectively.
+
+\par
+The exploit modules included in this package are individually licensed and
+Copyright (c) by their respective authors. Please see the Author field of each
+module to determine what license is specified. If you need a module under a
+different license (GPL module and you want to include it in non-GPL code),
+please contact the author directly.
+
+\par
+The payload modules included in this package are individually licensed and
+Copyright (c) by their respective authors. Please see the Author field of each
+module to determine what license is specified. Some of the assembly payloads
+were obtained from public resources that did not specify the terms of license.
+These payloads are being treated as public domain and will be removed or
+rewritten if a dispute arises.
+
+\par
+The Meterpreter is dual-licensed under the GNU General Public License v2.0 and
+the Artistic License. The Meterpreter component is Copyright (c) 2004-2005 Matt
+Miller. Please contact Matt Miller directly for questions regarding the license
+and licensing of the Meterpreter. 
+
+\par
+The InlineEgg library and some of the examples are Copyright (c) 2002, 2003 Core
+Security Technologies, Core SDI Inc and under a non-commercial license. Please
+see the COPYING.InlineEgg file in the "docs" subdirectory for more information.
+This code may not be included or referenced in any form by a commercial
+derivative of the Metasploit Exploit Framework.
+
+\par
+The Impurity components are licensed under the GNU General Public License v2.0
+and Copyright (c) 2003 Alexander E. Cuttergo. Modifications have been made from
+the original version and the additional components are Copyright (c) 2003 H D
+Moore / METASPLOIT.COM. The assembly payloads and handler routines that are
+incorporated into the Metasploit Exploit Framework are compatible with, but not
+derivative works of, the original Impurity release.
 
 
 \end{document}
