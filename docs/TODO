@@ -4,7 +4,6 @@ Pre-Release Tasks
 
  - Flush out Pex::x86
 
- - Make some minor cosmetic improvements to msfweb, msfpayload.cgi
  - Add raw mode support to Pex::Socket (spoof)
  - Exchange exploit sucks, remove it or fix it
 
