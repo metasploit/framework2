@@ -26,6 +26,7 @@ use CGI qw/:standard/;
 
 Msf::UI::ActiveStateSucks();
 
+my $VERSION = "2.0";
 my $query = new CGI; 
 print $query->header();
 
@@ -249,7 +250,7 @@ sub DisplayFooter {
 }
 
 sub DisplayPayloads {
-
+    print "<br><center>Metasploit v$VERSION Payload Index</center><br>\n";
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     foreach my $p (sort(keys(%{$payloads})))
     {
