@@ -7,48 +7,48 @@ use IO::Select;
 use base 'Msf::PayloadComponents::TextConsole';
 use vars qw{ @ISA };
 
-sub import {
-  my $class = shift;
-  @ISA = ('Msf::Payload');
-  foreach (@_) {
-    eval("use $_");
-    unshift(@ISA, $_);
-  }
-}
-
 sub ConsoleIn {
     my $self = shift;
-    return $self->GetVar('BROWSER') if $self->GetVar('BROWSER');
+    return $self->{WebShell} if exists($self->{WebShell});
     return $self->SUPER::ConsoleIn;
 }
 
 sub ConsoleOut {
     my $self = shift;
-    return $self->GetVar('BROWSER') if $self->GetVar('BROWSER');
+    return $self->{WebShell} if exists($self->{WebShell});
     return $self->SUPER::ConsoleOut;
 }
 
 sub HandleConsole {
   my $self = shift;
 
+  # Get handle to browser
+  my $brow = $self->GetVar('BROWSER');
+
   # Create listener socket
-  my $psock = IO::Socket::INET->new
-  (
-    LocalAddr => '0.0.0.0',
-    LocalPort => 0,
-    ReuseAddr => 1,
-    Listen    => 3,
-  );
+  my $sock = IO::Socket::INET->new(
+    'Proto'     => 'tcp',
+    'ReuseAddr' => 1,
+    'Listen'    => 5,
+    'Blocking'  => 0,
+  );  
   
-  if (! $psock) {
+  if (! $sock) {
     print $self->ConsoleOut "WebConsole: HandleConsole(): Failed to bind a port for the proxy shell: $!\n";
     return;
   }
   
   # Display listener link to browser
-  $psock->blocking(0);
-  $psock->autoflush(1);
+  my $addr = Pex::InternetIP($brow->peerhost);
   
+  $brow->send(
+    "[*] Proxy shell started on ".
+    "<a href='telnet://$addr:".$sock->sockport."'>".
+    "$addr:".$sock->sockport."</a><br>\n"
+  )
+    
+ 
+
   # Close socket to browser
   # Accept connection from user
   # Map connected socket to ConsoleIn, ConsoleOut
