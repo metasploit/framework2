@@ -48,8 +48,8 @@ sub _MakeSocket {
   return if($self->GetError);
 
   my %config = (
-    'PeerAddr'   => $self->Hostname,
-    'PeerPort'   => $self->Port,
+    'PeerAddr'   => $self->PeerAddr,
+    'PeerPort'   => $self->PeerPort,
     'Proto'      => 'udp',
     'ReuseAddr'  => 1,
   );
