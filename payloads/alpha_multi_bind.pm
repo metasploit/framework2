@@ -7,14 +7,14 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::alpha_bind;
+package Msf::Payload::alpha_multi_bind;
 use base 'Msf::PayloadComponent::BindConnection';
 use strict;
 use Pex::Alpha;
 
 my $info =
 {
-  'Name'         => 'Alpha Bind Shell',
+  'Name'         => 'BSD/Linux/Tru64 Alpha Bind Shell',
   'Version'      => '$Revision$',
   'Description'  => 'Listen for connection and spawn a shell',
   'Authors'      => [ 'vlad902 <vlad902 [at] gmail.com>', ],
