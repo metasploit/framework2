@@ -161,7 +161,9 @@ sub Load {
 }
 
 sub gSave {
-    # Removed
+    my $cmd = shift;
+    $ui->SaveConfig;
+    print "Saved config to: " . $ui->ConfigFile . "\n";
 }
 
 sub gVersion { print "msfconsole version $VERSION\n" }

@@ -8,7 +8,7 @@ sub new {
   my $class = shift;
   my $self = $class->SUPER::new({
     'BaseDir'  => shift,
-    'ConfDir'  => shift,
+    'ConfigFile' => @_ ? shift : '.msfconfig',
   });
   $self->_Initalize;
   return($self);
@@ -27,12 +27,15 @@ sub _ConfigFile {
 
 sub _Initalize {
   my $self = shift;
-  $self->{'Config'} = { }
+  Msf::Config->PopulateConfig($self->ConfigFile);
 }
 
-sub Config {
-    my $self = shift;
-    return $self->{'Config'};
+sub ConfigFile {
+  my $self = shift;
+  if($^O eq 'WIN32') {
+    return(dirname(File::Spec::Functions::rel2abs($0)) . '\\' . $self->_ConfigFile);
+  }
+  return("$ENV{'HOME'}/" . $self->_ConfigFile);
 }
 
 sub LoadExploits {
@@ -40,19 +43,20 @@ sub LoadExploits {
     my $dir = @_ ? shift : $self->_BaseDir . '/exploits';
     return($self->LoadModules($dir, 'Msf::Exploit::'));
 }
-
 sub LoadEncoders {
+#fixme external encoders
     my $self = shift;
     my $dir = @_ ? shift : $self->_BaseDir . '/encoders';
     return($self->LoadModules($dir, 'Msf::Encoder::'));
 }
-
 sub LoadNops {
+#fixme external nops
     my $self = shift;
     my $dir = @_ ? shift : $self->_BaseDir . '/nops';
     return($self->LoadModules($dir, 'Msf::Nop::'));
 }
 sub LoadPayloads {
+#fixme external payloads
     my $self = shift;
     my $dir = @_ ? shift : $self->_BaseDir . '/payloads';
     return($self->LoadModules($dir, 'Msf::Payload::'));
@@ -194,6 +198,11 @@ sub MakeNop {
     my $name = $self->GetEnv('Nop') || 'Msf::Nop::Pex';
     my $nop = $name->new(@_);
     return($nop);
+}
+
+sub SaveConfig {
+  my $self = shift;
+  Msf::Config->SaveConfig($self->ConfigFile);
 }
 
 1;

@@ -10,3 +10,5 @@
  - Determine WTF Advanced options are supposed to do and how they should be set
 
  - Fix AutoOpts, how to handle?  Possible when we are going to use a exploit, for example to check or exploit, call a function like Init, and this could process AutoOpts, and SetTempEnv for all of its key/val pairs...
+
+- Right now LoadTempEnv, will set the TempEnv to the actual stored hash, so you are modifing the stored hash also, this is nice because you don't have to SaveTempEnv before you do a save, but it isn't really intended behavior.  Load should "load" a copy, you should be able to make changes and ditch it without affecting the saved copy.  Maybe this should be changed, and LoadTempEnv should create a copy like SaveTempEnv does.

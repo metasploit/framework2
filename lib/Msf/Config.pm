@@ -25,7 +25,7 @@ sub PopulateConfig {
 sub SaveConfig {
   my $self = shift;
   my $configFile = shift;
-  $self->WriteConfig($configFile, $self->GetEnv);
+  $self->WriteConfig($configFile, $self->GetGlobalEnv, $self->GetTempEnvs);
 }
 
 sub ReadConfig {
@@ -51,14 +51,21 @@ sub ReadConfig {
   return($globalEnv, $tempEnvs);
 }
 
-#fixme needs to be updated for temp envs
 sub WriteConfig {
   my $self = shift;
   my $configFile = shift;
-  my %config = @_;
+  my $globalEnv = shift;
+  my $tempEnvs = shift;
+
   open(OUTFILE, ">$configFile") or return;
-  foreach (keys(%config)) {
-    print OUTFILE "$_=$config{$_}\n";
+  foreach (sort(keys(%{$globalEnv}))) {
+    print OUTFILE "$_=" . $globalEnv->{$_} . "\n";
+  }
+  foreach my $tempEnv (sort(keys(%{$tempEnvs}))) {
+    print OUTFILE "\n$tempEnv:\n";
+    foreach (sort(keys(%{$tempEnvs->{$tempEnv}}))) {
+      print OUTFILE "$_=" . $tempEnvs->{$tempEnv}->{$_} . "\n";
+    }
   }
   close(OUTFILE);
 }
