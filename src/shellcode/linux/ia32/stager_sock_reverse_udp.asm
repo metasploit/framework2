@@ -64,8 +64,6 @@ recv:
 	mov  dh, 0xc
 	mov  al, 0x3
 	int  0x80
-	mov  edi, ebx         ; not necessary if second stages use ebx instead of 
-	                      ; edi for fd
 	jmp  ecx
 %else
 	mov  edi, ebx
