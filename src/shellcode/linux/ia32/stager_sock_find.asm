@@ -1,7 +1,6 @@
 ;;
 ; 
 ;        Name: stager_sock_find
-;        Size: 36 bytes
 ;   Qualities: Nothing Special
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$

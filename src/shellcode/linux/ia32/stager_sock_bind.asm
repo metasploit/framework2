@@ -1,8 +1,6 @@
 ;;
 ; 
-;        Name: stager_sock_reverse
-;        Size: 63 bytes
-;        Type: Stager
+;        Name: stager_sock_bind
 ;   Qualities: Can Have Nulls
 ;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
