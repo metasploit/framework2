@@ -134,7 +134,7 @@ sub Nops {
   my $exploit = $self->GetVar('_Exploit');
   my $random  = $self->GetLocal('RandomNops');
   my $badChars = $exploit->PayloadBadChars;
-  my ($nop, $random, $tempnop);
+  my ($nop, $tempnop);
     
 # DEBUG DEBUG DEBUG
 #  $nop = "\x91\xd0\x20\x01";
