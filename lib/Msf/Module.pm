@@ -147,14 +147,12 @@ sub Validate {
         return;
       }
     }
-    elsif(uc($type) eq 'HEX') {
-#fixme better hex check?
-      if($value !~ /^[0-9a-f]+$/i && $value !~ /^0x[0-9a-f]+$/i) {
-        $self->SetError("Invalid hex $value for $key");
+    elsif(uc($type) eq 'BYTE') {
+      if($value > 255) {
+        $self->SetError("Invalid byte $value for $key");
         return;
       }
-      # replace hex with int value
-      $self->SetVar($key, hex($value));
+      $self->SetVar($key,  $value+0);
     }
   }
   return(1);

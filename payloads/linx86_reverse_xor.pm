@@ -19,7 +19,7 @@ my $info =
   'Size'         => 0,
   'UserOpts'     =>
     {
-      'XKEY'  => [1, 'HEX',  'Byte to xor the connection with'],
+      'XKEY'  => [1, 'BYTE',  'Byte to xor the connection with', 0x69],
     }
 };
 
@@ -42,7 +42,7 @@ sub RecvFilter {
   my $self = shift;
   my $data = shift;
   my $xkey = $self->GetVar('XKEY');
-  $data =~ s/(.)/chr(ord($1) ^ ord($xkey))/ge;
+  $data = Pex::Encoder::XorByte($xkey, $data);
   return($data);
 }
 
