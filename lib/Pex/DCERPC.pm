@@ -19,9 +19,9 @@ use Pex;
 
 my %UUIDS =
 (
-    "MGMT"      => "\x80\xbd\xa8\xaf\x8a\x7d\xc9\x11\xbe\xf4\x08\x00\x2b\x10\x29\x89",
-    "REMACT"    => "\xb8\x4a\x9f\x4d\x1c\x7d\xcf\x11\x86\x1e\x00\x20\xaf\x6e\x7c\x57",
-    "SYSACT"    => "\xa0\x01\x00\x00\x00\x00\x00\x00\xC0\x00\x00\x00\x00\x00\x00\x46",
+    'MGMT'      => "\x80\xbd\xa8\xaf\x8a\x7d\xc9\x11\xbe\xf4\x08\x00\x2b\x10\x29\x89",
+    'REMACT'    => "\xb8\x4a\x9f\x4d\x1c\x7d\xcf\x11\x86\x1e\x00\x20\xaf\x6e\x7c\x57",
+    'SYSACT'    => "\xa0\x01\x00\x00\x00\x00\x00\x00\xC0\x00\x00\x00\x00\x00\x00\x46",
 );
 
 sub UUID { return $UUIDS{shift()} }
@@ -76,54 +76,6 @@ sub Request {
         0,      # context id
         $opnum, # opnum
         ). $data;
-}
-
-sub TestInterfaceDump {
-    my ($host, $port) = @_;
-    my ($res, $rpc);
-
-    my $s = Pex::Socket->new();
-    return if ! $s->Tcp($host, $port);
-
-    my $bind = Bind($UUIDS{'MGMT'}, '1.0', DCEXFERSYNTAX(), '2');
-    $s->Send($bind);
-    $res = $s->Recv(60);
-    $rpc = DecodeResponse($res);
-    
-    if ($rpc->{'AckResult'} != 0)
-    {
-        print "Bind Error: " .$rpc->{'AckReason'}."\n";
-        return;
-    }
-
-    my $dump = Request(0);
-    $s->Send($dump);
-    $res = $s->Recv(-1);
-    $rpc = DecodeResponse($res);
-    
-    if ($rpc->{'Type'} eq 'fault')
-    {
-        printf ("Call Error: 0x%.8x\n", $rpc->{'Status'});
-        return;
-    }
-    
-    my $data = $rpc->{'StubData'};
-    $data = substr($data, 56);
-    
-    my %ints = ();
-    while (length($data) >= 20)
-    {
-        $ints{unpack('H*',substr($data, 0, 16))}=unpack('v',substr($data, 16)).".".unpack('v',substr($data, 18));
-        $data = substr($data, 20);
-    }
-  
-    foreach (keys(%ints))
-    {
-        print "$_ -> ".$ints{$_}."\n";
-    }
-    
-    
-    print STDERR Pex::Utils::BufferPerl($rpc->{'StubData'})."\n"; 
 }
 
 
@@ -214,3 +166,55 @@ sub DecodeResponse {
     
     return $res;
 }
+
+
+sub TestInterfaceDump {
+    my ($host, $port) = @_;
+    my ($res, $rpc);
+
+    my $s = Pex::Socket->new();
+    return if ! $s->Tcp($host, $port);
+
+    my $bind = Bind($UUIDS{'MGMT'}, '1.0', DCEXFERSYNTAX(), '2');
+    $s->Send($bind);
+    $res = $s->Recv(60);
+    $rpc = DecodeResponse($res);
+    
+    if ($rpc->{'AckResult'} != 0)
+    {
+        print "Bind Error: " .$rpc->{'AckReason'}."\n";
+        return;
+    }
+
+    my $dump = Request(0);
+    $s->Send($dump);
+    $res = $s->Recv(-1);
+    $rpc = DecodeResponse($res);
+    
+    if ($rpc->{'Type'} eq 'fault')
+    {
+        printf ("Call Error: 0x%.8x\n", $rpc->{'Status'});
+        return;
+    }
+    
+    my $data = $rpc->{'StubData'};
+    $data = substr($data, 56);
+    
+    my %ints = ();
+    while (length($data) >= 20)
+    {
+        $ints{unpack('H*',substr($data, 0, 16))}=unpack('v',substr($data, 16)).".".unpack('v',substr($data, 18));
+        $data = substr($data, 20);
+    }
+  
+    foreach (keys(%ints))
+    {
+        print "$_ -> ".$ints{$_}."\n";
+    }
+    
+    
+    print STDERR Pex::Utils::BufferPerl($rpc->{'StubData'})."\n"; 
+}
+
+
+1;
