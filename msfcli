@@ -27,20 +27,6 @@ use Msf::TextUI;
 
 my $ui = Msf::TextUI->new($Bin);
 
-# Grab the 0x00 style module index
-my $mod = shift;
-my @ARG;
-
-# parse the command line options
-while( my($key, $val) = split('\=', shift())) {
-  if (! defined($val)) {
-    push(@ARG, $key);
-  }
-  else {
-    $ui->SetTempEnv($key, $val);
-  }
-}
-
 my $exploits = { };
 my $payloads = { };
 my $exploitsIndex = $ui->LoadExploits;
@@ -48,10 +34,10 @@ my $payloadsIndex = $ui->LoadPayloads;
 my $encoders = $ui->LoadEncoders;
 my $nops     = $ui->LoadNops;
 
-$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
-$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
-$ui->SetTempEnv('_Encoders', $encoders);
-$ui->SetTempEnv('_Nops', $nops);
+
+# Grab the 0x00 style module index
+my $mod = shift;
+my @ARG;
 
 # A quick note:
 # The Load methods return a hash of instantiated objects
@@ -78,6 +64,24 @@ if(!defined($mod) || !defined($exploits->{$mod})) {
 }
 
 my $exploit = $exploits->{$mod};
+my $exploitName = $exploit->SelfName;
+$exploitName =~ s/.*:://g; # Remove package prefix
+$ui->LoadTempEnv($exploitName);
+
+$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+$ui->SetTempEnv('_Encoders', $encoders);
+$ui->SetTempEnv('_Nops', $nops);
+
+# parse the command line options
+while(my($key, $val) = split('\=', shift(@ARGV))) {
+  if(!defined($val)) {
+    push(@ARG, $key);
+  }
+  else {
+    $ui->SetTempEnv($key, $val);
+  }
+}
 
 my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
 
@@ -99,8 +103,6 @@ if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
   exit(0);
 }
 
-
-
 # Main Dispatch
 for(uc($ARG[0])) {
   $_ eq 'S' && do { $ui->Summary; last; };
@@ -109,106 +111,13 @@ for(uc($ARG[0])) {
   $_ eq 'P' && do { $ui->Payloads; last; };
   $_ eq 'T' && do { $ui->Targets; last; };
   $_ eq 'C' && do { $ui->Check; last; };
-  $_ eq 'E' && do { Exploit(); last; };
+  $_ eq 'E' && do { $ui->SetTempEnv('HCALLBACK', \&xCallback); $ui->Exploit; last; };
   Usage();
 }
 exit(0);
 
 
 ################################################################################
-
-sub Exploit {
-    if (defined($exploit->Payload) && !$payload) {
-        die("[*] You must specify a payload for this exploit.\n");
-    }
-
-    $exploit->Validate;
-    return if($exploit->PrintError);
-    # validate payload module options
-    if ($payload)
-    {
-        $payload->Validate;
-        return if($payload->PrintError);
-
-    }
-
-    my @targets = $exploit->Targets;
-    my $target = $ui->GetEnv('TARGET');
-    if (defined($target) && ! defined($targets[$target]))
-    {
-      print "[*] Invalid target specified\n";
-      exit(0);
-    }
-  
-    # Important: Default the target to 0, maybe this should somehow
-    # be in Msf::Exploit, maybe be part of the Validate process?
-    $ui->SetTempEnv('TARGET', 0) if (!defined($target));
-    if (defined($payload))
-    {
-        my $encodedPayload = $ui->Encode;
-        return if($ui->PrintError || !$encodedPayload);
-        $ui->SetTempEnv('EncodedPayload', $encodedPayload);
-    }
-
-    $ui->SetTempEnv('HCALLBACK', \&xCallback);
-
-    my $handler = Msf::HandlerCLI->new();
-    
-    my ($phand, $chand, $phcode, $chcode);
-    if ($payload && $handler->can($payload->Type))
-    {
-        $phand = $payload->Type;
-        $chand = $phand . "_exp";
-        
-        # create the link between the child and parent processes
-        if ($handler->can($phand) && $handler->can($chand))
-        {
-            my ($csock, $psock);
-            $ui->SetTempEnv('HANDLER', $handler);
-            $ui->SetTempEnv('HCFUNC',  $chand);
-            
-            print "[*] Creating link between child and parent process\n";
-            
-            socketpair($csock, $psock, AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
-            || die "msfcli: exploit: socketpair: $!";
-            
-            $ui->SetTempEnv('HCSOCK', $csock);
-            $ui->SetTempEnv('HPSOCK', $psock);
-        }      
-    }
-    
-    my $child = fork();
-    
-    if ($child)
-    {
-        if ($exploit->Payload)
-        {
-            if ($phand)
-            {
-                print "[*] Starting handler $phand...\n";
-                my $res = $handler->$phand($payload, $child);
-                kill('TERM', $child);
-
-                if (! $res)
-                {
-                    print "[*] Handler error: ". $handler->Error. "\n";
-                    kill('TERM', $child);
-                }
-
-            } else {
-                print "[*] No handler for payload type: ". $payload->Type. "\n";
-            }
-        }
-        
-        while (waitpid($child, WNOHANG) == 0) { sleep(1) }
-        
-    } else {
-        select(undef, undef, undef, 0.5);
-        $exploit->Exploit; 
-        exit(0);
-    }
-    print "\n";
-}
 
 sub Usage {
     print "\nUsage: $0 <ID> [var=val] [MODE]\n";
