@@ -8,6 +8,3 @@ package. To install this module:
 # cd Term-ReadLine-Gnu-1.14
 # perl Makefile.PL && make && make install
 # cd .. && rm -rf Term-ReadLine-Gnu-1.14
-
-Tab completion does not work correctly under ActiveState or Cygwin
-installations.

@@ -16,8 +16,9 @@ Some notes about the framework.
 - The framework should work fine on any little endian system, linux, bsd, osx,
   and windows should all work.  Any reports on success/failure would be great.
   Windows is a bit of a pain, tab completion also doesn't work.  Also, things
-  might work differently under cygwin and activestate.  Please report your
-  results with windows.
+  might work differently under cygwin.  ActiveState perl is NOT supported for
+  a number of really good reasons, please email us if you are curious about
+  what they are. 
 
 - Read docs/QUICKSTART.tabcompletion, this will make using msfconsole so much
   nicer.  Its all about the tab tab tab.
@@ -52,5 +53,4 @@ Some notes about the framework.
     
 - The following is a list of known bugs:
     + BSD bind and findsock payloads are buggy
-    + Tab completion does not work correctly under Cygwin
     + The TARGET parameter is not validated prior to being used
