@@ -1,9 +1,7 @@
 ;;
 ; 
 ;        Name: stager_egghunt
-;        Size: 30 bytes
 ;        Type: Stager
-;   Qualities: None
 ;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$

