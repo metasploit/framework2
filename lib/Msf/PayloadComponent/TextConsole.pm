@@ -48,11 +48,11 @@ sub _HandleConsole {
 			
 			if(lc($answer) eq 'y') {
 				$loop = 0;
-				last;
+				return;
 			}
 			
 			if(lc($answer) eq 'n') {
-				last;
+				return;
 			}
 
 			# Prompt them again until we get a valid answer
