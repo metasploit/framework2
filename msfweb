@@ -24,7 +24,7 @@
 #	5. Encoders
 #	6. Nops
 #	7. Logs
-
+#	8. Parent-based
 
 require 5.6.0;
 
@@ -57,8 +57,11 @@ my $nops;
 my $exploitKeys	= {};
 my $exploitArch	= {};
 my $exploitOS	= {};
-
 my $exploitList;
+
+my $payloadArch	= {};
+my $payloadOS	= {};
+my $payloadList;
 
 my $burl;
 my $skey;
@@ -95,6 +98,12 @@ for (1 .. (rand() * 128) + 128) {
 # Create the inital list of modules
 LoadAllModules();
 
+# Cache these lists
+if (! $args{'r'}) {
+	ExploitList();
+	PayloadList();
+}
+
 my $ghettoWeb = GhettoWeb->new
 (
 	'host'	=> $host,
@@ -104,6 +113,7 @@ my $ghettoWeb = GhettoWeb->new
 	'fnHRP'	=> \&HTTPRequest,
 );
 
+$ghettoWeb->LogFile('/tmp/ghetto.log');
 $ghettoWeb->Run();
 
 if ($ghettoWeb->IsError) {
@@ -119,6 +129,27 @@ exit(0);
 ######################################################################
 ######################################################################
 
+sub ProcessResRequest {
+	my ($req, $cli, $ipc) = @_;
+
+	my %files =
+	(
+		'LOGO'	=> ['image/jpg', 'msfweb_logo.jpg'],
+	);
+	
+	if ( exists( $files{ $req->{'params'}->{'ID'} } ) ) {
+		my ($type, $path) = @{ $files{ $req->{'params'}->{'ID'} } };
+		my $data;
+		
+		if ( open (X, "<$RealBin/data/msfweb/$path") ) {
+			while (<X>) { $data .= $_ }
+			close (X);
+		}
+		
+		$cli->Send(HTTPResponse(200, $data, $type));
+	}
+}
+
 
 sub ProcessIPCRequest { 
 	my $ipc = shift;
@@ -127,11 +158,20 @@ sub ProcessIPCRequest {
 
 sub ProcessWebRequest {
 	my ($req, $cli, $ipc) = @_;
-    my $state =  $req->{'params'};
+    my $state = $req->{'params'};
+	my $mbase = $req->{'base'};
 	my $res;
 	
+	# Process resource requests
+	if ($req->{'base'} eq 'RESOURCE') {
+		ProcessResRequest($req, $cli, $ipc);
+		exit(0);
+	}
+	
+	
+	
 	# Generate the base URL
-	$burl = '/'.$req->{'base'}.'?';
+	$burl = "/$mbase?";
 	
 	# Reload all modules only when the -r option has been specified
 	if (exists($args{'r'})) {
@@ -142,13 +182,29 @@ sub ProcessWebRequest {
 	$res .= HTML_Header($req);
 	
     my $logaction;
-    if ($state->{'MODULE'}) {
-        my $mname = exists($exploits->{$state->{'MODULE'}}) 
-                    ? $exploits->{$state->{'MODULE'}}->Name() : "Invalid Module";
+    if (defined (my $mid = $state->{'MODULE'} )) {
 
-        $res .= "<table width=100% bgcolor='black'><tr><td>".
-                "<font color='white'><b>Module: $mname</b></font></td></tr></table><br>\n";
-        $logaction = "$mname";  
+		my $mname;
+		        
+		if ($mbase eq 'EXPLOITS' && exists($exploits->{$mid}) ) {
+			$mname = $exploits->{$mid}->Name;
+		} 
+		
+		if ($mbase eq 'PAYLOADS' && exists($payloads->{$mid}) ) {
+			$mname = $payloads->{$mid}->Name;
+		} 
+		
+		if ($mbase eq 'ENCODERS' && exists($encoders->{$mid}) ) {
+			$mname = $encoders->{$mid}->Name;
+		} 
+		
+		if (! defined($mname)) {
+			$mname = 'Invalid Module';
+		}						
+
+        $res .= "<table width=100% bgcolor='black'>\n";
+		$res .= "<tr><td class='modHead'>Module: $mname</td></tr>\n";
+		$res .= "</table><br>\n";
     }
 
     $state->{'client'} = $cli;
@@ -156,7 +212,6 @@ sub ProcessWebRequest {
 	if ($req->{'base'} eq 'EXPLOITS') {
 	
     	if ($state->{'MODE'} eq 'MAIN')    { $res .= ExploitList($state) }
-    	if ($state->{'MODE'} eq 'SUMMARY') { $res .= ExploitSummary($state) }
     	if ($state->{'MODE'} eq 'PAYLOAD') { $res .= ExploitPayload($state) }
     	if ($state->{'MODE'} eq 'OPTIONS') { $res .= ExploitOptions($state) }
     	if ($state->{'MODE'} eq 'TARGETS') { $res .= ExploitTargets($state) }
@@ -165,7 +220,12 @@ sub ProcessWebRequest {
     	# ExploitExec doesn't return on success
     	if ($state->{'MODE'} eq 'EXPLOIT') { $res .= ExploitExec($state) }    
 	}
+
+	if ($req->{'base'} eq 'PAYLOADS') {
 	
+    	if ($state->{'MODE'} eq 'MAIN')    { $res .= PayloadList($state) }
+	}
+		
     $res .= HTML_Footer();
 	
     $cli->Send(HTTPResponse(200, $res));
@@ -256,11 +316,20 @@ sub HTML_Header {
 				font-size:		11pt;
 				font-variant:	small-caps;
 			}
+			
+			.modHead {
+				font-size:		11pt;
+				font-weight:	bold;
+				color:			white;
+			}
 		
         </style>
     </head>
     <body bgcolor='white' text='black'>
 <a name='Top'></a>
+
+<br/>
+<div align='center'><img src='/RESOURCE?ID=LOGO'></div>
 <br/>
 
 <table align='center' cellpadding=0 border=0 cellspacing=0 width='98%' bgcolor='#000000'>
@@ -339,6 +408,75 @@ sub StateToOptions {
     return $res;
 }
 
+sub PayloadList
+{
+    my $pList;
+	my @links;
+	my $payloadMerge = {};
+	
+	# Cache the generated page for speed
+	if (! $args{'r'} && defined($payloadList) ) {
+		return $payloadList;
+	}
+	
+	# Navigation header
+	$pList = "<div align='center' class='navHead'>Navigation Keys<br/><br/>\n";
+		
+	# List of payloadOS
+	foreach my $kname (sort( keys %{ $payloadOS }) ) {
+		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+		$payloadMerge->{$kname} = $payloadOS->{$kname};
+	}
+	$pList .= join(" | ", @links) . "<br/><br/>\n";
+	@links = ();
+
+	# List of payloadArch
+	foreach my $kname (sort( keys %{ $payloadArch}) ) {
+		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+		$payloadMerge->{$kname} = $payloadArch->{$kname};		
+	}
+	$pList .= join(" | ", @links) . "<br/><br/>\n";
+	@links = ();
+	$pList .= "</div><br\>\n";
+
+
+	# Generate a frame for each unique key, os, and arch
+	foreach my $kname (	sort( keys %{ $payloadMerge }) ) {
+	
+		$pList .= qq[
+<a name='$kname'><br></a>        
+<table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' bgcolor='black'>        
+	<tr><td>
+    <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' bgcolor='white'>
+    <tr>
+		<td class='nav' align='left'> $kname </td>
+    	<td class='listBody' align='right'><a href='#Top'>Top</a></td>
+	</tr>
+	<tr><td class='listBody' align='center' colspan=2>
+		<blockquote>
+		<table align='center' padding=6 border=0 cellspacing=0 width='100%'>
+];
+
+	# Dump out all of the matching payloads for this key, os, or arch
+	foreach my $ename (sort @{ $payloadMerge->{$kname} }) {
+		$pList .= "<tr><td> <li> <a href='/PAYLOADS?MODE=SUMMARY&";
+		$pList .= "MODULE=".URLEncode($ename)."'>".$payloads->{$ename}->Name."</a>";
+		$pList .= "</td></tr>\n";
+	}
+	
+	$pList .= qq[
+		</table>
+		</blockquote>
+</td></tr></table>
+</td></tr></table>
+];
+
+	}
+	
+	$payloadList = $pList;
+    return $pList;
+}
+
 sub ExploitList
 {
     my $eList;
@@ -398,7 +536,7 @@ sub ExploitList
 
 	# Dump out all of the matching exploits for this key, os, or arch
 	foreach my $ename (sort @{ $exploitMerge->{$kname} }) {
-		$eList .= "<tr><td> <li> <a href='".$burl."MODE=SUMMARY&";
+		$eList .= "<tr><td> <li> <a href='/EXPLOITS?MODE=PAYLOAD&";
 		$eList .= "MODULE=".URLEncode($ename)."'>".$exploits->{$ename}->Name."</a>";
 		$eList .= "</td></tr>\n";
 	}
@@ -416,7 +554,7 @@ sub ExploitList
     return $eList;
 }
 
-sub ExploitSummary
+sub ExploitPayload
 {
     my ($state) = @_;
     my $module = $state->{'MODULE'};
@@ -452,30 +590,20 @@ sub ExploitSummary
     $res .= "<br>$desc<br><br>";
 
     foreach my $ref (@{$x->RefLinks}) { $res .= "<li> <a href='$ref'>$ref</a><br>\n" }
-
-    my $u = StateToURL('PAYLOAD', $state);
-    $res .= "<br><a href='$u'>Select Payload</a><br>\n";
+	
     $res .= "</td></tr></table>\n";
 
-    return $res;
-}
+	# Display available payloads
 
-sub ExploitPayload
-{
-    my ($state) = @_;
-    my $module = $state->{'MODULE'};
-    my $res; 
-    
-    if (! exists($exploits->{$module})) {
-        return "<b>Invalid Module</b>";
-    }
-
-    my $x = $exploits->{$module};
     my $matches = $ui->MatchPayloads($x, $payloads) if($x->Payload);
 
     if (defined($x->Payload) ) {
+		$res .= "<hr size=1 color='#000000' width='80%'><br\>\n";
         $res .= "<table align='center' padding=4 border=0 cellspacing=0 width=750>\n";
-        
+		$res .= "<tr><td class='nav' align='center'>Payloads</td>";
+		$res .= "    <td class='nav' align='center'>Description</td></tr>\n";
+		$res .= "<tr><td colspan=2><br\></td></tr>\n";
+				
         foreach my $k (sort(keys(%{ $matches })))
         {
             my $u = StateToURL('OPTIONS', $state);
@@ -743,7 +871,7 @@ sub HTTPRequest {
 	my $vid = GenerateSID(inet_aton($cli->PeerAddr));
 	
 	# Redirect the user if the SID does not match
-	if ($sid ne $vid) {
+	if (0 && $sid ne $vid) {
 		
 		my $rdir =
 			"HTTP/1.1 302 Rejected\r\n".
@@ -825,7 +953,17 @@ sub LoadAllModules {
 	}
 
 	foreach my $key (keys(%{$payloadsIndex})) {
-		$payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
+		my $payload = $payloadsIndex->{$key};
+		
+		$payloads->{$payload->SelfEndName} = $payload;
+
+		foreach my $kname ( @{ $payload->OS } ) {
+			push @{ $payloadOS->{ $kname } }, $payload->SelfEndName;
+		}
+		
+		foreach my $kname ( @{ $payload->Arch } ) {
+			push @{ $payloadArch->{ $kname } }, $payload->SelfEndName;
+		}				
 	}
 
 	$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);

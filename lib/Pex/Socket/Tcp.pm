@@ -39,11 +39,17 @@ sub new_from_socket {
   my $self = bless({ }, $class);
   my $hash =
   {
-    LocalAddr => $sock->sockhost,
-    LocalPort => $sock->sockport,
-    PeerAddr  => $sock->peerhost,
-    PeerHost  => $sock->peerport, 
+    LocalAddr => eval { $sock->sockhost },
+    LocalPort => eval { $sock->sockport },
+    PeerAddr  => eval { $sock->peerhost },
+    PeerHost  => eval { $sock->peerport }, 
   };
+
+  # Verify that the socket is actually one
+  if ($@) {
+  	$self->SetError("Socket argument: $@");
+	return $self;
+  }
 
   $self->SetOptions($hash);
   $self->Init;
