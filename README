@@ -13,6 +13,12 @@ Our indiviual email address:
 
 Some notes about the framework.
 
+- The framework should work fine on any little endian system, linux, bsd, osx,
+  and windows should all work.  Any reports on success/failure would be great.
+  Windows is a bit of a pain, tab completion also doesn't work.  Also, things
+  might work differently under cygwin and activestate.  Please report your
+  results with windows.
+
 - Read docs/QUICKSTART.tabcompletion, this will make using msfconsole so much
   nicer.  Its all about the tab tab tab.
 
