@@ -37,8 +37,12 @@ sub EncodePayload {
     my $payload  = shift;
     my $badchars = shift;
 
+
     my $xor_key   = Pex::Encoder::KeyScanXorDwordFeedback($payload, $badchars);
-    my $xor_data  = Pex::Encoder::XorDwordFeedback($xor_key, $payload);
+
+	# Append a null to the payload, this becomes the end tag
+    $payload .= pack('N', 0);
+    my $xor_data  = Pex::Encoder::XorDwordFeedback($xor_key, $payload, 'N');
 
     my $encoder = 
         "\x20\xbf\xff\xff".   # /* bn,a  _start - 4 */
@@ -54,26 +58,24 @@ sub EncodePayload {
         "\x12\xbf\xff\xfc".   # /* bnz   dec_loop */
         "\x9e\x03\xe0\x04";   # /* add   %o7,4,%o7 */
     
-    # Change the endian-ness of the key
+    
+    # Flip the key endian-ness
     $xor_key = unpack('V', pack('N', $xor_key));
  
     # Extract
     my $hiData = unpack('N', substr($encoder, 12, 4));
     my $loData = unpack('N', substr($encoder, 16, 4));
-	
-    printf("key: 0x%.8x hi: 0x%.8x lo: 0x%.8x\n", $xor_key, $hiData, $loData);
-    
+
     # Patch
     $hiData = (($hiData >> 22) << 22) + ($xor_key >> 10);
     $loData = (($loData >> 10) << 10) + (($xor_key << 22) >> 22);
-    printf("key: 0x%.8x hi: 0x%.8x lo: 0x%.8x\n", $xor_key, $hiData, $loData);
-     
+    
     # Replace
     substr($encoder, 12, 4, pack('N', $hiData));
     substr($encoder, 16, 4, pack('N', $loData));
   
     # XXX - We do not check to see if the split bitshifted key is a badchar!
-	return $encoder . $xor_data . pack('N', $xor_key); 
+	return $encoder . $xor_data;
 }
 
 1;
