@@ -23,9 +23,11 @@ my $synWeight = 3;
 # Make sure to tune w/ bigger sleds, small sleds are hard to get complex
 # instructions for anyway...
 
+# Set debug = 2 for a auto-adjusting synWeight, just an experiment
+
 # Print a . for all simple (codeLen == 1/SetReg) and print a + for all the
 # more complicated instructions.  Nice to use to tune synWeight.
-my $debug = 0;
+my $debug = 2;
 
 my $none  = 0;
 my $reg1  = 1;
@@ -429,6 +431,8 @@ sub _GenerateSled {
   my $data = "\x00" x $len;
   my $pos = $len;
 
+  my ($c1, $c2) = (0, 1);
+
   my $lastIndex;
 
   while($pos > 0) {
@@ -442,10 +446,14 @@ sub _GenerateSled {
 
     # Check to see if it's a one byte codelen type that wants SetRegs called
     if($self->_InsHandler(0, $index, $pos, $len, $data, $lastIndex)) {
+      if($debug == 2) {
+        $synWeight = ($c1 / $c2) * 2;
+      }
       next if(int(rand($synWeight)) != 0);
       $pos--;
       substr($data, $pos, 1, $self->_SetRegs(substr($code, -1, 1), $index));
       print STDERR "." if($debug);
+      $c1++;
     }
     else {
       # Check to see if the byte that already exists will make for a valid
@@ -455,6 +463,7 @@ sub _GenerateSled {
       $pos -= $codeLen;
       substr($data, $pos, $codeLen, $code);
       print STDERR "+" if($debug);
+      $c2++;
     }
     $lastIndex = $index;
 
