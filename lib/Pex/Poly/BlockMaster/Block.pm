@@ -1,5 +1,6 @@
 package Pex::Poly::BlockMaster::Block;
 use strict;
+use Pex::Text;
 
 sub new {
   my $class = shift;
@@ -15,6 +16,27 @@ sub _ClearState {
   $self->_Done(0);
   foreach my $dep (@{$self->_Depers}) {
     $dep->_ClearState;
+  }
+}
+sub _SetupBlocks {
+  my $self = shift;
+  my $badChars = shift;
+  my $blocks = [ ];
+
+  foreach my $block (@{$self->_IBlocks}) {
+    my $tblock = $block;
+    $tblock =~ s/\[\>.*?\<\]//g;
+    if(!Pex::Text::BadCharCheck($badChars, $tblock)) {
+      push(@{$blocks}, $block);
+    }
+  }
+  if(!@{$blocks} && @{$self->_IBlocks}) {
+    push(@{$blocks}, $self->_IBlocks->[0]);
+  }
+  $self->_Blocks($blocks);
+ 
+  foreach my $dep (@{$self->_Depers}) {
+    $dep->_SetupBlocks($badChars);
   }
 }
 
@@ -37,6 +59,12 @@ sub _Depers {
   return($self->{'_Depers'});
 }
 
+sub _IBlocks {
+  my $self = shift;
+  $self->{'_IBlocks'} = shift if(@_);
+  $self->{'_IBlocks'} = [ ] if(ref($self->{'_IBlocks'}) ne 'ARRAY');
+  return($self->{'_IBlocks'});
+}
 sub _Blocks {
   my $self = shift;
   $self->{'_Blocks'} = shift if(@_);
@@ -60,12 +88,12 @@ sub _AddDepers {
 }
 sub AddBlock {
   my $self = shift;
-  push(@{$self->_Blocks}, @_);
+  push(@{$self->_IBlocks}, @_);
 }
 
 sub NumBlocks {
   my $self = shift;
-  return(scalar(@{$self->_Blocks}));
+  return(scalar(@{$self->_IBlocks}));
 }
 
 sub Signature {

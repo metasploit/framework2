@@ -39,6 +39,7 @@ sub _BuildDelta {
   my $rawshell = shift;
   my $badChars = shift;
   my $bm = $self->_BuildBM(length($rawshell));
+  $bm->BadChars($badChars);
   my $decoder = $bm->Build;
 #  print STDERR $decoder;
   my $assassin = Pex::Poly::RegAssassin->new;

@@ -33,6 +33,12 @@ sub RandBlock {
   return($self->_Blocks->[$rand]);
 }
 
+sub BadChars {
+  my $self = shift;
+  $self->{'BadChars'} = shift if(@_);
+  return($self->{'BadChars'});
+}
+
 sub _ClearDoneBlocks {
   my $self = shift;
   my $array = [ ];
@@ -72,6 +78,13 @@ sub _ClearState {
     $b->_ClearState;
   }
 }
+sub _SetupBlocks {
+  my $self = shift;
+  my $badChars = shift;
+  foreach my $b (@{$self->_Blocks}) {
+    $b->_SetupBlocks($badChars);
+  }
+}
 
 sub _Connections {
   my $self = shift;
@@ -86,6 +99,7 @@ sub _Connections {
 sub Build {
   my $self = shift;
   $self->_ClearState;
+  $self->_SetupBlocks($self->BadChars);
   my $data;
   while($self->_IsBlockLeft) {
     my $block = $self->RandBlock;
