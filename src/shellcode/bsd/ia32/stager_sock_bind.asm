@@ -13,7 +13,7 @@
 ;
 ; Description:
 ;
-;        Implementation of a Linux portbind TCP stager.
+;        Implementation of a BSD portbind TCP stager.
 ;
 ;;
 BITS   32
