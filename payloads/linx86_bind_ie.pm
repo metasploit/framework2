@@ -9,9 +9,9 @@
 
 package Msf::Payload::linx86_bind_ie;
 use strict;
-use base 'Msf::PayloadComponent::ExternalPayload';
+use base 'Msf::PayloadComponent::InlineEggPayload';
 sub load {
-  Msf::PayloadComponent::ExternalPayload->import('Msf::PayloadComponent::BindConnection');
+  Msf::PayloadComponent::InlineEggPayload->import('Msf::PayloadComponent::BindConnection');
 }
 
 my $info =
