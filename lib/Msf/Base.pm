@@ -56,15 +56,6 @@ sub GetEnv {
   return($self->MergeHash($envs[0], $envs[1]));
 }
 
-# fixme SetEnv...
-# the cli wont work until this does, setting Temp
-#sub SetEnv {
-#  my $self = shift;
-#  my $key = shift;
-#  my $val = shift;
-#  return $self->SetTempEnv($key, $val);
-#}
-
 
 sub GetGlobalEnv {
   my $self = shift;
@@ -176,12 +167,14 @@ sub GetError {
   my $self = shift;
   return($self->_Error);
 }
+
 sub SetError {
   my $self = shift;
   my $error = shift;
   $self->_Error($error);
   return($error);
 }
+
 sub ClearError {
   my $self = shift;
   $self->_Error(undef);
@@ -191,10 +184,8 @@ sub PrintError {
   my $self = shift;
   my $error = $self->_Error;
 
-  if(! defined($error)) {
-    return(0);
-  }
-  
+  return(0) if ! defined($error);
+
   $self->PrintLine('Error: ', $error);
   $self->ClearError;
   return(1);
@@ -213,6 +204,7 @@ sub PrintDebug {
   }
   $self->Print(@_) if($self->DebugLevel >= $level);
 }
+
 sub PrintDebugLine {
   my $self = shift;
   my $level = shift;

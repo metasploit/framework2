@@ -32,23 +32,26 @@ sub ConfigDir {
     my $self = shift;
     my $dir  = shift;
     
+    if (! $dir) { return $self->{'ConfigDir'} }
+    
     if (! -d $dir && mkdir($dir, 0700) && ! -d $dir)
     {
         $self->PrintLine("Msf::Config: Could not access configuration directory '$dir' ($!)");
-        return(0);
+        return(undef);
     }
-    return(1);
+    $self->{'ConfigDir'} = $dir;
+    return($dir);
 }
 
 sub LoadConfig {
     my $self = shift;
     my $dir  = $self->{'ConfigDir'};
 
-    my $conf = { };
+    my $tmpenv = { };
     local *X;
     
     # Load default values into the environment hash
-    foreach (keys(%{$defaults})) { $conf->{'G'}->{$_} = $defaults->{$_} }  
+    foreach (keys(%{$defaults})) { $self->SetGlobalEnv($_, $defaults->{$_}) }
     
     # Look for directory, try to create, make sure it exists
     if (! -d $dir && mkdir($dir, 0700) && ! -d $dir)
@@ -64,8 +67,25 @@ sub LoadConfig {
             {
                 chomp;
                 next if /^#/;
-                if (m/^([G|T])\s+([^\s+]*)\s+(.*)/) { $conf->{$1}->{$2} = $3 }
+                if (m/^([G|T])\s+([^\s+]*)\s+(.*)/) 
+                {
+                    my ($eType, $eName, $eValue) = ($1, $2, $3);
+                    
+                    # G     Var   Value
+                    if ($eType eq "G")
+                    {
+                        $self->SetGlobalEnv($eName, $eValue);
+                    }
+                    
+                    # T     Msf::Exploit::NastyRemoteOverflow=Var   Value
+                    if ($eType eq "T" && $eName =~ /^([^\=]*)=(.*)/) 
+                    {
+                        print STDERR "Setting $1 = $2 = $eValue\n";
+                        $tmpenv->{$1}->{$2} = $eValue;
+                    }
+                }
             }
+            $self->_TempEnvs($tmpenv);
             close (X);
         }
         
@@ -80,9 +100,7 @@ sub LoadConfig {
             close (X);
         }
     }
-    
-    foreach (keys(%{$conf->{'G'}})) { $self->SetGlobalEnv($_, $conf->{'G'}->{$_}) }
-    foreach (keys(%{$conf->{'T'}})) { $self->SetTempEnv($_, $conf->{'T'}->{$_}) }
+
 }
 
 sub SaveConfig {
@@ -107,11 +125,14 @@ sub SaveConfig {
                 print X "G\t$_\t".$self->GetGlobalEnv($_)."\n";
             }
             
-            foreach (keys(%{$self->GetTempEnv}))
+            my $environs = $self->GetTempEnvs;
+            foreach my $env (keys(%{$environs}))
             {
-                print X "T\t$_\t".$self->GetTempEnv($_)."\n";
+                foreach my $var (keys(%{$environs->{$env}}))
+                {
+                    print X "T\t". $env ."=". $var ."\t". $environs->{$env}->{$var} ."\n";
+                }
             }
-            
             close (X);        
         }
         

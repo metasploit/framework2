@@ -104,9 +104,6 @@ my %exploitCmds =
 );
 
 
-# load saved configuration
-#gLoad();
-
 $state->{'LocalAddress'} = Pex::InternetIP();
 xAddAddressCache($state->{'LocalAddress'});
 
@@ -163,6 +160,10 @@ sub Load {
     }
 }
 
+sub gSave {
+    $ui->Config->SaveConfig();
+    xMsg("save", "configuration has been written to " . $ui->Config->ConfigDir);
+}
 
 sub gVersion { print "msfconsole version $VERSION\n" }
 
@@ -265,57 +266,6 @@ sub gHelp
     print $col->GetOutput . "\n";
 }
 
-sub gSave 
-{
-    my $c = $state->{'CONF'};
-    my $e = $console->_env();
-    my $cdir;
-    
-    local *X;
-    
-    if (! exists($c->{'CONFDIR'}) || ! -d $c->{'CONFDIR'})
-    {
-        if (-d $ENV{"HOME"})
-        {
-            $cdir = $ENV{"HOME"} . "/.msfconsole";
-        } else {
-            $cdir = ".msfconsole";
-        }
-        
-        if (! -d $cdir) { mkdir($cdir, 0755) }
-        if (! -d $cdir) { return }
-        $c->{'CONFDIR'} = $cdir;
-    } else { $cdir = $c->{'CONFDIR'} }
-    
-    if(open(X, ">$cdir/environ"))
-    {
-        foreach my $var (keys(%{$e}))
-        {
-            print X $var."=".$e->{$var}."\n";
-        }
-        close(X);
-    }
-    
-    if(open(X, ">$cdir/config"))
-    {
-        foreach my $var (keys(%{$c}))
-        {
-            print X $var."=".$c->{$var}."\n";
-        }
-        close(X);
-    }
-    
-    if(open(X, ">$cdir/addrcache"))
-    {
-        foreach (xGetAddressCache())
-        {
-            print X $_ . "\n";
-        }
-    }
-    
-     
-    xMsg("save", "wrote configuration to $cdir");
-}
 
 sub gExec 
 {
@@ -782,7 +732,9 @@ sub xGetAddressCache
 
 sub xAddAddressCache
 {
-    $state->{'CacheAddress'}->{shift()}++
+    my $addr = shift;
+    $ui->Config->AddrCacheAdd($addr);
+    $state->{'CacheAddress'}->{$addr}++
 }
 
 
