@@ -1,6 +1,15 @@
 Pre-Release Tasks
 ==================
 
+ - Make msfcli do regex match against name, display multiple matches
+
+ - Make some minor cosmetic improvements to msfweb, msfpayload.cgi
+
+ - Flush out Pex::x86
+ - Add raw mode support to Pex::Socket (spoof)
+ - Add interface dump function to DCERPC
+ 
+
  - Exchange exploit sucks, remove it or fix it
  - DCOM exploit needs to be fixed so it works on XP again!
  - DCOM exploit needs vulnerability check mode
