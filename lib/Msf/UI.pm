@@ -280,11 +280,17 @@ sub Encode {
       $self->PrintDebugLine(4, "encoderOS: " . join(',', @{$encoderOS}));
       next;
     }
-    if(!Pex::Utils::CheckKeys($exploit->EncoderKeys, $encoder->Keys, $exploit->EncoderKeysType)) {
-      $self->PrintDebugLine(2, "$encoderName failed Keys check");
+
+    # New key foo (spn)
+    if(!Pex::Utils::CheckKeys(
+      $exploit->EncoderKeysParsed,
+      $encoder->Keys,
+      $exploit->EncoderKeysType)) {
+
+      $self->PrintDebugLine(3, $encoder->SelfEndName . " encoder failed key check");
       next;
     }
-    
+
     my $rawShell = $exploit->PayloadPrepend . $payload->Build . $exploit->PayloadAppend;
     my $encodedShell = $encoder->Encode($rawShell, $badChars);
 
