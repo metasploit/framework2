@@ -43,17 +43,14 @@ sub Generate {
     $args .= $_ . '=' . $opts->{$_} . ' ';
   }
   
-  # print "External: $prog $args\n";
-
-  if(! -e $prog) 
-  {
+  if(! -e $prog)  {
     $self->SetError("Program $prog does not exist");
     return;
   }
 
   $self->PrintDebugLine(3, "Running: $prog $args");
   local $/;
-  open(PROG, "$prog $args|") ||
+  open(PROG, "$prog $args 2>/dev/null |") ||
   do 
   {
     $self->SetError("Couldn't open $prog: $!");

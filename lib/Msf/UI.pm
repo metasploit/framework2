@@ -45,22 +45,30 @@ sub LoadExploits {
     return($self->LoadModules($dir, 'Msf::Exploit::'));
 }
 sub LoadEncoders {
-#fixme external encoders
     my $self = shift;
     my $dir = @_ ? shift : $self->_BaseDir . '/encoders';
     return($self->LoadModules($dir, 'Msf::Encoder::'));
 }
 sub LoadNops {
-#fixme external nops
+
     my $self = shift;
     my $dir = @_ ? shift : $self->_BaseDir . '/nops';
     return($self->LoadModules($dir, 'Msf::Nop::'));
 }
 sub LoadPayloads {
-#fixme external payloads
     my $self = shift;
     my $dir = @_ ? shift : $self->_BaseDir . '/payloads';
-    return($self->LoadModules($dir, 'Msf::Payload::'));
+    my $res = $self->LoadModules($dir, 'Msf::Payload::');
+    foreach my $pay (keys (%{ $res }))
+    {
+        if (! $res->{$pay}->{'Info'}->{'Size'})
+        {
+            # XXX- should this default to on?
+            $self->PrintLine("[*] Could not load module $pay");
+            delete($res->{$pay});
+        }
+    }
+    return $res;
 }
 
 sub LoadModules {
@@ -87,11 +95,10 @@ sub LoadModules {
 
         # load the module via do since we dont import
         $self->PrintDebugLine(3, "Doing $path");
-#        eval("do '$path'");
         do $path;
 
         if ($@) { $self->PrintLine("[*] Error loading $path: $@") }
-        else  { $res->{$entry} = $entry->new() }
+        else { $res->{$entry} = $entry->new() }
     }
     closedir(DIR);
     return($res);
