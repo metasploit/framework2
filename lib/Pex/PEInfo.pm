@@ -144,7 +144,7 @@ sub IAT {
     foreach my $dll (keys(%{ $self->{'IMPORT'} })) {
         foreach my $proc (keys(%{ $self->{'IMPORT'}->{$dll} })) {
             if (lc($func) eq lc($func)) {
-                return $self->{'IMPORT'}->{$dll}->{$proc}->{'iat_res'};
+                return $self->{'IMPORT'}->{$dll}->{$proc}->{'iat'};
             }
         }
     }
@@ -513,11 +513,13 @@ sub _LoadExport {
             # Process forwarders
             my $forwarder = unpack('Z*', substr($data, $self->_RV2O($ord_table[$idx]), 512));
             if ($forwarder =~ /^\w+\.\w+$/) {
-                $ord_str = $forwarder;
                 $etable->{'funcs'}->{$ord_str}->{'forwarder'}++;
             }
             
-            $etable->{'ordinals'}->[$ord] = $ord_str;
+            if (defined($etable->{'ordinals'}->[$ord])) {
+                my $name = $etable->{'ordinals'}->[$ord];
+            } 
+
             $etable->{'funcs'}->{$ord_str}->{'ord'} = $ord;
             $etable->{'funcs'}->{$ord_str}->{'add'} = $ord_table[$idx] + $self->ImageBase;
 
@@ -565,6 +567,7 @@ sub _ParseResourceEntry {
     $res->{'Data'} = $entry;
     $res->{'Code'} = $dcode;
     $res->{'RVA'}  = $drva;
+    $res->{'Size'} = $dsize;
     return $res;
 }
 
@@ -719,10 +722,11 @@ sub _LoadVersionData {
     my $sinf_size = $sinf_wlen - ($sinf_xpad - $vinf_xpad );
     
     my $sfi = $self->_ParseStringTableArray($vblock, $vblock_rva, $sinf_xpad, $sinf_size);
-    if ($versionFile) {
-        $sfi->{'FixedFileVersion'} = $versionFile;
-        $sfi->{'FixedProdVersion'} = $versionProd;
-    }
+    
+    #if ($versionFile) {
+    #    $sfi->{'default'}->{'FixedFileVersion'} = $versionFile;
+    #    $sfi->{'default'}->{'FixedProdVersion'} = $versionProd;
+    #}
     
     $self->{'VERSION'} = $sfi;
     
@@ -750,7 +754,7 @@ sub _ParseStringTableArray {
         }
         
         # Create a stub hash for strings in this language
-        $res->{$ainf_wlen} = {};
+        $res->{$ainf_wkey} = {};
         
         # This is getting repetitive...
         my $ainf_size = $ainf_wlen - ($ainf_xpad - $sinf_xpad);
@@ -768,7 +772,7 @@ sub _ParseStringTableArray {
             }
             
             # Store the unicode string value...
-            $res->{$ainf_wlen}->{$binf_wkey} = $self->_UNI2ANSI(substr($vblock, $binf_xpad, 256));        
+            $res->{$ainf_wkey}->{$binf_wkey} = $self->_UNI2ANSI(substr($vblock, $binf_xpad, 256));        
 
             # Push the ptr to the next structure
             $ainf_xptr += $binf_wlen;

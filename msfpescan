@@ -25,6 +25,8 @@ use Pex::PEInfo;
 use Pex;
 use Pex::Nasm::Ndisasm;
 
+use Msf::ColPrint;
+
 no utf8;
 
 my $VERSION = '$Revision$';
@@ -70,10 +72,22 @@ my %pops =
     );
 
 
-getopts("f:d:j:sx:a:B:A:I:nhv", \%opts);
+getopts("f:d:j:sx:a:B:A:I:nhvD", \%opts);
 Usage()   if($opts{'h'});
 Version() if($opts{'v'});
-if ($opts{'h'} || (! defined($opts{'f'}) && ! defined($opts{'d'})) || (! defined($opts{'j'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { Usage(); exit(0); }
+
+if ($opts{'h'} || 
+     (! defined($opts{'f'}) && ! defined($opts{'d'})) ||
+     (! defined($opts{'j'}) &&
+      ! defined($opts{'x'}) &&
+      ! defined($opts{'a'}) && 
+      ! defined($opts{'D'}) &&
+      ! $opts{'s'})
+   ) 
+{ 
+   Usage(); 
+   exit(0); 
+}
 
 my $func;
 my $args = { };
@@ -92,6 +106,10 @@ elsif(exists($opts{'x'})) {
 elsif(exists($opts{'a'})) {
   $func = \&address;
   $args->{'address'} = hex($opts{'a'});
+}
+elsif(exists($opts{'D'})) {
+  $func = \&dumpinfo;
+  $args->{'dumpinfo'} = hex($opts{'D'});
 }
 
 $args->{'before'} = $opts{'B'} if(exists($opts{'B'}));
@@ -204,6 +222,74 @@ sub address {
   printf("0x%.8x   %s\n", $address, hexOutput($found));
 }
 
+sub dumpinfo {
+    my $pe = shift;
+    my $args = shift;
+    
+    my @img_hdrs        = $pe->ImageHeaders;
+    my @opt_img_hdrs    = $pe->OptImageHeaders;
+    my $imports         = $pe->Imports;
+    my $exports         = $pe->Exports;
+    my $resources       = $pe->Resources;
+    my $version         = $pe->VersionStrings;
+    my $col;
+    
+    print "\n\n[ Image Headers ]\n\n";
+    $col = Msf::ColPrint->new(4, 4);
+    foreach my $hdr (@img_hdrs) {
+        $col->AddRow($hdr, sprintf("0x%.8x",$pe->ImageHeader($hdr)));
+    }
+    print $col->GetOutput;
+
+    print "\n\n[ Optional Headers ]\n\n";
+    $col = Msf::ColPrint->new(4, 4);
+    foreach my $hdr (@opt_img_hdrs) {
+        $col->AddRow($hdr, sprintf("0x%.8x",$pe->OptImageHeader($hdr)));
+    }
+    print $col->GetOutput;
+    
+    print "\n\n[ Exported Functions ]\n\n";
+    $col = Msf::ColPrint->new(4, 4);
+    foreach my $name (@{ $exports->{'ordinals'} }) {
+        my $add = $exports->{'funcs'}->{$name}->{'add'};
+        my $ord = $exports->{'funcs'}->{$name}->{'ord'};
+        next if ! $ord;    
+        $col->AddRow($ord, $name, sprintf("0x%.8x",$add));
+    }
+    print $col->GetOutput;    
+ 
+    print "\n\n[ Imported Functions ]\n\n";
+    $col = Msf::ColPrint->new(4, 4);
+    foreach my $module (keys(%{ $imports })) {
+        foreach my $func (sort(keys(%{ $imports->{$module} }))) {
+            $col->AddRow($module, $func, 
+                "IAT ".sprintf("0x%.8x", $imports->{$module}->{$func}->{'iat'})
+            );
+        }
+        $col->AddRow("", "", "");
+    }
+    print $col->GetOutput;    
+
+    print "\n[ Resources ]\n\n";
+    $col = Msf::ColPrint->new(4, 4);
+    foreach my $type (sort(keys(%{ $resources->{'Types'} }))) {
+        foreach my $name (sort(keys(%{ $resources->{'Types'}->{$type} }))) {
+            my $entry = $resources->{'Entries'}->{$name};
+            $col->AddRow($name, $entry->{'Name'}, "CP ".$entry->{'Code'}, $entry->{'Size'}." bytes");
+        }
+    }
+    print $col->GetOutput;
+
+    print "\n\n[ Version Strings ]\n\n";
+    $col = Msf::ColPrint->new(4, 4);
+    foreach my $lang (keys(%{ $version })) {
+        foreach my $name (sort(keys(%{ $version->{$lang} }))) {
+            $col->AddRow($lang, $name, $version->{$lang}->{$name});
+        }
+    }
+    print $col->GetOutput;
+    
+}
 
 sub hexOutput {
   my $data = shift;
@@ -232,6 +318,7 @@ Modes:
          -s            Search for pop+pop+ret combinations
          -x  <regex>   Search for regex match
          -a  <address> Show code at specified virtual address
+         -D            Display detailed PE information
 Options:
          -A  <count>   Number of bytes to show after match
          -B  <count>   Number of bytes to show before match
