@@ -11,13 +11,14 @@ package Msf::Nop::SPARC;
 use strict;
 use base 'Msf::Nop';
 use Pex::Utils;
+use Pex::SPARC;
 
 my $info = {
   'Name'    => 'SPARC Nop Generator',
   'Version' => '$Revision$',
-  'Authors' => [ 'H D Moore <hdm [at] metasploit.com>', ],
+  'Authors' => [ 'vlad902 <vlad902 [at] gmail.com>', ],
   'Arch'    => [ 'sparc' ],
-  'Desc'    =>  'Sparc nop generator based on ADMutate nop sleds',
+  'Desc'    =>  'Sparc nop generator',
   'Refs'    => [ ],
 };
 
@@ -28,45 +29,86 @@ sub new {
   return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
+my $table = [
+  [ \&Inssethi, [ ], ],					# sethi
+  [ \&Insarithmetic, [ 1, 0 ], ],			# add
+  [ \&Insarithmetic, [ 1, 1 ], ],			# and
+  [ \&Insarithmetic, [ 1, 2 ], ],			# or
+  [ \&Insarithmetic, [ 1, 3 ], ],			# xor
+  [ \&Insarithmetic, [ 1, 4 ], ],			# sub
+  [ \&Insarithmetic, [ 1, 5 ], ],			# andn
+  [ \&Insarithmetic, [ 1, 6 ], ],			# orn
+  [ \&Insarithmetic, [ 1, 7 ], ],			# xnor
+  [ \&Insarithmetic, [ 1, 8 ], ],			# addx
+  [ \&Insarithmetic, [ 1, 10 ], ],			# umul 
+  [ \&Insarithmetic, [ 1, 11 ], ],			# smul 
+  [ \&Insarithmetic, [ 1, 12 ], ],			# subx
+  [ \&Insarithmetic, [ 0, 14 ], ],			# udiv
+  [ \&Insarithmetic, [ 0, 15 ], ],			# sdiv
+  [ \&Insarithmetic, [ 2, 37 ], ],			# sll
+  [ \&Insarithmetic, [ 2, 38 ], ],			# srl
+  [ \&Insarithmetic, [ 2, 39 ], ],			# sra
+];
+
+# Returns valid destination register number between 0 and 31 excluding %sp
+sub get_dst_reg {
+  my $reg = int(rand(31));
+  $reg += ($reg >= 14);
+
+  return $reg;
+}
+
+# Any register.
+sub get_src_reg {
+  return int(rand(32));
+}
+
+sub Inssethi {
+  return pack("N", ((get_dst_reg() << 25) | (4 << 22) | int(rand(1 << 22))));
+}
+
+sub Insarithmetic {
+  my $ref = shift;
+
+# Use one src reg with a signed 13-bit immediate (non-0)
+  if(($ref->[0] == 0 || int(rand(2))) && $ref->[0] != 2)
+  {
+    return pack("N", ((2 << 30) | (get_dst_reg() << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | (1 << 13) | (int(rand((1 << 13) - 1)) + 1)));
+  }
+# Use two src regs
+  else
+  {
+    return pack("N", ((2 << 30) | (get_dst_reg() << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | get_src_reg()));
+  }
+}
+
 sub Nops {
-    my $self = shift;
-    my $length = shift;
+  my $self = shift;
+  my $length = shift;
 
-    my $exploit = $self->GetVar('_Exploit');
-    my $random  = $self->GetLocal('RandomNops');
-    my $badChars = $exploit->PayloadBadChars;
-    my @sparc;
+  my $exploit = $self->GetVar('_Exploit');
+  my $random  = $self->GetLocal('RandomNops');
+  my $badChars = $exploit->PayloadBadChars;
+  my ($nop, $random, $tempnop);
     
-    # ripped from ADMutate, will add real nop engine later
-    push @sparc, "\xa2\x1c\x80\x12";       # /*xor %l2,%l2,%l1   */
-    push @sparc, "\xb6\x06\x40\x1a";       # /*add %i1,%i2,%i3   */
-    push @sparc, "\xa0\x26\xe0\x42";       # /*sub %i3,0x42,%l0  */
-    push @sparc, "\xb6\x16\x40\x1a";       # /*or  %i1,%i2,%i3   */
-    push @sparc, "\xb2\x03\x60\x42";       # /*add %o5,0x42,%i1  */
-    push @sparc, "\xb6\x04\x80\x12";       # /*add %l2,%l2,%i3   */
-    push @sparc, "\xa4\x04\xe0\x42";       # /*add %l3,0x42,%l2  */
-    push @sparc, "\x96\x23\x60\x42";       # /*sub %o5,0x42,%o3  */
-    push @sparc, "\x96\x24\x80\x12";       # /*sub %l2,%l2,%o3   */
-    push @sparc, "\xb2\x26\x80\x19";       # /*sub %i2,%i1,%i1   */
-    push @sparc, "\x89\xa5\x08\x22";       # /*fadds %f20,%f2,%f4*/
-    push @sparc, "\xa2\x1a\x40\x0a";       # /*xor %o1,%o2,%l1   */ 
-    push @sparc, "\xa4\x32\xa0\x42";       # /*orn %o2,0x42,%l2  */
-    push @sparc, "\xa2\x03\x40\x12";       # /*add %o5,%l2,%l1   */
-    push @sparc, "\xba\x56\xa0\x42";       # /*umul %i2,0x42,%i5 */
-    push @sparc, "\xa4\x27\x40\x12";       # /*sub %i5,%l2,%l2   */
-    push @sparc, "\xa2\x0e\x80\x13";       # /*and %i2,%l3,%l1   */
-    push @sparc, "\xb6\x03\x60\x42";       # /*add %o5,0x42,%i3  */
-    push @sparc, "\x98\x3e\x80\x12";       # /*xnor %i2,%l2,%o4  */
+# DEBUG DEBUG DEBUG
+#  $nop = "\x91\xd0\x20\x01";
 
-    
-    if (! $random) {
-        return($sparc[0] x ($length / 4));
-        return(pack('N',$sparc[0]) x ($length / 4));
+# XXX: $random support
+
+  while(length($nop) < $length)
+  {
+    $random = int(rand(scalar(@{$table})));
+
+    $tempnop = $table->[$random]->[0]($table->[$random]->[1]);
+
+    if(!Pex::Utils::ArrayContains([split('', $tempnop)], [split('', $badChars)]))
+    {
+      $nop .= $tempnop;
     }
-    
-    # no randomness yet :/
-    return($sparc[0] x ($length / 4));
-    return(pack('N',$sparc[0]) x ($length / 4));
+  }
+
+  return $nop;
 }
 
 
