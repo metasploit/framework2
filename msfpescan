@@ -72,7 +72,7 @@ my %pops =
     );
 
 
-getopts("f:d:j:sx:a:B:A:I:nhvD", \%opts);
+getopts("f:d:j:sx:a:B:A:I:nhvDE", \%opts);
 Usage()   if($opts{'h'});
 Version() if($opts{'v'});
 
@@ -118,7 +118,7 @@ $args->{'after'} = $opts{'A'} if(exists($opts{'A'}));
 if($opts{'f'}) {
 
   my $filename = $opts{'f'};
-  my $pe = Pex::PEInfo->new($filename);
+  my $pe = Pex::PEInfo->new('File' => $filename, 'Debug' => $opts{'E'}, 'FullResources' => 1);
   
   if (! $pe)
   {

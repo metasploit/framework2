@@ -17,17 +17,17 @@
 package Pex::PEInfo;
 use strict;
 
+# Usage: new(File => $path, Debug => 1, FullResources => 1)
 sub new {
-    my ($class, $args) = @_;
+    my $class = shift;
     my $self = bless {}, $class;
-    return $self->_Init($args);
+    return $self->_Init(@_);
 }
-
 
 sub _Init {
     my $self = shift;
-    my $args = shift;
-    
+    my %args = @_;
+
     $self->{'RAW'}         = "";
     $self->{'LastError'}   = "";
     $self->{'IMG_HDR'}     = { };
@@ -38,15 +38,16 @@ sub _Init {
     $self->{'EXPORT'}      = { };
     $self->{'RESOURCE'}    = { };
     $self->{'VERSION'}     = { };
-    
-    $self->LoadImage($args);
+    $self->{'OPTS'}        = \%args;
+
+    $self->LoadImage;
     return $self;
 }
 
 sub Debug {
     my $self = shift;
-    if (@_) { $self->{'Debug'} = shift() }
-    return $self->{'Debug'};
+    if (@_) { $self->{'OPTS'}->{'Debug'} = shift() }
+    return $self->{'OPTS'}->{'Debug'};
 }
 
 sub LastError {
@@ -181,6 +182,18 @@ sub Resources {
     return $self->{'RESOURCE'};
 }
 
+sub Resource {
+    my $self = shift;
+    my $name = shift;
+    my $rsrc = exists($self->{'RESOURCE'}->{'Entries'}->{$name}) ?
+               $self->{'RESOURCE'}->{'Entries'}->{$name} :
+               return;
+
+    return substr($self->{'RAW'}, 
+                  $self->_RV2O($rsrc->{'RVA'}), 
+                  $rsrc->{'Size'});
+}
+
 sub VersionStrings {
     my $self = shift;
     return $self->{'VERSION'};
@@ -194,17 +207,28 @@ sub VersionString {
 }
 
 sub LoadImage {
-    my ($self, $fn) = @_;
+    my $self  = shift;
+    my $file  = $self->{'OPTS'}->{'File'};
+    my $debug = $self->{'OPTS'}->{'Debug'};
+    
     my $data;   
     local *X;
-    
-    if (! open(X, "<$fn")) {
+        
+    if (! open(X, "<$file")) {
         $self->LastError("Could not open file: $!");
         return;
     }
     
     while(<X>) { $data .= $_ }
     close(X);
+
+    # Strip the leading path from the file name
+    if ((my $ls = rindex($file, "/")) != -1) {
+        $file = substr($file, $ls+1);
+    }
+    
+    $self->{'FILENAME'} = $file;
+    
     
     $self->{'RAW'} = $data;
     
@@ -322,17 +346,6 @@ sub LoadImage {
     }   
     
     
-    if ($self->Debug) {
-        foreach (keys(%IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $IMAGE_HDR{$_}); }
-        foreach (keys(%OPT_IMAGE_HDR)) { printf("%s\t0x%.8x\n", $_ , $OPT_IMAGE_HDR{$_}); }
-        foreach (keys(%RVA)) { printf("%s\t0x%.8x [0x%.8x]\n", $_ , $RVA{$_}->[0], $RVA{$_}->[1] ); }
-        foreach (keys(%SECTIONS)) 
-        { 
-            printf("%s\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\t0x%.8x\n",
-                   $_ , $SECTIONS{$_}->[0], $SECTIONS{$_}->[1], $SECTIONS{$_}->[2], $SECTIONS{$_}->[3], $SECTIONS{$_}->[4]);
-        }
-    }
-    
     $self->{'IMG_HDR'}      = \%IMAGE_HDR;
     $self->{'OPT_IMG_HDR'}  = \%OPT_IMAGE_HDR;
     $self->{'SECTIONS'}     = \%SECTIONS;
@@ -363,13 +376,6 @@ sub _LoadImport {
     for my $idx (0 .. ($count - 1)) {
         my @entry = unpack('VVVVV', substr($idata, $idx * 20, 20));
         
-        if ($self->Debug) {
-            print "\n[ IMPORT $idx ]\n";
-            foreach (@entry) {
-                printf("\t0x%.8x\n", $_);
-            }
-        }
-        
         # all null struct can signify end of array
         last if ! $entry[0];
         
@@ -394,7 +400,7 @@ sub _LoadImport {
             else {
                 # Catch some really broken DLL's here
                 if (! $entry_start_ref) {
-                    print STDERR "PEInfo: invalid RVA $erva\n";
+                    $self->_DebugLog("invalid RVA $erva");
                     last;
                 }
 
@@ -405,8 +411,8 @@ sub _LoadImport {
             my $entry_iat_add  = $self->_O2V($rft_start_ref + (4 * $eidx));
             my $entry_iat_ref  = unpack('V', substr($data, $rft_start_ref + (4 * $eidx), 4));            
             
-            if ($self->Debug) {
-                printf("[ %s ]\t%.3d 0x%.8x 0x%.8x %.4d [0x%.8x|0x%.8x] %s\n",
+            $self->_DebugLog(sprintf(
+                        "[ %s ]\t%.3d 0x%.8x 0x%.8x %.4d [0x%.8x|0x%.8x] %s",
                         lc($dll_name),
                         $eidx,
                         $oft_start_ref + (4 * $eidx),
@@ -415,8 +421,7 @@ sub _LoadImport {
                         $entry_iat_add,
                         $entry_iat_ref,
                         $entry_name,
-                        );
-            }        
+                        ));
 
             $itable->{lc($dll_name)}->{$entry_name}->{'ord'} = $entry_hint_ord;
             $itable->{lc($dll_name)}->{$entry_name}->{'iat'} = $entry_iat_add;
@@ -450,14 +455,6 @@ sub _LoadExport {
     # fields[8] = Array of Names
     # fields[9] = Array of Ordinals
 
-    if ($self->Debug) {
-        print "\n[ EXPORT ]\n";
-        foreach (@fields) {
-            printf("\t0x%.8x\n", $_);   
-        }
-        print "\n";
-    }
-    
     $etable->{'TimeDate'} = $fields[1];
     $etable->{'name'} = lc
     ( 
@@ -498,10 +495,7 @@ sub _LoadExport {
         $etable->{'funcs'}->{$name_str}->{'ord'} = $ord_cur;
         $etable->{'funcs'}->{$name_str}->{'add'} = $func_cur + $self->ImageBase;
         $etable->{'ordinals'}->[$ord_cur]        = $name_str;
-        
-        if ($self->Debug) {    
-            printf("0x%.8x %.4d %s\n", $func_cur, $ord_cur, $name_str);
-        }
+        $self->_DebugLog(sprintf("0x%.8x %.4d %s", $func_cur, $ord_cur, $name_str));
     }
     
     for (my $idx = 0; $idx < scalar(@ord_table); $idx++) {
@@ -522,11 +516,7 @@ sub _LoadExport {
 
             $etable->{'funcs'}->{$ord_str}->{'ord'} = $ord;
             $etable->{'funcs'}->{$ord_str}->{'add'} = $ord_table[$idx] + $self->ImageBase;
-
-            if ($self->Debug) {    
-                printf("0x%.8x %.4d %s\n", $ord_table[$idx], $ord, $ord_str);
-            }
-           
+            $self->_DebugLog(sprintf("0x%.8x %.4d %s", $ord_table[$idx], $ord, $ord_str));
         }
     }
 
@@ -561,10 +551,8 @@ sub _ParseResourceEntry {
     my $res = { };
   
     my ($drva, $dsize, $dcode) = unpack('V3', substr($rdata, $rvalue, 12));
-    my $entry = substr($self->{'RAW'}, $self->_RV2O($drva), $dsize);
     
     $res->{'Name'} = $self->_ParseResourceName($rdata, $rname);
-    $res->{'Data'} = $entry;
     $res->{'Code'} = $dcode;
     $res->{'RVA'}  = $drva;
     $res->{'Size'} = $dsize;
@@ -588,6 +576,12 @@ sub _ParseResourceDirectory {
         $cindex = "/".$self->_ResID2Name($rname);
     }
     
+    my ($base) = $cindex =~ m/^\/([^\/]+)/;
+
+    if (! $self->{'OPTS'}->{'FullResources'} && $base && $base ne 'VERSION') {
+        return;
+    }
+
     # Remove the high bit from the offset value
     $rvalue -= 0x80000000;
     
@@ -600,9 +594,7 @@ sub _ParseResourceDirectory {
     $rtable->{'Dirs'}->{$cindex}->{'Version'} = $rfields[2].$rfields[3];
     $rtable->{'Dirs'}->{$cindex}->{'Entries'} = $rfields[4]+$rfields[5];
 
-    if ($self->Debug) {
-        print "$rname\tDIR\t$cindex (".$rtable->{'Dirs'}->{$cindex}->{'DirType'} .")\n";
-    }
+    $self->_DebugLog("$rname\tDIR\t$cindex (".$rtable->{'Dirs'}->{$cindex}->{'DirType'} .")");
     
     for my $rindex (0 .. ($rfields[4] + $rfields[5] - 1)) {
         my ($rname, $rvalue) = unpack('VV', substr($rdata, $rvalue + 16 + ($rindex * 8), 8));
@@ -615,14 +607,8 @@ sub _ParseResourceDirectory {
         else {
             # Place resource entry into the hash
             $rtable->{'Entries'}->{$path} = $self->_ParseResourceEntry($rdata, $rname, $rvalue);
-            
-            # Map into the types table as well
-            my ($base) = $cindex =~ m/^\/([^\/]+)/;
-            $rtable->{'Types'}->{$base}->{$path} = $rtable->{'Entries'}->{$path};
-            
-            if ($self->Debug) {
-                print $rtable->{'Entries'}->{$path}->{'Name'}."\tENT\t$path\t($base)\n";
-            }
+            $rtable->{'Types'}->{$base}->{$path} = $rtable->{'Entries'}->{$path};            
+            $self->_DebugLog($rtable->{'Entries'}->{$path}->{'Name'}."\tENT\t$path\t($base)");
         }
     }
 }
@@ -661,23 +647,25 @@ sub _ResID2Name {
 }
 
 sub _LoadVersionData {
-    my $self = shift;
-    my $resource = $self->Rva('resource');
-
-    my $rdata = substr($self->{'RAW'}, $self->_RV2O($resource->[0]), $resource->[1]);
+    my $self  = shift;
     my $vdata = $self->{'RESOURCE'}->{'Types'}->{'VERSION'};
+    
     return if ! $vdata;
 
     my ($versionFile, $versionProd);
     
-    # XXX - Only read first section right now
-    my $vblock = $vdata->{'/VERSION/0/0'}->{'Data'};
     my $vblock_rva = $vdata->{'/VERSION/0/0'}->{'RVA'};
+    my $vblock = $self->Resource('/VERSION/0/0');
     
-    my ($vinf_wlen, $vinf_vlen, $vinf_type) = unpack('v3', $vblock);
+    my ($vinf_wlen, $vinf_vlen, $vinf_type) = unpack('v3', substr($vblock, 0, 6));
     my $vinf_wkey = $self->_UNI2ANSI(substr($vblock, 6));
     my $vinf_xpad = (length($vinf_wkey) * 2) + 2 + 6;
     
+    if ($vinf_wkey ne 'VS_VERSION_INFO') {
+        $self->_DebugLog("version string not found: $vinf_wkey");
+        return;
+    }
+
     # Pad it up to the VS_FIXEDFILEINFO structure
     while (($vblock_rva + $vinf_xpad) % 4 != 0) {
         $vinf_xpad++;
@@ -687,10 +675,10 @@ sub _LoadVersionData {
         my $vfixed_ptr = index($vblock, pack('V', 0xfeef04bd));
         
         if ($vfixed_ptr != $vinf_xpad) {
-            print STDERR "PEInfo::_LoadVersionData: mismatch of VS_FIXEDFILEINFO start offsets\n";
+            $self->_DebugLog("mismatch of VS_FIXEDFILEINFO start offsets ($vinf_xpad != $vfixed_ptr)");
         }
         
-        my @vfixed = unpack('VVv8V*', substr($vblock, $vfixed_ptr, $vinf_vlen));   
+        my @vfixed = unpack('VVv8V*', substr($vblock, $vinf_xpad, $vinf_vlen));   
         $versionFile = join(".", ( $vfixed[3], $vfixed[2], $vfixed[5], $vfixed[4]));
         $versionProd = join(".", ( $vfixed[7], $vfixed[6], $vfixed[9], $vfixed[8]));
     }
@@ -708,9 +696,29 @@ sub _LoadVersionData {
     my $sinf_wkey = $self->_UNI2ANSI(substr($vblock, $vinf_xpad + 6, 256));
     my $sinf_xpad = $vinf_xpad + (length($sinf_wkey) * 2) + 2 + 6;
     
+    if (! $sinf_wlen || $sinf_wlen > length($vblock)) {
+        $self->_DebugLog("invalid sinf_wlen value: $sinf_wlen vs ".length($vblock));
+        return;
+    }
+    
+    # Ignore the translation table and find StringFileInfo
+    if ($sinf_wkey eq 'VarFileInfo') {
+        
+        $vinf_xpad += $sinf_wlen;
+        while (($vblock_rva + $vinf_xpad) % 4 != 0) {
+            $vinf_xpad++;
+        }
+        
+        ($sinf_wlen) = unpack('v', substr($vblock, $vinf_xpad, 2));
+        $sinf_wkey = $self->_UNI2ANSI(substr($vblock, $vinf_xpad + 6, 256));
+        $sinf_xpad = $vinf_xpad + (length($sinf_wkey) * 2) + 2 + 6;
+    }
+    
+    
     if ($sinf_wkey ne 'StringFileInfo') {
-        print STDERR "PEInfo::_LoadVersionData: StringFileInfo not found first in VERSION_INFO\n";
-        print STDERR "DATA: ".unpack("H*", substr($vblock, $vinf_xpad + 6, 64))."\n";
+        $self->_DebugLog("StringFileInfo not found first in VERSION_INFO ($sinf_wkey");
+        $self->_DebugLog(unpack("H*", substr($vblock, $vinf_xpad , 64)));
+        return;
     }
     
     # Pad it up to the StringArray structure
@@ -721,19 +729,15 @@ sub _LoadVersionData {
     # Determine the maximum byte length of the array
     my $sinf_size = $sinf_wlen - ($sinf_xpad - $vinf_xpad );
     
+    # Call the string array parser (ugly++)
     my $sfi = $self->_ParseStringTableArray($vblock, $vblock_rva, $sinf_xpad, $sinf_size);
     
-    #if ($versionFile) {
-    #    $sfi->{'default'}->{'FixedFileVersion'} = $versionFile;
-    #    $sfi->{'default'}->{'FixedProdVersion'} = $versionProd;
-    #}
+    if ($versionFile) {
+       # $self->_DebugLog("FixedFileVer: $versionFile");
+       # $self->_DebugLog("FixedProdVer: $versionProd");
+    }
     
     $self->{'VERSION'} = $sfi;
-    
-    # Point this to the next structure (VarFileInfo)
-    $vinf_xpad += $sinf_wlen;
-    
-    # XXX VarFileInfo not implemented yet
 }
 
 sub _ParseStringTableArray {
@@ -743,10 +747,16 @@ sub _ParseStringTableArray {
     my $res = { };
     
     while ($sinf_xptr < $sinf_xpad + $sinf_size) {
-            
+
         my ($ainf_wlen) = unpack('v', substr($vblock, $sinf_xptr, 2));
         my $ainf_wkey = $self->_UNI2ANSI(substr($vblock, $sinf_xptr + 6, 256));
         my $ainf_xpad = $sinf_xptr + (length($ainf_wkey) * 2) + 2 + 6;
+        
+        if (! $ainf_wlen) {
+            $self->_DebugLog("record length is 0 ($sinf_xptr, $sinf_xpad, $sinf_size)");
+            $self->_DebugLog(unpack("H*", substr($vblock, $sinf_xpad , 64)));
+            last;
+        }
         
         # Pad it up to the String structure array
         while (($vblock_rva + $ainf_xpad) % 4 != 0) {
@@ -863,4 +873,14 @@ sub _UNI2ANSI {
     return $data;
 }
 
+sub _DebugLog {
+    my $self = shift;
+    my $data = shift;
+    
+    return if ! $self->Debug;
+    my @src = caller(1);
+    print STDERR scalar(localtime())." ".
+          $src[3]." ".$self->{'FILENAME'}.
+          " $data\n";
+}
 1;
