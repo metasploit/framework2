@@ -55,16 +55,16 @@ sub EncodePayload {
         "\x9e\x03\xe0\x04";   # /* add   %o7,4,%o7 */
     
     # Extract
-    my $hiData = unpack('N', substr($encoder, 16, 4));
-    my $loData = unpack('N', substr($encoder, 20, 4));
+    my $hiData = unpack('N', substr($encoder, 12, 4));
+    my $loData = unpack('N', substr($encoder, 26, 4));
 	
     # Patch
     $hiData = (($hiData >> 22) << 22) + ($xor_key >> 10);
     $loData = (($loData >> 10) << 10) + (($xor_key << 22) >> 22);
     
     # Replace
-    substr($encoder, 16, 4, pack('N', $hiData));
-    substr($encoder, 20, 4, pack('N', $loData));
+    substr($encoder, 12, 4, pack('N', $hiData));
+    substr($encoder, 16, 4, pack('N', $loData));
   
     # XXX - We do not check to see if the split bitshifted key is a badchar!
 	return $encoder . $xor_data . pack('N', $xor_key); 
