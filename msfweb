@@ -38,8 +38,6 @@ use POSIX;
 use IO::Socket;
 use Getopt::Std;
 
-use Carp;
-
 no utf8;
 
 Msf::UI::ActiveStateSucks();
@@ -249,7 +247,10 @@ sub ProcessResRequest {
 			'osx'	=> ['image/gif', 'osx.gif'],
 			'sun'	=> ['image/gif', 'sun.gif'],
 			'win32'	=> ['image/gif', 'win32.gif'],
+
+			# special case icons
 			'unknown'	=> ['image/gif', 'clear.gif'],
+			'favorite'	=> ['image/x-icon', 'favicon.ico'],
 		);
 		
 		my ($type, $path) = @{ $icons{$os} || $icons{'unknown'} };
@@ -356,12 +357,21 @@ sub ProcessWebRequest {
 	my $cinfo = $cli->PeerAddr .':'. $cli->PeerPort;
 	my $log = "HTTP: $cinfo $$ ". $req->{'path'} ." ". $state->{'MODE'};
 	
+	
+	# Dirty hack to support /favicon.ico requests
+	if ($req->{'path'} eq '/favicon.ico') {
+		$req->{'path'} = '/RESOURCE?ICON=favorite';
+		$req->{'base'} = 'RESOURCE';
+		$state->{'ICON'} = 'favorite';
+	}
+	
 	if (exists($state->{'MODULE'})) {
 		$log .= " module=". $state->{'MODULE'};
 	}
 	
 	if ($req->{'base'} eq 'RESOURCE') {
-		$log .= " res=".$state->{'ID'};
+		$log .= " ICON=". $state->{'ICON'} if $state->{'ICON'};
+		$log .= " ID=". $state->{'ID'} if $state->{'ID'};		
 	}
 
 	$self->Log(3, $log);
@@ -914,15 +924,20 @@ sub ModuleList
 	# Dump out all of the matching modules for this key, os, or arch
 	foreach my $ename (sort @{ $moduleMerge->{$mfilt} }) {
 	
+		my $mod = $modules->{$mtype}->{$ename};
 		my $icons;
-		foreach ( KeysToIcons( @{ $modules->{$mtype}->{$ename}->OS } ) ) {
-			$icons  .= "<img src='/RESOURCE?ICON=$_' border=0> ";
+		
+		foreach ( KeysToIcons( @{ $mod->OS } ) ) {
+			$icons  .= "<img src='/RESOURCE?ICON=". $_ ."' border=0 alt='".$_."'> ";
 		}
-	
-		$mList .= "<tr><td> -  $icons ";
-		$mList .="<a href='/". uc($mtype) ."?MODE=SELECT&";
-		$mList .= "MODULE=".URLEncode($ename)."'>".$modules->{$mtype}->{$ename}->Name."</a>";
-		$mList .= "</td></tr>\n";
+
+
+		# Row 1: Module Name + Icons
+		$mList .= "<tr>";
+		$mList .= "<td> - <a href='/". uc($mtype) ."?MODE=SELECT&MODULE=".URLEncode($ename)."'>";
+		$mList .= $mod->Name ." </a></td>";
+		$mList .= "<td align='center'>$icons</td>";
+		$mList .= "</tr>\n";
 	}
 	
 	$mList .= qq[
