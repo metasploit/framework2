@@ -408,6 +408,10 @@ my $table = [
   # \xff\xf8 deadspace?
 ];
 
+sub _Table {
+  my $self = shift;
+  return($table);
+}
 sub _TableLength {
   my $self = shift;
   return(scalar(@{$table}));
@@ -795,15 +799,15 @@ sub _ValidReg {
   my $flags = $table->[$index]->[2];
 
   if(($flags & 0x03) == $reg2) {
-    return(0) if(($byte & 0xc0) ne $ins);
+    return(0) if(($byte & chr(0xc0)) ne $ins);
     return(0) if(
-      $self->_SmashCheckReg1($index, $byte & 0x07)
-      || $self->_SmashCheckReg2($index, ($byte & 0x38) >> 3)
+      $self->_SmashCheckReg1($index, ord($byte) & 0x07)
+      || $self->_SmashCheckReg2($index, (ord($byte) & 0x38) >> 3)
     );
   }
   elsif(($flags & 0x03) == $reg1) {
-    return(0) if(($byte & 0xf8) ne $ins);
-    return(0) if($self->_SmashCheckReg1($index, $byte & 0x07));  
+    return(0) if(($byte & chr(0xf8)) ne $ins);
+    return(0) if($self->_SmashCheckReg1($index, ord($byte) & 0x07));  
   }
   else {
     return(0) if($byte ne $ins);
