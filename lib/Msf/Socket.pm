@@ -23,7 +23,16 @@ use base 'Pex::Socket', 'Msf::Module';
 
 sub GetTimeout {
   my $self = shift;
-  return($self->GetLocal('SocketTimeout'));
+  my $timeout = $self->GetLocal('SocketTimeout');
+  $timeout = $self->SUPER::GetTimeout() if(!defined($timeout));
+  return($timeout);
+}
+
+sub GetTimeoutLoop {
+  my $self = shift;
+  my $timeout = $self->GetLocal('SocketTimeoutLoop');
+  $timeout = $self->SUPER::GetTimeoutLoop() if(!defined($timeout));
+  return($timeout);
 }
 
 1;

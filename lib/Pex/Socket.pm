@@ -46,6 +46,7 @@ sub new {
   my $hash = shift;
   $self->SetOptions($hash);
   $self->SetTimeout(10) if(!exists($hash->{'Timeout'}));
+  $self->SetTimeoutLoop(.5) if(!exists($hash->{'TimeoutLoop'}));
 
   return($self);
 }
@@ -109,6 +110,16 @@ sub SetTimeout {
 sub GetTimeout {
   my $self = shift;
   return($self->{'Timeout'});
+}
+sub SetTimeoutLoop {
+  my $self = shift;
+  my $timeout = shift;
+  $self->{'TimeoutLoop'} = $timeout;
+}
+
+sub GetTimeoutLoop {
+  my $self = shift;
+  return($self->{'TimeoutLoop'});
 }
 
 sub SetError {
@@ -351,8 +362,9 @@ sub Recv {
       return($data);
     }
 
+    my $timeoutLoop = $self->GetTimeoutLoop;
     while(1) {
-      my ($ready) = $selector->can_read(.01);
+      my ($ready) = $selector->can_read($timeoutLoop);
       last if(!$ready);
 
       my $tempData;

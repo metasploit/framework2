@@ -25,6 +25,10 @@ my $defaults = {
   'Nop'     => 'Msf::Nop::Pex',
   'DebugLevel' => 0,
   'Logging' => 'Disabled',
+# These are defaulting in Pex::Socket too, but these defaults will override
+# the Pex defaults if thats what you want.
+#  'Msf::Socket::SocketTimeout' => 10,
+#  'Msf::Socket::SocketTimeoutLoop' => .5,
 };
 
 sub PopulateConfig {
