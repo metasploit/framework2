@@ -2,7 +2,7 @@
 ; 
 ;        Name: stager_sock_reverse
 ;        Size: 50 bytes
-;   Qualities: Has Nulls
+;   Qualities: Can Have Nulls
 ;     Authors: skape <mmiller [at] hick.org>
 ;     Version: $Revision$
 ;     License: 
