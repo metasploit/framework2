@@ -14,7 +14,7 @@ sub import {
 sub HandleConnection {
   my $self = shift;
   $self->SUPER::HandleConnection;
-  my $sock = $self->Socket;
+  my $sock = $self->SocketOut;
   my $blocking = $sock->blocking;
   $sock->blocking(1);
 

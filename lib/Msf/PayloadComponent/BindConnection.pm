@@ -41,7 +41,8 @@ sub CheckHandler {
   my $loop = 4;
   while($sock && $loop--) {
     if($sock->connected) {
-      $self->Socket($sock);
+      $self->SocketIn($sock);
+      $self->SocketOut($sock);
       return(1);
     }
     select(undef, undef, undef, .2);

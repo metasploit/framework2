@@ -16,10 +16,15 @@ use POSIX;
 #  return($self);
 #}
 
-sub Socket {
+sub SocketIn {
   my $self = shift;
-  $self->{'Socket'} = shift if(@_);
-  return($self->{'Socket'});
+  $self->{'SocketIn'} = shift if(@_);
+  return($self->{'SocketIn'});
+}
+sub SocketOut {
+  my $self = shift;
+  $self->{'SocketOut'} = shift if(@_);
+  return($self->{'SocketOut'});
 }
 
 sub ChildPid {
@@ -47,7 +52,12 @@ sub ParentHandler {
 
   while(!$self->StopHandling) {
     if($self->CheckHandler) {
-      $self->PrintLine('[*] Got connection from ' . $self->Socket->peerhost . ':' . $self->Socket->peerport);
+      if($self->SocketIn == $self->SocketOut) {
+        $self->PrintLine('[*] Got connection from ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport);
+      }
+      else {
+        $self->PrintLine('[*] Got connection from ' . $self->SocketIn->peerhost . ':' . $self->SocketIn->peerport);
+      }
       $self->KillChild;
       $self->HandleConnection;
       $self->HandleConsole;
@@ -71,8 +81,13 @@ sub SetupHandler {
 
 sub ShutdownHandler {
   my $self = shift;
-  if($self->Socket) {
-    $self->Socket->shutdown(2);
+  if($self->SocketIn) {
+    $self->SocketIn->shutdown(2);
+    $self->SocketIn->close;
+  }
+  if($self->SocketOut) {
+    $self->SocketOut->shutdown(2);
+    $self->SocketOut->close;
   }
 }
 

@@ -47,7 +47,7 @@ sub new {
 sub HandleConnection {
   my $self = shift;
   $self->SUPER::HandleConnection;
-  my $sock = $self->Socket;
+  my $sock = $self->SocketOut;
   my $blocking = $sock->blocking;
 
   if(!open(INFILE, '<' . $self->GetVar('PEXEC'))) {

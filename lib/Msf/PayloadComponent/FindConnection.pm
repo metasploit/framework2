@@ -26,7 +26,8 @@ sub ChildHandler {
   $ready[0]->recv($data, 4096);
   return if(!length($data));
   if($data =~ /ABCDE/) {
-    $self->Socket($ready[0]);
+    $self->SocketIn($ready[0]);
+    $self->SocketOut($ready[0]);
     $self->PrintLine('[*] Findsock found shell...');
     $self->HandleConnection;
     exit(0);
