@@ -224,6 +224,7 @@ sub Options {
   my $exploit = $self->GetTempEnv('_Exploit');
   my $payload = $self->GetTempEnv('_Payload');
   my $payloadName = $self->GetTempEnv('_PayloadName');
+  my @targets = $exploit->TargetsList;
 
   if($exploit->Payload && defined($payloadName) && !$payload) {
     $self->PrintLine("[*] Invalid payload specified: $payloadName");
@@ -244,7 +245,18 @@ sub Options {
   $self->PrintLine;
   print $self->DumpOptions(2, 'Exploit', $exploit);
   print $self->DumpOptions(2, 'Payload', $payload) if($payloadName);
-  $self->PrintLine;
+  if(@targets) {
+    my $name = 'Target Not Specified';
+    my $target = $exploit->GetVar('TARGET');
+    $target = $exploit->DefaultTarget if(!defined($target));
+    if($target < @targets && $target >= 0) {
+      $name = $targets[$target];
+    }
+    $self->PrintLine('  Target: ' . $name);
+  }
+  else {
+    $self->PrintLine('  Target: Targetless Exploit');
+  }
   $self->PrintLine;
 }
 
