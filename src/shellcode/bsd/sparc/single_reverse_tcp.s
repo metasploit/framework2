@@ -41,7 +41,8 @@ main:
 	ld	[ %sp - 0x08 ], %o0
 	set	0xff027a68, %l0
 	set	0xc0a8020a, %l1
-	std	%l0, [ %sp - 0x10 ]
+	st	%l0, [ %sp - 0x10 ]
+	st	%l1, [ %sp - 0x0c ]
 	sub	%sp, 16, %o1
 	mov	0x10, %o2
 	mov	0x62, %g1 
