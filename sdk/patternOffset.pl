@@ -7,6 +7,6 @@ use Pex::Text;
 die "0x01020304 length" if(!@ARGV);
 
 my $addr = shift;
-my $length = @_ ? shift : 200;
+my $length = @ARGV ? shift : 200;
 
 print join(', ', Pex::Text::PatternOffset(Pex::Text::PatternCreate($length), $addr)) . "\n";
