@@ -33,10 +33,10 @@ sub ConsoleOut {
 
 sub _HandleConsole {
   my $self = shift;
-
+  my $out;
+	
   # Get handle to browser
-  my $brow = $self->GetVar('_BrowserSocket');
-  my $bs = Pex::Socket::Tcp->new_from_socket($brow);
+  my $bs = $self->GetVar('_BrowserSocket');
   
   # Create listener socket
   my $sock = IO::Socket::INET->new(
@@ -47,18 +47,20 @@ sub _HandleConsole {
   );  
   
   if (! $sock) {
-	  $bs->Send("WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!\n");
+      $out = "WebConsole: _HandleConsole(): Failed to bind a port for the proxy shell: $!\n";
+	  $bs->Send(sprintf("%x\n%s", length($out), $out));
 	  return;
   }
   
   # Display listener link to browser
-  my $addr = Pex::Utils::SourceIP($brow->peerhost);
-  
-  $bs->Send(
-	"[*] Proxy shell started on ".
-	"<a href='telnet://$addr:".$sock->sockport."'>".
-	"$addr:".$sock->sockport."</a>\n"
-  );
+  my $addr = Pex::Utils::SourceIP($bs->PeerAddr);
+
+  $out = "[*] Proxy shell started on ".
+	     "<a href='telnet://$addr:".$sock->sockport."'>".
+	     "$addr:".$sock->sockport."</a>\n";
+	
+  $bs->Send(sprintf("%x\n%s", length($out), $out));
+	
 
   # Accept connection from user
   my $sel = IO::Select->new($sock);
@@ -72,20 +74,20 @@ sub _HandleConsole {
   }
   
   if (! $csock) {
-	  $bs->Send("[*] Shutting down proxy shell due to timeout\n");
+      $out = "[*] Shutting down proxy shell due to timeout\n";
+	  $bs->Send(sprintf("%x\n%s", length($out), $out));
 	  return;
   }
   
   my $cs = Pex::Socket::Tcp->new_from_socket($csock);
 
-  $bs->Send("[*] Connection to proxy shell from ".$csock->peerhost.":".$csock->peerport."\n");
+  $out = "[*] Connection to proxy shell from ".$csock->peerhost.":".$csock->peerport."\n";
+  $bs->Send(sprintf("%x\n%s", length($out), $out));
+	  
   $cs->Send("\r\nMetasploit Web Interface Shell Proxy\r\n\r\n");
-  
-  
+ 
   # Map connected socket to ConsoleIn, ConsoleOut
   $self->{'WebShell'} = $csock;  
-  $bs->Send("</body></html>\n");
-  $bs->Close;
 
   # Call upwards to TextConsole's _HandleConsole
   $self->SUPER::_HandleConsole;

@@ -44,18 +44,16 @@ sub new {
 sub PrintLine {
     my $self = shift;
     my $msg = shift;
-    
+
     # ignore empty messages
     return(0) if ! length($msg);
-    
-    # If we are exploit mode, write output to browser
-    if (my $s = $self->GetEnv('_BrowserSocket')) {
-    	if ($s->connected) {
-	        eval { $s->send("$msg\n"); };
-			if ($@) {
-				print STDERR "Writing message to closed socket: $!\n";
-			}
-        }
+	
+	# XXX XSS checks go here
+	
+    # If we are in exploit mode, write output to browser
+    if (my $s = $self->GetTempEnv('_BrowserSocket')) {
+		$msg .= "\n";
+		$s->Send(sprintf("%x\n%s", length($msg), $msg));
         return;
     }
     

@@ -45,10 +45,6 @@ my $nops;
 my $skey = 0;
 my $ubase;
 
-my $HTTP_OK =
-    "HTTP/1.0 200 OK\r\n".
-    "Connection: Close\r\n".
-    "Content-Type: text/html\r\n\r\n";
 
 my ($x, $opt, $verbose, $cli);
 
@@ -112,28 +108,31 @@ $ui->SetTempEnv('_Nops', $nops);
     
 while (1)
 {
-    my $add;
-    ($cli, $add) = $httpd->accept();
-    next if ! $cli;
+    my ($cs, $add) = $httpd->accept();
+    next if ! $cs;
     
     my $child = fork();
     next if $child;
 
+	# Wrap the new socket inside a Msf::Socket object
+	my $cli = Msf::Socket::Tcp->new_from_socket($cs);
+	
     # Parse the HTTP request
     my $state = HTTPRequest($cli);
     
 	# Generate the base URL
-	$ubase = "/msf".GenerateSID($cli->peeraddr)."/";
+	$ubase = "/msf".GenerateSID(inet_aton($cli->PeerAddr))."/";
 	
     # Socket was closed
     exit(0) if ! defined($state);
     
     # Request was invalid
     if ($state == -1) {
-        $cli->send($HTTP_OK."Request Failed");
-        $cli->close();
+        $cli->Send(HTTPResponse(500, 'Request Failed'));
+        $cli->Close();
         exit(0);
     }
+
 
     my $res;
 	
@@ -181,12 +180,12 @@ while (1)
     }
 
     $state->{'client'} = $cli;
-    vprint($cli->peerhost.":".$cli->peerport."  ".$state->{'MODE'}."  $logaction\n");
+    vprint($cli->PeerAddr.":".$cli->PeerPort."  ".$state->{'MODE'}."  $logaction\n");
     
     $res .= ProcessRequest($cli, $state);
 
-    $cli->send($HTTP_OK.$res);
-    $cli->close();
+    $cli->Send(HTTPResponse(200, $res));
+    $cli->Close();
     exit(0);
 }
 
@@ -217,7 +216,6 @@ sub ProcessRequest {
     if ($state->{'MODE'} eq 'EXPLOIT') { $body = ExploitExec($state) }    
     
     $html = HTML_Header() . $body . HTML_Footer();
-    
     return($html);
 }
 
@@ -517,28 +515,32 @@ sub ExploitExec
     
     
     # We hijack the socket from the web service
-    my $cli = $state->{'client'};
-    $cli->blocking(0);
-    $cli->autoflush(1);
-    
-    # Map the client socket to a Msf::Socket to handle all sorts of
-    # annoying error conditions for us. This is particularly useful
-    # when the client reloads quickly or otherwise disconnects from
-    # msfweb in mid-subroutine.
-    my $Browser = Msf::Socket::Tcp->new_from_socket($cli);
-    
-    $Browser->Send($HTTP_OK);
-    $Browser->Send(HTML_Header());
-    $Browser->Send("<b>Processing exploit request (".$exploit->Name.")...</b><br>\n");
-    $Browser->Send("<b>Using payload: " . $payloadName . "<br>\n");
-    $Browser->Send("<pre>\n");
-    
-    $ui->SetTempEnv('_BrowserSocket', $cli);
+    my $Browser = $state->{'client'};
+
+	# Use chunked transfer mode to return partial responses
+	my $out = "HTTP/1.1 200 OK\r\n".
+	          "Connection: Close\r\n".
+			  "Content-Type: text/html\r\n".
+			  "Transfer-Encoding: Chunked\r\n\r\n";
+	
+    $Browser->Send($out);
+	
+	$out = HTML_Header().
+          "<b>Processing exploit request (".$exploit->Name.")...</b><br>\n".
+          "<b>Using payload: " . $payloadName . "<br>\n".
+          "<pre>\n";
+	
+	$Browser->Send(sprintf("%x\n%s", length($out), $out));
+	
+    $ui->SetTempEnv('_BrowserSocket', $Browser);
     $ui->Exploit();
 
-    $Browser->Send(join("<br>\n", @{$ui->DumpLines}));
-    $Browser->Send("\n</pre><br>");
-    $Browser->Send(HTML_Footer());
+	$out = "\n</pre><br>". HTML_Footer();
+	$Browser->Send(sprintf("%x\n%s", length($out), $out));
+
+	$out = "";
+	$Browser->Send(sprintf("%x\n%s", length($out), $out));
+	
 	$Browser->Close;
     
     exit(0);
@@ -547,47 +549,39 @@ sub ExploitExec
 # Primitive HTTP request parser
 sub HTTPRequest {
     my $cli = shift;
-    my $sel = IO::Select->new($cli);
     my ($url, $state);
-    my $res = "";
-    
-    $cli->blocking(0);
-    
-	# Read the first 2048 bytes of the request
-    my $max = time() + 5;
-    while ($max > time() && $res !~ /\r\n/)
-    {
-        my ($buf, $cnt);
-        my ($fd) = $sel->can_read(1);
-        next if ! $fd;
-        $cnt = sysread($fd, $buf, 2048); 
-        return(undef) if $cnt == 0;
-        $res .= $buf;    
-    }
+	
+    my $res = $cli->Recv(-1, 20);
     ($res) = split(/\n/, $res);
 
 	# Extract the URI
     if ($res =~ m/^GET\s+(.*)\s+HTTP\/1\.[01]/) { $url = $1 }
     else {
-		print STDERR "Invalid request from ".$cli->peerhost()."\n";
+		print STDERR "Invalid request from ".$cli->PeerAddr()."\n";
 		return(-1);
     }
 	
 	# Extract the session ID
 	my ($sid) = $url =~ m/^\/msf([^\/]+)\//;
-	my $vid = GenerateSID($cli->peeraddr);
+	my $vid = GenerateSID(inet_aton($cli->PeerAddr));
 	
 	# Redirect the user if the SID does not match
 	if ($sid ne $vid) {
-		print STDERR "Invalid session ID ($sid != $vid)\n";
+		
+		if ($sid) {
+			print STDERR "Invalid session ID ($sid != $vid)\n";
+		}
+		
 		my $rdir =
-			"HTTP/1.0 302 Rejected\r\n".
+			"HTTP/1.1 302 Rejected\r\n".
 			"Location: /msf$vid/\r\n".
-			"\r\n";
-			
-		$cli->send($rdir);
-		$cli->close;
-		return undef;
+			"Connection: Close\r\n".
+			"Content-Length: 0\r\n\r\n";
+
+		print STDERR "Redirecting to /msf$vid\n";
+		$cli->Send($rdir);
+		$cli->Close;
+		return;
 	}
 	
 	# Strip some things from the URI
@@ -628,3 +622,19 @@ sub GenerateSID {
 	my $data = shift;
 	return unpack("H*", pack('N', $skey) ^ $data);
 }
+
+sub HTTPResponse {
+	my $code = @_ ? shift() : 403;
+	my $body = @_ ? shift() : '';
+	my $type = @_ ? shift() : 'text/html';
+	my $data;
+	
+	$data = "$code HTTP/1.1\r\n".
+			"Connection: Close\r\n".
+	        "Content-Length: ".length($body)."\r\n".
+			"Content-Type: $type\r\n".
+			"\r\n". $body;
+
+	return $data;
+}
+
