@@ -75,6 +75,7 @@ sub LoadModules {
     {
         my $path = "$dir/$entry";
         next if ! -f $path;
+        next if ! -r $path;
         next if $entry !~ /.pm$/;
 
         $entry =~ s/\.pm$//g;
