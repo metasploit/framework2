@@ -512,7 +512,7 @@ sub Exploit {
     else {
       srand();
       $exploit->Exploit;
-      sleep(1);
+		$payload->ExtraDelay();
       exit(0);
     }
   }

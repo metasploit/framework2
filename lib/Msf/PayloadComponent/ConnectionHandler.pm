@@ -117,4 +117,14 @@ sub HandleConnection {
   my $self = shift;
 }
 
+#
+# Gives the check loop time to receive a connection
+#
+sub ExtraDelay
+{
+	my $self = shift;
+
+	sleep(1);
+}
+
 1;
