@@ -73,6 +73,7 @@ sub DumpAdvancedOptions {
     my $type = shift;
     my $object = shift;
     my $options = $object->Advanced || { };
+    $type .= ' (' . $object->SelfName . ')';
     $output .= "${indent}$type:\n${indent}" . ('-' x (length($type) + 1)) . "\n";
     foreach my $opt (keys(%{$options})) {
       $output .= "${indent}Name:     $opt\n${indent}Default:  " . $object->GetVar($opt) . "\n";
