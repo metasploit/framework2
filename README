@@ -1,15 +1,42 @@
-[ Metasploit Framework v2.0 BETA ]
+                                             [ Metasploit Framework v2.0 BETA ]
+Hey!
 
+You have a beta copy of the Metasploit Exploit Framework.
 
-The following components are disabled in this release:
+Some notes about the framework.
 
-    - msfweb
-    - msfconsole session logging
-    - win32 prefork capability
+- Read docs/QUICKSTART.tabcompletion, this will make using msfconsole so much
+  nicer.  Its all about the tab tab tab.
+
+- Read docs/QUICKSTART.ssl for SSL support in any exploits that support it.
+
+- The Pex nop generator is currently set to return a slide of \x90.  It supports
+  random nop sleds, and seems to work most of the time.  We have had some cases
+  where the sled caused trouble during exploitation (and its really annoying
+  when developing/debugging stuff).  If you want to give random sleds a shot,
+  you can "setg Msf::Nop::Pex::Random 1" in msfconsole.
+
+- Right now things are a bit slow.  We are reloading all the modules for any
+  commands that may be affected by module changes.  If this slowness is really
+  annoying let us know, it something we have to make a decent amount of changes
+  to fix, but if its important enough it can happen.
+
+- If you are interested to see more of whats going on behind the scenes, you
+  can set DebugLevel.  By default it is at 0, and we have log messages for
+  up to 5.
+
+- The nop generators and encoders are currently not selectable through an
+  interface, but they are configurable.  The Nop and Encoder variables
+  are a comma set list of what to try first.  It must be the fully qualified
+  name.  For example, to use the Fnstenv encoder,
+  "setg Encoder Msf::Encoder::Fnstenv".  There is also Pex, and None.
+
+- The following components are disabled in this release.
+    + msfweb
+    + msfconsole session logging
+    + win32 prefork capability
     
-    
-The following is a list of known bugs:
-
-    - The BSD bind and findsock payloads are buggy
-    - Tab completion does not work correctly under Cygwin
-    - The TARGET parameter is not validated prior to being used
+- The following is a list of known bugs:
+    + BSD bind and findsock payloads are buggy
+    + Tab completion does not work correctly under Cygwin
+    + The TARGET parameter is not validated prior to being used
