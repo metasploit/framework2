@@ -26,7 +26,15 @@ sub Nops {
   my $self = shift;
   my $length = shift;
 
-  return(Pex::Utils::Nops($length, 'x86', $self->GetLocal('RandomNops')));
+  my $exploit = $self->GetVar('_Exploit');
+  my $random  = $self->GetLocal('RandomNops');
+
+  if($random && $exploit && (!$exploit->NopModReg || !$exploit->NopModStack)) {
+    $self->PrintDebugLine(1, 'Exploit doesn\'t want stack/regs touched, going non-random');
+    $random = 0;
+  }
+
+  return(Pex::Utils::Nops($length, 'x86', $random));
 }
 
 1;

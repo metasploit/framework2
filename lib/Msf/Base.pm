@@ -365,7 +365,13 @@ sub MergeHash {
   my $hash2 = shift || { };
   my %hash = %{$hash1};
   foreach (keys(%{$hash2})) {
-    $hash{$_} = $hash2->{$_} if(!defined($hash1->{$_}));
+    if(!defined($hash1->{$_})) {
+      $hash{$_} = $hash2->{$_};
+    }
+    # recurse if both are has ref's
+    elsif(ref($hash1->{$_}) eq 'HASH' && ref($hash2->{$_}) eq 'HASH') {
+      $hash{$_} = $self->MergeHash($hash1->{$_}, $hash2->{$_});
+    }
   }
   return(\%hash);
 }
