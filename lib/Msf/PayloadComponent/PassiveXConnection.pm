@@ -531,6 +531,8 @@ sub ProcessHttpTunnelClient
 			"Content-Length: 0\r\n" .
 			"\r\n";
 
+		$self->PrintDebugLine(3, "PX: Transmitted " . length($data) . " bytes to local half.");
+
 		$client->shutdown(2);
 		$client->close();
 	}
@@ -543,6 +545,8 @@ sub ProcessHttpTunnelClient
 		# If we have data to send transmit it now.
 		if (defined($data))
 		{
+			$self->PrintDebugLine(3, "PX: Flushing outbound sendq.");
+
 			$self->TransmitLocalDataToHttpClient(
 				client => $client,
 				data   => $data);
@@ -552,6 +556,8 @@ sub ProcessHttpTunnelClient
 		# Stash the connection for later reference when we have data to send
 		else
 		{
+			$self->PrintDebugLine(3, "PX: Stashing outbound HTTP connection.");
+
 			$self->SetTunnelOutHttpClient(
 				client => $client);
 		}
@@ -568,12 +574,14 @@ sub ProcessLocalTcpClient
 	my $self = shift;
 	my $data = undef;
 
-	return undef if (not defined(recv($self->GetServerSideSock(), $data, 8192, 0)));
+	return undef if (not defined(recv($self->GetServerSideSock(), $data, 32768, 0)));
 
 	# If we already have an HTTP client that is waiting for outbound tunnel data,
 	# pass it right along to them
 	if ($self->GetTunnelOutHttpClient())
 	{
+		$self->PrintDebugLine(3, "PX: Sending " . length($data) . " bytes of data to remote half.");
+
 		$self->TransmitLocalDataToHttpClient(
 			client => $self->GetTunnelOutHttpClient(),
 			data   => $data);
@@ -584,6 +592,8 @@ sub ProcessLocalTcpClient
 	# Otherwise, we queue it for future transmission
 	else
 	{
+		$self->PrintDebugLine(3, "PX: Enqueueing " . length($data) . " bytes of data to be sent to remote half.");
+
 		$self->AppendToOutboundBuffer(
 			data => $data);
 	}
@@ -615,6 +625,8 @@ sub TransmitLocalDataToHttpClient
 		sock   => $client,
 		buf    => $response,
 		length => $length);
+	
+	$self->PrintDebugLine(3, "PX: Transmitted " . length($data) . " bytes to remote half.");
 
 	$client->shutdown(2);
 	$client->close();
