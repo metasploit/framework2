@@ -62,11 +62,11 @@ sub EncodePayload {
         0x4082ffd8,  # bne+      decode_loop
     );
 
-    my $icount = (length($shellcode) / 4);
+    my $icount = (length($payload) / 4);
     my $enc;
     
     foreach my $scale (1 .. 65535) {
-        my $size = 8191 - length($shellcode);
+        my $size = 8191 - length($payload);
         $enc = $encoder;
         
         substr($enc, 14, 2, pack('n', -$size -4 + (16 * 4)));
