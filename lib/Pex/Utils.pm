@@ -218,7 +218,7 @@ sub BufferPerl {
 # I stole this.
 sub FisherYates {
   my $array = shift;
-  for(my $i = @{$array}; $i > 0; $i--) {
+  for(my $i = @{$array}; $i > 1; $i--) {
     my $j = int(rand($i + 1));
     next if($i == $j);
     @$array[$i, $j] = @$array[$j, $i];

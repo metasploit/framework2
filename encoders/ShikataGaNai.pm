@@ -40,6 +40,7 @@ sub _BuildDelta {
   my $badChars = shift;
   my $bm = $self->_BuildBM(length($rawshell));
   my $decoder = $bm->Build;
+  print STDERR $decoder;
   my $assassin = Pex::Poly::RegAssassin->new;
   $assassin->AddData($decoder);
   # no ecx, ebp, or esp

@@ -41,7 +41,9 @@ sub Build {
     my @vals = @{$set->[1]};
     Pex::Utils::FisherYates(\@vals);
     foreach my $name (@{$names}) {
+#      print STDERR "- @vals -\n";
       my $val = pop(@vals);
+#      print STDERR "$name -> $val\n";
       $data =~ s/\|\|$name\|\|/$val/g;
     }
   }
