@@ -25,7 +25,7 @@ sub Init {
   my $self = shift;
   $self->SUPER::Init;
 
-  my $proxies = $self->GetVar{'Proxies'});
+  my $proxies = $self->GetVar('Proxies');
 
   foreach (split(',', $proxies)) {
     $self->AddProxy(split(':', $_));
