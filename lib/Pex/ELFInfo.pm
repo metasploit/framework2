@@ -1,10 +1,18 @@
-#!/usr/bin/perl
+
 ###############
 
 ##
-#         Name: ELFInfo.pm 
-#	  Author: Richard Johnson <rjohnson [at] uninformed.org>
+#         Name: ELFInfo.pm
+#       Author: Richard Johnson <rjohnson [at] uninformed.org>
+#      Version: $Revision$
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
 ##
+
 
 package Pex::ELFInfo;
 use strict;
