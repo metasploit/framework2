@@ -114,7 +114,7 @@ if ($action eq "BUILD")
     {
         if(defined($opt->{$_}))
         {
-            $optstr.= "$_=".$opt->{$_}
+            $optstr.= " $_=".$opt->{$_};
         }
     }
 
@@ -158,10 +158,10 @@ if ($action eq "BUILD")
     my ($sC, $sP) = (Pex::Utils::BufferC($s), Pex::Utils::BufferPerl($s));
     print "<pre>\n";
     
-    print "/* $sel - $ctitle $optstr  http://metasploit.com /*\n";
+    print "/* $sel - $ctitle [$optstr ] http://metasploit.com /*\n";
     print "unsigned char scode[] =\n$sC\n\n\n";
     
-    print "# $sel - $ctitle $optstr http://metasploit.com\n";
+    print "# $sel - $ctitle [$optstr ] http://metasploit.com\n";
     print "my \$shellcode =\n$sP\n\n\n";
 
 
