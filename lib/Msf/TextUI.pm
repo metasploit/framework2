@@ -153,6 +153,7 @@ sub DumpExploitSummary {
   $output .=   '      Name: ' . $exploit->Name . "\n";
   $output .=   '   Version: ' . $exploit->Version . "\n";
   $output .=   ' Target OS: ' . join(", ", @{$exploit->OS}) . "\n";
+  $output .=   '  Keywords: ' . join(", ", @{$exploit->Keys}) ."\n"; 
   $output .=   'Privileged: ' . ($exploit->Priv ? "Yes" : "No") . "\n";
   $output .=   "\n";
   
