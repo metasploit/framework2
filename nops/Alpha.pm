@@ -29,8 +29,8 @@ sub new {
 }
 
 # XXX: Operate: */v?
+# XXX: FPU: BUNCH of stuff
 # XXX: InsMemory (for lda and the like) 
-# XXX: InsFPU
 # Bad: ct[lt]z, ctpop, ld[bw]u, sext[bw], st[bw], sqrt*, ftoi*, itof*, max*, min*, perr, (un)pk* 
 my $table = [
 	[ \&InsBranch,	[ 0x30 ], ],				# br
@@ -48,6 +48,13 @@ my $table = [
 	[ \&InsBranch,	[ 0x3d ], ],				# bne
 	[ \&InsBranch,	[ 0x3e ], ],				# bge
 	[ \&InsBranch,	[ 0x3f ], ],				# bgt
+
+	[ \&InsFPU,	[ 0x17, 0x02a ], ],			# fcmoveq
+	[ \&InsFPU,	[ 0x17, 0x02b ], ],			# fcmovne
+	[ \&InsFPU,	[ 0x17, 0x02c ], ],			# fcmovlt
+	[ \&InsFPU,	[ 0x17, 0x02d ], ],			# fcmovge
+	[ \&InsFPU,	[ 0x17, 0x02e ], ],			# fcmovle
+	[ \&InsFPU,	[ 0x17, 0x02f ], ],			# fcmovgt
 
 	[ \&InsOperate,	[ 0, [ 0x10, 0x00 ] ], ],		# addl
 	[ \&InsOperate,	[ 0, [ 0x10, 0x02 ] ], ],		# s4addl
@@ -128,24 +135,35 @@ sub get_dst_reg {
 sub get_src_reg {
 	return int(rand(32));
 }
+sub get_src_freg {
+	return int(rand(32));
+}
+sub get_dst_freg {
+	return int(rand(32));
+}
 
 sub InsOperate {
 	my $ref = shift;
 
-	my $dst = get_dst_reg();
 	my $ver = $ref->[0];
 
 # 0, ~1, !2, ~3, !4
 # Use one src reg with an unsigned 8-bit immediate (non-0)
 	if(($ver == 0 && int(rand(2))) || $ver == 1)
 	{
-		return pack("V", (($ref->[1][0] << 26) | (get_src_reg() << 21) | ((int(rand((1 << 8) - 1)) + 1) << 13) | (1 << 12) | ($ref->[1][1] << 5) | $dst));
+		return pack("V", (($ref->[1][0] << 26) | (get_src_reg() << 21) | ((int(rand((1 << 8) - 1)) + 1) << 13) | (1 << 12) | ($ref->[1][1] << 5) | get_dst_reg()));
 	}
 # Use two src regs
 	else
 	{
-		return pack("V", (($ref->[1][0] << 26) | (get_src_reg() << 21) | (get_src_reg() << 16) | ($ref->[1][1] << 5) | $dst));
+		return pack("V", (($ref->[1][0] << 26) | (get_src_reg() << 21) | (get_src_reg() << 16) | ($ref->[1][1] << 5) | get_dst_reg()));
 	}
+}
+
+sub InsFPU {
+	my $ref = shift;
+
+	return pack("V", (($ref->[0] << 26) | (get_src_freg() << 21) | (get_src_freg() << 16) | ($ref->[1] << 5) | get_dst_freg()));
 }
 
 sub InsBranch {
