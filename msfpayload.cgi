@@ -96,7 +96,7 @@ if (! $action)
     print "</table><br><br>\n";
     
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
-    PrintRow("Encode Payload", "<input type='checkbox' name='ENCODE' value='Yes'>");
+    PrintRow("Encode Payload", "<input type='checkbox' name='ENCODE' CHECKED'>");
     PrintRow("Bad Characters", "<input type='text' name='BADCHARS' value='0x00'>");
     print "</table><br>\n";
     print "<center><input type='submit' value='Generate Shellcode'><br></center>\n";
@@ -109,7 +109,22 @@ if (! $action)
 if ($action eq "BUILD")
 {
     DisplayHeader("Generating Payload");
-    print "Weeeeee!";
+
+
+    my $s = $p->Build($opt);
+    if (! $s)
+    {
+        print "<b>Error</b>: Shellcode build error: " . $p->Error() . "<br>\n";
+        DisplayFooter();
+        exit(0);
+    }
+
+    my ($sC, $sP) = (Pex::Utils::BufferC($s), Pex::Utils::BufferPerl($s));
+    print "<pre>\n";
+    
+    print "unsigned char scode[] =\n$sC\n\n\n";
+    print "my $shellcode =\n$sP\n\n\n";
+
     DisplayFooter();
     exit(0);
 }
