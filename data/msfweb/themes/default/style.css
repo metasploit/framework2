@@ -167,6 +167,7 @@ A.nav {
 
 select {
 	color:			black;
+	background:		#eeeeee;
 	font-weight:	bold;
 	padding: 		2px 2px 2px 2px;	
 }

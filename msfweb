@@ -17,7 +17,6 @@
 # This is a really ghetto proof-of-concept for a web-based exploit interface
 
 #	TODO:
-#		+ Kill sessions that do not automatically close
 #		+ Build out the 'admin' pages
 #		+ Build out the 'logs' pages
 #		+ Add an option for HTTP authentication
@@ -1778,7 +1777,7 @@ qq[
 						
 						# write command to cache file
 						$bytes = XSS_Filter($bytes);
-						my $out = "<div class='textBold'>&gt;&gt; $bytes</div>\n";
+						my $out = "\n<div class='textBold'>&gt;&gt; $bytes</div>\n";
 						$cache->printflush($out);
 						$cache->sync;
 						next;
@@ -1787,21 +1786,21 @@ qq[
 					# Command request from a client
 					if ($data =~ m/CMD\s+(.*)/) {
 						my $cmd = pack('H*', $1);
-						my $log = "<div class='textBold'>&gt;&gt;";
-						
+						my $out = "<div class='textBold'>&gt;&gt; ";
+
 						# Interrupt
 						if ($cmd eq 'INT') {
-							$log .= "Session interrupt request...";
-							kill($$, 'INT');
+							$out .= "Session interrupt request...";
+							kill($top, 'INT');
 						}
 						
 						# Shutdown
 						if ($cmd eq 'DIE') {
-							$log .= "Session kill request...";
+							$out .= "Session kill request...";
 							$keepRunning = 0;
 						}
 							
-						$log .= "</div>\n";
+						$out .= "</div>\n";
 						
 						$cache->printflush($out);
 						$cache->sync;
@@ -1812,7 +1811,8 @@ qq[
 		}
 		
 		$cache->printflush("<div class='textBold'>&gt;&gt; Session is shutting down...</div>\n");
-
+		$cache->sync;
+		
 		# Shut down the service...
 		$eout->close;
 		$pout->close;
@@ -1824,10 +1824,8 @@ qq[
 	
 	if (! $ui->GetTempEnv('_ShellServer')) {
 		$pout->printflush("SHUTDOWN $sid\n");
-		# print STDERR "Shutting down the shell server process...\n";
 	}	
 
-	# print STDERR "Exiting exploit loop\n";
     exit(0);
 }
 
