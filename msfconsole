@@ -118,7 +118,7 @@ Msf::TextUI::PrintAsciiLogo();
 
 # print initialization message
 printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n", 
-       $VERSION, 
+       $FRAMEVERSION, 
        scalar(keys(%{$exploits})),
        scalar(keys(%{$payloads}))
 );
