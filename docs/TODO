@@ -9,7 +9,6 @@ Pre-Release Tasks
  - Add raw mode support to Pex::Socket (spoof)
  
  - Exchange exploit sucks, remove it or fix it
- - DCOM exploit needs to be fixed so it works on XP again!
  - DCOM exploit needs vulnerability check mode
 
  - msfencode needs to actually work
