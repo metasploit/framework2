@@ -107,8 +107,8 @@ sub NinjaSetupHandler {
     'PeerHost'  => $host,
     'PeerPort'  => $port,
     'Proto'     => 'tcp',
-    'Listen'    => 5,
-    'Blocking'  => 0,
+    'Blocking'  => 1,
+    'Timeout'   => 10,
   );
 
   if(!$sock) {
@@ -116,17 +116,7 @@ sub NinjaSetupHandler {
     return;
   }
 
-  my $loop = 4;
-  while($loop--) {
-    last if($sock->connected);
-    select(undef, undef, undef, .2);
-  }
-  
-  if(!$sock->connected) {
-    $self->SetError("Could not connect to sN control channel.");
-    return;
-  }
-
+  $sock->blocking(0);
   $sock->autoflush(1);
   $self->NinjaSock($sock);
   $self->NinjaSelector(IO::Select->new($sock));
