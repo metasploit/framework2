@@ -141,7 +141,7 @@ for(uc($ARG[0])) {
   $_ eq 'P' && do { $ui->Payloads; last; };
   $_ eq 'T' && do { $ui->Targets; last; };
   $_ eq 'C' && do { $ui->Check; last; };
-  $_ eq 'E' && do { $ui->SetTempEnv('HCALLBACK', \&xCallback); $ui->Exploit; last; };
+  $_ eq 'E' && do { $ui->Exploit; last; };
   Usage();
 }
 
@@ -168,5 +168,3 @@ sub ListExploits {
   print $ui->DumpExploits(2, $exploits);
   print "\n";
 }
-
-sub xCallback { }

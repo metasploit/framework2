@@ -80,7 +80,6 @@ my %globalCmds =
     'save'      => [\&gSave,                 "Save configuration to disk"],
     'setg'      => [\&gSet,                  "Set a global environment variable"],
     'unsetg'    => [\&gUnset,                "Remove a global environment variable"],
-    'logging'   => [\&gLogging,              "Enable or disable session logging"]
 );
 
 
@@ -168,36 +167,6 @@ sub Load {
       $state->{'Exploit'}->{'Exploit'} = $exploits->{$state->{'Exploit'}->{'Name'}};
     }
 }
-
-
-sub gLogging {
-    my ($cmd, $tog, $dir) = @_;
-    
-    if (defined($tog) && $tog =~ /^(T|Y|1|On)/i)
-    {
-        $ui->SetGlobalEnv('Logging', 'Enabled');
-    }
-    
-    if (defined($tog) && $tog =~ /^(F|N|0|Off)/i)
-    {
-        $ui->SetGlobalEnv('Logging', 'Disabled');
-    }   
-    
-    $dir = xCreateLogDir($dir);
-
-    if ($ui->GetEnv('Logging') eq 'Enabled')
-    {
-        if ( -d $ui->GetEnv('LogDir'))
-        {
-            $ui->PrintLine("Logging is currently enabled");
-        } else {
-            $ui->PrintLine("Logging is currently disabled (invalid directory)");
-        }
-    } else {
-        $ui->PrintLine("Logging is currently disabled");
-    } 
-}
-
 
 sub gSave {
     my $cmd = shift;
@@ -499,7 +468,6 @@ sub eTargets  {
 }
 
 sub eCheck {
-  xLogHandler("CONSOLE", "Check launched against " . $ui->GetEnv('RHOST')); 
   SaveTemp();
   FillTemp();
   $ui->Check;
@@ -507,10 +475,8 @@ sub eCheck {
 }
 
 sub eExploit {
-  xLogHandler("CONSOLE", "Exploit launched against " . $ui->GetEnv('RHOST')); 
   SaveTemp();
   FillTemp();
-  $ui->SetTempEnv('HCALLBACK', \&xLogHandler);
   $ui->Exploit;
   RestoreTemp();
 }
@@ -520,126 +486,6 @@ sub xMsg
 {
     my ($loc, $msg) = @_;
     print STDERR "msfconsole: $loc: $msg\n";
-}
-
-
-sub xLogHandler
-{ 
-    my @args = @_;
-    my $logging = $ui->GetEnv('Logging');
-    my $logdir  = $ui->GetEnv('LogDir');
-    
-    return if $logging ne 'Enabled';
-    $logdir = xCreateLogDir($logdir);
-    return if ! $logdir;
-
-    my ($mlog, $clog, $cenv);
-    $cenv = $ui->GetEnv;
-    
-    # This is a log message from somewhere in the console
-    if ($args[0] eq "CONSOLE")
-    {
-        $mlog .= xLogEntry($args[1]);
-    }
-    
-    
-    # This is the start of a new payload handler session
-    if ($args[0] eq "CONNECT")
-    {
-        my $connstr;
-        if ($args[1]->can('sockhost') && $args[1]->can('peerhost'))
-        {
-            $connstr =  $args[1]->sockhost . ":" . $args[1]->sockport . " " . 
-                        $args[1]->peerhost . ":" . $args[1]->peerport;
-        } else {
-            $connstr = "findsock";
-        }
-        
-        
-    
-        $mlog .= xLogEntry("Connection established " . $connstr);
-
-        my ($currfd, $currfn);
-        $currfn = time() . "_". $state->{'Exploit'}->{'Name'} . "_" . $connstr . ".log";
-        $currfn =~ s/\:/\_/g;
-
-        if (open($currfd, ">$logdir/$currfn"))
-        {
-            $state->{'CURRLOG'} = $currfd;
-
-            print $currfd "   Time: " . scalar(localtime()) . "\n";
-            print $currfd "   Name: " . $state->{'Exploit'}->{'Name'} . "\n";
-            print $currfd "Options:";
-            foreach my $var (keys(%{ $cenv })) 
-            {
-                # ignore the internal environment variables
-                next if $var =~ /^\_/;
-                print $currfd " $var=" . $cenv->{$var} 
-            }
-            print $currfd "\n";
-            
-            print $currfd "   Conn: $connstr\n";
-            
-            print $currfd "\n\n";
-        }       
-    }
-
-    # This is the end of a payload handler session
-    if ($args[0] eq 'CLOSED')
-    {
-        $mlog .= xLogEntry("Connection closed");
-        close($state->{'CURRLOG'});
-    } 
-
-    # This is the data from the session, encoded in hex and time stamped
-    if ($args[0] eq 'DATA')
-    {   
-        my $currfd = $state->{'CURRLOG'};
-
-        my $flow = $args[1];
-        print $currfd time()." $flow ".unpack("H*",$args[2])."\n";
-    }
-
-    # Finally write to the main log file
-    if (length($mlog))
-    {
-        open (X, ">>$logdir/msfconsole.log");
-        print X $mlog;
-        close(X);
-    }
-    
-}
-
-sub xCreateLogDir
-{
-    my $dir = shift;
-    if (! $dir) 
-    {
-        $dir = $ui->GetEnv('LogDir');
-        if (! $dir)
-        {
-            $dir  = exists($ENV{'HOME'}) ? $ENV{'HOME'} : $Bin;
-            $dir .= "/.msflogs";
-        }
-    }
-
-    return if ! -d $dir && ! mkdir($dir, 0700);
-
-    $ui->SetGlobalEnv('LogDir', $dir);
-    return $dir;   
-}
-
-sub xLogEntry
-{
-    my ($msg) = @_;
-    my $info;
-    
-    if (exists($state->{'Exploit'}) && exists($state->{'Exploit'}->{'Name'}))
-    {
-        $info = $state->{'Exploit'}->{'Name'};
-    }
-    
-    return scalar(localtime()) . " $info $msg\n";
 }
 
 sub xValidPayloads
