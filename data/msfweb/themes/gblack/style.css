@@ -187,20 +187,20 @@ select {
 
 #moduleList
 {
-
+	white-space: nowrap;
 }
 
-#moduleName
-{
-	border-top: 1px solid #111111;
-	border-left: 1em solid #111111;
-	padding: 0.5em 0.5em 0.5em 1em;
-}
-	
 #moduleIcons
 {
 	border-top: 1px solid #111111;
-	padding: 0.5em 0.5em 0em 1em;
+	border-left: 1em solid #111111;
+	padding: 0.5em 0em 0em 0.25em;
+}
+		
+#moduleName
+{
+	border-top: 1px solid #111111;
+	padding: 0.5em 0.5em 0em 0em;
 }
 
 #moduleSpacer 

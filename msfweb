@@ -246,7 +246,8 @@ sub ProcessResRequest {
 			'win32'	=> ['image/gif', 'win32.gif'],
 
 			# special case icons
-			'unknown'	=> ['image/gif', 'clear.gif'],
+			'any'	    => ['image/gif', 'any.gif'],
+			'unknown'	=> ['image/gif', 'unknown.gif'],
 			'favorite'	=> ['image/x-icon', 'favicon.ico'],
 		);
 		
@@ -394,26 +395,30 @@ sub ProcessWebRequest {
     if (defined (my $mid = $state->{'MODULE'} )) {
 
 		my $mname;
-		        
+		my $icons;
+				        
 		if ($mbase eq 'EXPLOITS' && exists($exploits->{$mid}) ) {
 			$mname = $exploits->{$mid}->Name;
-
-			# append the payload name
-			if (exists($state->{'PAYLOAD'})) {
-				$mname .= ' ('.$state->{'PAYLOAD'}.')';
+			$mname .= ' ('.$state->{'PAYLOAD'}.')' if exists($state->{'PAYLOAD'});
+			
+			foreach ( KeysToIcons( @{ $exploits->{$mid}->OS } ) ) {
+				$icons  .= "<img src='/RESOURCE?ICON=$_' border=0 class='iconset' alt='$_'> ";
 			}
 		}
 		
 		if ($mbase eq 'PAYLOADS' && exists($payloads->{$mid}) ) {
 			$mname = $payloads->{$mid}->Name;
+			foreach ( KeysToIcons( @{ $exploits->{$mid}->OS } ) ) {
+				$icons  .= "<img src='/RESOURCE?ICON=$_' border=0 class='iconset' alt='$_'> ";
+			}			
 		}
 		
 		if (! defined($mname)) {
 			$mname = 'Invalid Module';
 		}						
 
-        $res .= "<table width='100%'>\n";
-		$res .=" <tr><td id='moduleName'><div class='textBoldBright'>$mname</div></td></tr>\n";
+        $res .= "<table width='100%' cellspacing=0 border=0 cellpadding=0>\n";
+		$res .=" <tr><td id='moduleIcons' align='center'>$icons</td><td id='moduleName'><div class='textBoldBright'>$mname</div></td></tr>\n";
 		$res .= "</table><br>\n";
     }
 
@@ -543,9 +548,17 @@ sub KeysToIcons {
 		'macos'		=> 'mac',
 	);
 
+	if (! scalar(@keys) ) {
+		return ('any');
+	}
+
 	foreach (@keys) {
 		$match{ $_ }++ if exists($icons{$_});
 		$match{ $osmaps{ $_ } }++ if exists($icons{ $osmaps{ $_ } });
+	}
+	
+	if (! scalar(keys %match)) {
+		$match{'unknown'}++;
 	}
 
 	return sort keys %match;
@@ -860,10 +873,10 @@ sub ModuleList
 	
 	# List of mKeys
 	if (scalar(keys %{ $mKeys } )) {
-		$mList .= "<option value='ALL'>--- Exploit Key ---\n";
+		$mList .= "<option value='ALL'>--- Application ---\n";
 		foreach my $kname  (sort( keys %{ $mKeys }) ) {
 			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';
-			$mList .= "<option value='$kname' $sel> EKey::$kname\n";
+			$mList .= "<option value='$kname' $sel> app :: $kname\n";
 			$moduleMerge->{$kname} = $mKeys->{$kname};
 			if ($mfilt eq 'ALL') {
 				foreach my $mname (@{ $mKeys->{$kname} }) {
@@ -879,7 +892,7 @@ sub ModuleList
 		$mList .= "<option value='ALL'>--- Operating System ---\n";	
 		foreach my $kname (sort( keys %{ $mOS }) ) {
 			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';		
-			$mList .= "<option value='$kname' $sel> OpSys::$kname\n";
+			$mList .= "<option value='$kname' $sel> os :: $kname\n";
 			$moduleMerge->{$kname} = $mOS->{$kname};
 			if ($mfilt eq 'ALL') {
 				foreach my $mname (@{ $mOS->{$kname} }) {
@@ -895,7 +908,7 @@ sub ModuleList
 		$mList .= "<option value='ALL'>--- Architecture  ---\n";
 		foreach my $kname (sort( keys %{ $mArch}) ) {
 			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';		
-			$mList .= "<option value='$kname' $sel> Arch::$kname\n";
+			$mList .= "<option value='$kname' $sel> cpu :: $kname\n";
 			$moduleMerge->{$kname} = $mArch->{$kname};
 			if ($mfilt eq 'ALL') {
 				foreach my $mname (@{ $mArch->{$kname} }) {
@@ -928,9 +941,9 @@ sub ModuleList
 			$icons  .= "<img src='/RESOURCE?ICON=". $_ ."' border=0 class='iconset' alt='".$_."'> ";
 		}
 		$mList .= "<tr>";
+		$mList .= "<td id='moduleIcons' align='center'>$icons</td>";
 		$mList .= "<td id='moduleName'><a href='/". uc($mtype) ."?MODE=SELECT&amp;MODULE=".URLEncode($ename)."'>";
 		$mList .= $mod->Name ."</a></td>";
-		$mList .= "<td id='moduleIcons' align='center'>$icons</td>";
 		$mList .= "</tr>\n";
 		
 		$mList .= "<tr><td id='moduleSpacer' colspan=2></tr>\n";
@@ -990,13 +1003,9 @@ sub ModuleInfo {
 	}
 		
 	if (scalar( @{ $module->OS } )) {
-		my $icons;
-		foreach ( KeysToIcons( @{ $module->OS } ) ) {
-			$icons  .= "<img src='/RESOURCE?ICON=$_' border=0 alt='$_'> ";
-		}
 		
 		$res .= "<tr><td align='right' width=80 class='textBold'>OS:</td>";
-		$res .= "<td class='textNormal'> $icons (". join(", ", @{ $module->OS }) .")</td></tr>\n";
+		$res .= "<td class='textNormal'>". join(", ", @{ $module->OS }) ."</td></tr>\n";
 		
 	}
 
