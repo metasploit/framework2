@@ -11,3 +11,5 @@ The following components are disabled in this release:
 The following is a list of known bugs:
 
     - The BSD bind and findsock payloads are buggy
+    - Tab completion does not work correctly under Cygwin
+    - The TARGET parameter is not validated prior to being used
