@@ -278,4 +278,46 @@ sub GetUserOptsDefault {
   return($default);
 }
 
+# Convert References to a list of URL's
+sub RefLinks {
+  my $self = shift;
+  my @urls = ();
+  
+  foreach my $ref (@{ $self->Refs }) {
+    if (ref($ref) eq 'ARRAY') {
+        push @urls, $self->RefConvert(@{ $ref });    
+    }
+    else {
+        push @urls, $self->RefConvert('URL', $ref);
+    }
+  }
+
+  return \@urls;
+}
+
+# Convert Reference Type and Data to a given URL
+sub RefConvert {
+  my $self = shift;
+  my $type = shift;
+  my $data = shift;
+  
+  if ($type eq 'URL') {
+    return $data;
+  }
+  
+  if ($type eq 'OSVDB') {
+    return 'http://www.osvdb.org/'.$data;
+  }
+  
+  if ($type eq 'CVE') {
+    return 'http://cve.mitre.org/cgi-bin/cvename.cgi?name='.$data;
+  }
+  
+  if ($type eq 'BID') {
+    return 'http://www.securityfocus.com/bid/'.$data;
+  }
+  
+  return $data;
+}
+
 1;

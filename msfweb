@@ -328,7 +328,7 @@ sub ExploitSummary
     $res .= "<tr><td colspan=2>";
     $res .= "<br>$desc<br><br>";
 
-    foreach my $ref (@{$x->Refs()}) { $res .= "<li> <a href='$ref'>$ref</a><br>\n" }
+    foreach my $ref (@{$x->RefLinks}) { $res .= "<li> <a href='$ref'>$ref</a><br>\n" }
 
     my $u = StateToURL('PAYLOAD', $state);
     $res .= "<br><a href='$u'>Select Payload</a><br>\n";

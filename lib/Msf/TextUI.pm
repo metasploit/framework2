@@ -189,7 +189,7 @@ sub DumpExploitSummary {
   $output .= "Description:\n$desc\n";
   
   $output .= "References:\n";
-  foreach (@{$exploit->Refs}) { $output .= "    " . $_ . "\n" }
+  foreach (@{$exploit->RefLinks}) { $output .= "    " . $_ . "\n" }
   $output .= "\n";
   return($output);
 }
