@@ -20,6 +20,14 @@
 ##
 ###############
 
+# TODO
+#
+# PXDLLCLSID - custom clsid
+# PXDLLVER   - dll version
+#
+# fix child pid cleanup
+#
+
 package Msf::PayloadComponent::PassiveXConnection;
 
 use strict;
