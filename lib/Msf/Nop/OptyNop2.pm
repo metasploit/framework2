@@ -50,32 +50,28 @@ sub f {
 
 	return(-1) if($nl == 0);
 
-	my @s;
-	for(my $i = 0; $i < $nl; $i += 3) {
-		push(@s, $i);
-	}
-
-	Pex::Utils::FisherYates(\@s);
+	Pex::Utils::FisherYates($nt);
 
 	my $lv = -1;
 	my $l  = -1;  
 
-	foreach my $i (@s) {
-		next if($nt->[$i] & $m);
-		next if($nt->[$i + 1] > $pc);
-		next if(Pex::Text::BadCharCheck($s->_BadChars, chr($nt->[$i + 2])));
+	foreach my $e (@{$nt}) {
+		next if(($e >> 16) & $m);
+		next if(($e >> 8 & 0xff) > $pc);
+		my $b = $e & 0xff;
+		next if(Pex::Text::BadCharCheck($s->_BadChars, chr($b)));
 
-		if($lv == -1 || $lv > $c->[$nt->[$i + 2]]) {
-			$l  = $i + 2;
-			$lv = $c->[$nt->[$l]];
+		if($lv == -1 || $lv > $c->[$b]) {
+			$l  = $b;
+			$lv = $c->[$b];
 		}
 	}
 
 
 	return(-1) if($l == -1);
 
-	$c->[$nt->[$l]]++;
-	return($nt->[$l]);
+	$c->[$l]++;
+	return($l);
 }
 
 1;
