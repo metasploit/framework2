@@ -39,7 +39,6 @@ Lxorlp:
 payload:
 	;;; Insert XORed payload here
 	
-	.long	(0x00000000 ^ 0x01020304)
 	.long	(0x7fe00008 ^ 0x01020304)
 	.long	(0x7fe00008 ^ 0x01020304)
 	.long	(0x7fe00008 ^ 0x01020304)

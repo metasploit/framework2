@@ -191,7 +191,7 @@ while (1)
 }
 
 sub Usage {
-    print STDERR "Usage: $0 -a hostname:port [-v]\n";
+    print STDERR "Usage: $0 -a hostname:port [-v -r]\n";
     exit(0);
 }
 
