@@ -4,6 +4,7 @@
 ;   Qualities: Can Have Nulls
 ;   Platforms: BSD
 ;     Authors: skape <mmiller [at] hick.org>
+;     Authors: vlad902 <vlad902 [at] gmail.com>
 ;     Version: $Revision$
 ;     License: 
 ;
