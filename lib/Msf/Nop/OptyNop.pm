@@ -20,6 +20,8 @@ use Pex::Text;
 # goes the more complicated instructions you should get, but also slower!
 my $synWeight = 3;
 my $synWeightJmp = 4;
+# try to prevent getting stuck when we just can't even out the weights
+my $synSkipLimit = 10;
 
 # Make sure to tune w/ bigger sleds, small sleds are hard to get complex
 # instructions for anyway...
@@ -28,7 +30,7 @@ my $synWeightJmp = 4;
 
 # Print a . for all simple (codeLen == 1/SetReg) and print a + for all the
 # more complicated instructions.  Nice to use to tune synWeight.
-my $debug = 2;
+my $debug = 0;
 
 my $none  = 0;
 my $reg1  = 1;
@@ -433,6 +435,8 @@ sub _GenerateSled {
   my $self = shift;
   my $len = shift;
 
+  my $synSkip = 0;
+
   return if($len <= 0);
 
   my $data = "\x00" x $len;
@@ -456,7 +460,18 @@ sub _GenerateSled {
       if($debug == 2) {
         $synWeight = ($c2 / $c1);
       }
-      next if(rand($synWeight) < .5);
+      if(rand($synWeight) < .5) {
+        # try to prevent getting stuck
+        if($synSkip < $synSkipLimit) {
+#          print STDERR "skipping due to synWeight $c2 / $c1\n";
+          $synSkip++;
+	  next;
+	}
+	else {
+	  # go anyway, limit reached.
+	  $synSkip = 0;
+	}
+      }
       $pos--;
       substr($data, $pos, 1, $self->_SetRegs(substr($code, -1, 1), $index));
       print STDERR "." if($debug);
