@@ -67,6 +67,48 @@ sub EncodePayload {
     $upper = 1;
   }
 
+  # possible terminators and valid chars
+  my @pterms = (0x41 .. 0x4a);
+  my @pchars = (0x41 .. 0x5a, 0x30 .. 0x39);
+
+  if(!$upper) {
+    push(@pterms, 0x61 .. 0x6a);
+    push(@pchars, 0x61 .. 0x7a);
+  }
+
+  my $valid;
+  my $term;
+
+  my @terms;
+  foreach my $t (@pterms) {
+    if(Pex::Text::BadCharCheck($badChars, chr($t), chr($t + 0x10))) {
+      $self->PrintDebugLine(5, 'Bad terminator char $t, skipping');
+    }
+    else {
+      push(@terms, chr($t));
+    }
+  }
+
+  if(!@terms) {
+    $self->PrintDebugLine(3, 'Could not find a valid terminator.');
+    return;
+  }
+
+  my $term = $terms[int(rand(@terms))];
+
+  foreach my $c (@pchars) {
+    my $c = chr($c);
+    if(Pex::Text::BadCharCheck($badChars, $c)) {
+      $self->PrintDebugLine(5, 'Bad valid char ' . ord($c) . ', skipping');
+       next;
+    }
+    next if($c eq $term);
+    $valid .= $c;
+  }
+
+  $self->_Terminator($term);
+  $self->_ValidChars($valid);
+
   my $encoderType = $upper ? 'upper' : 'mixed';
 
   if($noCompress) {
@@ -78,6 +120,17 @@ sub EncodePayload {
   return if(!defined($decoder));
 
   return($prepend . $decoder);
+}
+
+sub _Terminator {
+  my $self = shift;
+  $self->{'_Terminator'} = shift if(@_);
+  return($self->{'_Terminator'});
+}
+sub _ValidChars {
+  my $self = shift;
+  $self->{'_ValidChars'} = shift if(@_);
+  return($self->{'_ValidChars'});
 }
 
 sub _FindGetEip {

@@ -184,15 +184,27 @@ sub _Encode {
   return($stub . $decoder . $encoded);
 }
 
+sub _ValidChars {
+  my $self = shift;
+  return('0123456789BCDEFGHIJKLMNOPQRSTUVWXYZ');
+}
+sub _Terminator {
+  my $self = shift;
+  return('A');
+}
+
 sub EncodeData {
   my $self = shift;
   my $raw = shift;
   my %options = @_;
 
   my $validChars = $options{'validChars'};
-  $validChars = '0123456789BCDEFGHIJKLMNOPQRSTUVWXYZ' if(!defined($validChars));
+  $validChars = $self->_ValidChars if(!defined($validChars));
   my $unicode = $options{'unicode'};
   my $noterm = $options{'dontTerminate'};
+
+  my @validChars = split('', $validChars);
+
 #  $unicode = 1;
 
   my $data;
@@ -201,35 +213,47 @@ sub EncodeData {
   my $vlength = length($validChars);
 
   foreach my $char (split('', $raw)) {
-    # // encoding AB -> CD 00 EF 00
-    my $A = (ord($char) & 0xf0) >> 4;
-    my $B = (ord($char) & 0x0f);
-    
-    my $F = $B;
-    # // E is arbitrary as long as EF is a valid character
-    my $i = int(rand($vlength));
 
-    while((ord(substr($validChars, $i, 1)) & 0x0f) != $F) {
-      $i = ++$i % $vlength;
+    # I've found this the best way to do randomization
+    Pex::Utils::FisherYates(\@validChars);
+
+    # seperate the original byte into 2 nibbles
+    my $o1 = (ord($char) & 0xf0) >> 4;
+    my $o2 = (ord($char) & 0x0f);
+
+    my $e2;
+    foreach my $c (@validChars) {
+      if((ord($c) & 0x0f) == $o2) {
+        $e2 = ord($c) >> 4;
+        last;
+      }
     }
+    return if(!defined($e2));
 
-    my $E = ord(substr($validChars, $i, 1)) >> 4;
+    # Randomize again... :)
+    Pex::Utils::FisherYates(\@validChars);
+
     # // normal code uses xor, unicode-proof uses ADD.
     # // AB -> 
-    my $D = $unicode ? ($A - $E) & 0x0f : ($A ^ $E);
+    my $D = $unicode ? ($o1 - $e2) & 0x0f : ($o1 ^ $e2);
     # // C is arbitrary as long as CD is a valid character
-    $i = int(rand($vlength));
-  
-    while((ord(substr($validChars, $i, 1)) & 0x0f) != $D) {
-      $i = ++$i % $vlength;
-    }
 
-    my $C = ord(substr($validChars, $i, 1)) >> 4;
-    $data .= chr(($C << 4) + $D) . chr(($E << 4) + $F);
+    my $e1;
+    foreach my $c (@validChars) {
+#      print STDERR ".\n";
+      if((ord($c) & 0x0f) == $D) {
+ #       $e1 = ord($c) >> 4;
+       $e1 = ord($c);
+        last;
+      }
+    }
+    return if(!defined($e1));
+
+    $data .= chr($e1) . chr(($e2 << 4) + $o2);
 
   }
 
-  $data .= 'A' if(!$noterm);
+  $data .= $self->_Terminator if(!$noterm);
   return($data);
 }
 
@@ -259,7 +283,7 @@ sub _MakeUpperW32SehGetPc {
 sub _MakeDecoderPoly {
   my $self = shift;
 
-  my $push41 = $bmb->new('push byte 0x41', '[>0 head<]jA');
+  my $push41 = $bmb->new('push byte 0x41', '[>0 head<]j' . $self->_Terminator);
 
   my $popEax = $bmb->new('pop eax (0x41)', 'X');
   $popEax->AddDepend($push41);
@@ -279,7 +303,7 @@ sub _MakeDecoderPoly {
   my $incEcx1 = $bmb->new('inc ecx', '[>1 chr(0x40 + ||REG1||)<]');
   $incEcx1->AddDepend($loopTop);
 
-  my $imul = $bmb->new('imul', '[>0 imul<]k[>1 chr(0x40 + ||REG1||)<]AQ');
+  my $imul = $bmb->new('imul', '[>0 imul<]k[>1 chr(0x40 + ||REG1||)<]A' . chr(ord($self->_Terminator) + 0x10));
   $imul->AddDepend($incEcx1);
 
   my $xor1 = $bmb->new('xor decode', '[>0 xord<]2[>1 chr(0x40 + ||REG1||)<][>1 chr(:incEcx2: < :xord: ? 0x41 : 0x42)<]');
