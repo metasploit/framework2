@@ -4,7 +4,7 @@
 ;   Qualities: Can Have Nulls
 ;   Platforms: Linux
 ;     Authors: skape <mmiller [at] hick.org>
-               vlad902 <vlad902 [at] gmail.com>
+;              vlad902 <vlad902 [at] gmail.com>
 ;     Version: $Revision$
 ;     License: 
 ;
