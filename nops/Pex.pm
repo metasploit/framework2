@@ -12,13 +12,13 @@ my $info = {
   'Refs'    => [ ],
 };
 
-my $defaults = {
+my $advanced = {
   'Random' => [0, 'Use random nop equivalent instructions, otherwise default to 0x90'],
 };
 
 sub new {
   my $class = shift; 
-  return($class->SUPER::new({'Info' => $info, 'Defaults' => $defaults}, @_));
+  return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
 sub Nops {
