@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::902_reverse;
+package Msf::Payload::win32_reverse;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
 sub load {

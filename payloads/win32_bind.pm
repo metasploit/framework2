@@ -7,7 +7,7 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::902_bind;
+package Msf::Payload::win32_bind;
 use strict;
 use base 'Msf::PayloadComponent::Win32Payload';
 sub load {
