@@ -37,7 +37,7 @@ BEGIN
 }
 
 my %opts;
-getopts('hvmru', \%opts);
+getopts('hvmruas', \%opts);
 
 if ($opts{v}) {
     print "Msfupdate Version: $VERSION\n";
@@ -127,11 +127,11 @@ foreach (keys(%{$mod})) {
 }
 
 # They modified something, ask them what they want to do with it
-if (keys(%{$mod})) {  
+if (! $opts{a} && keys(%{$mod})) {  
     print "[*] WARNING: You have made modifications to the\n";
-    print "    following components of the Framework:\n";
-    foreach (keys(%{$mod})) {
-        print "     - ".$_."\n";
+    print "    following components of the Framework:\n\n";
+    foreach (sort(keys(%{$mod}))) {
+        print "\t".$_."\n";
     }
     print "\n";
     print "    Would you like to preserve these changes? If\n";
@@ -145,8 +145,7 @@ if (keys(%{$mod})) {
         $resp = <STDIN>;
         chomp($resp);
     }
-    print "\n";
-    if ($resp !~ /yes/i) {
+    if ($resp =~ /no/i) {
         $mod = {};
     }
 }
@@ -158,6 +157,10 @@ foreach (keys(%{$upd})) {
     }
 }
 
+# Ignore locally modified files when -a is supplied
+if ($opts{a}) {
+    $mod = {};
+}
 
 # After all of this stuff, this is what we have
 # - $mod is a table of anything the user wants to keep
@@ -177,20 +180,45 @@ foreach (keys(%{$upd})) {
 #   .current file and get ready for the next update.
 #
 
+print "[*] Update Task Summary\n\n";
 foreach my $entry (keys(%{$upd})) {
     if ($mod->{$entry}) {
-        print "[*] Ignoring user-modified file $entry\n";
-        next;
+        print "\tIgnore $entry\n";
     }
-    
+    else {
+        print "\tUpdate $entry\n";
+    }
+}
+print "\n";
+
+exit(0) if $opts{s};
+
+if (! $opts{a}) {
+    print "Continue? (yes or no) ";
+    my $resp;
+    while ($resp !~ /yes|no/i) {
+        print "> ";
+        $resp = <STDIN>;
+        chomp($resp);
+    }
+    print "\n";
+    if ($resp !~ /yes/i) {
+        exit(0);
+    }
+}
+
+foreach my $entry (keys(%{$upd})) {
+    if ($mod->{$entry}) {
+        next;
+    } 
     my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/current/$entry");
     if ($upd->{$entry} ne md5_hex($data)) {
         print "[*] Error downloading file $entry\n";
         if ($data) {
-            $err->{$entry} = "md5 sum mismatch";
+            $err->{$entry} = "Checksum Error";
         }
         else {
-            $err->{$entry} = "download error";
+            $err->{$entry} = "Download Error";
         }
         next;
     }
@@ -198,7 +226,7 @@ foreach my $entry (keys(%{$upd})) {
     # overwrite the local file O_o
     WriteFile($entry, $data);
     
-    # set executable permissions just in case
+    # set it executable since we dont track permissions
     chmod(0755, $entry);
     
     print "[*] Successfully downloaded $entry (".length($data)." bytes)\n";
@@ -232,8 +260,18 @@ if ($new_data) {
     print "\n\n";
 }
 
+
 sub Usage { 
-    print STDERR "Usage: $0 <-r | -m | -u | -v>\n";
+    print STDERR "  Usage: $0 [options]>\n";
+    print STDERR "Options:\n";
+    print STDERR "         -h             You're looking at me baby\n";
+    print STDERR "         -v             List version information\n";
+    print STDERR "         -u             Perform an online update via metasploit.com\n";
+    print STDERR "         -s             Only display update tasks, do not actually download\n";
+    print STDERR "         -m             Show any files locally modified since last update\n";
+    print STDERR "         -a             Do not prompt, default to overwrite all files\n";
+    # Developer options
+    # print STDERR "         -r             Rebuild the local version database\n";
     exit(0);
 }
 
@@ -289,8 +327,8 @@ sub DownloadFile {
         print STDERR "[*] Could not connect to $host: $!\n";
         exit(0);
     }
-
-    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate\r\n\r\n";
+    my ($vnum) = $VERSION =~ m/\$Revision$]+)/;
+    my $req = "GET $path HTTP/1.0\r\nUser-Agent: MSFUPDATE/$vnum\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
         # Reset the verified flag
