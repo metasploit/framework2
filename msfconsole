@@ -649,7 +649,7 @@ sub xValidPayloads
 {
     my $exploit = shift;
     if($exploit->Payload) {
-      $state->{'Exploit'}->{'Payloads'} = $ui->MatchPayloads(shift, $payloads);
+      $state->{'Exploit'}->{'Payloads'} = $ui->MatchPayloads($exploit, $payloads);
       return $state->{'Exploit'}->{'Payloads'};
     }
     return;
