@@ -343,6 +343,7 @@ sub Encode {
 sub GetEncoders {
   my $self = shift;
   my @preferred = split(',', $self->GetEnv('Encoder'));
+  return(@preferred) if($self->GetEnv('EncoderDontFallThrough'));
   my @encoders;
   foreach my $encoder (keys(%{$self->GetTempEnv('_Encoders')})) {
     next if(scalar(grep { $_ eq $encoder } @preferred));
@@ -353,6 +354,7 @@ sub GetEncoders {
 sub GetNops {
   my $self = shift;
   my @preferred = split(',', $self->GetEnv('Nop'));
+  return(@preferred) if($self->GetEnv('NopDontFallThrough'));
   my @nops;
   foreach my $nop (keys(%{$self->GetTempEnv('_Nops')})) {
     next if(scalar(grep { $_ eq $nop } @preferred));
