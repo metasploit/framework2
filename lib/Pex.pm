@@ -97,39 +97,6 @@ sub LoadPayloads
     return($res);
 }
 
-sub MatchPayloads
-{
-    my ($x, $payloads) = @_;
-    my $res = { };
-    
-    if (! $x->Payload) { return $res }
-    
-    my ($xarch, $xkeys, $xos);
-    
-    foreach (@{$x->Arch}) { $xarch->{$_}++ }
-    foreach (@{$x->Keys}) { $xkeys->{$_}++ }
-    foreach (@{$x->OS})   { $xos->{$_}++ }
-
-    
-    foreach my $k (sort(keys(%{ $payloads })))
-    {
-        my $p = $payloads->{$k};
-        if (
-            $xos->{$p->OS()}  && $xarch->{ $p->Arch() } &&
-            ($x->Priv == 1 || $p->Priv == 0)            &&
-            $p->Size < $x->Payload->{'Size'}
-           )
-        {
-            my ($kwm, %kws) = (1, ());
-            foreach ($p->Keys) { $kws{$_}++ }
-            foreach (keys(%{$xkeys})) { $kwm = 0 if ! exists($kws{$_}) }
-            next if ! $kwm;
-            $res->{$k} = $payloads->{$k};
-        }    
-    }
-    return $res;
-}
-
 sub PatternCreate
 {
     my ($length) = @_;

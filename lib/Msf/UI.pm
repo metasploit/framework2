@@ -217,13 +217,13 @@ sub Encode {
     }
   }
   my $encoded = $encoder->Encode;
-  $self->SetError($encoded->GetError);
+  $self->SetError($encoder->GetError);
   return($encoded);
 }
 
 sub MakeEncoder {
     my $self = shift;
-    # Even though there is already a entry in default in Msf::Config
+    # Even though there is already an entry in default in Msf::Config
     # This is important enough to just default again anyway
     my $name = $self->GetEnv('Encoder') || 'Msf::Encoder::Pex';
     my $encoder = $name->new(@_);

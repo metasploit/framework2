@@ -1,7 +1,7 @@
 package Msf::Module;
 use strict;
 use base 'Msf::Base';
-
+use Socket;
 
 sub new {
   my $class = shift;
@@ -66,12 +66,16 @@ sub Validate {
   return(1) if(!defined($userOpts));
 
   foreach my $key (keys(%{$userOpts})) {
-    my ($type, $desc) = @{$userOpts->{$key}};
+    my ($reqd, $type, $desc, $dflt) = @{$userOpts->{$key}};
     my $value = $self->GetVar($key);
 
-    if(!defined($value)) {
+    if(!defined($value) && $reqd) {
       $self->SetError("Missing required option: $key");
       return;
+    }
+    elsif(!defined($value)) {
+      # option is not required, set it to the default
+      if (defined($dflt)) { $self->SetVar($key, $dflt) }
     }
     elsif(uc($type) eq 'ADDR') {
       my $addr = gethostbyname($value);
@@ -79,8 +83,8 @@ sub Validate {
         $self->SetError("Invalid address $value for $key");
         return;
       }
-#fixme Should we pass them the ip?
-#      $self->SetVar($addr);
+      # replace a hostname with an IP address
+      $self->SetVar($key, inet_ntoa($addr));
     }
     elsif(uc($type) eq 'PORT') {
       if($value < 1 || $value > 65535) {
@@ -125,6 +129,7 @@ sub GetVar {
   $val = $self->GetUserOptsDefault($key);
   return($val);
 }
+
 sub SetVar {
   my $self = shift;
   my $key = shift;
@@ -153,6 +158,7 @@ sub GetLocal {
   $val = $self->GetUserOptsDefault($key);
   return($val);
 }
+
 sub SetLocal {
   my $self = shift;
   my $key = shift;
@@ -185,6 +191,7 @@ sub GetDefault {
   return if(!defined($self->{'Defaults'}->{$key}));
   return($self->{'Defaults'}->{$key});
 }
+
 sub GetDefaultValue {
   my $self = shift;
   my $key = shift;
@@ -197,6 +204,7 @@ sub GetDefaultValue {
   return if(!defined($self->{'Defaults'}->{$key}));
   return($self->{'Defaults'}->{$key}->[0]);
 }
+
 sub SetDefault {
   my $self = shift;
   my $key = shift;
@@ -215,6 +223,7 @@ sub GetUserOpts {
 
   return($userOpts->{$key});
 }
+
 sub GetUserOptsDefault {
   my $self = shift;
   my $key = shift;

@@ -55,6 +55,7 @@ my $state = {'Mode' => 'Main'};
 
 my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
 $console->tabCompletion(\&xTabCompletion);
+$console->_useEnv(undef);
 
 # virtual command table
 my %virtualCmds = ();
@@ -153,6 +154,7 @@ sub Load {
         $name =~ s/.*:://g; # Remove package prefix
         $exploits->{$name} = $exploitsIndex->{$key};
         $exploitsIndex->{$name} = $key;
+        # print "$name:\t" . $exploits->{$name}->{'Info'}->{'Payload'}->{'Size'} . "\n"
     }
     
     # Generate payloads index
@@ -488,10 +490,10 @@ sub ePayloads
 
 sub eOptions
 {
-    my $exploit = $state->{'Exploit'}->{'Object'};
+    my $exploit = $state->{'Exploit'}->{'Exploit'};
     my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
 
-    my $payload = $ui->GetVar('PAYLOAD');
+    my $payload = $ui->GetTempEnv('PAYLOAD');
 
     if ($exploit->Payload && ! $payload)
     {
@@ -550,7 +552,7 @@ sub eExploit
     my $exploit = $state->{'Exploit'}->{'Exploit'};
     my $exploitPayloads = $state->{'Exploit'}->{'Payloads'};
 
-    my $payload = $ui->GetVar('PAYLOAD');
+    my $payload = $ui->GetTempEnv('PAYLOAD');
 
     if ($exploit->Payload && ! $payload)
     {
@@ -558,13 +560,13 @@ sub eExploit
         return;
     }
     
-    if ($exploit->Payload && ! exists($payloads->{$payload}))
+    if ($exploit->Payload && ! exists($exploitPayloads->{$payload}))
     {
         xMsg("exploit", "invalid payload specified: $payload");
         return;
     }
     
-    $payload = $payloads->{$payload};
+    $payload = $exploitPayloads->{$payload};
 
     $exploit->Validate;
     return if($exploit->PrintError);
@@ -577,7 +579,7 @@ sub eExploit
     }
 
     my @targets = $exploit->Targets;
-    my $target = $ui->GetEnv('TARGET');
+    my $target = $ui->GetTempEnv('TARGET');
     if (defined($target) && ! defined($targets[$target]))
     {
       xMsg('exploit', 'Invalid target specified.');
@@ -585,7 +587,7 @@ sub eExploit
   
     # Important: Default the target to 0, maybe this should somehow
     # be in Msf::Exploit, maybe be part of the Validate process?
-    $ui->SetEnv('TARGET', 0) if(!defined($target));
+    $ui->SetTempEnv('TARGET', 0) if (!defined($target));
 
     if (defined($payload))
     {
@@ -595,7 +597,7 @@ sub eExploit
     
     $ui->SetTempEnv('HCALLBACK', \&xCallback);
 
-    my $handler = Pex::HandlerConsole->new();
+    my $handler = Msf::HandlerConsole->new();
     
     my ($phand, $chand, $phcode, $chcode);
     if ($payload && $handler->can($payload->Type))
@@ -608,7 +610,7 @@ sub eExploit
         {
             my ($csock, $psock);
             $ui->SetTempEnv('HANDLER', $handler);
-            $ui->SetTempEnv('HCFUNC', $chand);
+            $ui->SetTempEnv('HCFUNC',  $chand);
             
             xMsg("exploit", "creating link between child and parent process");
             
@@ -626,7 +628,7 @@ sub eExploit
             if ($phand)
             {
                 xMsg("exploit", "starting handler $phand");
-                my $res = $handler->$phand($payload, $ui, $child);
+                my $res = $handler->$phand($payload, $ui->GetTempEnv, $child);
                 kill('TERM', $child);
 
                 if (! $res)
@@ -756,16 +758,15 @@ sub xAddAddressCache
 
 sub xCreateSetList
 {
-    if ($state->{"Mode"} eq "Main") { return () } 
+    if ($state->{"Mode"} eq "Main") { return keys(%{$ui->GetEnv}) } 
     
     if ($state->{"Mode"} eq "Exploit") 
     {
         my %options = ();
         
         my $x = $state->{'Exploit'}->{'Exploit'};
-        my $e = $console->getEnv();
-        my $p = $e->{'PAYLOAD'};
-
+        my $p = $ui->GetTempEnv('PAYLOAD');
+        
         foreach (keys(%{$x->UserOpts})) { $options{$_}++ }
         if ($x->Payload && $p && exists($payloads->{$p}))
         {
@@ -775,6 +776,7 @@ sub xCreateSetList
         
         if ($x->Payload) { $options{"PAYLOAD"}++ }
         if ($x->Targets) { $options{"TARGET"}++  }
+
         return(keys(%options));
     }
 }
@@ -790,8 +792,7 @@ sub xCreateSetValueList
         my $n = $state->{'SetName'};
         my $x = $state->{'Exploit'}->{'Exploit'};
         my $v = $state->{'Exploit'}->{'Payloads'};
-        my $e = $console->getEnv();
-        my $p = $e->{'PAYLOAD'};
+        my $p = $ui->GetTempEnv('PAYLOAD');
 
         if ($x->Payload && $p && exists($payloads->{$p})) { $p = $payloads->{$p} }
         
@@ -853,22 +854,19 @@ sub xTabCompletion
         }
     }
         
-    if (lc($cmd) eq "set")
+    if (lc($cmd) eq "set" || lc($cmd) eq "setg")
     {
         # display variables if no args are specified
         if (! $args[0] || (! $args[1] && ($args[0] && $text)))
         {
             $state->{'TabVals'} = [sort(xCreateSetList())];
-        }
-        
-        if (! $args[1] || (! $args[2] && ($args[1] && $text)))
+        } elsif (! $args[1] || (! $args[2] && ($args[1] && $text)))
         {
             $state->{'SetName'} = $args[0];
             $state->{'TabVals'} = [sort(xCreateSetValueList())];
         }
     }
-
-     
+       
     if (lc($cmd) eq "exec") {  return () }   
            
     my @matches = $console->_term->completion_matches($text, \&xTabCompletionMatcher);
