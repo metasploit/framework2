@@ -11,7 +11,7 @@ Things that MUST be done
 - Write a quickstart users guide, enough to get them up and running in a few
   paragraphs. (I'll do this).
 
-- Get some basic developer docs, although the bulk of this can wait a week or
+- Get some basic developer docs?, although the bulk of this can wait a week or
   two.
 
 - Fixed the PoPToP exploit to use hardcoded strings, and remove all my random
@@ -19,6 +19,9 @@ Things that MUST be done
 
 - Get a logo in ascii art form for msfcli and msfconsole and probably msfweb
   (imgs would be harder in msfweb right?).
+
+- A mailing list is a must, a must! msf@metasploit.com?
+  framework@metasploit.com?
 
 Things that can wait
 ====================
