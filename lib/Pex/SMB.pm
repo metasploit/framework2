@@ -21,125 +21,25 @@ use Pex;
 use Pex::Struct;
 use strict;
 
-
-###############################
-# constants ripped from pysmb #
-###############################
-
-use constant {
-# Shared Device Type
-  SHARED_DISK => 0x00,
-  SHARED_PRINT_QUEUE => 0x01,
-  SHARED_DEVICE => 0x02,
-  SHARED_IPC => 0x03,
-
-# Extended attributes mask
-  ATTR_ARCHIVE => 0x020,
-  ATTR_COMPRESSED => 0x800,
-  ATTR_NORMAL => 0x080,
-  ATTR_HIDDEN => 0x002,
-  ATTR_READONLY => 0x001,
-  ATTR_TEMPORARY => 0x100,
-  ATTR_DIRECTORY => 0x010,
-  ATTR_SYSTEM => 0x004,
-
-# Service Type
-  SERVICE_DISK => 'A:',
-  SERVICE_PRINTER => 'LPT1:',
-  SERVICE_IPC => 'IPC',
-  SERVICE_COMM => 'COMM',
-  SERVICE_ANY => '?????',
-
-# Server Type (Can be used to mask with SMBMachine.get_type() or SMBDomain.get_type())
-  SV_TYPE_WORKSTATION => 0x00000001,
-  SV_TYPE_SERVER      => 0x00000002,
-  SV_TYPE_SQLSERVER   => 0x00000004,
-  SV_TYPE_DOMAIN_CTRL => 0x00000008,
-  SV_TYPE_DOMAIN_BAKCTRL => 0x00000010,
-  SV_TYPE_TIME_SOURCE    => 0x00000020,
-  SV_TYPE_AFP            => 0x00000040,
-  SV_TYPE_NOVELL         => 0x00000080,
-  SV_TYPE_DOMAIN_MEMBER => 0x00000100,
-  SV_TYPE_PRINTQ_SERVER => 0x00000200,
-  SV_TYPE_DIALIN_SERVER => 0x00000400,
-  SV_TYPE_XENIX_SERVER  => 0x00000800,
-  SV_TYPE_NT        => 0x00001000,
-  SV_TYPE_WFW       => 0x00002000,
-  SV_TYPE_SERVER_NT => 0x00004000,
-  SV_TYPE_POTENTIAL_BROWSER => 0x00010000,
-  SV_TYPE_BACKUP_BROWSER    => 0x00020000,
-  SV_TYPE_MASTER_BROWSER    => 0x00040000,
-  SV_TYPE_DOMAIN_MASTER     => 0x00080000,
-  SV_TYPE_LOCAL_LIST_ONLY => 0x40000000,
-  SV_TYPE_DOMAIN_ENUM     => 0x80000000,
-
-# Options values for SMB.stor_file and SMB.retr_file
-  SMB_O_CREAT => 0x10,   # Create the file if file does not exists. Otherwise, operation fails.
-  SMB_O_EXCL => 0x00,    # When used with SMB_O_CREAT, operation fails if file exists. Cannot be used with SMB_O_OPEN.
-  SMB_O_OPEN => 0x01,    # Open the file if the file exists
-  SMB_O_TRUNC => 0x02,   # Truncate the file if the file exists
-
-# Share Access Mode;
-  SMB_SHARE_COMPAT => 0x00,
-  SMB_SHARE_DENY_EXCL => 0x10,
-  SMB_SHARE_DENY_WRITE => 0x20,
-  SMB_SHARE_DENY_READEXEC => 0x30,
-  SMB_SHARE_DENY_NONE => 0x40,
-  SMB_ACCESS_READ => 0x00,
-  SMB_ACCESS_WRITE => 0x01,
-  SMB_ACCESS_READWRITE => 0x02,
-  SMB_ACCESS_EXEC => 0x03,
-
-# SMB Command Codes
-  SMB_COM_CREATE_DIR => 0x00,
-  SMB_COM_DELETE_DIR => 0x01,
-  SMB_COM_CLOSE => 0x04,
-  SMB_COM_DELETE => 0x06,
-  SMB_COM_RENAME => 0x07,
-  SMB_COM_CHECK_DIR => 0x10,
-  SMB_COM_READ_RAW => 0x1a,
-  SMB_COM_WRITE_RAW => 0x1d,
-  SMB_COM_TRANSACTION => 0x25,
-  SMB_COM_TRANSACTION2 => 0x32,
-  SMB_COM_OPEN_ANDX => 0x2d,
-  SMB_COM_READ_ANDX => 0x2e,
-  SMB_COM_WRITE_ANDX => 0x2f,
-  SMB_COM_TREE_DISCONNECT => 0x71,
-  SMB_COM_NEGOTIATE => 0x72,
-  SMB_COM_SESSION_SETUP_ANDX => 0x73,
-  SMB_COM_LOGOFF => 0x74,
-  SMB_COM_TREE_CONNECT_ANDX => 0x75,
-
-# Security Share Mode (Used internally by SMB class);
-  SECURITY_SHARE_MASK => 0x01,
-  SECURITY_SHARE_SHARE => 0x00,
-  SECURITY_SHARE_USER => 0x01,
-
-# Security Auth Mode (Used internally by SMB class);
-  SECURITY_AUTH_MASK => 0x02,
-  SECURITY_AUTH_ENCRYPTED => 0x02,
-  SECURITY_AUTH_PLAINTEXT => 0x00,
-
-
-# Raw Mode Mask (Used internally by SMB class. Good for dialect up to and including LANMAN2.1);
-  RAW_READ_MASK => 0x01,
-  RAW_WRITE_MASK => 0x02,
-
-# Capabilities Mask (Used internally by SMB class. Good for dialect NT LM 0.12);
-  CAP_RAW_MODE => 0x0001,
-  CAP_MPX_MODE => 0x0002,
-  CAP_UNICODE => 0x0004,
-  CAP_LARGE_FILES => 0x0008,
-  CAP_EXTENDED_SECURITY => 0x80000000,
-
-# Flags1 Mask;
-  FLAGS1_PATHCASELESS => 0x08,
-
-# Flags2 Mask;
-  FLAGS2_LONG_FILENAME => 0x0001,
-  FLAGS2_UNICODE => 0x8000,
-
-};
+use constant SMB_COM_CREATE_DIR         => 0x00;
+use constant SMB_COM_DELETE_DIR         => 0x01;
+use constant SMB_COM_CLOSE              => 0x04;
+use constant SMB_COM_DELETE             => 0x06;
+use constant SMB_COM_RENAME             => 0x07;
+use constant SMB_COM_CHECK_DIR          => 0x10;
+use constant SMB_COM_READ_RAW           => 0x1a;
+use constant SMB_COM_WRITE_RAW          => 0x1d;
+use constant SMB_COM_TRANSACTION        => 0x25;
+use constant SMB_COM_TRANSACTION2       => 0x32;
+use constant SMB_COM_OPEN_ANDX          => 0x2d;
+use constant SMB_COM_READ_ANDX          => 0x2e;
+use constant SMB_COM_WRITE_ANDX         => 0x2f;
+use constant SMB_COM_TREE_DISCONNECT    => 0x71;
+use constant SMB_COM_NEGOTIATE          => 0x72;
+use constant SMB_COM_SESSION_SETUP_ANDX => 0x73;
+use constant SMB_COM_LOGOFF             => 0x74;
+use constant SMB_COM_TREE_CONNECT_ANDX  => 0x75;
+use constant SMB_COM_CREATE_ANDX        => 0xa2;
 
 ##############################
 ## pre-generated structures ##
@@ -1392,7 +1292,7 @@ sub SMBCreate {
     my $smb = $STSMB->copy;
     $smb->Set
     (
-        'command'       => 0xA2,
+        'command'       => SMB_COM_CREATE_ANDX,
         'flags1'        => 0x18,
         'flags2'        => 0x2001,
         'tree_id'       => $self->LastTreeID,
@@ -1422,7 +1322,7 @@ sub SMBCreate {
         return;
     }
 
-    if ($smb_res->Get('command') != 0xA2) {
+    if ($smb_res->Get('command') != SMB_COM_CREATE_ANDX) {
         $self->Error('Create returned command '.$smb_res->Get('command'));
         return;
     }
@@ -1508,7 +1408,7 @@ sub SMBWrite {
     my $smb = $STSMB->copy;
     $smb->Set
     (
-        'command'       => 0x2F,
+        'command'       => SMB_COM_WRITE_ANDX,
         'flags1'        => 0x18,
         'flags2'        => 0x2001,
         'tree_id'       => $self->LastTreeID,
@@ -1538,7 +1438,7 @@ sub SMBWrite {
         return;
     }
 
-    if ($smb_res->Get('command') != 0x2F) {
+    if ($smb_res->Get('command') != SMB_COM_WRITE_ANDX) {
         $self->Error('Write returned command '.$smb_res->Get('command'));
         return;
     }
