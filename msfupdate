@@ -21,6 +21,8 @@ my $SSL_VERIFIED = 0;
 my $SSL_ISSUER   = '/C=US/ST=Texas/L=San Antonio/O=The Metasploit Project/OU=Development/CN=Metasploit CA/emailAddress=cacert@metasploit.com';
 my $SSL_CERTS    = "$RealBin/docs";
 
+select(STDOUT); $|++;
+        
 # Determine if SSL support is enabled
 BEGIN
 {
@@ -69,7 +71,6 @@ if ($opts{r}) {
 
 if ($opts{u}) {
     if (! $SSL_SUPPORT) {
-        select(STDOUT); $|++;
         print "[*] WARNING: The Net::SSLeay module is not installed.\n";
         print "    The update process will fall back to plain HTTP,\n";
         print "    this opens up the possibility of someone being\n";
@@ -115,10 +116,65 @@ if ($opts{m}) {
     exit(0);
 }
 
-if (keys(%{$mod})) {
-
+# Strip this list down to just modifications
+foreach (keys(%{$mod})) {
+    if ($mod->{$_} ne 'Mod') {
+        delete($mod->{$_});
+    }
 }
 
+# They modified something, ask them what they want to do with it
+if (keys(%{$mod})) {  
+    print "[*] WARNING: You have made modifications to the\n";
+    print "    following components of the Framework:\n";
+    foreach (keys(%{$mod})) {
+        print "     - ".$_."\n";
+    }
+    print "\n";
+    print "    Would you like to preserve these changes? If\n";
+    print "    you say no, all local modifications will be\n";
+    print "    overwritten by the updates.\n";
+    print "\n";
+    print "Preserve modifications (yes or no) ";
+    my $resp;
+    while ($resp !~ /yes|no/i) {
+        print "> ";
+        $resp = <STDIN>;
+        chomp($resp);
+    }
+    print "\n";
+    if ($resp !~ /yes/i) {
+        $mod = {};
+    }
+}
+
+# Ignore user created files unless the delete flag is set
+if (! $opts{d}) {
+    foreach (keys(%{$upd})) {
+        if ($upd->{$_} eq 'Del') {
+            delete($upd->{$_});
+        }
+    }
+}
+
+# After all of this stuff, this is what we have
+# - $mod is a table of anything the user wants to keep
+# - $upd is a table of everything online new or updated
+# - $upd contains Del items only if the user specified -d
+
+# The plan of attack is:
+# - Iterate through each item in $upd, if there is a match in
+#   $mod, we print a message and ignore the download for it.
+#   We will delete anything with the Del status set in this
+#   table. 
+# - Once we have identified an update, we try to download it.
+#   If an error occurs, either because the download fails or
+#   the md5 does no match, we place this into the $err table.
+#
+# - After all files have been processed, we rebuild the local
+#   .current file and get ready for the next update.
+#
+# HD goes to sleep.
 
 
 if ($new_data) {
