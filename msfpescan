@@ -71,7 +71,7 @@ my %pops =
     );
 
 
-getopts("f:j:c:sx:l:I:", \%opts);
+getopts("f:j:c:sx:l:I:n", \%opts);
 if (! defined($opts{'f'}) || (! defined($opts{'j'}) && ! defined($opts{'c'}) && ! defined($opts{'x'}) && ! $opts{'s'})) { usage() }
 
 my $filename = $opts{'f'};
@@ -161,6 +161,7 @@ if (exists($opts{'c'}))
 # Regex
 if(exists($opts{'x'})) {
   my $regex = $opts{'x'};
+  $regex .= '.' x $opts{'l'};
   while($data =~ m/($regex)/g) {
     my $found = $1;
     my $loc = pos($data) - length($found);
@@ -171,7 +172,15 @@ if(exists($opts{'x'})) {
 
 sub hexOutput {
   my $data = shift;
-  return(unpack('H*', $data));
+  my $string = unpack('H*', $data);
+  if($opts{'n'}) {
+    my $tempString = $string;
+    $tempString =~ s/(..)/\\x$1/g;
+    $string .= "\n--- ndisasm output ---\n";
+    $string .= `echo -ne "$tempString" | ndisasm -u /dev/stdin`;
+    $string .= "--- ndisasm output ---";
+  }
+  return($string);
 }
 
 
@@ -184,8 +193,9 @@ sub usage
     print STDERR "         -s           Search for pop+pop+ret combinations\n";
     print STDERR "         -x  <regex>  Search for regex match\n";
     print STDERR "Options:\n";
-    print STDERR "         -l  <count>  Number of bytes to show after pattern\n";
+    print STDERR "         -l  <count>  Number of bytes to show after match\n";
     print STDERR "         -I  address  Use this ImageBase address instead of one from file\n";
+    print STDERR "         -n           Print ndisasm output of data\n";
     print STDERR "\n";
     exit(0);
 
