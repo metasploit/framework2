@@ -22,9 +22,8 @@
 #	3. SSL mode support
 #	4. Payloads
 #	5. Encoders
-#	6. Nops
+#	6. Admin
 #	7. Logs
-#	8. Parent-based
 
 require 5.6.0;
 
@@ -46,23 +45,21 @@ my $VERSION = $ui->Version;
 
 $ui->SetGlobalEnv('_Console', 'Msf::PayloadComponent::WebConsole');
 
-my @sections = qw{ EXPLOITS PAYLOADS ENCODERS NOPS LOGS };
+my @sections = qw{ EXPLOITS PAYLOADS ENCODERS ADMIN LOGS };
 my $exploits = { };
 my $payloads = { };
+my $encoders = { };
+my $nops     = { };
+
 my $exploitsIndex;
 my $payloadsIndex;
-my $encoders;
-my $nops;
+my $encodersIndex;
 
-my $exploitKeys	= {};
-my $exploitArch	= {};
-my $exploitOS	= {};
-my $exploitList;
-
-my $payloadArch	= {};
-my $payloadOS	= {};
-my $payloadList;
-
+my $moduleKeys	= { };
+my $moduleArch	= { };
+my $moduleOS	= { };
+my $moduleList	= { };
+my $modules	    = { };
 my $burl;
 my $skey;
 
@@ -125,6 +122,15 @@ if ($ghettoWeb->IsError) {
 exit(0);
 
 
+########################################################
+#                 !!! WARNING !!!                      #
+#                                                      #
+#    Viewing the code below may result in the loss     #
+#    of vision, nausea, indigestion, insomnia, or      #
+#    even INSTANT DEATH. You have been warned.         #
+#                                                      #
+########################################################
+
 ######################################################################
 ######################################################################
 ######################################################################
@@ -135,6 +141,7 @@ sub ProcessResRequest {
 	my %files =
 	(
 		'LOGO'	=> ['image/jpg', 'msfweb_logo.jpg'],
+		'STYLE'	=> ['text/css',  'style.css'],
 	);
 	
 	if ( exists( $files{ $req->{'params'}->{'ID'} } ) ) {
@@ -167,9 +174,7 @@ sub ProcessWebRequest {
 		ProcessResRequest($req, $cli, $ipc);
 		exit(0);
 	}
-	
-	
-	
+
 	# Generate the base URL
 	$burl = "/$mbase?";
 	
@@ -212,7 +217,7 @@ sub ProcessWebRequest {
 	if ($req->{'base'} eq 'EXPLOITS') {
 	
     	if ($state->{'MODE'} eq 'MAIN')    { $res .= ExploitList($state) }
-    	if ($state->{'MODE'} eq 'PAYLOAD') { $res .= ExploitPayload($state) }
+    	if ($state->{'MODE'} eq 'SELECT')  { $res .= ExploitPayload($state) }
     	if ($state->{'MODE'} eq 'OPTIONS') { $res .= ExploitOptions($state) }
     	if ($state->{'MODE'} eq 'TARGETS') { $res .= ExploitTargets($state) }
     	if ($state->{'MODE'} eq 'CHECK')   { $res .= ExploitCheck($state) }
@@ -224,8 +229,15 @@ sub ProcessWebRequest {
 	if ($req->{'base'} eq 'PAYLOADS') {
 	
     	if ($state->{'MODE'} eq 'MAIN')    { $res .= PayloadList($state) }
+		if ($state->{'MODE'} eq 'SELECT')  { $res .= PayloadOptions($state) }
 	}
-		
+	
+	if ($req->{'base'} eq 'ENCODERS') {
+	
+    	if ($state->{'MODE'} eq 'MAIN')    { $res .= EncoderList($state) }
+		if ($state->{'MODE'} eq 'SELECT')  { $res .= EncoderOptions($state) }
+	}
+			
     $res .= HTML_Footer();
 	
     $cli->Send(HTTPResponse(200, $res));
@@ -247,83 +259,7 @@ sub HTML_Header {
 [<html>
     <head>
         <title>Metasploit Framework Web Console v$VERSION</title>
-        <style>
-            BODY 
-            {
-                background:     white;
-                font-family:    Verdana, Tahoma, Arial, Helvetica, sans-serif;
-                color:          black;
-                font-size:      12pt;
-                margin:         0;
-            }
-
-            A:link          { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
-            A:active        { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
-            A:visited       { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
-            A:hover         { font-size: 12pt; text-decoration: none; color: navy; font-weight: bold;}
-
-			.tabDark {
-				background:		#dddddd;
-				font-size:		12pt;
-				font-weight:	bold;
-			}
-			
-			.tabLight {
-				background:		#ffffff;
-				font-size:		12pt;
-				font-weight:	bold;
-			}
-			
-			.tabActive {
-				background:		#feff9c;
-				color:			black;
-				font-size:		12pt;
-				font-weight:	bold;
-			}
-			
-			.sectionTitle {
-				color:			black;
-				font-size:		14pt;
-				font-weight:	bold;
-			}
-
-			
-			.listBody {
-				background:		white;
-				color:			black;
-				font-size:		12pt;
-			}
-			
-			A.nav {
-				font-size:		11pt;
-				font-weight:	bold;
-				font-variant:	small-caps;
-			}
-			
-			.nav { 
-				font-size:		13pt;
-				font-variant:	small-caps;
-				font-weight:	normal;
-				font-weight:	bold;
-			}
-			
-			.navHead { 
-				font-size:		11pt;
-				font-weight:	bold;
-			}
-			
-			.copy {
-				font-size:		11pt;
-				font-variant:	small-caps;
-			}
-			
-			.modHead {
-				font-size:		11pt;
-				font-weight:	bold;
-				color:			white;
-			}
-		
-        </style>
+		<link type="text/css" rel="stylesheet" href="/RESOURCE?ID=STYLE">
     </head>
     <body bgcolor='white' text='black'>
 <a name='Top'></a>
@@ -408,119 +344,81 @@ sub StateToOptions {
     return $res;
 }
 
-sub PayloadList
-{
-    my $pList;
-	my @links;
-	my $payloadMerge = {};
-	
-	# Cache the generated page for speed
-	if (! $args{'r'} && defined($payloadList) ) {
-		return $payloadList;
-	}
-	
-	# Navigation header
-	$pList = "<div align='center' class='navHead'>Navigation Keys<br/><br/>\n";
-		
-	# List of payloadOS
-	foreach my $kname (sort( keys %{ $payloadOS }) ) {
-		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
-		$payloadMerge->{$kname} = $payloadOS->{$kname};
-	}
-	$pList .= join(" | ", @links) . "<br/><br/>\n";
-	@links = ();
-
-	# List of payloadArch
-	foreach my $kname (sort( keys %{ $payloadArch}) ) {
-		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
-		$payloadMerge->{$kname} = $payloadArch->{$kname};		
-	}
-	$pList .= join(" | ", @links) . "<br/><br/>\n";
-	@links = ();
-	$pList .= "</div><br\>\n";
-
-
-	# Generate a frame for each unique key, os, and arch
-	foreach my $kname (	sort( keys %{ $payloadMerge }) ) {
-	
-		$pList .= qq[
-<a name='$kname'><br></a>        
-<table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' bgcolor='black'>        
-	<tr><td>
-    <table align='center' cellpadding=8 border=0 cellspacing=0 width='100%' bgcolor='white'>
-    <tr>
-		<td class='nav' align='left'> $kname </td>
-    	<td class='listBody' align='right'><a href='#Top'>Top</a></td>
-	</tr>
-	<tr><td class='listBody' align='center' colspan=2>
-		<blockquote>
-		<table align='center' padding=6 border=0 cellspacing=0 width='100%'>
-];
-
-	# Dump out all of the matching payloads for this key, os, or arch
-	foreach my $ename (sort @{ $payloadMerge->{$kname} }) {
-		$pList .= "<tr><td> <li> <a href='/PAYLOADS?MODE=SUMMARY&";
-		$pList .= "MODULE=".URLEncode($ename)."'>".$payloads->{$ename}->Name."</a>";
-		$pList .= "</td></tr>\n";
-	}
-	
-	$pList .= qq[
-		</table>
-		</blockquote>
-</td></tr></table>
-</td></tr></table>
-];
-
-	}
-	
-	$payloadList = $pList;
-    return $pList;
+sub PayloadList {
+	my $mtype = 'payloads';
+	if (! $args{'r'} || ! defined( $moduleList->{$mtype} )) {
+		$moduleList->{$mtype} = ModuleList($mtype);
+	} 
+	return $moduleList->{$mtype};
 }
 
-sub ExploitList
+sub ExploitList {
+	my $mtype = 'exploits';
+	if (! $args{'r'} || ! defined( $moduleList->{$mtype} )) {
+		$moduleList->{$mtype} = ModuleList($mtype);
+	} 
+	return $moduleList->{$mtype};
+}
+
+sub EncoderList {
+	my $mtype = 'encoders';
+	if (! $args{'r'} || ! defined( $moduleList->{$mtype} )) {
+		$moduleList->{$mtype} = ModuleList($mtype);
+	} 
+	return $moduleList->{$mtype};
+}
+
+sub ModuleList
 {
-    my $eList;
+	my $mtype = shift;
+    my $mList;
 	my @links;
-	my $exploitMerge = {};
 	
-	# Cache the generated page for speed
-	if (! $args{'r'} && defined($exploitList) ) {
-		return $exploitList;
-	}
-	
+	my $moduleMerge = {};
+	my $mKeys		= $moduleKeys->{$mtype};
+	my $mOS			= $moduleOS->{$mtype};
+	my $mArch		= $moduleArch->{$mtype};
+			
 	# Navigation header
-	$eList = "<div align='center' class='navHead'>Navigation Keys<br/><br/>\n";
+	$mList = "<div align='center' class='navHead'>Navigation Keys<br/><br/>\n";
 	
-	# List of exploitKeys
-	foreach my $kname  (sort( keys %{ $exploitKeys }) ) {
-		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
-		$exploitMerge->{$kname} = $exploitKeys->{$kname};
+	# List of mKeys
+	if (scalar(keys %{ $mKeys } )) {
+		my @links = ();
+		foreach my $kname  (sort( keys %{ $mKeys }) ) {
+			push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+			$moduleMerge->{$kname} = $mKeys->{$kname};
+		}
+		$mList .= join(" | ", @links) . "<br/><br/>\n";
 	}
-	$eList .= join(" | ", @links) . "<br/><br/>\n";
-	@links = ();
+	
 		
-	# List of exploitOS
-	foreach my $kname (sort( keys %{ $exploitOS }) ) {
-		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
-		$exploitMerge->{$kname} = $exploitOS->{$kname};
+	# List of mOS
+	if (scalar(keys %{ $mOS } )) {
+		my @links = ();	
+		foreach my $kname (sort( keys %{ $mOS }) ) {
+			push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+			$moduleMerge->{$kname} = $mOS->{$kname};
+		}
+		$mList .= join(" | ", @links) . "<br/><br/>\n";
 	}
-	$eList .= join(" | ", @links) . "<br/><br/>\n";
-	@links = ();
 
-	# List of exploitArch
-	foreach my $kname (sort( keys %{ $exploitArch}) ) {
-		push @links, "<a href='#$kname' class='nav'>$kname</a> ";
-		$exploitMerge->{$kname} = $exploitArch->{$kname};		
+	# List of mArch
+	if (scalar(keys %{ $mArch } )) {
+		my @links = ();
+		foreach my $kname (sort( keys %{ $mArch}) ) {
+			push @links, "<a href='#$kname' class='nav'>$kname</a> ";
+			$moduleMerge->{$kname} = $mArch->{$kname};		
+		}
+		$mList .= join(" | ", @links) . "<br/><br/>\n";
 	}
-	$eList .= join(" | ", @links) . "<br/><br/>\n";
-	@links = ();
-	$eList .= "</div><br\>\n";
-
+	
+	$mList .= "</div><br\>\n";
 
 	# Generate a frame for each unique key, os, and arch
-	foreach my $kname (	sort( keys %{ $exploitMerge }) ) {
+	foreach my $kname (	sort( keys %{ $moduleMerge }) ) {
 	
-		$eList .= qq[
+		$mList .= qq[
 <a name='$kname'><br></a>        
 <table align='center' cellpadding=1 border=0 cellspacing=0 width='80%' bgcolor='black'>        
 	<tr><td>
@@ -534,14 +432,14 @@ sub ExploitList
 		<table align='center' padding=6 border=0 cellspacing=0 width='100%'>
 ];
 
-	# Dump out all of the matching exploits for this key, os, or arch
-	foreach my $ename (sort @{ $exploitMerge->{$kname} }) {
-		$eList .= "<tr><td> <li> <a href='/EXPLOITS?MODE=PAYLOAD&";
-		$eList .= "MODULE=".URLEncode($ename)."'>".$exploits->{$ename}->Name."</a>";
-		$eList .= "</td></tr>\n";
+	# Dump out all of the matching modules for this key, os, or arch
+	foreach my $ename (sort @{ $moduleMerge->{$kname} }) {
+		$mList .= "<tr><td> <li> <a href='/". uc($mtype) ."?MODE=SELECT&";
+		$mList .= "MODULE=".URLEncode($ename)."'>".$modules->{$mtype}->{$ename}->Name."</a>";
+		$mList .= "</td></tr>\n";
 	}
 	
-	$eList .= qq[
+	$mList .= qq[
 		</table>
 		</blockquote>
 </td></tr></table>
@@ -549,9 +447,7 @@ sub ExploitList
 ];
 
 	}
-	
-	$exploitList = $eList;
-    return $eList;
+    return $mList;
 }
 
 sub ExploitPayload
@@ -866,24 +762,28 @@ sub HTTPRequest {
 	};
 
 	
-	# Extract the session ID
-	my ($sid) = $headers{'cookie'} =~ m/SID=(.*)$/;
-	my $vid = GenerateSID(inet_aton($cli->PeerAddr));
+	# XXX Deprecated
+	if ( 0 )  {
 	
-	# Redirect the user if the SID does not match
-	if (0 && $sid ne $vid) {
-		
-		my $rdir =
-			"HTTP/1.1 302 Rejected\r\n".
-			"Set-Cookie: SID=$vid; path=/;\r\n".
-			"Location: ". $res->{'path'} ."\r\n".
-			"Date: ". HTTPDate() ."\r\n".
-			"Connection: Close\r\n".
-			"Content-Length: 0\r\n\r\n";
+		# Extract the session ID
+		my ($sid) = $headers{'cookie'} =~ m/SID=(.*)$/;
+		my $vid = GenerateSID(inet_aton($cli->PeerAddr));
 
-		$cli->Send($rdir);
-		$cli->Close;
-		return;
+		# Redirect the user if the SID does not match
+		if ($sid ne $vid) {
+
+			my $rdir =
+				"HTTP/1.1 302 Rejected\r\n".
+				"Set-Cookie: SID=$vid; path=/;\r\n".
+				"Location: ". $res->{'path'} ."\r\n".
+				"Date: ". HTTPDate() ."\r\n".
+				"Connection: Close\r\n".
+				"Content-Length: 0\r\n\r\n";
+
+			$cli->Send($rdir);
+			$cli->Close;
+			return;
+		}
 	}
 	
 	# Process the URL
@@ -928,27 +828,30 @@ sub GenerateSID {
 sub LoadAllModules {
 	$exploitsIndex	= $ui->LoadExploits;
 	$payloadsIndex	= $ui->LoadPayloads;
-	$encoders		= $ui->LoadEncoders;
+	$encodersIndex	= $ui->LoadEncoders;
 	$nops			= $ui->LoadNops;
-	$exploitKeys	= {};
-	$exploitOS		= {};
-	$exploitArch	= {};
+
+	$moduleKeys		= {};
+	$moduleOS		= {};
+	$moduleArch		= {};
+	$modules		= {};
 	
 	foreach my $key (keys(%{$exploitsIndex})) {
 		my $exploit = $exploitsIndex->{$key};
 		
 		$exploits->{$exploit->SelfEndName} = $exploit;
+		$modules->{'exploits'}->{$exploit->SelfEndName} = $exploit;
 		
 		foreach my $kname ( @{ $exploit->Keys } ) {
-			push @{ $exploitKeys->{ $kname } }, $exploit->SelfEndName;
+			push @{ $moduleKeys->{'exploits'}->{$kname} }, $exploit->SelfEndName;
 		}
 
 		foreach my $kname ( @{ $exploit->OS } ) {
-			push @{ $exploitOS->{ $kname } }, $exploit->SelfEndName;
+			push @{ $moduleOS->{'exploits'}->{$kname} }, $exploit->SelfEndName;
 		}
 		
 		foreach my $kname ( @{ $exploit->Arch } ) {
-			push @{ $exploitArch->{ $kname } }, $exploit->SelfEndName;
+			push @{ $moduleArch->{'exploits'}->{$kname} }, $exploit->SelfEndName;
 		}				
 	}
 
@@ -956,15 +859,32 @@ sub LoadAllModules {
 		my $payload = $payloadsIndex->{$key};
 		
 		$payloads->{$payload->SelfEndName} = $payload;
-
+		$modules->{'payloads'}->{$payload->SelfEndName} = $payload;
+		
 		foreach my $kname ( @{ $payload->OS } ) {
-			push @{ $payloadOS->{ $kname } }, $payload->SelfEndName;
+			push @{ $moduleOS->{'payloads'}->{$kname} }, $payload->SelfEndName;
 		}
 		
 		foreach my $kname ( @{ $payload->Arch } ) {
-			push @{ $payloadArch->{ $kname } }, $payload->SelfEndName;
+			push @{ $moduleArch->{'payloads'}->{$kname} }, $payload->SelfEndName;
 		}				
 	}
+
+	foreach my $key (keys(%{$encodersIndex})) {
+		my $encoder = $encodersIndex->{$key};
+		
+		$encoders->{$encoder->SelfEndName} = $encoder;
+		$modules->{'encoders'}->{$encoder->SelfEndName} = $encoder;
+		
+		foreach my $kname ( @{ $encoder->OS } ) {
+			push @{ $moduleOS->{'encoders'}->{$kname} }, $encoder->SelfEndName;
+		}
+		
+		foreach my $kname ( @{ $encoder->Arch } ) {
+			push @{ $moduleArch->{'encoders'}->{$kname} }, $encoder->SelfEndName;
+		}				
+	}
+		
 
 	$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
 	$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
