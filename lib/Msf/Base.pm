@@ -401,12 +401,13 @@ sub MergeHashRec {
     }
     # recurse if both are array refs
     elsif(ref($hash1->{$_}) eq 'ARRAY' && ref($hash2->{$_}) eq 'ARRAY') {
-      my (@res, %uhash);
-      foreach my $kval (@{$hash1->{$_}}, @{$hash2->{$_}}) { 
-        if (ref($kval)) { push @res, $kval } 
-        else            { $uhash{$kval}++  }
+      my @res = @{$hash1->{$_}};
+      foreach my $kval (@{$hash2->{$_}}) {
+        if(ref($kval) || !Pex::Utils::ArrayContains(\@res, [ $kval ])) {
+          push(@res, $kval);
+        }
       }
-      $hash{$_} = [ @res, keys(%uhash) ];
+      $hash{$_} = [ @res ];
     }
   }
   return(\%hash);
