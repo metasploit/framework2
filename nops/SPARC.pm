@@ -11,7 +11,6 @@ package Msf::Nop::SPARC;
 use strict;
 use base 'Msf::Nop';
 use Pex::Utils;
-use Pex::SPARC;
 
 my $info = {
   'Name'    => 'SPARC Nop Generator',
@@ -134,10 +133,7 @@ sub Nops {
   my $exploit = $self->GetVar('_Exploit');
   my $random  = $self->GetLocal('RandomNops');
   my $badChars = $exploit->PayloadBadChars;
-  my ($nop, $tempnop);
-    
-# DEBUG DEBUG DEBUG
-#  $nop = "\x91\xd0\x20\x01";
+  my $nop, $tempnop, $count;
 
 # XXX: single nop mode needs to take badChars into account too
   if(! $random)
@@ -145,8 +141,10 @@ sub Nops {
     return Inssethi() x ($length / 4);			# XXX: Lame.
   }
 
-# XXX: add a maximum iteration counter to prevent restrictive badChars from looping...
-  while(length($nop) < $length)
+# DEBUG DEBUG DEBUG
+#  $nop = "\x91\xd0\x20\x01";
+
+  for($count = 0; length($nop) < $length; $count++)
   {
     $random = int(rand(scalar(@{$table})));
 
@@ -155,11 +153,22 @@ sub Nops {
     if(!Pex::Utils::ArrayContains([split('', $tempnop)], [split('', $badChars)]))
     {
       $nop .= $tempnop;
+      $count = 0;
+    }
+
+    if($count > $length + 500)
+    {
+      if(length($nop) == 0)
+      {
+        $self->PrintDebugLine(3, "Iterated $count times with no nop match.");
+        return;
+      }
+
+      $self->PrintDebugLine(4, "Iterated $count times with no nop match (length(\$nop) = " . sprintf("%i", length($nop)) . ")");
     }
   }
 
   return $nop;
 }
-
 
 1;
