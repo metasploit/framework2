@@ -29,6 +29,6 @@ sub new {
 
 sub _GenSize {
   my $self = shift;
-  my $bin = $self->Generate({LHOST => '127.0.0.1', 'LPORT' => '4444',});
-  return length($bin);
+  my $bin = $self->Generate({'LHOST' => '127.0.0.1', 'LPORT' => '4444',});
+  return(length($bin));
 }
