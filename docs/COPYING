@@ -1,7 +1,7 @@
 The Metasploit Exploit Framework source code is dual-licensed under the GNU
 General Public License v2.0 and the Artistic License. The package is Copyright
-(c) 2003 H D Moore, contributions from others and their individual copyrights
-are marked at the top of each file. 
+(c) 2003-2004 H D Moore and spoonm, contributions from others and their 
+individual copyrights are marked at the top of each file. 
 
 
 The exploit modules included in this package are individually licensed and
