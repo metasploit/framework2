@@ -1,0 +1,60 @@
+This document is a quick guide to using the Cygwin environment with the
+Metasploit Framework.
+
+
+
+Installation
+=============
+
+Cygwin is freely available from http://www.cygin.com. The front page of
+this site contains a link to a Setup.exe for the latest version. Simply
+download this file and execute it locally. When the installer starts, it
+will ask you whether you want to install from the Internet or use a local
+directory. Select the option to install from the Internet and specify the
+server to use, the directory to install it under, and where to put the
+temporary files.
+
+When you package selection screen comes up, you have a few choices:
+
+1) Leave it a default and lose the ability to configure SSL and tab completion
+2) Manually select all of the necessary development tools
+3) Install everything and spend some time waiting for it to finish
+
+If you are in a hurry, are short on bandwidth, or do not need SSL or tab
+completion support, then the first option may be feasible. 
+
+If you would like nifty tab completion and the ability to extend the Framework,
+you should manually select all of the standard Gnu development tools. Make sure
+that OpenSSL, Python, Autoconf, Automake, Make, Flex, Bison, and YACC are
+selected. If you want to change any of the assembly payloads, you will need to
+also select NASM from the packages list. 
+
+Finally, if you plan on really using the Cygwin environment, just select
+everything by clicking the word Default next to ALL until it says Install. It
+will take some time to download and install the full suite, even on broadband.
+Take some advice from the original Eggdrop developer and go make a pizza :)
+
+The "Full" install requires downloading about ~300Mb of files.
+
+
+
+Configuration
+==============
+
+Now that Cygwin is installed, you should install the perl modules in the extras
+subdirectory of this package. This can usually be accomplished by extracting
+each package via tar -zxf <file>, changing into the directory, typing 
+perl Makefile.PL, make, and make install. Tab completion makes the msfconsole
+interface extremely efficient.
+
+
+
+Random Cygwin Tips
+===================
+
+ - You can access your windows drives from the Cygwin shell through the 
+   /cygdrive directory. This directory is not normally visible. If you 
+   install the Framework in C:\Framework, you can make a link to it from
+   inside your Cygwin home directory with the following command:
+   
+   $ ln -sf /cydrive/c/Framework framework
