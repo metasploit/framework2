@@ -76,7 +76,7 @@
 %endif
 
       push byte 0xff	; dwMilliseconds (infinite)
-      push dword [edi]	; Process Handle
+      push dword [esi]	; Process Handle
 %if %1 == 1
       call eax
 %else
