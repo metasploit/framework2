@@ -132,9 +132,9 @@ sub DumpExploitSummary {
   foreach ($exploit->TargetsList) { $output .= "    " . $_ . "\n" }
   
   $output .= "\n";
-  $output .= "Available Options:\n";
+  $output .= "Available Options:\n\n";
 
-  print $self->DumpOptions(4, 'Exploit', $exploit);
+  $output .= $self->DumpOptions(4, 'Exploit', $exploit);
 
   if ($exploit->Payload) {
     $output .= "\n";
