@@ -1645,7 +1645,7 @@ sub ExploitExec
 	$out = HTML_Header().
            "<div class='moduleOutput'>\n".
            "<b>Processing exploit request (".$exploit->Name.")...</b><br>\n".
-           "<b>Using payload: " . $payloadName . "</div><br>\n".
+           "<b>Using payload: " . XSS_Filter($payloadName) . "</div><br>\n".
 qq[		   
 		<br>
 		</td>
