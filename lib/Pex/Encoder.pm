@@ -662,6 +662,8 @@ LOOP:
 sub KeyScanXorDwordFeedback {
   my $data = shift;
   my $badChars = shift;
+  my $pack = @_ ? shift : 'V';
+  my $checkFunc = @_ ? shift : \&XorDwordFeedbackCheck;
 
   my %badChars;
   my @dataFreq;
@@ -699,7 +701,7 @@ LOOP:
 #  print "1 SUCCESS! " . join('-', @keys) . "\n";
 
   while(1) {
-    my $pos = XorDwordFeedbackCheck(unpack('V', pack('C4', @keys)), $data, $badChars);
+    my $pos = &{$checkFunc}(unpack('V', pack('C4', @keys)), $data, $badChars, $pack);
     my $kindex = Pex::Text::BadCharIndex($badChars, pack('C4', @keys));
     last if($pos == -1 && $kindex == -1);
     $pos = $kindex if($pos == -1);
@@ -722,16 +724,24 @@ sub XorDwordFeedback {
   my $pack = @_ ? shift : 'V';
   my $res;
 
-#  printf("New xor key 0x%08x $xor\n", $xor);
+  printf("New xor key 0x%08x $xor - $pack\n", $xor);
+
+  print Pex::Text::BufferC($buffer);
 
   for(my $c = 0; $c < length($buffer); $c += 4) {
     my $chunk = substr($buffer, $c, 4);
     my $spacing = 4 - length($chunk);
     $chunk .= "\x00" x $spacing;
-    my $clean = unpack($pack, $chunk);
+    my $clean = unpack('V', $chunk);
     $chunk = $clean ^ $xor;
-    $xor = DWordAdd($xor, $clean);
-#    printf("New xor key 0x%08x $xor\n", $xor);
+
+    # Owww, my head hurts
+    $xor = unpack($pack, pack('V', DWordAdd(
+      unpack($pack, pack('V', $xor)),
+      unpack($pack, pack('V', $clean))
+    )));
+
+    printf("New xor key 0x%08x $xor\n", $xor);
     $res .= substr(pack('V', $chunk), 0, 4 - $spacing);
   }
   return($res);
@@ -741,12 +751,14 @@ sub XorDwordFeedbackCheck {
   my $key = shift;
   my $data = shift;
   my $badChars = shift;
-  return(Pex::Text::BadCharIndex($badChars, XorDwordFeedback($key, $data)));
+  my $pack = @_ ? shift : 'V';
+  return(Pex::Text::BadCharIndex($badChars, XorDwordFeedback($key, $data, $pack)));
 }
 
 sub DWordAdd {
   my $num1 = shift;
   my $num2 = shift;
+  print "Add: $num1 $num2\n";
   return(($num1 + $num2) % 4294967296);
 }
 
