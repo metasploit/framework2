@@ -12,189 +12,189 @@ use strict;
 use base 'Msf::Nop';
 use Pex::Utils;
 
+my $advanced = { };
 my $info = {
-  'Name'    => 'SPARC Nop Generator',
-  'Version' => '$Revision$',
-  'Authors' => [ 'vlad902 <vlad902 [at] gmail.com>', ],
-  'Arch'    => [ 'sparc' ],
-  'Desc'    =>  'Sparc nop generator',
-  'Refs'    => [ ],
+	'Name'    => 'SPARC Nop Generator',
+	'Version' => '$Revision$',
+	'Authors' => [ 'vlad902 <vlad902 [at] gmail.com>', ],
+	'Arch'    => [ 'sparc' ],
+	'Desc'    =>  'SPARC nop generator',
+	'Refs'    => [ ],
 };
 
-my $advanced = { };
 
 sub new {
-  my $class = shift; 
-  return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
+	my $class = shift; 
+	return($class->SUPER::new({'Info' => $info, 'Advanced' => $advanced}, @_));
 }
 
 my $table = [
-  [ \&Inssethi, [ ], ],					# sethi
-  [ \&Insarithmetic, [ 1, 0 ], ],			# add
-  [ \&Insarithmetic, [ 1, 1 ], ],			# and
-  [ \&Insarithmetic, [ 1, 2 ], ],			# or
-  [ \&Insarithmetic, [ 1, 3 ], ],			# xor
-  [ \&Insarithmetic, [ 1, 4 ], ],			# sub
-  [ \&Insarithmetic, [ 1, 5 ], ],			# andn
-  [ \&Insarithmetic, [ 1, 6 ], ],			# orn
-  [ \&Insarithmetic, [ 1, 7 ], ],			# xnor
-  [ \&Insarithmetic, [ 1, 8 ], ],			# addx
-  [ \&Insarithmetic, [ 1, 12 ], ],			# subx
-  [ \&Insarithmetic, [ 1, 16 ], ],			# addcc
-  [ \&Insarithmetic, [ 1, 17 ], ],			# andcc
-  [ \&Insarithmetic, [ 1, 18 ], ],			# orcc
-  [ \&Insarithmetic, [ 1, 19 ], ],			# xorcc
-  [ \&Insarithmetic, [ 1, 20 ], ],			# subcc
-  [ \&Insarithmetic, [ 1, 21 ], ],			# andncc
-  [ \&Insarithmetic, [ 1, 22 ], ],			# orncc
-  [ \&Insarithmetic, [ 1, 23 ], ],			# xnorcc
-  [ \&Insarithmetic, [ 1, 24 ], ],			# addxcc
-  [ \&Insarithmetic, [ 1, 28 ], ],			# subxcc
-  [ \&Insarithmetic, [ 1, 32 ], ],			# taddcc
-  [ \&Insarithmetic, [ 1, 33 ], ],			# tsubcc
-  [ \&Insarithmetic, [ 2, 37 ], ],			# sll
-  [ \&Insarithmetic, [ 2, 38 ], ],			# srl
-  [ \&Insarithmetic, [ 2, 39 ], ],			# sra
-  [ \&Insarithmetic, [ 4, 40 ], ],			# rdy
-  [ \&Insarithmetic, [ 3, 48 ], ],			# wry
-  [ \&Insbranch, [ 0 ] ],				# bn[,a]
-  [ \&Insbranch, [ 1 ] ],				# be[,a]
-  [ \&Insbranch, [ 2 ] ],				# ble[,a]
-  [ \&Insbranch, [ 3 ] ],				# bl[,a]
-  [ \&Insbranch, [ 4 ] ],				# bleu[,a]
-  [ \&Insbranch, [ 5 ] ],				# bcs[,a]
-  [ \&Insbranch, [ 6 ] ],				# bneg[,a]
-  [ \&Insbranch, [ 7 ] ],				# bvs[,a]
-  [ \&Insbranch, [ 8 ] ],				# ba[,a]
-  [ \&Insbranch, [ 9 ] ],				# bne[,a]
-  [ \&Insbranch, [ 10 ] ],				# bg[,a]
-  [ \&Insbranch, [ 11 ] ],				# bge[,a]
-  [ \&Insbranch, [ 12 ] ],				# bgu[,a]
-  [ \&Insbranch, [ 13 ] ],				# bcc[,a]
-  [ \&Insbranch, [ 14 ] ],				# bpos[,a]
-  [ \&Insbranch, [ 15 ] ],				# bvc[,a]
+	[ \&InsSethi, [ ], ],					# sethi
+	[ \&InsArithmetic, [ 0, 0 ], ],				# add
+	[ \&InsArithmetic, [ 0, 1 ], ],				# and
+	[ \&InsArithmetic, [ 0, 2 ], ],				# or
+	[ \&InsArithmetic, [ 0, 3 ], ],				# xor
+	[ \&InsArithmetic, [ 0, 4 ], ],				# sub
+	[ \&InsArithmetic, [ 0, 5 ], ],				# andn
+	[ \&InsArithmetic, [ 0, 6 ], ],				# orn
+	[ \&InsArithmetic, [ 0, 7 ], ],				# xnor
+	[ \&InsArithmetic, [ 0, 8 ], ],				# addx
+	[ \&InsArithmetic, [ 0, 12 ], ],			# subx
+	[ \&InsArithmetic, [ 0, 16 ], ],			# addcc
+	[ \&InsArithmetic, [ 0, 17 ], ],			# andcc
+	[ \&InsArithmetic, [ 0, 18 ], ],			# orcc
+	[ \&InsArithmetic, [ 0, 19 ], ],			# xorcc
+	[ \&InsArithmetic, [ 0, 20 ], ],			# subcc
+	[ \&InsArithmetic, [ 0, 21 ], ],			# andncc
+	[ \&InsArithmetic, [ 0, 22 ], ],			# orncc
+	[ \&InsArithmetic, [ 0, 23 ], ],			# xnorcc
+	[ \&InsArithmetic, [ 0, 24 ], ],			# addxcc
+	[ \&InsArithmetic, [ 0, 28 ], ],			# subxcc
+	[ \&InsArithmetic, [ 0, 32 ], ],			# taddcc
+	[ \&InsArithmetic, [ 0, 33 ], ],			# tsubcc
+	[ \&InsArithmetic, [ 2, 37 ], ],			# sll
+	[ \&InsArithmetic, [ 2, 38 ], ],			# srl
+	[ \&InsArithmetic, [ 2, 39 ], ],			# sra
+	[ \&InsArithmetic, [ 4, 40 ], ],			# rdy
+	[ \&InsArithmetic, [ 3, 48 ], ],			# wry
+	[ \&InsBranch, [ 0 ] ],					# bn[,a]
+	[ \&InsBranch, [ 1 ] ],					# be[,a]
+	[ \&InsBranch, [ 2 ] ],					# ble[,a]
+	[ \&InsBranch, [ 3 ] ],					# bl[,a]
+	[ \&InsBranch, [ 4 ] ],					# bleu[,a]
+	[ \&InsBranch, [ 5 ] ],					# bcs[,a]
+	[ \&InsBranch, [ 6 ] ],					# bneg[,a]
+	[ \&InsBranch, [ 7 ] ],					# bvs[,a]
+	[ \&InsBranch, [ 8 ] ],					# ba[,a]
+	[ \&InsBranch, [ 9 ] ],					# bne[,a]
+	[ \&InsBranch, [ 10 ] ],				# bg[,a]
+	[ \&InsBranch, [ 11 ] ],				# bge[,a]
+	[ \&InsBranch, [ 12 ] ],				# bgu[,a]
+	[ \&InsBranch, [ 13 ] ],				# bcc[,a]
+	[ \&InsBranch, [ 14 ] ],				# bpos[,a]
+	[ \&InsBranch, [ 15 ] ],				# bvc[,a]
 # XXX: This was taken out for safety.
-#  [ \&Insarithmetic, [ 1, 36 ], ],			# mulscc
+#	[ \&InsArithmetic, [ 0, 36 ], ],			# mulscc
 # Removed for SPARCV7 support
-#  [ \&Insarithmetic, [ 1, 10 ], ],			# umul 
-#  [ \&Insarithmetic, [ 1, 11 ], ],			# smul 
-#  [ \&Insarithmetic, [ 0, 14 ], ],			# udiv
-#  [ \&Insarithmetic, [ 0, 15 ], ],			# sdiv
-#  [ \&Insarithmetic, [ 1, 26 ], ],			# umulcc
-#  [ \&Insarithmetic, [ 1, 27 ], ],			# smulcc
-#  [ \&Insarithmetic, [ 0, 30 ], ],			# udivcc
-#  [ \&Insarithmetic, [ 0, 31 ], ],			# sdivcc
+#	[ \&InsArithmetic, [ 0, 10 ], ],			# umul 
+#	[ \&InsArithmetic, [ 0, 11 ], ],			# smul 
+#	[ \&InsArithmetic, [ 1, 14 ], ],			# udiv
+#	[ \&InsArithmetic, [ 1, 15 ], ],			# sdiv
+#	[ \&InsArithmetic, [ 0, 26 ], ],			# umulcc
+#	[ \&InsArithmetic, [ 0, 27 ], ],			# smulcc
+#	[ \&InsArithmetic, [ 1, 30 ], ],			# udivcc
+#	[ \&InsArithmetic, [ 1, 31 ], ],			# sdivcc
 ];
 
 # Returns valid destination register number between 0 and 31 excluding %sp and %fp
 sub get_dst_reg {
-  my $reg = int(rand(30));
-  $reg += ($reg >= 14);
-  $reg += ($reg >= 30);
+	my $reg = int(rand(30));
+	$reg += ($reg >= 14);
+	$reg += ($reg >= 30);
 
-  return $reg;
+	return $reg;
 }
 
 # Any register.
 sub get_src_reg {
-  return int(rand(32));
+	return int(rand(32));
 }
 
-sub Inssethi {
-  return pack("N", ((get_dst_reg() << 25) | (4 << 22) | int(rand(1 << 22))));
+sub InsSethi {
+	return pack("N", ((get_dst_reg() << 25) | (4 << 22) | int(rand(1 << 22))));
 }
 
-sub Insarithmetic {
-  my $ref = shift;
-  my $dst = get_dst_reg();
-  my $ver = $ref->[0];
+sub InsArithmetic {
+	my $ref = shift;
+	my $dst = get_dst_reg();
+	my $ver = $ref->[0];
 
 # WRY fix-ups.
-  if($ver == 3)
-  {
-    $dst = 0;
-    $ver = 1; 
-  }
+	if($ver == 3)
+	{
+		$dst = 0;
+		$ver = 1; 
+	}
 
 # 0, ~1, !2, ~3, !4
 # Use one src reg with a signed 13-bit immediate (non-0)
-  if(($ver == 0) || ($ver == 1 && int(rand(2))))
-  {
-    return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | (1 << 13) | (int(rand((1 << 13) - 1)) + 1)));
-  }
+	if(($ver == 0 && int(rand(2))) || $ver == 1)
+	{
+		return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | (1 << 13) | (int(rand((1 << 13) - 1)) + 1)));
+	}
 # RDY
-  elsif($ver == 4)
-  {
+	elsif($ver == 4)
+	{
 # $ref->[1] could be replaced with a static value since this only encodes for one function but it's done this way for consistancy.
-    return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19)));
-  }
+		return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19)));
+	}
 # Use two src regs
-  else
-  {
-    return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | get_src_reg()));
-  }
+	else
+	{
+		return pack("N", ((2 << 30) | ($dst << 25) | ($ref->[1] << 19) | (get_src_reg() << 14) | get_src_reg()));
+	}
 }
 
-sub Insbranch {
-  my $ref = shift;
-  my $len = shift;
+sub InsBranch {
+	my $ref = shift;
+	my $len = shift;
 
 # We jump to 1 instruction before the payload so in cases where the delay slot of a branch with the the anull bit set that is not taken the first instruction of the
 #   payload is not anulled. 
-  $len = ($len / 4) - 1;
+	$len = ($len / 4) - 1;
 
-  return if(! $len);
-  $len = 0x3fffff if($len >= 0x400000);
+	return if(! $len);
+	$len = 0x3fffff if($len >= 0x400000);
 
-#  return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | $len)); 
-  return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | int(rand($len - 1)) + 1)); 
+#	return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | $len)); 
+	return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | int(rand($len - 1)) + 1)); 
 }
 
 sub Nops {
-  my $self = shift;
-  my $length = shift;
-  my $backup_length = $length;
+	my $self = shift;
+	my $length = shift;
+	my $backup_length = $length;
 
-  my $exploit = $self->GetVar('_Exploit');
-  my $random  = $self->GetVar('RandomNops');
-  my $badChars = $exploit->PayloadBadChars;
-  my ($nop, $tempnop, $count, $rand);
+	my $exploit = $self->GetVar('_Exploit');
+	my $random  = $self->GetVar('RandomNops');
+	my $badChars = $exploit->PayloadBadChars;
+	my ($nop, $tempnop, $count, $rand);
 
-  if(! $random)
-  {
-    $length = 4;
-  }
+	if(! $random)
+	{
+		$length = 4;
+	}
 
-  for($count = 0; length($nop) < $length; $count++)
-  {
-    $rand = int(rand(scalar(@{$table})));
+	for($count = 0; length($nop) < $length; $count++)
+	{
+		$rand = int(rand(scalar(@{$table})));
 
-    $tempnop = $table->[$rand]->[0]($table->[$rand]->[1], $length - length($nop));
+		$tempnop = $table->[$rand]->[0]($table->[$rand]->[1], $length - length($nop));
 
-    if(!Pex::Utils::ArrayContains([split('', $tempnop)], [split('', $badChars)]))
-    {
-      $nop .= $tempnop;
-      $count = 0;
-    }
+		if(!Pex::Utils::ArrayContains([split('', $tempnop)], [split('', $badChars)]))
+		{
+			$nop .= $tempnop;
+			$count = 0;
+		}
 
-    if($count > $length + 1000)
-    {
-      if(length($nop) == 0)
-      {
-        $self->PrintDebugLine(3, "Iterated $count times with no nop match.");
-        return;
-      }
+		if($count > $length + 1000)
+		{
+			if(length($nop) == 0)
+			{
+				$self->PrintDebugLine(3, "Iterated $count times with no nop match.");
+				return;
+			}
 
-      $self->PrintDebugLine(4, "Iterated $count times with no nop match (length(\$nop) = " . sprintf("%i", length($nop)) . ")");
-    }
-  }
+			$self->PrintDebugLine(4, "Iterated $count times with no nop match (length(\$nop) = " . sprintf("%i", length($nop)) . ")");
+		}
+	}
 
-  if(! $random)
-  {
-    $nop = $nop x ($backup_length / 4);
-  }
+	if(! $random)
+	{
+		$nop = $nop x ($backup_length / 4);
+	}
 
-  return $nop;
+	return $nop;
 }
 
 1;
