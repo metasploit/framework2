@@ -44,7 +44,7 @@ sub SolarisPayload {
     
     # XXX - this is probably wrong, still need to verify
     my $cport  = unpack('N', pack('nn', $self->GetVar('CPORT') ^ 4095, 0));
-    my $hiData = unpack('N', substr($encoder, 0, 4));
+    my $hiData = unpack('N', substr($hash->{'Payload'}, 0, 4));
     $hiData = (($hiData >> 22) << 22) + ($cport >> 10);
     substr($hash->{'Payload'}, 0, 4, pack('N', $hiData));
     return $hash;  
@@ -58,3 +58,5 @@ sub new {
     my $self = $class->SUPER::new($hash, @_);
     return($self);
 }
+
+1;
