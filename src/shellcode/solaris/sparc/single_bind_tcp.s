@@ -63,7 +63,7 @@ fcntl_loop:
 	mov	0x3e, %g1
 	ta	0x08
 
-	bnz	dup2_loop
+	bnz	fcntl_loop
 	ld	[ %sp - 0x08 ], %o0
 
 	xor	%o3, %o3, %o2
