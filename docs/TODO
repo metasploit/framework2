@@ -1,20 +1,31 @@
 Pre-Release Tasks
 ==================
 
- - Write a quickstart users guide, enough to get them up and running in a few paragraphs. (I'll do this [spn]).
 
- - Get some basic developer docs?, although the bulk of this can wait a week or two.
+ - Fix msfconsole so that ^C during Exploit with unhandled payload does not kill interface
 
- - Configure mailing list, public CVS, bugzilla, etc. Currently waiting on Savannah approval...
+ - The winadduser payload seems to be completely hosed, need to debug it
 
+ - The winreverse payload does not seem to be setting EXITFUNC correctly
+
+ - Determine the issue with the PREFORK code, it DOES work on some exploits
+ 
+ - Add at least one more windows payload (download url or something)
+
+ - Convert the QUICKSTART.* docs into a decent user guide
+
+ - Finish building out the basic development guides
+
+ - Find a host for the mailing list, public CVS, bugzilla, etc. 
+ 
  - Add documentation describing how the shared config file relates to msfcli and msfconsole
-
- - Finish rewriting the configuration and logging system in msfconsole
 
  - Change the ExternalPayload module so that it does safe argument handling
  
- - Remove 'call esp' as equivalent to 'jmp esp', call changes stack, duh :(
-
+ - Remove any exploits which are just plain broken
+ 
+ 
+ 
 Post-Release Tasks
 ===================
  - Rewrite BSD bind payload (SIGSYS error after listen call) [LSD one is also broken]
