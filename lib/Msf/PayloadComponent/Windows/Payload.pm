@@ -112,7 +112,7 @@ sub BuildPayload
 			$hash->{'Payload'});
 
 	# FIXME: Temporary hack - make sure the direction bit is not set.
-	return "\xfc" . $payload;
+	return $payload;
 }
 
 #
