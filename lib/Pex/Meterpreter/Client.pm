@@ -83,20 +83,48 @@ sub run
 	my $sigintHandler = sub 
 	{	
 		my $interactive = $self->getInteractiveChannel();
+		my $question;
 		my $yes = 0;
 
 		# If there is an interactive channel, prompt the user accordingly
 		if (defined($interactive))
 		{
-			print "Caught Ctrl-C, close interactive session? [y/N] ";
+			$question = "Caught interrupt, close interactive session? [y/N] ";
 		}
 		else
 		{
-			print "Caught Ctrl-C, abort meterpreter? [y/N] ";
+			$question = "Caught interrupt, abort meterpreter? [y/N] ";
 		}
 
-		$yes = 1 if (<STDIN> =~ /^y/i);
+		$self->getConsoleOutput->printflush($question);
 
+		my $fd = $self->getConsoleInput;
+		$fd->blocking(0);
+					
+		my $start = time();
+		while ($start + 30 > time()) {
+	
+			my $answer = $fd->getline;		
+			if (! $answer) {
+				select(undef, undef, undef, 0.5);
+				next;
+			}
+			
+			next if $answer eq "!^! MSF_INTERRUPT\n";
+			
+			if (lc($answer) =~ /^y/) {
+				$yes = 1;
+				last;
+			}
+			elsif (lc($answer) =~ /^n/) {
+				last;
+			}
+			
+			$self->getConsoleOutput->printflush($question);
+		}
+		
+		$fd->blocking(1);		
+		
 		# If the user answers yes, either stop interacting with the channel or set
 		# the loop flag to 0
 		if ($yes)
@@ -146,6 +174,7 @@ sub run
 
 		foreach my $fd (@readable)
 		{
+			next if ! $loop;
 			my $handler = $self->{'selectables'}->{$fd}->{'notifyHandler'};
 
 			if (defined($handler))
@@ -164,6 +193,9 @@ sub run
 
 	# Restore sigint handler
 	$SIG{'INT'} = $oldSigint;
+	
+	$self->getConsoleOutput->printflush("The meterpreter is shutting down...\n");
+	return;
 }
 
 #
@@ -218,6 +250,16 @@ sub processConsoleInput
 	# If a valid command is supplied, dispatch it for processing
 	if (defined($cmd))
 	{
+
+		# Check for the magic interrupt and shutdown requests
+		if ($cmd eq "!^! MSF_SHUTDOWN\n") {
+			return -1;
+		}
+		if ($cmd eq "!^! MSF_INTERRUPT\n") {
+			kill INT => $$;
+			return $res;
+		}
+
 		# If an interactive channel is supplied, write the input buffer to it,
 		# otherwise process the command locally
 		if (defined($chan = $self->getInteractiveChannel()))

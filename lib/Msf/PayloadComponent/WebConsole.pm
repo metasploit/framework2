@@ -37,8 +37,8 @@ sub LoadConsole {
   # Get our session IO
   my $sid = $self->GetVar('_SessionID');
 
-  # XXX dirty
-  my $cache_file = sprintf("$RealBin/data/msfweb/cache%.4x", $sid);
+  # Remove any current cache file
+  my $cache_file = $self->GetVar('_CacheDir'). sprintf("/cache%.8x.dat", $sid);
   unlink($cache_file);
 
 

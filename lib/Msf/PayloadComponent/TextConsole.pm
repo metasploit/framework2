@@ -27,22 +27,44 @@ sub _HandleConsole {
 
 	# Install the signal handler for the console
 	my $sigHandler = sub {
-		$self->PipeWrite($pLocalOut, "Caught ctrl-c, exit connection? [y/n] ");
 
-		# Switch back to blocking mode for this read
-		$pLocalIn->blocking(1);
-		my $answer = $self->PipeRead($pLocalIn);	
-		$pLocalIn->blocking(0);
+		$self->PipeWrite($pLocalOut, "Caught interrupt, exit connection? [y/n] ");
+
+		# We can't tell the difference between non-block read with no data and bad pipe...
+		my $start = time;
 		
-		chomp($answer);
-		if(lc($answer) eq 'y') {
-			$loop = 0;
+		# Wait for a maximium of 30 seconds for an answer
+		while ($start + 30 > time() ) {
+		
+			my $answer = $self->PipeRead($pLocalIn);
+
+			# Wait half of a second and try it again.
+			if (! $answer) {
+				select(undef, undef, undef, 0.5);
+				next;
+			}
+			
+			chomp($answer);
+			
+			if(lc($answer) eq 'y') {
+				$loop = 0;
+				last;
+			}
+			
+			if(lc($answer) eq 'n') {
+				last;
+			}
+
+			# Prompt them again until we get a valid answer
+			$self->PipeWrite($pLocalOut, "Caught interrupt, exit connection? [y/n] ");			
 		}
+		
+		$self->PipeWrite($pLocalOut, "Dropping back to the console...\n");
 	};
 
 	# Save off the old handlers and replace with new
 	my ($osigTerm, $osigInt) = ($SIG{'TERM'}, $SIG{'INT'});
-	$SIG{'TERM'}	= $sigHandler;
+	# $SIG{'TERM'}	= $sigHandler;
 	$SIG{'INT'}		= $sigHandler;
 
 	# Non-blocking sockets. Wee.
@@ -62,11 +84,12 @@ LOOPER:
 		my $selector = IO::Select->new($pLocalIn, $pRemoteOut);	
 		
 		# Check to see if the local or remote side have data
-		my @ready = $selector->can_read;
+		my @ready = $selector->can_read(5);
 		
 		# No sockets are ready, sleep a little bit
 		if (! scalar(@ready)) {
 			select(undef, undef, undef, 0.5);
+			next;
 		}
 		
 		foreach my $ready (@ready) {
@@ -78,6 +101,19 @@ LOOPER:
 				my $data = $self->PipeRead($pLocalIn);
 				last LOOPER if ! defined($data);
 			
+
+				# Check for the magic interrupt sequence
+				if ($data eq "!^! MSF_INTERRUPT\n") {
+					$sigHandler->();
+					next;
+				}
+				
+				# Check for the magic shutdown sequence
+				if ($data eq "!^! MSF_SHUTDOWN\n") {
+					last LOOPER;
+					next;
+				}
+				
 				# Log the plain data before filter	
 				$self->SendLog($data);
 				

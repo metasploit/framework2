@@ -676,7 +676,7 @@ sub SessionLoad {
 	my $res		= qq
 [<html>
     <head>
-        <title>Metasploit Framework Web Console v$VERSION</title>
+        <title>Metasploit Framework v$VERSION - Session $sid </title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
     </head>
 <frameset rows="*, 65" border=0 frameborder=0 framespacing=0>
@@ -1702,7 +1702,6 @@ qq[
 		chomp($ok);
 
 		if ($ok eq 'SHUTDOWN') {
-			# print STDERR "Shutting down the shell server...\n";
 			$eout->close;
 			$pout->close;
 			exit(0);
@@ -1713,6 +1712,18 @@ qq[
 			$pout->close;
 			exit(0);
 		}
+		
+		$SIG{'INT'} = $SIG{'TERM'} = sub 
+		{
+			# print STDERR "*** Shutting down processes for session $sid...\n";
+			$eout->printflush("!^! MSF_SHUTDOWN\n");
+			$eout->sync;
+			$eout->close;
+			$pout->close;
+			kill KILL => $epid;
+			exit(0);		
+		};
+		
 		
 		my $info = IPCHashToData(%sess);
 		$pout->printflush("INFO $sid $info\n");
@@ -1788,10 +1799,12 @@ qq[
 						my $cmd = pack('H*', $1);
 						my $out = "<div class='textBold'>&gt;&gt; ";
 
-						# Interrupt
+						# Interrupt via magic command string :(
 						if ($cmd eq 'INT') {
-							$out .= "Session interrupt request...";
-							kill($top, 'INT');
+							$out .= "Session interrupt request ($epid)...";
+							$eout->printflush();
+							$eout->printflush("!^! MSF_INTERRUPT\n");
+							kill INT => $epid;
 						}
 						
 						# Shutdown
@@ -1813,9 +1826,8 @@ qq[
 		$cache->printflush("<div class='textBold'>&gt;&gt; Session is shutting down...</div>\n");
 		$cache->sync;
 		
-		# Shut down the service...
-		$eout->close;
-		$pout->close;
+		# Call the signal handler subroutine created above
+		kill INT => $$;
 		exit(0);
 	}
 	
