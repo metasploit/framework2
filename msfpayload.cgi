@@ -69,20 +69,23 @@ if (! $action)
     PrintRow("Supported OS",    join(" ", @{$p->OS()}));
     PrintRow("Handler Type",    $p->Type);
     PrintRow("Total Size",      $p->Size);
-    print "</table><br>\n";
+
 
     if (scalar(keys(%{$p->UserOpts})))
     {
-        print "Payload Options<br>\n";
-        print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
-        print "<tr><td>Name</td><td>Required</td><td>Description</td><td>Default</td></tr>\n";
+        my $subtable =
+        "<table cellspacing=0 cellpadding=4 border=0>\n".
+        "<tr align='center'><td>Name</td><td>Required</td><td>Description</td><td>Default</td></tr>\n".
         
         foreach my $o (keys(%{$p->UserOpts}))
         {
-            PrintRow($o, ($p->UserOpts->{$o}->[0] ? "Y" : "N"), $p->UserOpts->{$o}->[1], $p->UserOpts->{$o}->[2]);
+            $subtable .= CreateRow($o, ($p->UserOpts->{$o}->[0] ? "Y" : "N"), $p->UserOpts->{$o}->[1], $p->UserOpts->{$o}->[2]);
         }
-        print "</table><br>\n";
+        $subtable .= "</table>\n";
+        PrintRow("Payload Options", $subtable);
     }
+    print "</table><br>\n";
+        
     DisplayFooter();
     exit(0);
 }
@@ -114,6 +117,12 @@ sub PrintRow {
     print "</tr>\n";
 }
 
+sub CreateRow {
+    my $res = "<tr>";
+    foreach (@_) { $res .= "<td>$_</td>" }
+    $res .= "</tr>\n";
+    return($res);
+}
 __DATA__
 
 my $s = $p->Build($opt);
