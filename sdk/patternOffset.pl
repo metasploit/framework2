@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use lib 'lib';
+use lib '../lib';
 use Pex::Text;
 
 die "0x01020304 length" if(!@ARGV);

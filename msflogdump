@@ -66,7 +66,7 @@ sub Usage {
 }
 
 sub Version {
-    my $ver = Pex::Utils::Rev2Ver($ver);
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
     print STDERR qq{
   Msflogdump Version:  $ver
 

@@ -226,7 +226,8 @@ sub HTML_Footer
     <br>
     <center>
         <a href='/'>Exploit Listing</a> |
-        <a href='http://metasploit.com/'>Metasploit.com</a>
+        <a href='http://metasploit.com/'>Metasploit.com</a> |
+        <a href='http://s1.amazon.com/exec/varzea/pay/T2FKAC37FCOAYS/103-6224645-8776633'>Donate!</a>
     </center>
     </body>
     </html>";
