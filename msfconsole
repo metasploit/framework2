@@ -50,7 +50,7 @@ my $exploits;
 my $payloads;
 
 my %opts;
-getopts('hvqs:', \%opts);
+getopts('hvqs:u:', \%opts);
 
 Usage() if($opts{'h'});
 Version() if($opts{'v'});
@@ -83,8 +83,6 @@ my %globalCmds =
     '?'         => [\&gHelp,                 "Show the main console help"],
     'quit'      => [\&gExit,                 "Exit the console"],
     'exit'      => [\&gExit,                 "Exit the console"],
-#    'use'       => [sub{Load(); gUse(@_);},  "Select an exploit by name"],
-#    'info'      => [sub{Load(); gInfo(@_);}, "Display detailed exploit or payload information"],
     'use'       => [sub{gUse(@_);},  "Select an exploit by name"],
     'info'      => [sub{gInfo(@_);}, "Display detailed exploit or payload information"],
     'cd'        => [\&gChdir,                "Change working directory"],
@@ -107,9 +105,7 @@ my %exploitCmds =
     'set'       => [\&eSet,                         "Set a temporary environment variable"],
     'unset'     => [\&eUnset,                       "Remove a temporary environment variable"],
     'back'      => [\&eBack,                        "Drop back to the main menu"],
-#    'show'      => [sub{Load(); eShow(@_);},        "Show options, advanced, payloads, or targets"],
     'show'      => [sub{ eShow(@_);},        "Show options, advanced, payloads, or targets"],
-#    'check'     => [sub{Load(); eCheck(@_);},       "Perform vulnerability check"],
     'check'     => [sub{eCheck(@_);},       "Perform vulnerability check"],
     'exploit'   => [sub {eExploit(@_);},     "Launch the actual exploit"],
     'rexploit'  => [sub{Load(); eExploit(@_);},     "Reload and exploit, for us tester types"],
@@ -219,10 +215,6 @@ sub Load {
         gUse('use', $state->{'Exploit'}->{'Name'});
       }
     }
-    
-#    if ($tmpDL) {
-#        $ui->SetTempEnv('DebugLevel', $tmpDL);
-#    }
 }
 
 sub gSave {
