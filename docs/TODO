@@ -24,7 +24,7 @@ Pre-Release Tasks
  
  - Remove any exploits which are just plain broken
  
- 
+ - The Pex library needs documentation and API guides for standalone use 
  
 Post-Release Tasks
 ===================
