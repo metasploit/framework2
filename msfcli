@@ -21,13 +21,18 @@ use strict;
 use FindBin qw{$Bin};
 use lib "$Bin/lib";
 use IO::Socket;
+use Getopt::Std;
 use POSIX;
+
 use Msf::TextUI;
+use Pex;
 
 Msf::UI::ActiveStateSucks();
 
+
 my $ui = Msf::TextUI->new($Bin);
 
+my %opts;
 my $exploits = { };
 my $payloads = { };
 my $exploitsIndex = $ui->LoadExploits;
@@ -35,6 +40,10 @@ my $payloadsIndex = $ui->LoadPayloads;
 my $encoders = $ui->LoadEncoders;
 my $nops     = $ui->LoadNops;
 
+getopts('h', \%opts);
+if ($opts{'h'}) {
+    Usage();
+}
 
 my $mod = shift;
 my @ARG;
@@ -45,7 +54,7 @@ my @ARG;
 # But since the cli only does 1 exploitation a run, its ok.
 
 foreach my $key (sort(keys(%{$exploitsIndex}))) {
-    $exploits->{@{[split(/::/,$key)]}[-1]} = $exploitsIndex->{$key};
+    $exploits->{$exploitsIndex->{$key}->SelfEndName}=$exploitsIndex->{$key};
 }
 
 # Generate payloads index
@@ -134,7 +143,7 @@ for(uc($ARG[0])) {
   $_ eq 'E' && do { $ui->SetTempEnv('HCALLBACK', \&xCallback); $ui->Exploit; last; };
   Usage();
 }
-exit(0);
+
 
 
 ################################################################################
@@ -150,6 +159,7 @@ sub Usage {
     print "       (C)HECK        Determine if the target is vulnerable\n";
     print "       (E)XPLOIT      Attempt to exploit the target\n";
     print "\n";
+    exit(0);
 }
 
 sub ListExploits {
