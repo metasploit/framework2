@@ -276,7 +276,9 @@ sub Check {
 
   my $res = $exploit->Check;
   return if($exploit->PrintError);
-  print "Check:   $res\n";
+
+  # The check routine prints out data and returns 1/0
+  return $res;
 }
 
 
