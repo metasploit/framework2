@@ -132,7 +132,7 @@ sub GetSavedTempEnv {
   my $envName = shift;
   my $key = shift;
   my $env = $self->_TempEnvs->{$envName};
-  return if(!defuned($env));
+  return if(!defined($env));
   if(defined($key)) {
     print "TempGet $key => " . $env->{$key} . "\n" if($envDebug);
     return($env->{$key});
@@ -145,6 +145,8 @@ sub SetSavedTempEnv {
   my $envName = shift;
   my @pairs = @_;
 
+  # Create it if it doesn't exist
+  $self->_TempEnvs->{$envName} = { } if(!defined($self->_TempEnvs->{$envName}));
   my $env = $self->_TempEnvs->{$envName};
 
   for(my $i = 0; $i < @pairs; $i += 2) {
