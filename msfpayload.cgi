@@ -61,6 +61,9 @@ if (! $action)
     DisplayHeader("Payload Information");
     print $query->start_form;
     
+    print "<input type='hidden' name='PAYLOAD' value='$sel'>\n";
+    print "<input type='hidden' name='ACTION'  value='BUILD'>\n";
+    
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     PrintRow("Name",            $sel);
     PrintRow("Version",         $p->Version);
@@ -91,12 +94,32 @@ if (! $action)
         PrintRow("Payload Options", $subtable);
     }
     print "</table><br><br>\n";
+    
+    print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
+    PrintRow("Encode Payload", "<input type='checkbox' name='ENCODE' value='Yes'>");
+    PrintRow("Bad Characters", "<input type='text' name='BADCHARS' value='0x00'>");
+    print "</table><br>\n";
     print "<center><input type='submit' value='Generate Shellcode'><br></center>\n";
     print $query->end_form;
         
     DisplayFooter();
     exit(0);
 }
+
+if ($action eq "BUILD")
+{
+    DisplayHeader("Generating Payload");
+    print "Weeeeee!";
+    DisplayFooter();
+    exit(0);
+}
+
+
+DisplayHeader("Unknown Action");
+print "Invalid action specified.";
+DisplayFooter();
+exit(0);
+
 
 sub DisplayHeader {
     my $title = shift;
