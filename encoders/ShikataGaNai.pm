@@ -2,7 +2,7 @@ package Msf::Encoder::ShikataGaNai;
 
 use strict;
 use base 'Msf::Encoder';
-use Pex::Encoder;
+use Pex::Encoding::XorDwordFeedback;
 use Pex::Poly::BlockMaster;
 use Pex::Poly::DeltaKing;
 use Pex::Poly::RegAssassin;
@@ -62,13 +62,13 @@ sub _EncodeSelfEnd {
   my $end = substr($decoder, -4, 4, '');
   $rawshell = $end . $rawshell;
 
-  my $xorkey = Pex::Encoder::KeyScanXorDwordFeedback($rawshell, $badChars);
+  my $xorkey = Pex::Encoding::XorDwordFeedback->KeyScan($rawshell, $badChars);
   if(!$xorkey) {
     $self->PrintDebugLine(3, 'Failed to find xor key');
     return;
   }
 
-  my $xordat = Pex::Encoder::XorDwordFeedback($xorkey, $rawshell);
+  my $xordat = Pex::Encoding::XorDwordFeedback->Encode($xorkey, $rawshell);
 
   $xorkey = pack('V', $xorkey);
   $decoder =~ s/XORK/$xorkey/s;
@@ -93,13 +93,13 @@ sub _EncodeNormal {
 
   my $decoder = $self->_BuildDelta($rawshell, $badChars)->Build;
 
-  my $xorkey = Pex::Encoder::KeyScanXorDwordFeedback($rawshell, $badChars);
+  my $xorkey = Pex::Encoding::XorDwordFeedback->KeyScan($rawshell, $badChars);
   if(!$xorkey) {
     $self->PrintDebugLine(3, 'Failed to find xor key');
     return;
   }
 
-  my $xordat = Pex::Encoder::XorDwordFeedback($xorkey, $rawshell);
+  my $xordat = Pex::Encoding::XorDwordFeedback->Encode($xorkey, $rawshell);
 
   $xorkey = pack('V', $xorkey);
   $decoder =~ s/XORK/$xorkey/s;
