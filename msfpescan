@@ -228,7 +228,7 @@ Modes:
          -j  <reg>     Search for jump equivalent instructions
          -s            Search for pop+pop+ret combinations
          -x  <regex>   Search for regex match
-         -a  <address> Show code at this VMA address
+         -a  <address> Show code at specified virtual address
 Options:
          -A  <count>   Number of bytes to show after match
          -B  <count>   Number of bytes to show before match

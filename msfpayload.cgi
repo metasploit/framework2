@@ -44,7 +44,7 @@ my $encoders = $ui->LoadEncoders;
 my $nops     = $ui->LoadNops;
 
 foreach my $key (keys(%{$payloadsIndex})) {
-    $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
+    $payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
 }
 
 foreach my $key (keys(%{$exploitsIndex})) {
