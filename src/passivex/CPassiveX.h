@@ -1,8 +1,3 @@
-/*
- *  This file is part of the Metasploit Exploit Framework
- *  and is subject to the same licenses and copyrights as
- *  the rest of this package.
- */
 #ifndef _CPASSIVEX_H
 #define _CPASSIVEX_H
 

