@@ -142,7 +142,7 @@ sub DumpExploitSummary {
   if ($exploit->Payload) {
     $output .= "Payload Information:\n";
     $output .= "    Space: " . $exploit->PayloadSpace . "\n";
-    $output .= "    Avoid: " . scalar(split(//, $exploit->PayloadBadChars)) . " characters\n\n";
+    $output .= "    Avoid: " . length($exploit->PayloadBadChars) . " characters\n\n";
   }
 
   my $desc = $self->WordWrap($exploit->Description, 4, 60);

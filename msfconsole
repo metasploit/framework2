@@ -46,6 +46,8 @@ my $nops;
 my $exploits;
 my $payloads;
 
+my $state = {'Mode' => 'Main'};
+
 # For many reasons (modules setup stuff on new), internal variables
 # keeping state between exploit attempts, etc, we want new instances
 # of everything, so we will call load before anything that uses a
@@ -53,11 +55,9 @@ my $payloads;
 # this is also good if they add/remove a module the directories 
 Load();
 
-my $state = {'Mode' => 'Main'};
 
 my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
 $console->tabCompletion(\&xTabCompletion);
-#$console->_useEnv(undef);
 
 # virtual command table
 my %virtualCmds = ();
