@@ -12,6 +12,8 @@ Pre-Release Tasks
  - Finish rewriting the configuration and logging system in msfconsole
 
  - Change the ExternalPayload module so that it does safe argument handling
+ 
+ - Remove 'call esp' as equivalent to 'jmp esp', call changes stack, duh :(
 
 Post-Release Tasks
 ===================
