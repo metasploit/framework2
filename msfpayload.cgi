@@ -17,8 +17,8 @@
 require 5.6.0;
 use strict;
 
-use FindBin qw{$Bin};
-use lib "$Bin/lib";
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
 use Msf::TextUI;
 use POSIX;
 use Pex;
@@ -27,7 +27,7 @@ use CGI qw/:standard/;
 my $query = new CGI; 
 print $query->header(),
 
-my $ui = Msf::TextUI->new($Bin);
+my $ui = Msf::TextUI->new($RealBin);
 
 my $payloadsIndex = $ui->LoadPayloads;
 my $payloads = { };
