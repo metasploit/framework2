@@ -194,7 +194,7 @@ if ($action eq "BUILD")
 
     $optstr .= " Size=" . length($r);
 
-    my ($sC, $sP) = (Pex::Utils::BufferC($r), Pex::Utils::BufferPerl($r));
+    my ($sC, $sP) = (Pex::Text::BufferC($r), Pex::Text::BufferPerl($r));
     
     if ($p->Multistage)
     {

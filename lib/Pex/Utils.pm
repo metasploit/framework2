@@ -17,6 +17,8 @@
 
 package Pex::Utils;
 use strict;
+#temp for move warnings
+use Pex::Text;
 
 #
 # Generate a nop sled for the appropriate architecture,
@@ -197,6 +199,20 @@ sub MergeHash {
     }
   }
   return(\%hash);
+}
+
+
+# Weee for moving code
+
+sub BufferC {
+  print STDERR "!!! Big ass ugly warning\nThis function has been moved to Pex::Text\n";
+  print STDERR "Called by " . join(' ', caller()) . "\n\n";
+  return(Pex::Text::BufferC(@_));
+}
+sub BufferPerl {
+  print STDERR "!!! Big ass ugly warning\nThis function has been moved to Pex::Text\n";
+  print STDERR "Called by " . join(' ', caller()) . "\n\n";
+  return(Pex::Text::BufferC(@_));
 }
 
 1;

@@ -116,7 +116,7 @@ if ($p->Multistage)
     print STDERR "Warning: Multistage payloads only return first stage\n\n";
 }
 
-my $r = $action =~ /^C/ ? Pex::Utils::BufferC($s->RawPayload) : Pex::Utils::BufferPerl($s->RawPayload);
+my $r = $action =~ /^C/ ? Pex::Text::BufferC($s->RawPayload) : Pex::Text::BufferPerl($s->RawPayload);
 
 print $r;
 exit(0);

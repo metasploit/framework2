@@ -257,7 +257,7 @@ sub Encode {
     if(Pex::Utils::BadCharCheck($badChars, $encodedShell)) {
       $self->PrintDebugLine(2, "$encoderName failed, bad chars in encoded payload");
       $self->PrintDebugLine(5, "encoded payload:");
-      $self->PrintDebugLine(5, Pex::Utils::BufferC($encodedShell));
+      $self->PrintDebugLine(5, Pex::Text::BufferC($encodedShell));
       next;
     }
 

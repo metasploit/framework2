@@ -164,9 +164,9 @@ if(!$encodedPayload) {
 print STDERR "[*] Using $finalEncoder with final size of ".length($encodedPayload->Payload)." bytes\n";
 
 if (! $opts{'t'} || $opts{'t'} =~ /perl/i) {
-    print Pex::Utils::BufferPerl($encodedPayload->Payload);
+    print Pex::Text::BufferPerl($encodedPayload->Payload);
 } elsif ($opts{'t'} =~ /c/) {
-    print Pex::Utils::BufferC($encodedPayload->Payload);
+    print Pex::Text::BufferC($encodedPayload->Payload);
 } else {
     print $encodedPayload->Payload;
 }

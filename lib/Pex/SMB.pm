@@ -452,7 +452,7 @@ sub SMBNegotiateClear {
     print "Session: " .length($ses_res->Get('request')) . " | " . $smb_res->Length."\n";
     print "length: ". length($smb_res->{'LeftOver'})."\n";
     print "length: ". length($smb_res->Get('request'))."\n";
-    print Pex::Utils::BufferPerl($smb_res->{'LeftOver'})."\n";
+    print Pex::Text::BufferPerl($smb_res->{'LeftOver'})."\n";
     
  
     if ($smb_res->Get('error_class') != 0) {
