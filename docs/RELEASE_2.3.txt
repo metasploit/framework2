@@ -12,39 +12,40 @@ Some highlights in this release:
     + Win32 ordinal-stagers are now included (92-byte reverse connect)
     + A handful of new sparc payloads have been added (sol, linux, bsd)
     + Reliability problems have been resolved in bsd, linux, and win32
-    + New size-optimized Mac OS X encoders and payloads
     + New udp-based linux shell stagers and shell payloads
+    + New size-optimized Mac OS X encoders and payloads
 
  - Includes the win32 version of the Meterpreter
-    + In-memory dll injection of the basic meterpreter shell
     + Dynamically load new features over the network w/o disk access
+    + In-memory dll injection of the basic meterpreter shell
     + Current extensions include Fs, Process, Net, and Sys
+    + Extensive documentation is available online:
+      * http://metasploit.com/projects/Framework/docs/meterpreter.pdf
 
  - Complete rewrite of the 'msfweb' user interface
-    + Streaming HTTP is used to provide a 100% web-based shell
-    + The interface is skinnable and includes three different themes
     + Generate and encode stand-alone shellcode from the web interface
+    + The interface is skinnable and includes three different themes
+    + Streaming HTTP is used to provide a 100% web-based shell
     + Ability to set advanced options in the web interface
 
  - Massive speed enhancements in msfconsole and msfweb
-    + Modules are no longer reloaded after each exploit
-    + Optimizations made to various sort/search algorithms
     + Snappier response and quicker load times on older systems
+    + Optimizations made to various sort/search algorithms
+    + Modules are no longer reloaded after each exploit
 
- - A few new exploits and a large number of exploit bug fixes
-    + WINS MS04-045 module fingerprints the remote service pack
-    + LSASS MSO4-011 module correctly fixes the stack pointer
-    + Two cross-platform modules for the UoW IMAPD overflows
-    + Solaris dtspcd module ported from Sinan Eren's code
-    + AIM 'goaway' module automatically targets based on browser
-    + IRIX lpdsched popen() command execution module added
-    + IIS 4.0 ism.dll HTR Buffer Overflow added
-    + Veritas Name Service Buffer Overflow added
-    + IMAIL IMAPD 'delete' Buffer Overflow added
-    + IIS w3who.dll ISAPI Buffer Overflow added
-    + Samba trans2open() Overflow for Mac OS X added
-    + 4D WebSTAR FTP Buffer Overflow for Mac OS X added
-    + Seattle Labs POP3 Buffer Overflow added
+ - New exploits
+    + Microsoft WINS Service Memory Overwrite (MS04-045) 
+    + Samba trans2open() Buffer Overflow (Mac OS X)
+    + 4D WebSTAR FTP Server Buffer Overflow (Mac OS X)
+    + Veritas Name Service Registration Buffer Overflow    
+    + AOL Instant Messenger 'goaway' Buffer Overflow
+    + IPSwitch IMail IMAPD 'delete' Buffer Overflow
+    + Seattle Labs Mail Server POP3 Buffer Overflow
+    + UoW IMAPD Buffer Overflow (sparc, ia32)
+    + IRIX lpdsched Remote Command Execution    
+    + CDE dtspcd Buffer Overflow (Solaris)
+    + IIS 4.0 ism.dll HTR Buffer Overflow 
+    + IIS w3who.dll ISAPI Buffer Overflow
 
 
 This release is available from the Metasploit.com web site:
@@ -54,7 +55,7 @@ This release is available from the Metasploit.com web site:
 Screen shots of the new release are online and available from:
   - http://metasploit.com/projects/Framework/screenshots.html
   
-A demonstration of the new msfweb interface if running live from:
+A demonstration of the new msfweb interface is running live from:
   - http://metasploit.com:55555/
   
 
@@ -90,19 +91,20 @@ please refer to the online documentation, particularly the User Guide:
 
 The Opcode Database has been refactored in order to support more granular
 queries. The new version provides users with the ability to easily cross
-reference specific opcode types, classes, and meta classes across one or more
-modules for one or more operating system versions. This level of granular
-control allows for a robust and flexible interface that can be used to determine
-opcode portability. Aside from opcodes themselves, the opcode database also
-contains detailed information about the segments, imports, and exports that are
-associated with each module in the database. A quick overview of the features
-included in the new database are: 
-  - Granular searching of opcodes of a specific type, class, and meta class.
-  - Searching modules provided directly from Windbg's module list.
-  - Cross referencing opcodes across various operating system version.
+reference specific opcode types, classes, and meta classes across one or
+more modules for one or more operating system versions. This level of
+granular control allows for a robust and flexible interface that can be
+used to determine opcode portability. Aside from opcodes themselves, the
+opcode database also contains detailed information about the segments,
+imports, and exports that are associated with each module in the database.
+
+A quick overview of the features included in the new database are:    
+  - Granular searching of opcodes of a specific type, class, and meta class.  
+  - Searching modules provided directly from Windbg's module list. 
+  - Cross referencing opcodes across various operating system version. 
   - Detailed module information including segments, imports, and exports.
 
-You can access the beta version of the new Opcode Database at the following url:
+You can access the beta version of the new Opcode Database at:
   - http://metasploit.com/opcode_beta.html
 
 
