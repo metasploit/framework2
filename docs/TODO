@@ -5,7 +5,7 @@
 
  - Rewrite msfweb to work with new architecture
  
- - Rewrite BSD bind payload (SIGSYS error after listen() call)
+ - Rewrite BSD bind payload (SIGSYS error after listen call) [LSD one is also broken]
 
  - Rewrite all handlers to no longer use $opt argument, then change all references to handlers
  
