@@ -15,12 +15,12 @@ my $advanced = {
 };
 
 my $info = {
-  'Name'    => 'Pex Variable Length Fnstenv/mov Double Word Xor Encoder',
+  'Name'    => 'Shikata Ga Nai',
   'Version' => '$Revision$',
   'Authors' => [ 'spoonm <ninjatools [at] hush.com> [Artistic License]', ],
   'Arch'    => [ 'x86' ],
   'OS'      => [ ],
-  'Description'  =>  'Variable-length fnstenv/mov dword xor encoder',
+  'Description'  =>  "You know what I'm saying, baby",
   'Refs'    => [ ],
 };
 

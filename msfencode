@@ -186,7 +186,7 @@ sub Fatal {
 sub Usage {
     print STDERR qq{
 
-  Usage: $0 <options>
+  Usage: $0 <options> [var=val]
 Options:
          -i <file>      Specify the file that contains the raw shellcode
          -a <arch>      The target CPU architecture for the payload
@@ -195,6 +195,7 @@ Options:
          -b <chars>     The characters to avoid: '\\x00\\xFF'
          -s <size>      Maximum size of the encoded data
          -e <encoder>   Try to use this encoder first
+         -n <encoder>   Dump encoder info
          -l             List all available encoders
          
 };
