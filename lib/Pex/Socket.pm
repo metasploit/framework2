@@ -441,11 +441,6 @@ sub Recv {
     # We gotz data y0
     my $tempData;
     if($self->UseSSL) {
-      # Using select() with SSL is tricky, even though the socket
-      # may have data, the SSL session may not. There isn't really
-      # a clean way around this, so we just try until we get two
-      # empty reads in a row or we time out
-      
       $tempData = $self->SSLRead;
       if(!length($tempData)) {
         if($timeout) {
