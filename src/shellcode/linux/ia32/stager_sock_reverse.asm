@@ -16,9 +16,10 @@
 ;        Implementation of a Linux reverse TCP stager.
 ;
 ;;
-BITS 32
+BITS   32
+GLOBAL _start
 
-entry:
+_start:
 	xor  ebx, ebx
 
 socket:
