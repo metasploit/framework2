@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+###############
+
+require 5.6.0;
+
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
+use Digest::Perl::MD5 qw{md5_hex};
+use Getopt::Std;
+use IO::Socket;
+use IO::Select;
+use POSIX;
+
+my $SSL_SUPPORT;
+
+# Determine if SSL support is enabled
+BEGIN
+{
+    if (eval "require Net::SSLeay")
+    {
+        Net::SSLeay->import();
+        Net::SSLeay::load_error_strings();
+        Net::SSLeay::SSLeay_add_ssl_algorithms();
+        Net::SSLeay::randomize();
+        $SSL_SUPPORT++;
+    }
+}
+
+chdir($RealBin);
+my $res = ScanFiles('.');
+
+sub ScanFiles {
+    my $dir = shift;
+    my $res;
+    my $hwn;
+    
+    opendir ($hwn, $dir) || return;
+    
+    while (defined($entry = readdir($hwn))) {
+        my $path = "$dir/$entry";
+
+        # ignore all symlinks
+        next if -l $path;
+        
+        # ignore all leading dot files   
+        next if $entry =~ /^\./;
+        
+        # ignore cvs directories
+        next if $entry eq 'CVS';
+        
+        # ignore the development tools
+        next if $entry eq 'dev';
+        
+        # recurse into directories
+        if (-d $path) {
+            $res .= ScanFiles($path);
+        } 
+        elsif (-f $path) {
+            $res .= HashFile($path)."\t$path\n";;
+        }
+    }
+    closedir($hwn);
+    return $res;   
+}
+
+sub HashFile {
+    my $path = shift;
+    my $data;
+    my $inp;
+    
+    open($inp, "<$path") || return;
+    while (<$inp>) { $data .= $_ }
+    close($inp);
+    
+    return md5_hex($data);
+}
