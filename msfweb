@@ -21,7 +21,6 @@
 #		+ Build out the 'admin' pages
 #		+ Build out the 'logs' pages
 #		+ Add an option for HTTP authentication
-#		+ Add Advanced options selection
 #
 
 
@@ -415,7 +414,7 @@ sub ProcessWebRequest {
 
         $res .= "<table width='100%'>\n";
 		$res .= "<tr><td class='textBoldBright'>Module: $mname</td></tr>\n";
-		$res .= "</table><br/>\n";
+		$res .= "</table><br>\n";
     }
 
     $state->{'client'} = $cli;
@@ -476,19 +475,21 @@ sub HTML_Header {
 		 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
     </head>
     <body>
-<a name='Top'></a>
-
-<br/>
-<div align='center'><img src='/RESOURCE?ID=LOGO' alt='msfweb'></div>
-<br/>
-
-<table align='center' cellpadding=1 border=0 cellspacing=0 width='98%' class='tblOuter'><tr><td>
-<table align='center' cellpadding=8 border=0 cellspacing=1 width='100%' class='tblInner'>
-<tr>
+	<br>
+	
+	<div align='center'><img src='/RESOURCE?ID=LOGO' alt='msfweb'></div>
+	<br>
+	
+	<table align='center' cellpadding=8 border=0 cellspacing=1 width='100%' class='tblInner'>
+		<tr><td>
+			<table align='center' cellpadding=8 cellspacing=1 width='100%' class='tblOuter' >
+			<tr>
 ];
 
 	my $lastTab = 'tabLight';
 	my $currTab;
+	
+	$header .= "\t\t\t";
 	
 	my $width = int( 100 / scalar(@sections) ) .'%';
 	foreach my $section (@sections) {
@@ -497,11 +498,12 @@ sub HTML_Header {
 		$header .= qq[ <td class='$lastTab' width='$width' align='center'> <a href='/$section' class='$currTab'>$section</a> </td> ];
 	}
 	$header .= qq[
-        </tr>
+			</tr>
+			</table>
+        </td></tr>
 
-        <tr>
-                <td colspan=5>
-                <br/>
+        <tr><td colspan=5>
+		<br>
 	];
 	
 	return $header;
@@ -510,15 +512,13 @@ sub HTML_Header {
 
 sub HTML_Footer {
     return qq[
-		<br/>
+		<br>
 		</td>
 	</tr>
-
 </table>
-</td></tr></table>
 
 <div align='center' class='copy'>
-	<br/>copyright &copy 2003-2005 metasploit.com<br/><br/>
+	<br>copyright &copy 2003-2005 metasploit.com<br><br>
 </div>
 </body>
 </html>
@@ -1011,11 +1011,11 @@ sub ModuleInfo {
 	}
 
     $res .= "<tr><td colspan=2 class='textNormal'>";
-    $res .= "<br/>$desc<br/><br/>";
+    $res .= "<br>$desc<br><br>";
 
-    foreach my $ref (@{$module->RefLinks}) { $res .= " -  <a href='$ref' target='_blank'>$ref</a><br/>\n" }
+    foreach my $ref (@{$module->RefLinks}) { $res .= " -  <a href='$ref' target='_blank'>$ref</a><br>\n" }
 	
-    $res .= "<br/></td></tr></table>\n";
+    $res .= "<br></td></tr></table>\n";
 	return $res;
 }
 
@@ -1066,9 +1066,10 @@ sub PayloadOptions
     my $p = $payloads->{$module};
     
 	$res .= ModuleInfo($p);	 
-	  
-    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";    
-    $res .= "<form action='$burl' method='GET'>\n";
+	
+	$res .= "<form action='$burl' method='GET'>\n";  
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n"; 
+	
     foreach (keys(%{$state})) {
         next if $_ eq 'client';
         if ($_ ne "MODE") {
@@ -1334,16 +1335,15 @@ sub ExploitOptions
 
     my $x = $exploits->{$module};
     my $p = $payloads->{$state->{'PAYLOAD'}};
-    
-    $res .= "<table align='center' cellpadding=2 border=0 cellspacing=0 width='95%'>\n";
+
+    $res .= "<form action='$burl' method='GET'>\n";    
         
     if (defined($x->Payload) && ! $state->{"PAYLOAD"})
     {
-        $res .=  "<tr><td class='textBold'>Payload must be selected first!</td></tr></table>\n";
+        $res .=  "<div class='textBold'>Payload must be selected first!</div>\n";
         return $res;
     }
- 
-    $res .= "<form action='$burl' method='GET'>\n";
+
     foreach (keys(%{$state})) {
         next if $_ eq 'client';
 		next if $_ eq 'parent';
@@ -1355,6 +1355,8 @@ sub ExploitOptions
         }
     }
 
+    $res .= "<table align='center' cellpadding=2 border=0 cellspacing=0 width='95%'>\n";
+	
     my $mopts = $x->UserOpts;
     my $popts = defined($x->Payload) ? $p->UserOpts : {};
 
@@ -1426,20 +1428,24 @@ sub ExploitOptions
 		$res .= "</tr>\n";		
 	}
 	
-	$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+	$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
 			
     $res .= "<tr>";
-	$res .= "<td colspan=3 align='right'> <input type='submit' name='ExploitAction' value='Check'> </td>";
-    $res .= "<td colspan=2 align='left'> <input type='submit' name='ExploitAction' value='Exploit'> </td>";
+	$res .= "<td colspan=3 align='right'> <input type='submit' name='ExploitAction' value='-Check-'> </td>";
+    $res .= "<td colspan=2 align='left'> <input type='submit' name='ExploitAction' value='-Exploit-'> </td>";
 	$res .= "</tr>\n";
 	
-	$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
-	$res .= "<td><td colspan=5 class='textBold'>Advanced Module Options</td></tr>\n";
-	
+
 	# Advanced option processing    
 	my $mopts = $x->Advanced();
     my $popts = defined($x->Payload) ? $p->Advanced() : {};
 
+
+	if ( scalar(keys %{ $mopts} ) || scalar(keys %{ $popts} ) ) {
+		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
+		$res .= "<tr><td colspan=5 class='textBold' align='left'>Advanced Module Options</td></tr>\n";
+	}
+	
 	# Advanced exploit options	
 	foreach my $mopt (sort(keys(%{$mopts}))) {
         my $dflt = $mopts->{$mopt}->[0];
@@ -1449,7 +1455,7 @@ sub ExploitOptions
 			$dflt = $x->AutoOpts->{$mopt};
 		}
 		
-		$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
         $res .= "<tr>".
 		        "<td class='textBoldDark'>* $mopt</td>".
 				"<td class='textBoldDark'>Optional</td>".
@@ -1470,7 +1476,7 @@ sub ExploitOptions
 			$dflt = $x->AutoOpts->{$popt};
 		}
 		
-		$res .= "<td><td colspan=5>&nbsp;</td></tr>\n";
+		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
         $res .= "<tr>".
 		        "<td class='textBoldDark'>* $popt</td>".
 				"<td class='textBoldDark'>Optional</td>".
@@ -1482,9 +1488,6 @@ sub ExploitOptions
                 "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$popts->{$popt}->[1]."</td></tr>\n";
     }
 	
-	
-	
-    $res .= "</form>\n";
     $res .= "</table>\n";
     return $res;
 }
@@ -1542,10 +1545,10 @@ sub ExploitExec
 
         $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit'>\n";
         $res .= "</form>\n";
-        $res .= "<hr><br/><br/>\n";
-        $res .= "<br/><div class='textBold'>Check Results:</div>";
-		$res .= "<div class='textNormal'>" . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br/>\n";
-        $res .= "<br/>". join("<br/>\n", @{$ui->DumpLines}) . "<br/>\n";
+        $res .= "<hr><br><br>\n";
+        $res .= "<br><div class='textBold'>Check Results:</div>";
+		$res .= "<div class='textNormal'>" . (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br>\n";
+        $res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
         return $res;
     }
     $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";
@@ -1571,14 +1574,14 @@ sub ExploitExec
 	
 	$out = HTML_Header().
            "<div class='moduleOutput'>\n".
-           "<b>Processing exploit request (".$exploit->Name.")...</b><br/>\n".
-           "<b>Using payload: " . $payloadName . "</div><br/>\n".
+           "<b>Processing exploit request (".$exploit->Name.")...</b><br>\n".
+           "<b>Using payload: " . $payloadName . "</div><br>\n".
 qq[		   
-		<br/>
+		<br>
 		</td>
 	</tr>
 </table></td></tr></table>
-<br/>
+<br>
 ];
 
 
