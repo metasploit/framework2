@@ -22,15 +22,6 @@ my %UUIDS =
     'MGMT'      => 'afa8bd80-7d8a-11c9-bef4-08002b102989',  # v2.0
     'REMACT'    => '4d9f4ab8-7d1c-11cf-861e-0020af6e7c57',  # v0.0
     'SYSACT'    => '000001a0-0000-0000-c000-000000000046',  # v0.0
-    'UNK001'    => '00000136-0000-0000-c000-000000000046',  # v0.0
-    'UNK002'    => '0b0a6584-9e0f-11cf-a3cf-00805f68cb1b',  # v1.1
-    'UNK003'    => '412f241e-c12a-11ce-abff-0020af6e7a17',  # v0.2 
-    'UNK004'    => '975201b0-59ca-11d0-a8d5-00a0c90d8051',  # v1.0
-    'UNK005'    => '99fcfec4-5260-101b-bbcb-00aa0021347a',  # v1.0
-    'UNK006'    => 'b9e79e60-3d52-11ce-aaa1-00006901293f',  # v0.2
-    'UNK008'    => 'c6f3ee72-ce7e-11d1-b71e-00c04fc3111a',  # v1.0
-    'UNK009'    => 'e1af8308-5d1f-11c9-91a4-08002b14a0fa',  # v3.0
-    'UNK010'    => 'e60c73e6-88f9-11cf-9af1-0020af6e72f4',  # v2.0   
 );
 
 sub UUID { return UUID_to_Bin($UUIDS{shift()}) }
@@ -198,7 +189,7 @@ sub DecodeResponse {
 }
 
 
-sub DumpInterfaces {
+sub MGMT_INQ_IF_IDS {
     my ($host, $port) = @_;
     my ($res, $rpc);
 
@@ -210,8 +201,7 @@ sub DumpInterfaces {
     $res = $s->Recv(60);
     $rpc = DecodeResponse($res);
     
-    if ($rpc->{'AckResult'} != 0)
-    {
+    if ($rpc->{'AckResult'} != 0) {
         print "Bind Error: " .$rpc->{'AckReason'}."\n";
         return;
     }
@@ -221,20 +211,22 @@ sub DumpInterfaces {
     $res = $s->Recv(-1);
     $rpc = DecodeResponse($res);
     
-    if ($rpc->{'Type'} eq 'fault')
-    {
+    if ($rpc->{'Type'} eq 'fault') {
         printf ("Call Error: 0x%.8x\n", $rpc->{'Status'});
         return;
     }
     
-    my $data = $rpc->{'StubData'};
-    $data = substr($data, 56);
+    # very ugly inq_if_ids() response parsing :( 
+    my $status  = unpack('N', $rpc->{'StubData'});
+    my $ifcount = unpack('V', substr($rpc->{'StubData'}, 4, 4));
+    my $ifstats = substr($rpc->{'StubData'}, 12, 4 * $ifcount);
+    my $iflist  = substr($rpc->{'StubData'}, 12 + (4 * $ifcount));
     
     my %ints = ();
-    while (length($data) >= 20) {   
-        my $if = Bin_to_UUID($data);
-        $ints{$if}=unpack('v',substr($data, 16)).".".unpack('v',substr($data, 18));
-        $data = substr($data, 20);
+    while (length($iflist) >= 20) {   
+        my $if = Bin_to_UUID($iflist);
+        $ints{$if}=unpack('v',substr($iflist, 16)).".".unpack('v',substr($iflist, 18));
+        $iflist = substr($iflist, 20);
     }
     return %ints;
 }
