@@ -32,7 +32,7 @@ my $envDebug = 0;
 
 
 sub Version {
-    return "2.0";
+    return "2.1";
 }
 
 sub new {
