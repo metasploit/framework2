@@ -1,3 +1,7 @@
+Problems
+========
+There is now Msf::Socket which will do great things, but MSSQL, etc, is using Pex::Socket, and we want those classes to be able to stand alone.... Pass in the socket to MSSQL instead of creating it there?
+
 Pre-Release Tasks
 ==================
 
