@@ -14,41 +14,32 @@
 #
 ##
 
-# This is a very ugly proof-of-concept MSF interface
-
-print STDERR "Sorry, this code is undergoing a rewrite for version 2.0\n";
-exit(0);
-
-__END__
-
-Msf::UI::ActiveStateSucks();
-
-
 require 5.6.0;
 
-use strict;
-use vars qw($VERSION);
+$VERSION = "2.0";
 
+use strict;
 use FindBin qw{$Bin};
 use lib "$Bin/lib";
-use Pex;
-use Pex::HandlerWeb;
-
-use HTTP::Daemon;
-use HTTP::Status;
+use Msf::HandlerWEB;
+use Msf::WebUI;
 
 use POSIX;
 use IO::Socket;
 use Getopt::Std;
 
+Msf::UI::ActiveStateSucks();
 
-# XXX - UI class needs to be written for this, everything will be broke
-# until the UI is fixed.
+my $ui = Msf::WebUI->new($Bin);
 
-$VERSION = "2.0";
+my $exploits = { };
+my $payloads = { };
+my $exploitsIndex;
+my $payloadsIndex;
+my $encoders;
+my $nops;
 
-my $exploits = Pex::LoadExploits("$Bin/exp");
-my $payloads = Pex::LoadPayloads("$Bin/pay");
+
 my ($x, $opt, $verbose, $cli);
 
 my %args = ();
@@ -85,63 +76,70 @@ while (1)
     next if ! $cli;
     
     my $child = fork();
-    
-    if (! $child)
+    next if $child;
+
+    # Load up all our modules
+    $exploitsIndex = $ui->LoadExploits;
+    $payloadsIndex = $ui->LoadPayloads;
+    $encoders = $ui->LoadEncoders;
+    $nops     = $ui->LoadNops;
+
+
+
+    while (my $req = $cli->get_request)
     {
-        while (my $req = $cli->get_request)
+        if ($req->method ne "GET")
         {
-            if ($req->method ne "GET")
-            {
-                $cli->send_error(RC_PAYMENT_REQUIRED);
-                next;
-            }
-
-            my $res;
-            my $out = HTTP::Response->new();
-            
-            my $state = {};
-            
-            my $url = $req->url->path_query;
-            $url =~ s/^\///g;
-            $url =~ s/^\?//g;
-            $url =~ s/\+/%20/g;
-            $url =~ s/\x00|\x0A|\x0D//g;
-                        
-            my @chunks = split(/&/, $url);
-            foreach my $chunk (@chunks)
-            {
-                my ($var, $val) = split(/=/, $chunk);
-                $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
-                $state->{$var} = $val;
-                
-                # ignore empty values
-                $val =~ s/^\s+|\s+$//g;
-                if (! length($val)) { delete($state->{$var}) }
-            }
-    
-            if ($state->{'MODULE'})
-            {
-                my $mname = exists($exploits->{$state->{'MODULE'}}) 
-                            ? $exploits->{$state->{'MODULE'}}->Name() : "Invalid Module";
-                            
-                $res = "<table width=100% bgcolor='black'><tr><td>".
-                       "<font color='white'><b>Module: $mname</b></font></td></tr></table><br>\n";
-            }
-    
-    
-            $state->{"client"} = $cli;
-            $res .= ProcessRequest($cli, $state, $out);
-            
-            $out->code(RC_OK);
-            $out->message('EXPLOITS');
-            $out->content($res);
-            $cli->send_response($out);
-
-            vprint("[*] User "  .  $cli->peerhost() . " requested ". $url . "\n");
+            $cli->send_error(RC_PAYMENT_REQUIRED);
+            next;
         }
-        $cli->close();
-        exit(0);
+
+        my $res;
+        my $out = HTTP::Response->new();
+
+        my $state = {};
+
+        my $url = $req->url->path_query;
+        $url =~ s/^\///g;
+        $url =~ s/^\?//g;
+        $url =~ s/\+/%20/g;
+        $url =~ s/\x00|\x0A|\x0D//g;
+
+        my @chunks = split(/&/, $url);
+        foreach my $chunk (@chunks)
+        {
+            my ($var, $val) = split(/=/, $chunk);
+            $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+            $state->{$var} = $val;
+
+            # ignore empty values
+            $val =~ s/^\s+|\s+$//g;
+            if (! length($val)) { delete($state->{$var}) }
+        }
+
+        if ($state->{'MODULE'})
+        {
+            my $mname = exists($exploits->{$state->{'MODULE'}}) 
+                        ? $exploits->{$state->{'MODULE'}}->Name() : "Invalid Module";
+
+            $res = "<table width=100% bgcolor='black'><tr><td>".
+                   "<font color='white'><b>Module: $mname</b></font></td></tr></table><br>\n";
+        }
+
+
+        $ui->SetGlobalEnv('ClientSocket') = $cli;
+        $res .= ProcessRequest($cli, $state, $out);
+
+        $out->code(RC_OK);
+        $out->message('EXPLOITS');
+        $out->content($res);
+        $cli->send_response($out);
+
+        vprint("[*] User "  .  $cli->peerhost() . " requested ". $url . "\n");
     }
+    $cli->close();
+    exit(0);
+    
 }
 
 sub Usage
@@ -169,6 +167,8 @@ sub ProcessRequest
     if ($state->{'MODE'} eq "OPTIONS") { $body = ExploitOptions($state) }
     if ($state->{'MODE'} eq "TARGETS") { $body = ExploitTargets($state) }
     if ($state->{'MODE'} eq "CHECK")   { $body = ExploitCheck($state) }
+    
+    # ExploitExec doesn't return on success
     if ($state->{'MODE'} eq "EXPLOIT") { $body = ExploitExec($state) }    
     
     $html = HTML_Header() . $body . HTML_Footer();
@@ -180,7 +180,7 @@ sub HTML_Header
 {
     return "
     <html>
-    <head><title>Metasploit Framework Web Console</title></head>
+    <head><title>Metasploit Framework Web Console v$VERSION</title></head>
     <body bgcolor='white' text='black'>";
 }
 
@@ -354,7 +354,7 @@ sub ExploitOptions
     }
 
     my $mopts = $x->UserOpts();
-    my $popts = defined($x->Payload) ? $p->Opts() : {};
+    my $popts = defined($x->Payload) ? $p->UserOpts() : {};
 
     foreach my $mopt (sort(keys(%{$mopts})))
     {
