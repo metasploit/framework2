@@ -177,25 +177,6 @@ sub ProcessIPCRequest {
 		$self->SessionRemove($args[0]);
 	}
 	
-	if ($cmd eq 'GET') {
-		if (! $self->SessionCheck($args[0])) {
-			$ipc->printlfush("GET ERROR\n");
-			return;
-		}
-		
-		my $resp = $self->SessionDataGet($args[0]);
-		$ipc->printflush("GET ".unpack("H*", $resp)."\n");
-	}
-	
-	if ($cmd eq 'PUT') {
-		if (! $self->SessionCheck($args[0])) {
-			$ipc->printlfush("PUT ERROR\n");
-			return;
-		}	
-		my $resp = $self->SessionDataPut($args[0], pack("H*", $args[1]));
-		$ipc->printflush("PUT $resp\n");
-	}
-	
 	if ($cmd eq 'CMD') {
 		my $out = $self->SessionIPC($args[0]);
 		if ($out) {
@@ -208,9 +189,18 @@ sub ProcessIPCRequest {
 
 	}
 	
+	if ($cmd eq 'INFO') {
+		$self->SessionInfo($args[0], $args[1]);
+	}
+	
+	# XXX replace this :/
 	if ($cmd eq 'LIST') {
-		my $list = join(",", $self->SessionList());
-		$ipc->printflush("LIST $list\n");
+		my @list = $self->SessionList();
+		my $data;
+		foreach my $sid (@list) {
+			$data .= "sid=".unpack("H*", "$sid").",". $self->SessionInfo($sid)." ";
+		}
+		$ipc->printflush("LIST $data\n");
 	}
 }
 
@@ -404,21 +394,54 @@ sub SessionList {
 	my $ipc		= $state->{'parent'}; 
 	my $res;
 	
-	my @slist;
+	my %slist;
 	$ipc->printflush("LIST\n");
 	
 	if ( defined(my $raw = $ipc->getline) ) {
-		chomp($raw);
-		my ($cmd, $list) = split(/\s+/, $raw);
-		@slist = split(/,/, $list);
+		if ( (my ($data) = $raw =~ m/^LIST\s+(.*)\n/) ) {
+			foreach my $entry (split(/\s+/, $data)) {
+				my %hash = IPCDataToHash($entry);
+				my $sid = $hash{'sid'};
+				$slist{$sid} = \%hash;
+				print "$sid ($entry\n)";
+			}
+		}
+	}
+	
+	if (! scalar(keys(%slist))) {
+		$res .= "<p class='textBold'>There are no active sessions.<br\><br\></p>\n";
+		return $res;
 	}
 
-	$res .= "<p class='textBold'>Session List:<br\></p>\n";
+	$res .= "<p class='textBold'>Session List:<br\><br\></p>\n";
     $res .= "<table align='center' cellpadding=0 border=0 cellspacing=0 width='95%'>\n";
-	$res .= "<tr><td colspan=2><br\></td></tr>\n";
+	$res .= "<tr>";
+	
+	foreach (qw{Time Session User Exploit Target Payload}) {
+		$res .= "<td class='textBold' align='center'>$_</td>";
+	}
+	
+	$res .= "</tr><tr><td colspan=6><br\></td></tr>\n";
 
-	foreach my $sid (@slist) {
-        $res .= "<tr><td class='textNormal'><a href='/SESSIONS?MODE=LOAD&SID=$sid' target='_blank'>Session $sid</a></td></tr>";
+	foreach my $sid (sort { $a <=> $b } keys %slist ) {
+		my $ses			= $slist{$sid};
+		my $s_module	= $ses->{'module'};
+		my $s_payload	= $ses->{'payload'};
+		my $s_client	= $ses->{'client'};
+		my $s_target	= $ses->{'target'};
+		my $s_time		= scalar(localtime($ses->{'start'}));
+		
+		my $mlink = '/EXPLOITS?MODE=SELECT&MODULE='.URLEncode($s_module);
+		my $plink = ($s_payload ne 'unknown') ? '/PAYLOADS?MODE=SELECT&MODULE='.URLEncode($s_payload) : '#';
+		
+        $res .= "<tr>";
+		$res .= "<td class='textNormal'>$s_time</td>";
+		$res .= "<td class='textNormal'><a href='/SESSIONS?MODE=LOAD&SID=$sid' target='_blank'>Session $sid</a></td>";
+		$res .= "<td class='textNormal'>$s_client</td>";
+		$res .= "<td class='textNormal'><a href='$mlink'>$s_module</a></td>";
+		$res .= "<td class='textNormal'>$s_target</td>";
+		$res .= "<td class='textNormal'><a href='$plink'>$s_payload</a></td>";
+		$res .= "</tr>";
 	}
 	
     $res .= "</table>\n";
@@ -970,10 +993,11 @@ sub ExploitTarget
 	# Display available targets
 
     if (scalar($x->TargetsList) ) {
-        $res .= "<table align='center' cellpadding=2 border=0 cellspacing=0 width='95%'>\n";
-		$res .= "<tr><td class='textBold' align='left'  colspan=2>Select Target:</td></td>";
+        $res .= "<table align='align' cellpadding=2 border=0 cellspacing=0'>\n";
+		$res .= "<tr><td class='textBold' align='left'>Select Target:</td><td>&nbsp;</td></tr>";
 
 		my $tidx = 0;
+		my $colc = ListColor();
         foreach my $k ( $x->TargetsList )
         {
             my $u = StateToURL('PAYLOAD', $state);
@@ -982,14 +1006,16 @@ sub ExploitTarget
 			if ($tidx == $x->DefaultTarget) {
 				$default = "(default)";
 			}
+			$colc = ListColor($colc);
 			
-            $res .= "<tr><td align='right' class='textBold'>$tidx - </td><td><a href='".$u."OPT_TARGET=$tidx'> $k $default</a></td></tr>\n";
+            $res .= "<tr><td>&nbsp;</td><td align='left' class='textBold' bgcolor='$colc'>$tidx - <a href='".$u."OPT_TARGET=$tidx'> $k $default </a></td></tr>\n";
 			$tidx++;
         }
         $res .= "</table>\n";
     } else {
-        return ExploitOptions($state);
+        $res .= ExploitPayload($state);
     }
+	return $res;
 }
 
 sub ExploitPayload
@@ -1014,18 +1040,21 @@ sub ExploitPayload
 		$res .= "<tr><td class='textBold' align='center'>Payload</td>";
 		$res .= "    <td class='textBold' align='center'>Description</td></tr>\n";
 		$res .= "<tr><td colspan=2><br\></td></tr>\n";
-				
+
+		my $colc = ListColor();				
         foreach my $k (sort(keys(%{ $matches })))
         {
             my $u = StateToURL('OPTIONS', $state);
             my $pname = $payloads->{$k}->Name();
-            $res .= "<tr><td class='textNormal'><a href='".$u."PAYLOAD=" . $k . "'>$k</a></td>";
-            $res .= "<td class='textNormal'>" .$pname . "</td></tr>\n";
+			$colc = ListColor($colc);
+            $res .= "<tr><td class='textNormal' bgcolor='$colc'><a href='".$u."PAYLOAD=" . $k . "'>$k</a></td>";
+            $res .= "<td class='textNormal' bgcolor='$colc'>" .$pname . "</td></tr>\n";
         }
         $res .= "</table>\n";
     } else {
-        return ExploitOptions($state);
+        $res .= ExploitOptions($state);
     }
+	return $res;
 }
 
 sub ExploitOptions
@@ -1099,7 +1128,7 @@ sub ExploitOptions
                 "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
     }
     
-	if ($p && scalar @{$p->Arch}) {
+	if ($p && @{ $p->Arch } ) {
 
     	$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
 		my %encoderList = PayloadEncoders($p->Arch, $p->OS);
@@ -1211,8 +1240,6 @@ sub ExploitExec
     # We hijack the socket from the web service
     my $bout = $state->{'client'};
 	my $pout = $state->{'parent'};
-
-	print STDERR "WTF ($bout, $pout)\n";
 		
 	# Use chunked transfer mode to return partial responses
 	my $out = "HTTP/1.1 200 OK\r\n".
@@ -1278,6 +1305,17 @@ qq[
 	# Save the parent pid
 	my $top = $$;
 	
+	# Save off some information about this session
+	my %sess =
+	(
+		'module'	=> $module,
+		'client'	=> $bout->PeerAddr,
+		'target'	=> $ui->GetEnv('RHOST') || 'unknown',
+		'start'		=> time(),
+		'payload'	=> $ui->GetEnv('PAYLOAD') || 'unknown',
+	);
+	
+	
 	# Now things get interesting :-)
 	my $epid = fork();
 	
@@ -1304,6 +1342,10 @@ qq[
 			$pout->close;
 			exit(0);
 		}
+		
+		my $info = IPCHashToData(%sess);
+		$pout->printflush("INFO $sid $info\n");
+		
 
 		unlink($cache_file);
 		if (! open (CACHE, ">$cache_file")) {
@@ -1528,6 +1570,33 @@ sub XSS_Filter {
 	return $data;
 }
 
+sub IPCDataToHash {
+	my $data = shift;
+	my %hash;
+	
+	foreach (split(/,/, $data)) {
+		my ($var, $val) = split(/\=/, $_);
+		next if ! $var;
+		next if ! $val;
+		$hash{$var} = pack("H*", $val);
+	}
+	return %hash;
+}
+
+sub IPCHashToData {
+	my %hash = @_;
+	my $data;
+	foreach (keys %hash) {
+		$data .= $_."=".unpack("H*", $hash{$_}).",";
+	}
+	return $data;
+}
+
+sub ListColor {
+	my $color = shift;
+	return ($color eq '#ffffff') ? '#dddddd' : '#ffffff';
+}
+
 sub LoadAllModules {
 	$exploitsIndex	= $ui->LoadExploits;
 	$payloadsIndex	= $ui->LoadPayloads;
@@ -1627,6 +1696,7 @@ sub SessionNew {
 		'PID'	=> 0,
 		'Data'	=> '',
 	};
+	$self->Log(3, "Creating session $sid with IPC socket $ipc");	
 	return $sid;
 }
 
@@ -1678,7 +1748,7 @@ sub SessionRemove {
 	
 	# shut down the pipe process
 	if ((my $pid = $self->SessionPipePID($sid))) {
-		print STDERR "Killing session PID $pid\n";
+		$self->Log(3, "Removing session $sid with Pipe PID $pid");
 		kill(9, $pid);
 	}
 	
@@ -1694,6 +1764,15 @@ sub SessionRemove {
 sub SessionList { 
 	my $self = shift;
 	return keys %{ $self->{'_Session'} };
+}
+
+sub SessionInfo {
+	my $self = shift;
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+	$self->{'_Session'}->{$sid}->{'Info'} = shift if @_;
+	return $self->{'_Session'}->{$sid}->{'Info'};
 }
 
 sub SessionCheck { 
