@@ -177,15 +177,10 @@ sub Nops {
 			$count = 0;
 		}
 
-		if($count > $length + 1000)
+		if($count > $length + 10000)
 		{
-			if(length($nop) == 0)
-			{
-				$self->PrintDebugLine(3, "Iterated $count times with no nop match.");
-				return;
-			}
-
-			$self->PrintDebugLine(4, "Iterated $count times with no nop match (length(\$nop) = " . sprintf("%i", length($nop)) . ")");
+			$self->PrintDebugLine(3, "Iterated $count times with no nop match.");
+			return;
 		}
 	}
 
