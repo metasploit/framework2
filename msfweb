@@ -145,7 +145,7 @@ sub ProcessRequest
     my ($cli, $state) = @_;
     my ($html, $body);
    
-    my $body = "Default Response";
+    $body = "Default Response";
 
     if ($state->{'MODE'} eq 'MAIN')    { $body = ExploitList($state) }
     if ($state->{'MODE'} eq 'SUMMARY') { $body = ExploitSummary($state) }
@@ -505,7 +505,7 @@ sub HTTPRequest {
         my ($fd) = $sel->can_read(1);
         next if ! $fd;
         $cnt = sysread($fd, $buf, 2048); 
-        return(undef) if $cnt = 0;
+        return(undef) if $cnt == 0;
         $res .= $buf;    
     }
     ($res) = split(/\n/, $res);
