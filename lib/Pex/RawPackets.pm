@@ -113,7 +113,7 @@ sub UDP {
     my $tpkt = NetPacket::UDP->decode();
     $tpkt->{src_port}   = 0;
     $tpkt->{dest_port}  = 0;
-    $tpkt->{len}     = 0;
+    $tpkt->{len}        = 0;
     $tpkt->{cksum}      = 0;
     $tpkt->{data}       = "";
 

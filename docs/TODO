@@ -1,10 +1,8 @@
 Pre-Release Tasks
 ==================
 
- - msfweb needs rewritten handlers to work correctly
-  
+ - Exchange exploit sucks, remove it or fix it
  - DCOM exploit needs to be fixed so it works on XP again!
- 
  - DCOM exploit needs vulnerability check mode
 
  - msfencode needs to actually work
@@ -12,19 +10,16 @@ Pre-Release Tasks
  - Determine the issue with the PREFORK code, it DOES work on some exploits
  
  - Convert the QUICKSTART.* docs into a decent user guide
-
+ - Write a new introduction and place into ./README
  - Finish building out the basic development guides
-
- - Find a host for bugzilla 
- 
- - Add documentation describing how the shared config file relates to msfcli and msfconsole
- 
+ - Make sure docs refer to shared config between all ui's
  - The Pex library needs documentation and API guides for standalone use 
 
  - Add nasm into cygwin environment
+ - Change registry path to avoid pre-installed cygwin clash
+ - Include other tools in the cygwin envirnment (like what?)
 
- - Write a new introduction and place into ./README
-
+ - Find a host for bugzilla 
  - Send ey4s hookers and booze
  
  
