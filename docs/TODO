@@ -1,7 +1,7 @@
 Pre-Release Tasks
 ==================
 
- - Flush out Pex::x86
+ - Global logging needs to be added
 
  - Convert the QUICKSTART.* docs into a decent user guide
  - Write a new introduction and place into ./README
