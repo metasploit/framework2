@@ -257,7 +257,7 @@ sub eSet {
     }
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
-    if ($ui->GetTempEnv('PAYLOAD')) s{
+    if ($ui->GetTempEnv('PAYLOAD')) {
         $prompt .= '('.$ui->GetTempEnv('PAYLOAD').')';
     }
     $prompt .= ' > ';
