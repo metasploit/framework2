@@ -700,8 +700,9 @@ LOOP:
 
   while(1) {
     my $pos = XorDwordFeedbackCheck(unpack('V', pack('C4', @keys)), $data, $badChars);
-    my $kcheck = Pex::Text::BadCharCheck($badChars, pack('C4', @keys));
-    last if($pos == -1 && !$kcheck);
+    my $kindex = Pex::Text::BadCharIndex($badChars, pack('C4', @keys));
+    last if($pos == -1 && $kindex == -1);
+    $pos = $kindex if($pos == -1);
 #    print "Bad at $pos\n";
     $pos = $pos % 4;
     my $stop = (($r[$pos] + 254) % 255) + 1;
