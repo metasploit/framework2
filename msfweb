@@ -71,6 +71,9 @@ my %config	=
 );
 
 
+$SIG{'PIPE'} = 'IGNORE';
+
+
 # Process the command line options
 getopts("a:l:v:p:t:T:C:r:hD", \%args);
 

@@ -833,7 +833,8 @@ sub OffsetToRVA {
 			{
 				return $offset + $section->{'PhysToVirtDisplacement'};
 			}
-    }   
+    }
+    return 0;	   
 }
 
 sub RVAToOffset {
@@ -851,7 +852,8 @@ sub RVAToOffset {
 
 sub OffsetToVirtual {
     my ($self, $offset) = @_;
-    return $self->OffsetToRVA($offset) + $self->{'OPT_IMG_HDR'}->{'ImageBase'};
+    my $rva = $self->OffsetToRVA($offset) || return 0;
+	return $rva + $self->{'OPT_IMG_HDR'}->{'ImageBase'};
 }
 
 sub VirtualToOffset {

@@ -161,7 +161,8 @@ sub popPopRet
             my $idx = index($data,  $opc, $lst);
             while ($idx > 0)
             {
-                printf("0x%.8x   $rA $rB ret\n", $pe->OffsetToVirtual($idx));
+                my $va = $pe->OffsetToVirtual($idx);
+                printf("0x%.8x   $rA $rB ret\n", $va) if $va;
                 $lst = $idx + 1;
                 $idx = index($data, $opc, $lst);
             }
@@ -185,7 +186,9 @@ sub jmpReg
         while ($idx > 0)
         {
             my ($reg, $typ) = @{$jmps{$opc}};
-            printf("0x%.8x   $typ $reg\n", $pe->OffsetToVirtual($idx));
+
+            my $va = $pe->OffsetToVirtual($idx);
+            printf("0x%.8x   $typ $reg\n", $va) if $va;			
             $lst = $idx + 1;
             $idx = index($data, $opc, $lst);
         }
@@ -204,7 +207,8 @@ sub regex {
   while($data =~ m/($regex)/g) {
     my $found = $1;
     my $index = pos($data) - length($found);
-    printf("0x%.8x   %s\n", $pe->OffsetToVirtual($index), hexOutput($found));
+    my $va = $pe->OffsetToVirtual($index);
+    printf("0x%.8x   %s\n", $va, hexOutput($found)) if $va;
   }
 }
 
