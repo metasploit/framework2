@@ -73,28 +73,28 @@ sub _BuildBM {
 
   # spoon's variable length dword xor add feedback whoozle codez
 
-  my $fpuins = $bmb->new;
+  my $fpuins = $bmb->new('fpuIns');
   for(my $b = 0xe8; $b <= 0xee; $b++) {
     $fpuins->AddBlock("[>0 fpu<]\xd9" . chr($b));
   }
 
-  my $fnstenv = $bmb->new("\xd9\x74\x24\xf4"); # fnstenv [esp - 12]
-  my $pop = $bmb->new("\x5b"); # pop ebx
-  my $zero = $bmb->new(
+  my $fnstenv = $bmb->new('fnstenv', "\xd9\x74\x24\xf4"); # fnstenv [esp - 12]
+  my $pop = $bmb->new('popEbx', "\x5b"); # pop ebx
+  my $zero = $bmb->new('clearEcx',
     "\x31\xc9", # xor ecx, ecx
     "\x29\xc9", # sub ecx, ecx
   );
 
-  my $mov;
+  my $mov = $bmb->new('movXorlen');
   if($l->{'padLength'} <= 255) {
-    $mov = $bmb->new("\xb1" . $l->{'lengthByte'}); # mov cl, BYTE xorlen
+    $mov->AddBlock("\xb1" . $l->{'lengthByte'}); # mov cl, BYTE xorlen
   }
   else {
-    $mov = $bmb->new("\x66\xb9" . $l->{'lengthWord'}); # mov cx, WORD xorlen
+    $mov->AddBlock("\x66\xb9" . $l->{'lengthWord'}); # mov cx, WORD xorlen
   }
 
-  my $movkey = $bmb->new("\xb8" . $xorkey); # mov eax, xorkey
-  my $loopXor = $bmb->new;
+  my $movkey = $bmb->new('movXorkey', "\xb8" . $xorkey); # mov eax, xorkey
+  my $loopXor = $bmb->new('loopBlock');
 
   $loopXor->AddBlock(
     "\x31\x43[>1 chr(:end: - :fpu:)<]".     # xor [ebx+0x1b], eax
@@ -123,7 +123,7 @@ sub _BuildBM {
     "\x03\x43[>1 chr(:end: - :fpu: - 4)<]", # add eax, [ebx+0x18]
   );
 
-  my $loop = $bmb->new("\xe2\xf5[>0 end<]");# loop xor_xor
+  my $loop = $bmb->new('loopIns', "\xe2\xf5[>0 end<]");# loop xor_xor
       
   $fnstenv->AddDepend($fpuins);
   $pop->AddDepend($fnstenv);

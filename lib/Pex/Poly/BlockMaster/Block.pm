@@ -5,6 +5,7 @@ sub new {
   my $class = shift;
   my $self = bless({ }, $class);
   $self->_ClearState;
+  $self->Name(@_ ? shift : $self);
   $self->AddBlock(@_) if(@_);
   return($self);
 }
@@ -15,6 +16,12 @@ sub _ClearState {
   foreach my $dep (@{$self->_Depers}) {
     $dep->_ClearState;
   }
+}
+
+sub Name {
+  my $self = shift;
+  $self->{'Name'} = shift if(@_);
+  return($self->{'Name'});
 }
 
 sub _Deps {
@@ -63,7 +70,7 @@ sub NumBlocks {
 
 sub Signature {
   my $self = shift;
-  return($self->NumBlocks . ' - ' . $self);
+  return($self->NumBlocks . ' - ' . $self->Name);
 }
 
 sub _Connections {
