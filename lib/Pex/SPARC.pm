@@ -55,7 +55,7 @@ sub set {
   my $dst = shift;
 
 # XXX: Add support for signedness
-  if($constant <= 4095 && $constant >= 0)
+  if($constant <= 8191 && $constant >= 0)
   {
     return ori("g0", $constant, $dst)
   }
