@@ -111,14 +111,14 @@ sub DisplayPayloads {
 }
 
 sub PrintRow {
-    print "<tr>";
+    print "<tr valign='top'>";
     print "<td align='right'><b>" . shift(@_) . ":</b></td>";
     foreach (@_) { print "<td>$_</td>" }
     print "</tr>\n";
 }
 
 sub CreateRow {
-    my $res = "<tr>";
+    my $res = "<tr align='center'>";
     foreach (@_) { $res .= "<td>$_</td>" }
     $res .= "</tr>\n";
     return($res);
