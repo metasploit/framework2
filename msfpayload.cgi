@@ -62,6 +62,7 @@ foreach my $name (@params)
 {
     $ui->SetTempEnv($name, $query->param($name));
     $opt->{$name} = $query->param($name);
+    $opt->{$name} =~ s/\<|\>//g;
 }
 
 my $action = uc($opt->{'ACTION'});
