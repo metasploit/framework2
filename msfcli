@@ -164,12 +164,15 @@ sub Exploit {
 
     $exploit->Validate;
     return if($exploit->PrintError);
-    
+    $ui->SetTempEnv('_Exploit', $exploit);
+    $ui->SetTempEnv('_Encoders', $encoders);
+    $ui->SetTempEnv('_Nops', $nops);
     # validate payload module options
     if ($payload)
     {
         $payload->Validate;
         return if($payload->PrintError);
+        $ui->SetTempEnv('_Payload', $payload);
     }
 
     my @targets = $exploit->Targets;
@@ -185,7 +188,7 @@ sub Exploit {
     $ui->SetTempEnv('TARGET', 0) if (!defined($target));
     if (defined($payload))
     {
-        $exploit->SetEncodedPayload($ui->Encode($exploit, $payload));
+        $ui->Encode;
         return if($ui->PrintError);
     }
 

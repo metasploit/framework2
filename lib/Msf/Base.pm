@@ -46,14 +46,16 @@ sub GetEnv {
   my $key = shift;
   my @envs = ($self->GetTempEnv, $self->GetGlobalEnv);
   print join(' ', caller()) if($envDebug >= 3);
+# fixme more than two envs...
+  return($self->MergeHash($envs[0], $envs[1])) if(!defined($key));
+
   foreach my $env (@envs) {
     if(exists($env->{$key})) {
       print "Get $key => " . $env->{$key} . "\n" if($envDebug);
       return($env->{$key});
     }
   }
-# fixme more than two envs...
-  return($self->MergeHash($envs[0], $envs[1]));
+  return;
 }
 
 # fixme SetEnv...
@@ -202,6 +204,10 @@ sub LoadTempEnv {
   return($self->_TempEnv);
 }
 
+sub IsError {
+  my $self = shift;
+  return(defined($self->GetError));
+}
 sub GetError {
   my $self = shift;
   return($self->_Error);
@@ -221,9 +227,7 @@ sub PrintError {
   my $self = shift;
   my $error = $self->_Error;
 
-  if(! defined($error)) {
-    return(0);
-  }
+  return(0) if(!$self->IsError);
   
   $self->PrintLine('Error: ', $error);
   $self->ClearError;
@@ -275,12 +279,13 @@ sub Print {
 
 sub MergeHash {
   my $self = shift;
-  my $hash1 = shift;
-  my $hash2 = shift;
-  foreach (keys(%$hash2)) {
-    $hash1->{$_} = $hash2->{$_} if(!defined($hash1->{$_}));
+  my $hash1 = shift || { };
+  my $hash2 = shift || { };
+  my %hash = %{$hash1};
+  foreach (keys(%{$hash2})) {
+    $hash{$_} = $hash2->{$_} if(!defined($hash1->{$_}));
   }
-  return($hash1);
+  return(\%hash);
 }
 
 sub SelfName {

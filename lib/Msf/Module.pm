@@ -3,23 +3,26 @@ use strict;
 use base 'Msf::Base';
 use Socket;
 
+my $defaults =
+{
+  'Name'        => 'No Name',
+  'Version'     => '0.0',
+  'Author'      => 'No Author',
+  'Arch'        => [ ],
+  'OS'          => [ ],
+  'Keys'        => [ ],
+  'Priv'        => [ ],
+  'UserOpts'    => { },
+  'Refs'        => [ ],
+  'Description' => 'No Description',
+  'AutoOpts'    => { },
+};
+
 sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };
   my $self = bless($hash, $class);
-
-# We don't need this anymore
-# use _Info and _Advanced, they will set themselves in undefined
-  # Make sure Info and Defaults always exists
-  # Makes life easier checking elsewhere
-#  if(!defined($self->{'Info'})) {
-#    $self->PrintDebugLine(4, "$self: No Info hash, setting to { }");
-#    $self->{'Info'} = { };
-#  }
-#  if(!defined($self->{'Advanced'})) {
-#    $self->PrintDebugLine(4, "$self: No Advanced hash, setting to { }");
-#    $self->{'Advanced'} = { };
-#  }
+  $self->SetDefaults($self->MergeHash($self->_InfoDefaults, $defaults));
   return($self);
 }
 
@@ -36,11 +39,17 @@ sub _Advanced {
   $self->{'Advanced'} = shift if(@_);
   return($self->{'Advanced'});
 }
+sub _InfoDefaults {
+  my $self = shift;
+  $self->{'_InfoDefaults'} = { } if(!defined($self->{'_InfoDefaults'}));
+  $self->{'_InfoDefaults'} = shift if(@_);
+  return($self->{'_InfoDefaults'});
+}
 
 sub SetDefaults {
   my $self = shift;
   my $hash = shift;
-  $self->MergeHash($self->_Info, $hash);
+  $self->_Info($self->MergeHash($self->_Info, $hash));
 }
 
 
@@ -61,12 +70,6 @@ sub Description { my $self = shift; return $self->_Info->{'Description'}; }
 #fixme
 # Used?
 sub AutoOpts    { my $self = shift; return $self->_Info->{'AutoOpts'}; }
-
-# Exploit Specific (move to Msf::Exploit?)
-sub Payload     { my $self = shift; return $self->_Info->{'Payload'}; }
-
-# Payload Specific (move to Msf::Payload?)
-sub Type        { my $self = shift; return $self->_Info->{'Type'}; }
 
 sub Validate {
   my $self = shift;

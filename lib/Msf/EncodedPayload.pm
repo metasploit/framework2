@@ -10,6 +10,26 @@ sub new {
   $self->{'Nops'} = shift;
   return($self);
 }
+sub _RawPayload {
+  my $self = shift;
+  $self->{'RawPayload'} = shift if(@_);
+  return($self->{'RawPayload'});
+}
+sub _EncodedPayload {
+  my $self = shift;
+  $self->{'EncodedPayload'} = shift if(@_);
+  return($self->{'EncodedPayload'});
+}
+sub _Nops {
+  my $self = shift;
+  $self->{'Nops'} = shift if(@_);
+  return($self->{'Nops'});
+}
+
+sub SetNops {
+  my $self = shift;
+  return($self->_Nops(shift));
+}
 
 sub RawPayload {
   my $self = shift;

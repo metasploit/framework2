@@ -3,6 +3,7 @@ use strict;
 use base 'Msf::Base';
 use Msf::Config;
 use Pex::Encoder;
+use Pex::Utils;
 
 sub new {
   my $class = shift;
@@ -152,8 +153,8 @@ CHECK:
     }
 
     #fixme Eventually we should also factor in the Encoder Size, even though we will catch it in Encode
-    if($exploit->Size < $payload->Size) {
-      $self->PrintDebugLine(3, $payload->Name . " failed, payload is too large for exploit, Exploit: " . $exploit->Size . " Payload: " . $payload->Size);
+    if($exploit->PayloadSpace < $payload->Size) {
+      $self->PrintDebugLine(3, $payload->Name . " failed, payload is too large for exploit, Exploit: " . $exploit->PayloadSpace . " Payload: " . $payload->Size);
       next CHECK;
     }
 
@@ -163,53 +164,214 @@ CHECK:
 }
 
 sub Encode {
-# Nopping is done inside of the Pex::Encode class
   my $self = shift;
-  my ($exploit, $payload) = @_;
+  my $exploit = $self->GetTempEnv('_Exploit');
+  my $payload = $self->GetTempEnv('_Payload');
 
-  my $nop = $self->MakeNop(@_);
-  my $encoder = $self->MakeEncoder(@_, $nop);
+  my @nops = $self->GetNops;
+  my @encoders = $self->GetEncoders;
 
-#fixme
+  my $payloadArch = $payload->Arch;
+  my $payloadOS = $payload->OS;
 
-  # In order to support Encoders that support multiple architectures
-  # and nop generators that support multiple architectures, etc
-  # we need to make sure that every arch in exploit is in encoder
-  # and is in nops
-  my $exploitArch = $exploit->Arch;
-  my $encoderArch = $encoder->Arch;
-  my $nopArch = $nop->Arch;
+  my $badChars = $exploit->PayloadBadChars;
+  my $prependEncoder = $exploit->PayloadPrependEncoder;
+  my $exploitSpace = $exploit->PayloadSpace;
+  my $encodedPayload;
 
-  foreach my $arch (@{$exploitArch}) {
-    if(!scalar(grep {$_ eq $arch} @{$encoderArch}) || !scalar(grep {$_ eq $arch} @{$nopArch})) {
-      $self->PrintDebug(1, "Arch: $arch\nExploit: " . join(' ', @{$exploitArch}) .
-        "\nEncoder: " . join(' ', @{$encoderArch}) . "\nNop: " . join(' ', @{$nopArch}) . "\n");
-      $self->SetError('Exploit supports architecture(s) that the encoder and/or nop generator do not.');
-      return;
+  if(BadCharCheck($badChars, $prependEncoder)) {
+    # This should never happen unless the exploit coder is dumb, but might as well check
+    $self->SetError('Bad Characters in prependEncoder');
+    return;
+  }
+
+  foreach my $encoderName (@encoders) {
+    $self->PrintDebugLine(1, "Tring $encoderName");
+    my $encoder = $self->MakeEncoder($encoderName);
+    if(!$encoder) {
+      $self->PrintDebugLine(1, "Failed to make encoder $encoderName");
+      next;
+    }
+    my $encoderArch = $encoder->Arch;
+    my $encoderOS = $encoder->OS;
+
+    if(!ListCheck($payloadArch, $encoderArch)) {
+      $self->PrintDebugLine(2, "$encoderName failed, doesn't support all architectures");
+      $self->PrintDebugLine(4, "payloadArch: " . join(',', @{$payloadArch}));
+      $self->PrintDebugLine(4, "encoderArch: " . join(',', @{$encoderArch}));
+      next;
+    }
+    if(!ListCheck($payloadOS, $encoderOS)) {
+      $self->PrintDebugLine(2, "$encoderName failed, doesn't support all operating systems");
+      $self->PrintDebugLine(4, "payloadOS: " . join(',', @{$payloadOS}));
+      $self->PrintDebugLine(4, "encoderOS: " . join(',', @{$encoderOS}));
+      next;
+    }
+
+    my $rawShell = $exploit->PayloadPrepend . $payload->Build . $exploit->PayloadAppend;
+    my $encodedShell = $encoder->Encode($rawShell, $badChars);
+
+    if(!$encodedShell) {
+      $self->PrintDebugLine(1, "$encoderName failed to return an encoded payload");
+      next;
+    }
+
+    if($encoder->IsError) {
+      $self->PrintDebugLine(1, "$encoderName failed with an error");
+      $self->PrintDebugLine(4, $encoder->GetError);
+      $encoder->ClearError;
+      next;
+    }
+
+    if(BadCharCheck($badChars, $encodedShell)) {
+      $self->PrintDebugLine(2, "$encoderName failed, bad chars in encoded payload");
+      $self->PrintDebugLine(5, "encoded payload:");
+      $self->PrintDebugLine(5, Pex::Utils::BufferC($encodedShell));
+      next;
+    }
+
+    $encodedShell = $prependEncoder . $encodedShell;
+    
+    if(length($encodedShell) > $exploitSpace - $exploit->PayloadMinNops) {
+      $self->PrintDebugLine(2, "$encoderName failed, encoded payload too large for exploit");
+      $self->PrintDebugLine(4, "ExploitSpace: $exploitSpace");
+      $self->PrintDebugLine(4, "EncodedLength: " . length($encodedShell)); 
+      $self->PrintDebugLine(4, 'MinNops: ' . $exploit->PayloadMinNops . ' MaxNops: ' . $exploit->PayloadMaxNops);
+      next;
+    }
+
+    $encodedPayload = Msf::EncodedPayload->new($rawShell, $encodedShell);
+    last;
+  }
+
+  if(!$encodedPayload) {
+    $self->SetError("No encoders succeeded");
+    return;
+  }
+
+  my $maxNops = defined($exploit->PayloadMaxNops) ? $exploit->PayloadMaxNops : 10000000;
+  my $emptySpace = $exploitSpace - length($encodedPayload->EncodedPayload);
+  my $nopSize = $maxNops < $emptySpace ? $maxNops : $emptySpace;
+  my $success = 0;
+
+  foreach my $nopName (@nops) {
+    $self->PrintDebugLine(1, "Tring $nopName");
+    my $nop = $self->MakeNop($nopName);
+    if(!$nop) {
+      $self->PrintDebugLine(1, "Failed to make nop generator $nop");
+      next;
+    }
+    my $nopArch = $nop->Arch;
+    my $nopOS = $nop->OS;
+
+    if(!ListCheck($payloadArch, $nopArch)) {
+      $self->PrintDebugLine(2, "$nopName failed, doesn't support all architectures");
+      $self->PrintDebugLine(4, "payloadArch: " . join(',', @{$payloadArch}));
+      $self->PrintDebugLine(4, "nopArch: " . join(',', @{$nopArch}));
+      next;
+    }
+    if(!ListCheck($payloadOS, $nopOS)) {
+      $self->PrintDebugLine(2, "$nopName failed, doesn't support all operating systems");
+      $self->PrintDebugLine(4, "payloadOS: " . join(',', @{$payloadOS}));
+      $self->PrintDebugLine(4, "nopOS: " . join(',', @{$nopOS}));
+      next;
+    }
+
+    my $nops = $nop->Nops($nopSize, $badChars);
+
+    if($nop->IsError) {
+      $self->PrintDebugLine(1, "$nopName failed with an error");
+      $self->PrintDebugLine(4, $nop->GetError);
+      $nop->ClearError;
+      next;
+    }
+
+    if(length($nops) != $nopSize) {
+      $self->PrintDebugLine(2, "$nopName failed, error generating nops");
+      next;
+    }
+
+    if(BadCharCheck($badChars, $nops)) {
+      $self->PrintDebugLine(2, "$nopName failed, bad chars in nops");
+      next;
+    }
+
+    $success = 1;
+    $encodedPayload->SetNops($nops);
+    last;
+  }
+
+  if(!$success) {
+    $self->SetError("No nop generators succeeded");
+    return;
+  }
+  $self->SetTempEnv('EncodedPayload', $encodedPayload);
+}
+
+sub GetEncoders {
+  my $self = shift;
+  my @preferred = split(',', $self->GetEnv('Encoder'));
+  my @encoders;
+  foreach my $encoder (keys(%{$self->GetTempEnv('_Encoders')})) {
+    next if(scalar(grep { $_ eq $encoder } @preferred));
+    push(@encoders, $encoder);
+  }
+  return(@preferred, @encoders);
+}
+sub GetNops {
+  my $self = shift;
+  my @preferred = split(',', $self->GetEnv('Nop'));
+  my @nops;
+  foreach my $nop (keys(%{$self->GetTempEnv('_Nops')})) {
+    next if(scalar(grep { $_ eq $nop } @preferred));
+    push(@nops, $nop);
+  }
+  return(@preferred, @nops);
+}
+sub MakeEncoder {
+  my $self = shift;
+  my $name = shift;
+  # Check to see if the encoder is in our encoders list
+  return if(!scalar(grep { $_ eq $name } keys(%{$self->GetTempEnv('_Encoders')})));
+
+  my $encoder = $name->new;
+  return($encoder);
+}
+sub MakeNop {
+  my $self = shift;
+  my $name = shift;
+  # Check to see if the encoder is in our nops list
+  return if(!scalar(grep { $_ eq $name } keys(%{$self->GetTempEnv('_Nops')})));
+
+  my $nop = $name->new;
+  return($nop);
+}
+
+# Example usage: ListCheck($exploitArch, $encoderArch)
+# All of list1 must be in list2 unless list2 is empty
+sub ListCheck {
+  my $self = shift;
+  my $list1 = shift || [ ];
+  my $list2 = shift || [ ];
+  if(@{$list2}) { # A empty list means it supports all
+    foreach my $entry (@{$list1}) {
+      if(!scalar(grep { $_ eq $entry } @{$list2})) {
+        return(0);
+      }
     }
   }
-  my $encoded = $encoder->Encode;
-  $self->SetError($encoder->GetError);
-  return($encoded);
+  return(1);
 }
-
-sub MakeEncoder {
-    my $self = shift;
-    # Even though there is already an entry in default in Msf::Config
-    # This is important enough to just default again anyway
-    my $name = $self->GetEnv('Encoder') || 'Msf::Encoder::Pex';
-    my $encoder = $name->new(@_);
-
-    return($encoder);
-}
-
-sub MakeNop {
-    my $self = shift;
-    # Even though there is already a entry in default in Msf::Config
-    # This is important enough to just default again anyway
-    my $name = $self->GetEnv('Nop') || 'Msf::Nop::Pex';
-    my $nop = $name->new(@_);
-    return($nop);
+sub BadCharCheck {
+  my $self = shift;
+  my $badChars = shift;
+  my $string = shift;
+  foreach (split('', $badChars)) {
+    if(index($string, $_) != -1) {
+      return(1);
+    }
+  }
+  return(0);
 }
 
 sub SaveConfig {

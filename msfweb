@@ -502,7 +502,7 @@ sub ExploitExec
             exit(0);
         }
 
-        if (length($shellcode) != $x->Size)
+        if (length($shellcode) != $x->PayloadSpace)
         {
             $cli->send("msfweb: exploit: error creating shellcode: wrong length!\n");
             exit(0);

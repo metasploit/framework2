@@ -18,35 +18,11 @@ $VERSION = 2.0;
 use strict;
 use base 'Msf::Module';
 
-my $defaults =
-{
-  'Name'        => 'No Name',
-  'Version'     => '0.0',
-  'Author'      => 'No Author',
-  'Arch'        => [ ],
-  'Refs'        => [ ],
-  'Description' => 'No Description',
-};
-
 sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };
-  my $self = bless($hash, $class);
-  $self->SetDefaults($defaults);
-  $self->{'Exploit'} = shift;
-  $self->{'Payload'} = shift;
+  my $self = $class->SUPER::new($hash);
   return($self);
-}
-
-sub _Exploit {
-  my $self = shift;
-  $self->{'Exploit'} = shift if(@_);
-  return($self->{'Exploit'});
-}
-sub _Payload {
-  my $self = shift;
-  $self->{'Payload'} = shift if(@_);
-  return($self->{'Payload'});
 }
 
 sub Nops {
