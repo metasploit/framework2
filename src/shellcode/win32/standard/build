@@ -123,7 +123,7 @@ if (-f "linux_template.o")
 }
 
 unlink("payload.bin");
-
+system("chmod 755 *.exe *.elf");
 
 sub BufferPerl
 {
