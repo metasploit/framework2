@@ -154,8 +154,9 @@ sub Targets {
 sub Check {
   $exploit->Validate; # verify that all required exploit options have been set
   return if($exploit->PrintError);
-  $exploit->Check;
+  my $res = $exploit->Check;
   return if($exploit->PrintError);
+  print "Check:   $res\n";
 }
 
 sub Exploit {

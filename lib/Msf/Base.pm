@@ -148,9 +148,11 @@ sub ClearError {
 sub PrintError {
   my $self = shift;
   my $error = $self->_Error;
-  if(defined($error)) {
+
+  if(! defined($error)) {
     return(0);
   }
+  
   $self->PrintLine('Error: ', $error);
   $self->ClearError;
   return(1);
