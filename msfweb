@@ -1349,8 +1349,9 @@ qq[
 			print STDERR "Could not open cache file: $!\n";
 			$eout->close;
 			$pout->close;
+			exit(0);
 		}
-		
+
 		my $cache = IO::Handle->new_from_fd(fileno(CACHE), "a+");
 		$cache->blocking(0);
 		$cache->autoflush(1);
