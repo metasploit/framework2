@@ -17,8 +17,7 @@ socket:
 
 connect:
 	pop  edx
-;	push 0x0100007f
-	push 0x0400fe0a
+	push 0x0100007f
 	push word 0xbfbf
 	push dx
 	mov  ecx, esp
