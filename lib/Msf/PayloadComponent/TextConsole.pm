@@ -69,9 +69,7 @@ LOOPER:
         $self->SendLog($data);
         $data = $self->SendFilter($data);
         
-        if (! fileno($sockOut) || $sockOut->connected) {
-            last LOOPER;
-        }
+        last LOOPER if(!$sockOut || !$sockOut->connected);
         
         $sockOut->send($data);
       }
@@ -82,9 +80,7 @@ LOOPER:
         $data = $self->RecvFilter($data);
         $self->RecvLog($data);
         
-        if (! fileno($consoleOut)) {
-            last LOOPER;
-        }
+        last LOOPER if(!$consoleOut || !$consoleOut->opened);
         
         print $consoleOut $data;
       }
