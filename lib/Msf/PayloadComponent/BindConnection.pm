@@ -33,19 +33,17 @@ sub CheckHandler {
     'PeerHost'  => $host,
     'PeerPort'  => $port,
     'Proto'     => 'tcp',
-    'Blocking'  => 0,
+    'Timeout'   => 10,
   );
-
-  return(0) if(!$sock);
-  $sock->autoflush(1);
-  my $loop = 4;
-  while($sock && $loop--) {
-    if($sock->connected) {
-      $self->SocketIn($sock);
-      $self->SocketOut($sock);
-      return(1);
-    }
-    select(undef, undef, undef, .2);
+  
+  $self->PrintDebugLine(5, 'Bind loop hit.');
+  
+  if($sock && $sock->connected) {
+    $sock->autoflush(1);
+#    $self->PrintLine('$sock->connected returned true. ' . $sock->peerhost . $sock->peerport);
+    $self->SocketIn($sock);
+    $self->SocketOut($sock);
+    return(1);
   }
 
   return(0);
