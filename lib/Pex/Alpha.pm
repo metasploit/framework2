@@ -71,7 +71,14 @@ sub set {
   }
   elsif($constant & 0xffff)
   {
-    return ldah("zero", $constant, $dst) . lda($dst, $constant, $dst);
+    if($constant & 0x8000)
+    {
+      return ldah("zero", $constant + (1 << 16), $dst) . lda($dst, $constant, $dst);
+    }
+    else
+    {
+      return ldah("zero", $constant, $dst) . lda($dst, $constant, $dst);
+    }
   }
   else
   {
