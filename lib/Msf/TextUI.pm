@@ -6,11 +6,10 @@ use Msf::ColPrint;
 sub new {
   my $class = shift;
   my $self = $class->SUPER::new(@_);
-  
+
   # configure STDERR/STDERR for text display
   select(STDERR); $|++;
   select(STDOUT); $|++;
-  
   return($self);
 }
 

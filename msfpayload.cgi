@@ -15,24 +15,24 @@
 ##
 
 require 5.6.0;
-
 use strict;
 
-use POSIX;
-
-use lib "/home/httpd/code/framework/lib";
+use FindBin qw{$Bin};
+use lib "$Bin/lib";
 use Msf::TextUI;
+use POSIX;
 use Pex;
 use CGI qw/:standard/;
 
-my $query = new CGI;
+my $query = new CGI; 
 print $query->header(),
- 
-my $ui = Msf::TextUI->new("/home/httpd/code/framework");
+
+my $ui = Msf::TextUI->new($Bin);
 
 my $payloadsIndex = $ui->LoadPayloads;
 my $payloads = { };
 my $opt = { };
+
 
 foreach my $key (keys(%{$payloadsIndex})) {
     $payloads->{$payloadsIndex->{$key}->Name} = $payloadsIndex->{$key};
@@ -55,7 +55,9 @@ if (! exists($opt->{'PAYLOAD'}) || ! exists($payloads->{$opt->{'PAYLOAD'}}))
 
 my $sel = $opt->{'PAYLOAD'};
 my $p = $payloads->{$sel};
-my $popts = $p->UserOpts;
+my $popts = { };
+
+if (defined($p)) { $popts = $p->UserOpts } else { print "!!!!!: $sel<br>\n" }
 
 if (! $action)
 {   
@@ -193,7 +195,7 @@ sub DisplayPayloads {
     print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
     foreach my $p (sort(keys(%{$payloads})))
     {
-        print CreateRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit' value='$p'>",
+        print CreatePayloadRow( $query->start_form . "<input type='hidden' name='PAYLOAD' value='$p'>"."<input type='submit' value='$p'>",
                          $payloads->{$p}->Description . $query->end_form);
     }
     print "</table><br>";
@@ -215,29 +217,11 @@ sub CreateRow {
     $res .= "</tr>\n";
     return($res);
 }
-__DATA__
 
-my $s = $p->Build($opt);
-if (! $s)
-{
-    print "Error: " . $p->Error() . "\n";
-    exit(0);
-}
-
-if ($action =~ /^R/) { print $s; exit; }
-
-my $r = $action =~ /^C/ ? Pex::Utils::BufferC($s) : Pex::Utils::BufferPerl($s);
-
-print $r;
-exit(0);
-
-sub Usage
-{
-    print STDERR "   Usage: $0 <payload> [var=val] <S|C|P>\n";
-    print STDERR "Payloads: \n";
-    foreach my $p (sort(keys(%{$payloads})))
-    {
-        print STDERR "\t$p" . (" " x (20 - length($p))) . $payloads->{$p}->Description . "\n";
-    }
-    exit(0);
+sub CreatePayloadRow {
+    my $res = "<tr>";
+    $res .= "<td align='right'>".shift(@_)."</td>";
+    foreach (@_) { $res .= "<td>$_</td>" }
+    $res .= "</tr>\n";
+    return($res);
 }
