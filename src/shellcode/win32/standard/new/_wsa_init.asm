@@ -204,3 +204,67 @@ LConnect:            ; connect(edi, sockaddr, 16)
     ; jne short LConnect
 
 %endmacro
+
+; expects:
+;   edi = socket
+;   FN_BIND = address to bind()
+; returns:
+;   result in eax
+; preserves ebp, esp, ebx, esi
+; preserves stack if %1 == 1
+%macro WSA_CALL_BIND 1
+
+LBind:
+    xor ebx, ebx
+    push        ebx
+    push        ebx
+    push        ebx
+    push dword 0x11220002               ; port 8721
+
+    mov ecx, esp
+    push BYTE 0x10
+    push ecx
+    push edi
+    call dword FN_BIND
+%if %1 == 1 ; preserve stack, remove sockaddr structure.
+    add esp, byte 0x0c
+%endif
+%endmacro
+
+; expects:
+;   edi = socket
+;   FN_LISTEN = address to listen()
+; returns:
+;   result in eax
+; preserves ebp, esp, ebx, esi
+; preserves stack if %1 == 1
+%macro WSA_CALL_LISTEN 1
+
+LListen:
+    push BYTE 0x01
+    push edi
+    call dword FN_LISTEN
+%endmacro
+
+; expects:
+;   edi = socket
+;   FN_ACCEPT = address to accept()
+; returns:
+;   Old socket in eax
+; preserves ebp, esp, ebx, esi
+; preserves stack if %1 == 1
+%macro WSA_CALL_ACCEPT 1
+
+LAccept:
+    sub         esp, byte 0x08
+    push        byte 0x10
+    push        esp
+    push        esp
+    push        edi
+    call dword FN_ACCEPT
+    xchg        eax, edi
+
+%if %1 == 1
+    add     esp, byte 0x0c
+%endif
+%endmacro
