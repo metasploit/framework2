@@ -572,6 +572,10 @@ sub HTTPRequest {
 
         # ignore empty values
         $val =~ s/^\s+|\s+$//g;
+        
+        # remove any < or >'s (silly XSS monkies,there are worse problems here)
+        $val =~ s/\<|\>//g;        
+        
         if (! length($val)) { delete($state->{$var}) }
     }
     

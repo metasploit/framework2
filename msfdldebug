@@ -45,7 +45,7 @@ if ($opts{'h'}) {
 }
 
 my $target = shift() || Usage();
-my $pe = PEInfo->new($target);
+my $pe = Pex::PEInfo->new($target);
 my $dbg_idx = 0;
 my $dbg_skp = 0;
 my $dbg_hsh;
