@@ -26,6 +26,7 @@ my $defaults = {
   'DebugLevel' => 0,
   'Logging' => 0,
   'Console' => 'Msf::PayloadComponent::TextConsole',
+  'AlternateExit' => 0,
 # These are defaulting in Pex::Socket too, but these defaults will override
 # the Pex defaults if thats what you want.
 #  'Msf::Socket::SocketTimeout' => 10,

@@ -548,6 +548,14 @@ sub xCreateSetList
         if ($x->Payload) { $options{"PAYLOAD"}++ }
         if ($x->TargetsList) { $options{"TARGET"}++  }
 
+        foreach my $e (keys(%{ $ui->GetEnv })) {
+            $options{$e}++;
+        }
+        
+        foreach my $e (keys(%{ $ui->GetTempEnv })) {
+            $options{$e}++;
+        }   
+
         return(keys(%options));
     }
 }
@@ -637,8 +645,8 @@ sub xTabCompletion
     }
         
     if (
-        ($state->{'Mode'} eq "Main"    && lc($cmd) eq "setg") ||
-        ($state->{'Mode'} eq "Exploit" && lc($cmd) eq "set")
+        ($state->{'Mode'} eq "Main"    && lc($cmd) =~ /^(un|)setg$/) ||
+        ($state->{'Mode'} eq "Exploit" && lc($cmd) =~ /^(un|)set$/)
        )
     {
         # display variables if no args are specified
