@@ -85,7 +85,7 @@ if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
 }
 
 # Main Dispatch
-for($ARG[0]) {
+for(uc($ARG[0])) {
   $_ eq 'S' && do { Summary(); last; };
   $_ eq 'O' && do { Options(); last; };
   $_ eq 'A' && do { Advanced(); last; };
@@ -160,95 +160,99 @@ sub Check {
 }
 
 sub Exploit {
-  # verify that a payload has been configured
-  if (defined($exploit->Payload) && ! defined($payload))
-  {
-    die("[*] You must specify a payload for this module.\n");
-  }
 
-  # verify that all required exploit options have been set
-  $exploit->Validate;
-  return if($exploit->PrintError);  
-  # verify that all required payload options have been set 
-  if(defined($payload)) {
-    $payload->Validate;
-    return if($payload->PrintError);
-  }
-
-  my @targets = $exploit->Targets;
-  my $target = $ui->GetEnv('TARGET');
-  if (defined($target) && ! defined($targets[$target]))
-  {
-    die("[*] Invalid target specified.\n");
-  }
-
-  # Important: Default the target to 0, maybe this should somehow
-  # be in Msf::Exploit, maybe be part of the Validate process?
-  $ui->SetEnv('TARGET', 0) if(!defined($target));
-
-  if (defined($payload))
-  {
-    $exploit->SetEncodedPayload($ui->Encode($exploit, $payload));
-    return if($ui->PrintError);
-  }
-
-
-  # Shady handler area
-  $ui->SetEnv('HCALLBACK', \&HandlerCallback);
-  my $handler = Msf::HandlerCLI->new();
-
-  my ($phand, $chand, $phcode, $chcode);
-  if ($payload && $handler->can($payload->Type))
-  {
-      $phand = $payload->Type;
-      $chand = $phand . "_exp";
-      
-      # create the link between the child and parent processes
-      if ($handler->can($phand) && $handler->can($chand))
-      {
-          my ($csock, $psock);
-          $ui->SetEnv('HANDLER', $handler);
-          $ui->SetEnv('HCFUNC', $chand);
-          
-          print "[*] Creating link between child and parent process\n";
-          
-          socketpair($ui->GetEnv('HCSOCK'), $ui->GetEnv('HPSOCK'),  AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
-          || die "socketpair: $!\n";
-      }
-  }
-  # End of shady handler area
+    $exploit->Validate;
+    return if($exploit->PrintError);
     
-  my $child = fork();
-
-  # parent
-  if ($child)
-  {
-    if ($exploit->Payload)
+    # validate payload module options
+    if ($payload)
     {
-      if ($phand)
-      {
-        print "[*] Starting handler $phand\n";
-        my $res = $handler->$phand($payload, $child);
-        kill('TERM', $child);
+        $payload->Validate;
+        return if($payload->PrintError);
+    }
 
-        if (! $res)
+    my @targets = $exploit->Targets;
+    my $target = $ui->GetTempEnv('TARGET');
+    if (defined($target) && ! defined($targets[$target]))
+    {
+      xMsg('exploit', 'Invalid target specified.');
+    }
+  
+    # Important: Default the target to 0, maybe this should somehow
+    # be in Msf::Exploit, maybe be part of the Validate process?
+    $ui->SetTempEnv('TARGET', 0) if (!defined($target));
+
+    if (defined($payload))
+    {
+        $exploit->SetEncodedPayload($ui->Encode($exploit, $payload));
+        return if($ui->PrintError);
+    }
+
+    $ui->SetTempEnv('HCALLBACK', \&xCallback);
+
+    my $handler = Msf::HandlerCLI->new();
+    
+    my ($phand, $chand, $phcode, $chcode);
+    if ($payload && $handler->can($payload->Type))
+    {
+        $phand = $payload->Type;
+        $chand = $phand . "_exp";
+        
+        # create the link between the child and parent processes
+        if ($handler->can($phand) && $handler->can($chand))
         {
-          print "[*] Handler error: " . $handler->Error() ."\n";
-          kill('TERM', $child);
-        }
-
-      } else {
-        print "[*] No handler for payload type: " . $payload->Type() ."\n";
-      }
+            print STDERR "Handler (" . $payload->Type .") can $phand and $chand!\n";
+            my ($csock, $psock);
+            $ui->SetTempEnv('HANDLER', $handler);
+            $ui->SetTempEnv('HCFUNC',  $chand);
+            
+            xMsg("exploit", "creating link between child and parent process");
+            
+            socketpair($csock, $psock, AF_UNIX, SOCK_STREAM, PF_UNSPEC) 
+            || die "msfconsole: exploit: socketpair: $!";
+            
+            $ui->SetTempEnv('HCSOCK', $csock);
+            $ui->SetTempEnv('HPSOCK', $psock);
+        }      
     }
     
-    while (waitpid($child, WNOHANG) == 0) { sleep(1) }
-      
-  } else {
-    select(undef, undef, undef, 0.5);
-    $exploit->Exploit; 
-  }
-  print "\n";
+    my $child = fork();
+    
+    if ($child)
+    {
+        if ($exploit->Payload)
+        {
+            if ($phand)
+            {
+                xMsg("exploit", "starting handler $phand");
+                my $res = $handler->$phand($payload, $ui->GetTempEnv, $child);
+                kill('TERM', $child);
+
+                if (! $res)
+                {
+                    xMsg("exploit", "handler error: " . $handler->Error() );
+                    kill('TERM', $child);
+                }
+
+            } else {
+                xMsg("exploit", "no handler for payload type: " . $payload->Type());
+            }
+        }
+        
+        while (waitpid($child, WNOHANG) == 0) { sleep(1) }
+        
+    } else {
+        select(undef, undef, undef, 0.5);
+        $exploit->Exploit; 
+        exit(0);
+    }
+    print "\n";
+}
+
+sub xMsg
+{
+    my ($loc, $msg) = @_;
+    print STDERR "msfconsole: $loc: $msg\n";
 }
 
 
@@ -271,7 +275,4 @@ sub ListExploits {
   print "\n";
 }
 
-sub HandlerCallback
-{
-    # print STDERR "CALLBACK: " . join(" | ", @_) . "\n";
-}
+sub xCallback { }
