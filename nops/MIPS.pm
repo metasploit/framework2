@@ -34,7 +34,7 @@ sub Nops {
 
   my $exploit = $self->GetVar('_Exploit');
   my $random  = $self->GetLocal('RandomNops');
-  my $badRegs = $exploit->NopBadRegs;
+  my $badRegs = $exploit->NopSaveRegs;
   my $badChars = $exploit->PayloadBadChars;
 
   # trashes v0 -> addiu   v0,v0,7764
