@@ -134,6 +134,18 @@ sub EnglishText {
 
   return($string);
 }
+
+sub AlphaNumText {
+  my $size = shift;
+  my @chars = @_ ? split('', shift) : ('A' .. 'Z', 'a' .. 'z', '0' .. '9');
+
+  my $data;
+  while($size--) {
+    $data .= $chars[int(rand(@chars))];
+  }
+  return($data);
+}
+
 sub RandomData {
   my $size = shift;
   my $string;
