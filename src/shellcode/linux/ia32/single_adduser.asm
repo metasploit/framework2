@@ -17,15 +17,18 @@
 ;
 ; Meta-Information:
 ;
-; meta-importable=no
-; meta-shortname=Add a line to /etc/passwd.
-; meta-description=Spawn a shell on an established connection
+; meta-shortname=Linux adduser
+; meta-description=Create an entry in /etc/passwd with UID=0
 ; meta-authors=vlad902 <vlad902 [at] gmail.com>, spoonm <ninjatools [at] hush.com>, skape <mmiller [at] hick.org>
 ; meta-os=linux
 ; meta-arch=ia32
 ; meta-category=single
 ; meta-name=adduser
 ; meta-basemod=Msf::PayloadComponent::NoConnection
+; Offset for inserting the string:
+; meta-custom1=0x27
+; Offset after string:
+; meta-custom2=0x4b
 ;;
 
 

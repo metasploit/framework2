@@ -87,10 +87,11 @@ sub RecurseDirectoryForPayloads
 
 			push @payloads, 
 				{
-					source => $path . ".asm",
-					hex    => $path . ".hex",
-					raw    => $path . ".o",
-					disasm => $path . ".disasm",
+					source   => $path . ".asm",
+					hex      => $path . ".hex",
+					raw      => $path . ".o",
+					disasm   => $path . ".disasm",
+					template => $path . ".template",
 				};
 		}
 	}
@@ -233,6 +234,95 @@ sub TranslatePayload
 		return 0;
 	}
 
+	# If a template file exists, use it
+	if (-f $payload->{'template'})
+	{
+		$contents = BuildPayloadFromCustomTemplate(
+			name    => $name,
+			meta    => $meta,
+			payload => $payload,
+			authors => $authorList);
+	}
+	else
+	{
+		$contents = BuildPayloadFromStandardTemplate(
+			name    => $name,
+			meta    => $meta,
+			payload => $payload,
+			authors => $authorList);
+	}
+
+	# Write the module to the file and close, we win
+	print MODULE $contents;
+
+	close(MODULE);
+
+	return 1;
+}
+
+#
+# Build the payload from a template file rather than from the standard template
+#
+sub BuildPayloadFromCustomTemplate
+{
+	my ($name, $meta, $payload, $authors) = @{{@_}}{qw/name meta payload authors/};
+	my $contents = "";
+	my $disasm = GetPayloadDisassembly(
+		payload => $payload);
+	my $hex = GetPayloadHexString(
+		payload => $payload);
+	my $shortname = $meta->{'shortname'};
+	my $description = $meta->{'description'};
+	my $arch = $meta->{'arch'};
+	my $os = $meta->{'os'};
+
+	if (!open(TEMPLATE, $payload->{'template'}))
+	{
+		printf STDERR "Failed to open template file: " . $payload->{'template'} . "\n";
+		return undef;
+	}
+
+	while (<TEMPLATE>)
+	{
+		$contents .= $_;
+	}
+
+	close(TEMPLATE);
+
+	# Replace template variables
+	$contents =~ s/__NAME__/$name/gm;
+	$contents =~ s/__SHORTNAME__/$shortname/gm;
+	$contents =~ s/__DESCRIPTION__/$description/gm;
+	$contents =~ s/__ARCH__/$arch/gm;
+	$contents =~ s/__OS__/$os/gm;
+	$contents =~ s/__AUTHORS__/$authors/gm;
+	$contents =~ s/__HEX__/$hex/gm;
+	$contents =~ s/__DISASM__/$disasm/gm;
+
+	# Enumerate through all the custom defined variables
+	my $index = 1;
+	my $val;
+
+	while (defined($val = $meta->{"custom$index"}))
+	{
+		my $var = "__CUSTOM" . $index . "__";
+
+		$contents =~ s/$var/$val/gm;
+
+		$index++;
+	}
+
+	return $contents;
+}
+
+#
+# Build the payload from the standard template
+#
+sub BuildPayloadFromStandardTemplate
+{
+	my ($name, $meta, $payload, $authors) = @{{@_}}{qw/name meta payload authors/};
+	my $contents = '';
+
 	# Build out the module's contents
 	$contents .=
 "
@@ -262,7 +352,7 @@ my \$info =
 	'Name'        => '" . $meta->{'shortname'} . "',
 	'Version'     => '\$Revision$',
 	'Description' => '" . $meta->{'description'} . "',
-	'Authors'     => [ $authorList ],
+	'Authors'     => [ $authors ],
 	'Priv'        => 0,
 	'Size'        => 0,
 	'Arch'        => [ '" . $meta->{'arch'} . "' ],
@@ -295,12 +385,7 @@ sub new
 1;
 ";
 
-	# Write the module to the file and close, we win
-	print MODULE $contents;
-
-	close(MODULE);
-
-	return 1;
+	return $contents;
 }
 
 #
