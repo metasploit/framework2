@@ -269,4 +269,32 @@ sub MergeHash {
   return(\%hash);
 }
 
+# Returns true if contains bad char
+# all take badChars, string
+sub BadCharCheck {
+  return(BadCharIndex(@_) == -1 ? 0 : 1);
+}
+
+sub BadCharIndex {
+  my @indexes = BadCharIndexes(@_);
+  return(-1) if(!@indexes);
+  return($indexes[0]);
+}
+
+sub BadCharIndexes {
+  my $self = shift;
+  my $badChars = @_ ? shift : return;
+  my $string = @_ ? shift : return;
+  my @indexes;
+  
+  my $i = 0;
+  foreach (split('', $string)) {
+    if(index($badChars, $_) != -1) {
+      push(@indexes, $i);
+    }
+    $i++;
+  }
+  return(@indexes);
+}
+
 1;

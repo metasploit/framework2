@@ -210,7 +210,7 @@ sub Encode {
   my $exploitSpace = $exploit->PayloadSpace || '';
   my $encodedPayload;
 
-  if($self->BadCharCheck($badChars, $prependEncoder)) {
+  if(Pex::Utils::BadCharCheck($badChars, $prependEncoder)) {
     # This should never happen unless the exploit coder is dumb, but might as well check
     $self->SetError('Bad Characters in prependEncoder');
     return;
@@ -254,7 +254,7 @@ sub Encode {
       next;
     }
 
-    if($self->BadCharCheck($badChars, $encodedShell)) {
+    if(Pex::Utils::BadCharCheck($badChars, $encodedShell)) {
       $self->PrintDebugLine(2, "$encoderName failed, bad chars in encoded payload");
       $self->PrintDebugLine(5, "encoded payload:");
       $self->PrintDebugLine(5, Pex::Utils::BufferC($encodedShell));
@@ -322,7 +322,7 @@ sub Encode {
       next;
     }
 
-    if($self->BadCharCheck($badChars, $nops)) {
+    if(Pex::Utils::BadCharCheck($badChars, $nops)) {
       $self->PrintDebugLine(2, "$nopName failed, bad chars in nops");
       next;
     }
@@ -393,18 +393,6 @@ sub ListCheck {
     }
   }
   return(1);
-}
-sub BadCharCheck {
-  my $self = shift;
-  my $badChars = shift || return(0);
-  my $string = shift || return(0);
-
-  foreach (split('', $badChars)) {
-    if(index($string, $_) != -1) {
-      return(1, $_);
-    }
-  }
-  return(0);
 }
 
 sub SaveConfig {
