@@ -16,7 +16,7 @@ my $info =
 {
 	'Name'         => 'Windows PassiveX ActiveX Injection Payload',
 	'Version'      => '$Revision$',
-	'Description'  => 'Executes an ActiveX control via hh.exe',
+	'Description'  => 'Executes an ActiveX control via a hidden IEXPLORE.EXE',
 	'Multistage'   => 0,
 	'Authors'      => [ 'skape <mmiller [at] hick.org>', ],
 	'UserOpts'     =>

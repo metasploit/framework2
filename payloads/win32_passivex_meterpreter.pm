@@ -16,7 +16,7 @@ my $info =
 {
 	'Name'         => 'Windows PassiveX ActiveX Inject Meterpreter Payload',
 	'Version'      => '$Revision$',
-	'Description'  => 'Executes an ActiveX control that downloads and executes Meterpreter',
+	'Description'  => 'Executes an ActiveX control via a hidden IEXPLORE.exe that downloads and executes Meterpreter',
 	'Multistage'   => 1,
 	'Authors'      => [ 'skape <mmiller [at] hick.org>', ],
 	'UserOpts'     =>
