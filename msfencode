@@ -191,13 +191,13 @@ Options:
 
 sub ListEncoders {
     my $col = Msf::ColPrint->new(2, 4);
-    print "\nEncoder Name      Arch             Description\n";
-    print "=============================================================\n\n";
+    $col->AddRow('Encoder Name', 'Arch', 'Description');
+    $col->AddHr('=');
     foreach my $name (sort(keys(%{$encoders})))
     {
         my $encoder = $encoders->{$name};
         $col->AddRow($name, join(', ',@{$encoder->Arch}), $encoder->Description);
     }
-    print $col->GetOutput . "\n";
+    print "\n" . $col->GetOutput . "\n";
     exit(0);
 }
