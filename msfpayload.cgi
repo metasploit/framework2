@@ -24,6 +24,8 @@ use POSIX;
 use Pex;
 use CGI qw/:standard/;
 
+Msf::UI::ActiveStateSucks();
+
 my $query = new CGI; 
 print $query->header();
 

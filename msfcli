@@ -25,6 +25,8 @@ use POSIX;
 use Msf::HandlerCLI;
 use Msf::TextUI;
 
+Msf::UI::ActiveStateSucks();
+
 my $ui = Msf::TextUI->new($Bin);
 
 my $exploits = { };

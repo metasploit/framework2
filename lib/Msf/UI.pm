@@ -414,4 +414,25 @@ sub SaveConfig {
   Msf::Config->SaveConfig($self->ConfigFile);
 }
 
+sub ActiveStateSucks {
+    return if $^O ne 'MSWin32';
+    
+    print 
+    q|
+
+   *** ACTIVESTATE PERL IS NOT SUPPPORTED ***
+
+If you would like to use the Metasploit Framework
+under the Windows platform, please install Cygwin.
+Cygwin is a free Unix emulation environment, you
+can obtain a copy online at the following address:
+
+http://www.cygwin.com/
+
+Please see docs/QUICKSTART.cygwin for more info.
+
+|;
+    exit(0);
+}
+
 1;

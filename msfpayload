@@ -25,6 +25,8 @@ use lib "$Bin/lib";
 use Msf::TextUI;
 use Pex;
 
+Msf::UI::ActiveStateSucks();
+
 
 my $ui = Msf::TextUI->new($Bin);
 $ui->SetTempEnv('_MsfPayload', 1);

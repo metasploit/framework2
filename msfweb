@@ -20,6 +20,10 @@ print STDERR "Sorry, this code is undergoing a rewrite for version 2.0\n";
 exit(0);
 
 __END__
+
+Msf::UI::ActiveStateSucks();
+
+
 require 5.6.0;
 
 use strict;
