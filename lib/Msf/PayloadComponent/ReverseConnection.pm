@@ -107,7 +107,20 @@ sub CheckHandler {
     }
     else
     {
-      $sock = $ready[0];
+      my $paddr;
+      my $buf;
+		my $ip;
+		my $port;
+
+      $sock  = $ready[0];
+      $paddr = recv($sock, $buf, 1024, MSG_PEEK);
+
+      if (defined($paddr))
+      {
+        ($port, $ip) = sockaddr_in($paddr);
+
+        $self->PipeRemoteSrc($sock->sockhost.":".$sock->sockport." <-> ". inet_ntoa($ip) .":". $port);
+      }
     }
 
     $self->PipeRemoteIn($sock);
