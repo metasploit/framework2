@@ -1,6 +1,8 @@
 Pre-Release Tasks
 ==================
 
+ - Verify that send() and Send() for UDP dont truncate
+
  - Fix /usr/bin/env errors for Solaris / perl 5.6
 
  - Finish writing msfencode 
