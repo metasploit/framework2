@@ -26,20 +26,23 @@ sub _PexCall {
 
 sub Timeout {
   my $self = shift;
+  return($self->_PexCall('Timeout', @_)) if(@_);
   my $timeout = $self->GetVar('ConnectTimeout');
-  $timeout = $self->SUPER::Timeout if(!defined($timeout));
+  $timeout = $self->_PexCall('Timeout') if(!defined($timeout));
   return($timeout);
 }
 sub RecvTimeout {
   my $self = shift;
+  return($self->_PexCall('RecvTimeout', @_)) if(@_);
   my $timeout = $self->GetVar('RecvTimeout');
-  $timeout = $self->SUPER::RecvTimeout if(!defined($timeout));
+  $timeout = $self->_PexCall('RecvTimeout') if(!defined($timeout));
   return($timeout);
 }
 sub RecvLoopTimeout {
   my $self = shift;
+  return($self->_PexCall('RecvLoopTimeout', @_)) if(@_);
   my $timeout = $self->GetVar('RecvLoopTimeout');
-  $timeout = $self->SUPER::RecvLoopTimeout if(!defined($timeout));
+  $timeout = $self->_PexCall('RecvLoopTimeout') if(!defined($timeout));
   return($timeout);
 }
 

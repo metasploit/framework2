@@ -33,9 +33,9 @@ sub Init {
 
 sub SSL {
   my $self = shift;
-  return($self->SUPER::SSL(@_)) if(@_);
+  return($self->_PexCall('SSL', @_)) if(@_);
   my $ssl = $self->GetVar('ForceSSL');
-  $ssl = $self->SUPER::SSL if(!defined($ssl));
+  $ssl = $self->_PexCall('SSL') if(!defined($ssl));
   return($ssl);
 }
 
