@@ -12,7 +12,6 @@ my $info =
     'Priv'         => 0,
     'OS'           => [ 'linux' ],
     'Multistage'   => 0,
-    'Type'         => 'impurity_reverse',
     'Size'         => '',
     'UserOpts'     =>
         {

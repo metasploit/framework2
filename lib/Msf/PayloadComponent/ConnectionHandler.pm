@@ -39,11 +39,13 @@ sub StopHandling {
   return($self->{'StopHandling'});
 }
 
+
 sub ParentHandler {
   my $self = shift;
   my $sigHandler = sub {
-    $self->StopHandling(1);
+    $self->SigHandler;
   };
+
   my ($osigTerm, $osigInt) = ($SIG{'TERM'}, $SIG{'INT'});
   $SIG{'TERM'} = $sigHandler;
   $SIG{'INT'} = $sigHandler;
@@ -108,6 +110,11 @@ sub ChildHandler {
   my $sock = shift;
   sleep(1);
   return;
+}
+
+sub SigHandler {
+  my $self = shift;
+  $self->StopHandling(1);
 }
 
 sub HandleConnection {

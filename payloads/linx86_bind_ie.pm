@@ -15,7 +15,6 @@ my $info =
   'Priv'         => 0,
   'OS'           => [ 'linux' ],
   'Multistage'   => 0,
-  'Type'         => 'bind_shell',
   'Size'         => 0,
 };
 
