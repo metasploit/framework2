@@ -19,7 +19,7 @@ my $info =
   'Authors'      => [ 'H D Moore <hdm [at] metasploit.com>', ],
   'Priv'         => 0,
   'OS'           => [ 'solaris', 'linux', 'bsd', 'hpux', 'aix' ],
-  'Keys'         => ['cmd_interact'],
+  'Keys'         => ['+cmd_interact'],
 };
 
 sub new {
