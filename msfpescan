@@ -71,8 +71,8 @@ my %pops =
     );
 
 
-getopts("f:j:c:sx:l:I:n", \%opts);
-if (! defined($opts{'f'}) || (! defined($opts{'j'}) && ! defined($opts{'c'}) && ! defined($opts{'x'}) && ! $opts{'s'})) { usage() }
+getopts("f:j:c:sx:a:l:I:n", \%opts);
+if (! defined($opts{'f'}) || (! defined($opts{'j'}) && ! defined($opts{'c'}) && ! defined($opts{'x'}) && ! defined($opts{'a'}) && ! $opts{'s'})) { usage() }
 
 my $filename = $opts{'f'};
 my $pe = Pex::PEInfo->new($filename);
@@ -170,6 +170,15 @@ if(exists($opts{'x'})) {
   exit(0);
 }
 
+elsif(exists($opts{'a'})) {
+  my $address = hex($opts{'a'});
+  my $length = exists($opts{'l'}) ? $opts{'l'} : 1;
+  my $loc = $address - $pe->OffsetToVirtual(0);
+  my $found = substr($data, $loc, $length);
+  printf("0x%.8x   %s\n", $pe->OffsetToVirtual($loc), hexOutput($found));
+}
+
+
 sub hexOutput {
   my $data = shift;
   my $string = unpack('H*', $data);
@@ -192,6 +201,7 @@ sub usage
     print STDERR "         -c  <data>   Search for custom byte pattern (ie 'FFE4')\n";
     print STDERR "         -s           Search for pop+pop+ret combinations\n";
     print STDERR "         -x  <regex>  Search for regex match\n";
+    print STDERR "         -a <address> Find code at VMA adress\n";
     print STDERR "Options:\n";
     print STDERR "         -l  <count>  Number of bytes to show after match\n";
     print STDERR "         -I  address  Use this ImageBase address instead of one from file\n";
