@@ -447,7 +447,7 @@ sub _GenerateSled {
     # Check to see if it's a one byte codelen type that wants SetRegs called
     if($self->_InsHandler(0, $index, $pos, $len, $data, $lastIndex)) {
       if($debug == 2) {
-        $synWeight = ($c1 / $c2) * 2;
+        $synWeight = ($c1 / $c2) ** 2;
       }
       next if(int(rand($synWeight)) != 0);
       $pos--;
