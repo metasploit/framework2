@@ -1333,8 +1333,7 @@ qq[
 				if ($fd eq $eout) {
 					my ($data, $buff);
 					while ($eout->read($buff, 1024)) { $data .= $buff }
-					print STDOUT "Writing data to cache file...\n";
-					$cache->printflush($data);
+					$cache->printflush(XSS_Filter($data));
 					$cache->sync;
 				}
 				
