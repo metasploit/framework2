@@ -23,7 +23,7 @@
 #	4. Admin
 #	5. Logs
 #   6. ShikataGaNai != random via msfweb payload encoder? !?!?!!
-#	7. web-based shell console
+
 
 require 5.6.0;
 
@@ -80,6 +80,8 @@ if ($args{a})
 
 print "[*] Starting Metasploit v$VERSION Web Interface on $host:$port...\n";
 
+# Set the cache directory
+$ui->SetTempEnv('_CacheDir', "$RealBin/data/msfweb");
 
 # Create the inital list of modules
 LoadAllModules();
@@ -172,14 +174,24 @@ sub ProcessIPCRequest {
 	
 	if ($cmd eq 'SHUTDOWN') {
 		$ipc->printflush("SHUTDOWN\n");
+		$self->SessionRemove($args[0]);
 	}
 	
 	if ($cmd eq 'GET') {
+		if (! $self->SessionCheck($args[0])) {
+			$ipc->printlfush("GET ERROR\n");
+			return;
+		}
+		
 		my $resp = $self->SessionDataGet($args[0]);
 		$ipc->printflush("GET ".unpack("H*", $resp)."\n");
 	}
 	
 	if ($cmd eq 'PUT') {
+		if (! $self->SessionCheck($args[0])) {
+			$ipc->printlfush("PUT ERROR\n");
+			return;
+		}	
 		my $resp = $self->SessionDataPut($args[0], pack("H*", $args[1]));
 		$ipc->printflush("PUT $resp\n");
 	}
@@ -191,13 +203,14 @@ sub ProcessIPCRequest {
 			$ipc->printflush("CMD OK\n");
 		}
 		else {
-			$ipc->printflush("CMD ERROR ($out)\n");
+			$ipc->printflush("CMD ERROR\n");
 		}
 
 	}
 	
 	if ($cmd eq 'LIST') {
-		$ipc->printflush("LIST 1,2,3,4,5,6,7,8,9\n");
+		my $list = join(",", $self->SessionList());
+		$ipc->printflush("LIST $list\n");
 	}
 }
 
@@ -430,100 +443,154 @@ sub SessionLoad {
 # Quick command bar to send commands to the shell
 sub SessionCommand { 
 	my $state	= shift;
+	my $ipc		= $state->{'parent'};	
 	my $sid		= $state->{'SID'} + 0;
+	my $cmd		= $state->{'CMD'};	
 	my $res		= qq
 [<html>
 <body bgcolor='white' text='black'>
 
-<form action='/SESSIONS#END' target='update'>
-<input type='hidden' name='MODE' value='UPDATE'>
+<form action='/SESSIONS' name='cmdform'>
+<input type='hidden' name='MODE' value='COMMAND'>
 <input type='hidden' name='SID' value='$sid'>
 <input type='text' name='CMD' size=80>
 <input type='submit' name='submit' onsumbit='javascript:document.form.CMD="";' value='Send Command'>
 <input type='submit' name='clear' value='Clear'>
 </form>
+<script language='javascript'>
+<!--
+	window.focus();
+	document.cmdform.CMD.focus();
+//-->
+</script>
 </body>
 </html>
 ];
+	my $cmd_data;
+	
+	# process the actual command
+	if ($cmd) {
+		$cmd .= "\n";
+		$ipc->printflush("CMD $sid ".unpack("H*", $cmd)."\n");
+		$cmd = XSS_Filter($cmd);
+		$cmd_data .= "<div class='textBold'>&gt;&gt; $cmd</div>\n";
+		my $raw = $ipc->getline;
+		
+		if ($raw =~ /ERROR/) {
+			$cmd_data.= "<div class='textBold'>!!! Session Closed !!!</div>\n";
+			$ipc->printflush("SHUTDOWN $sid\n");
+		}
+	}
+
 	return $res;
 }
 
 sub SessionUpdate { 
 	my $state	= shift;
 	my $ipc		= $state->{'parent'};
+	my $chi		= $state->{'client'};
 	my $sid		= $state->{'SID'} + 0;
 	my $cmd		= $state->{'CMD'};
 
+	# <meta http-equiv='refresh' content='10;URL=/SESSIONS?MODE=UPDATE&SID=$sid#END'>
 	my $res		= qq
 [<html>
     <head>
         <title>Metasploit Framework Web Console v$VERSION</title>
 		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
-		<meta http-equiv='refresh' content='10;URL=/SESSIONS?MODE=UPDATE&SID=$sid#END'>
     </head>
     <body bgcolor='white' text='black'>
 	<pre>
 ];
 
-	# Check for the cache file, open if needed
-	my $cache_file = sprintf("$RealBin/data/msfweb/cache%.4x.dat", $sid);
+	# Use chunked transfer mode to return partial responses
+	my $out = "HTTP/1.1 200 OK\r\n".
+	          "Connection: close\r\n".
+			  "Date: ". HTTPDate()."\r\n".
+			  "Content-Type: text/html\r\n".
+			  "Transfer-Encoding: chunked\r\n\r\n";
+	
+    $chi->Send($out);
+	$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+	
+	my $init = 0;
+	my $foff = 0;
+	my $idle = 0;
+	my $tick = time();
+	
+	my $cache_file = $ui->GetEnv('_CacheDir'). sprintf("/cache%.8x.dat", $sid);
 	my $cache_data;
-	
-	if ($state->{'clear'}) {
-		unlink($cache_file);
-	}
-	
-	if (open(CACHE, "<$cache_file")) {
-		while (<CACHE>) { $cache_data .= $_ }
-		close(CACHE);
-	}
 
-	my $raw;
+	if (! open(CACHE, "<$cache_file")) {
+		if (open(CACHE, ">>$cache_file")) {
+			$init = time;
+			print CACHE "<!-- INIT:$init -->\n";
+			close (CACHE);
+		} else { print STDERR "Could not write cache file: $!"; exit(0); }
+	}
+				
+	while (1) {
+		$res = undef;
+		
+		if (! $chi->Socket->connected) {
+			exit(0);
+		}
+		
+		# Read the init time stamp from the top
+		seek(FILE, 0, 0);
+		my $init_data = <CACHE>;
+		
+		# If it changed, reset the file markers
+		if ($init_data =~ m/\s+INIT:([0-9]{1,15})\s+/) {
+			if ($init != $1) {
+				$init = $1;
+				$foff = 0;
+				print STDERR "Resetting INIT markers ($init)\n";
+			}
+		}
 
-	# Ask the server for any pending data for this session
-	$ipc->printflush("GET $sid\n");
-	$raw = $ipc->getline;
-	
-	if ($raw =~ m/GET (\w+)$/) {
-		my $data = pack("H*", $1);
-		$data = XSS_Filter($data);
-		$cache_data .= $data;
-	}
-	
-	if (open(CACHE, ">$cache_file")) {
-		print CACHE $cache_data;
-		close(CACHE);
-	}
-	
-	if ($cmd) {
-		$cmd .= "\n";
-		$ipc->printflush("CMD $sid ".unpack("H*", $cmd)."\n");
-		$cmd = XSS_Filter($cmd);
-		$cache_data .= "<div class='textBold'>&gt;&gt; $cmd</div>";
-		$raw = $ipc->getline;
-	}
-	
-	# Give us time to execute the command and load the response
-	sleep(1);
+		# Seek to the last data marker
+		seek(CACHE, $foff, 0);
+		
+		# Read until we hit EOF
+		for ($foff = tell(CACHE); my $data = <CACHE>; $foff = tell(CACHE)) {
+			$res .= $data;
+		}
+		
+		# Clear stdio errors and seek to the last tell
+		seek(CACHE, $foff, 1);
+		seek(CACHE, $foff, 0);
 
-	# Ask the server for any pending data for this session
-	$ipc->printflush("GET $sid\n");
-	$raw = $ipc->getline;
-	
-	if ($raw =~ m/GET (\w+)$/) {
-		my $data = pack("H*", $1);
-		$data = XSS_Filter($data);
-		$cache_data .= $data;
+		# If there is a new data, display it
+		if ($res) {
+			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+			$tick = time();
+			$idle = 0;
+		}
+		
+		# Send a comment as a keep alive
+		if ($tick + 10 < time()) {
+			$res = "<!-- MSF -->";
+			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+			$tick = time();
+			$idle++;
+		}
+		
+		# If we have been idle for two minutes, shut down
+		if ($idle > 12) {
+			$res =  "<div class='textBold'>!!!: Idle timeout reached, closing down</div>\n";
+			$res .= "</pre></body></html>\n";
+			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+			exit(0);
+		}
+		
+		# Sleep a quarter of a second to reduce CPU usage 
+		select(undef, undef, undef, 0.25);
 	}
 	
-	if (open(CACHE, ">$cache_file")) {
-		print CACHE $cache_data;
-		close(CACHE);
-	}
-
-	$res .= $cache_data;
-	$res .= "</pre><br\><br\><a name='END'></a></body></html>";
-	return $res;
+	$res = "</pre></body></html>\n";
+	$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+	exit(0);
 }
 
 
@@ -1215,7 +1282,9 @@ qq[
 	
 	# The main process will keep our IPC open as long as we stay alive
 	if ($epid) {
-	
+		
+		my $cache_file = $ui->GetEnv('_CacheDir').sprintf("/cache%.8x.dat", $sid);
+		
 		# Wait for the go-ahead message from the parent
 		my $ok = $pout->getline;
 		exit if ! $ok;
@@ -1223,14 +1292,29 @@ qq[
 
 		if ($ok eq 'SHUTDOWN') {
 			print STDERR "Shutting down the shell server...\n";
+			$eout->close;
+			$pout->close;
 			exit(0);
 		}
 		
 		if ($ok ne 'SHELL') {
 			print STDERR "Unknown starting command: $ok\n";
+			$eout->close;
+			$pout->close;
 			exit(0);
 		}
 
+		unlink($cache_file);
+		if (! open (CACHE, ">$cache_file")) {
+			print STDERR "Could not open cache file: $!\n";
+			$eout->close;
+			$pout->close;
+		}
+		
+		my $cache = IO::Handle->new_from_fd(fileno(CACHE), "a+");
+		$cache->blocking(0);
+		$cache->autoflush(1);
+		
 		my $keepRunning = 1;
 		
 		while ($keepRunning) {
@@ -1249,7 +1333,9 @@ qq[
 				if ($fd eq $eout) {
 					my ($data, $buff);
 					while ($eout->read($buff, 1024)) { $data .= $buff }
-					$pout->printflush("PUT $sid ". unpack("H*", $data)."\n");
+					print STDOUT "Writing data to cache file...\n";
+					$cache->printflush($data);
+					$cache->sync;
 				}
 				
 				# Request from the server
@@ -1258,15 +1344,20 @@ qq[
 					chomp ($data);
 					
 					if ($data eq 'SHUTDOWN') {
-						$eout->close;
-						$pout->close;
 						$keepRunning = 0;
 						next;
 					}
 					
+					# Command request from a client
 					if ($data =~ m/CMD\s+(.*)/) {
 						my $bytes = pack("H*", $1);
-						$eout->printflush($bytes);	
+						$eout->printflush($bytes);
+						
+						# write command to cache file
+						$bytes = XSS_Filter($bytes);
+						my $out = "<div class='textBold'>&gt;&gt; $bytes</div>\n";
+						$cache->printflush($out);
+						$cache->sync;
 						next;
 					}
 					
@@ -1275,6 +1366,9 @@ qq[
 			}
 		}
 		
+		# Shut down the service...
+		$eout->close;
+		$pout->close;
 		exit(0);
 	}
 	
@@ -1574,6 +1668,39 @@ sub SessionIPC {
 	return if ! exists($self->{'_Session'}->{$sid});
 	$self->{'_Session'}->{$sid}->{'IPC'} = shift if @_;
 	return $self->{'_Session'}->{$sid}->{'IPC'};
+}
+
+sub SessionRemove { 
+	my $self = shift;	
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+	
+	# shut down the pipe process
+	if ((my $pid = $self->SessionPipePID($sid))) {
+		print STDERR "Killing session PID $pid\n";
+		kill(9, $pid);
+	}
+	
+	# shut down the ipc channel
+	eval { $self->SessionIPC->close };
+	
+	# remove the entry from the session list
+	delete($self->{'_Session'}->{$sid});
+
+	return;
+}
+
+sub SessionList { 
+	my $self = shift;
+	return keys %{ $self->{'_Session'} };
+}
+
+sub SessionCheck { 
+	my $self = shift;	
+	my $sid  = shift;
+	return 0 if ! exists($self->{'_Session'}->{$sid});
+	return 1;
 }
 
 sub IsError {
