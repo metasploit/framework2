@@ -424,7 +424,8 @@ sub ProcessWebRequest {
 		}						
 
         $res .= "<table width='100%' cellspacing=0 border=0 cellpadding=0>\n";
-		$res .=" <tr><td id='moduleIcons' align='center'>$icons</td><td id='moduleName'><div class='textBoldBright'>$mname</div></td></tr>\n";
+		$res .= "<tr><td id='moduleIcons' align='center'>$icons</td>";
+		$res .= "<td id='moduleName'><div class='textBold'>$mname</div></td></tr>\n";
 		$res .= "</table><br>\n";
     }
 
@@ -969,17 +970,13 @@ sub ModuleInfo {
 	my $module = shift;
 	my $res;
 	
-	my $desc = $module->Description();
-    $desc =~ s/\</\&lt;/g;
-    $desc =~ s/\>/\&gt;/g;
+	my $desc = XSS_Filter($module->Description);
     
+	my ($rev)   = $module->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
     $res .= "<table align='center' cellpadding=6 border=0 cellspacing=0 width='95%'>\n";
     $res .= "<tr><td align='right' width=80 class='textBold'>Name:</td>";
-	$res .= "<td class='textNormal'>" . $module->Name() . "</td></tr>\n";
-	
-    my ($rev)   = $module->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
-    $res .= "<tr><td align='right' width=80 class='textBold'>Version:</td>";
-	$res .= "<td class='textNormal'>" . $rev . "</td></tr>\n";
+	$res .= "<td class='textNormal'>" . $module->SelfEndName() . " v$rev</td></tr>\n";
+
 
     my @authors = @{$module->Authors()};
     my $author = shift(@authors);
