@@ -30,6 +30,11 @@ sub _Initalize {
   $self->{'Config'} = Msf::Config->new($self->{'ConfigDir'});
 }
 
+sub Config {
+    my $self = shift;
+    return $self->{'Config'};
+}
+
 sub LoadExploits {
     my $self = shift;
     my $dir = @_ ? shift : $self->_BaseDir . '/exploits';
