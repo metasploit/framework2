@@ -59,25 +59,30 @@ if (! $action)
     my $p = $payloads->{$sel};
     
     DisplayHeader("Payload Information");
-    print "\n";
-    print "        Name: $sel\n";
-    print "     Version: " . $p->Version . "\n";
-    print "      Author: " . $p->Author . "\n";
-    print "Architecture: " . join(" ", @{$p->Arch}) . "\n";
-    print "  Privileged: " . ($p->Priv ? "Yes" : "No") . "\n";
-    print "Supported OS: " . join(" ", @{$p->OS()}) . "\n";
-    print "Handler Type: " . $p->Type . "\n";
-    print "  Total Size: " . $p->Size . "\n\n";
     
+    print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
+    PrintRow("Name",            $sel);
+    PrintRow("Version",         $p->Version);
+    PrintRow("Author",          $p->Author);
+    PrintRow("Architecture",    join(" ", @{$p->Arch}));
+    PrintRow("Privileged",      ($p->Priv ? "Yes" : "No"));
+    PrintRow("Supported OS",    join(" ", @{$p->OS()}));
+    PrintRow("Handler Type",    $p->Type);
+    PrintRow("Total Size",      $p->Size);
+    print "</table><br>\n";
+
     if (scalar(keys(%{$p->UserOpts})))
     {
+        print "Payload Options<br>\n";
+        print "<table width=800 cellspacing=0 cellpadding=4 border=0>\n";
+        print "<tr><td>Name</td><td>Required</td><td>Description</td><td>Default</td></tr>\n";
+        
         foreach my $o (keys(%{$p->UserOpts}))
         {
-            print "\t" . $o . (" " x (20 - length($o))) . ($p->UserOpts->{$o}->[0] ? "Y" : "N") .
-                  "\t" . $p->UserOpts->{$o}->[1] . "\t" . $p->UserOpts->{$o}->[2] . "\n";
+            PrintRow($o, ($p->UserOpts->{$o}->[0] ? "Y" : "N"), $p->UserOpts->{$o}->[1], $p->UserOpts->{$o}->[2]);
         }
+        print "</table><br>\n";
     }
-    print "\n";
     DisplayFooter();
     exit(0);
 }
@@ -100,6 +105,13 @@ sub DisplayPayloads {
     }
     print "<input type='submit' value='Select Payload'><br>\n";
     print $query->end_form;
+}
+
+sub PrintRow {
+    print "<tr>";
+    print "<td align='right'><b>" . shift(@_) . ":</b></td>";
+    foreach my (@_) { print "<td>$_</td>" }
+    print "</tr>\n";
 }
 
 __DATA__
