@@ -497,7 +497,8 @@ sub ExploitExec
 sub HTTPRequest {
     my $cli = shift;
     my $sel = IO::Select->new($cli);
-    my ($res, $url, $state);
+    my ($url, $state);
+    my $res = "";
     
     $cli->blocking(0);
     

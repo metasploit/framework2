@@ -23,6 +23,9 @@ my $defaults =
   'Multistage'  => 0,
   'Type'        => '',
   'Size'        => 0,
+  'Append'      => '',
+  'Prepend'     => '',
+  'PrependEncoder'  => '',  
 };
 
 sub new {

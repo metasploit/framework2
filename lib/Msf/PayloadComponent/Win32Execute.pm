@@ -41,14 +41,16 @@ sub Build {
   return($self->SUPER::Build . $commandString . "\x00");
 }
 
+# This gets overloaded by subclass
 sub CommandString {
   my $self = shift;
-  return;
+  return "";
 }
 
 sub Size {
   my $self = shift;
-  return($self->SUPER::Size + length($self->CommandString) + 1);
+  my $cmd  = $self->CommandString || '';
+  return($self->SUPER::Size + length($cmd) + 1);
 }
 
 

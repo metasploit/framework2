@@ -205,9 +205,9 @@ sub Encode {
   my $payloadArch = $payload->Arch;
   my $payloadOS = $payload->OS;
 
-  my $badChars = $exploit->PayloadBadChars;
-  my $prependEncoder = $exploit->PayloadPrependEncoder;
-  my $exploitSpace = $exploit->PayloadSpace;
+  my $badChars = $exploit->PayloadBadChars || '';
+  my $prependEncoder = $exploit->PayloadPrependEncoder || '';
+  my $exploitSpace = $exploit->PayloadSpace || '';
   my $encodedPayload;
 
   if($self->BadCharCheck($badChars, $prependEncoder)) {
@@ -238,7 +238,7 @@ sub Encode {
       $self->PrintDebugLine(4, "encoderOS: " . join(',', @{$encoderOS}));
       next;
     }
-
+    
     my $rawShell = $exploit->PayloadPrepend . $payload->Build . $exploit->PayloadAppend;
     my $encodedShell = $encoder->Encode($rawShell, $badChars);
 
@@ -396,8 +396,9 @@ sub ListCheck {
 }
 sub BadCharCheck {
   my $self = shift;
-  my $badChars = shift;
-  my $string = shift;
+  my $badChars = shift || return(0);
+  my $string = shift || return(0);
+
   foreach (split('', $badChars)) {
     if(index($string, $_) != -1) {
       return(1, $_);

