@@ -1,6 +1,6 @@
 ;;
 ;
-;        Name: osx_shell
+;        Name: stage_tcp_shell.asm
 ;   Qualities: Can Have Nulls
 ;   Platforms: MacOS X / PPC
 ;     Authors: H D Moore <hdm [at] metasploit.com>

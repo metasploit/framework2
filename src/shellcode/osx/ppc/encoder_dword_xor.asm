@@ -1,6 +1,6 @@
 ;;
 ;
-;        Name: osx_dword_xor
+;        Name: encoder_dword_xor
 ;   Qualities: Null-Free Decoder
 ;   Platforms: MacOS X / PPC
 ;     Authors: H D Moore <hdm [at] metasploit.com>

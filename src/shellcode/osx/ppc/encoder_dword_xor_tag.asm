@@ -1,6 +1,6 @@
 ;;
 ;
-;        Name: osx_dword_xor_tag
+;        Name: encoder_dword_xor_tag
 ;   Qualities: Null-Free Decoder
 ;   Platforms: MacOS X / PPC
 ;     Authors: H D Moore <hdm [at] metasploit.com>
@@ -23,8 +23,6 @@
 ;;
 
 ;;; Based on Dino Dai Zovi's PPC decoder (20030821) ...
-
-;;; Based on Dino Dai Zovi's PPC decoder (20030821) ...
 ;;; This encoder can't deal with null DWORDS in the payload
 
 .globl	main
@@ -39,14 +37,14 @@ _main:
 	subi	r31, r31, 0x3030 - 60
 	addi	r5, r5, 0x3030
 
-	lis	r6, hi16(0x01020304)
-	ori	r6, r6, lo16(0x01020304)
-	
+	lis		r6, hi16(0x01020304)
+	ori		r6, r6, lo16(0x01020304)
+
 Lxorlp:	
 	;;; Load a word, xor it, store it
-	lwz	r8, 0x3030(r31)
+	lwz		r8, 0x3030(r31)
 	xor.	r4, r8, r6
-	stw	r4, 0x3030(r31)
+	stw		r4, 0x3030(r31)
 
 	;;; Do the self-modifying code song and dance
 	dcbf	r5, r31			; Flush data cache block to memory
@@ -55,20 +53,20 @@ Lxorlp:
 
 	;;; Increment the data pointer
 	subi	r30, r5, 0x3030 - 4
-	add	r31, r31, r30
+	add		r31, r31, r30
 
 	;;; Branch once we reach the XOR key tag
-	bne	Lxorlp			; Branch if we xor'd our own key
+	bne		Lxorlp			; Branch if we xor'd our own key
 	.long	0x4cff012c		; (isync) Toss prefetched instructions
 
 payload:
 	;;; Insert XORed payload here
 	
-	.long	(0x7fe00008 ^ 0x01020304)
-	.long	(0x7fe00008 ^ 0x01020304)
-	.long	(0x7fe00008 ^ 0x01020304)
-	.long	(0x7fe00008 ^ 0x01020304)
-	.long	(0x7fe00008 ^ 0x01020304)
+	;.long	(0x7fe00008 ^ 0x01020304)
+	;.long	(0x7fe00008 ^ 0x01020304)
+	;.long	(0x7fe00008 ^ 0x01020304)
+	;.long	(0x7fe00008 ^ 0x01020304)
+	;.long	(0x7fe00008 ^ 0x01020304)
 
 	;; Insert XOR key here
 	.long	0x01020304

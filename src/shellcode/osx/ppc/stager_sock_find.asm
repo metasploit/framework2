@@ -1,6 +1,6 @@
 ;;
 ;
-;        Name: osx_findrecv
+;        Name: stager_sock_find
 ;   Qualities: Can Have Nulls
 ;   Platforms: MacOS X / PPC
 ;     Authors: H D Moore <hdm [at] metasploit.com>
