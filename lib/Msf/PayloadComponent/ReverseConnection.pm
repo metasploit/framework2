@@ -22,6 +22,16 @@ sub new {
   return($self);
 }
 
+sub Protocol
+{
+  my $self = shift;
+  my $proto = $self->_Info->{'Protocol'};
+
+  $proto = 'tcp' if not defined($proto);
+
+  return $proto;
+}
+
 sub ListenerSock {
   my $self = shift;
   $self->{'ListenerSock'} = shift if(@_);
@@ -54,14 +64,23 @@ sub SetupHandler {
   return($self->NinjaSetupHandler) if($self->NinjaWanted);
 
   my $port = $self->GetVar('LPORT');
+  my $sock;
 
-  my $sock = IO::Socket::INET->new(
-    'LocalPort' => $port,
-    'Proto'     => 'tcp',
-    'ReuseAddr' => 1,
-    'Listen'    => 5,
-    'Blocking'  => 0,
-  );
+  if ($self->Protocol eq 'udp')
+  {
+    $sock = IO::Socket::INET->new(
+      'LocalPort' => $port,
+      'Proto'     => 'udp');
+  }
+  else
+  {
+    $sock = IO::Socket::INET->new(
+      'LocalPort' => $port,
+      'Proto'     => 'tcp',
+      'ReuseAddr' => 1,
+      'Listen'    => 5,
+      'Blocking'  => 0);
+  }
 
   if(!$sock) {
     $self->SetError("Could not start listener: $!");
@@ -80,7 +99,17 @@ sub CheckHandler {
 
   my @ready = $self->ListenerSelector->can_read(.5);
   if(@ready) {
-    my $sock = $ready[0]->accept();
+    my $sock;
+	 
+    if($self->Protocol() eq 'tcp')
+    {
+      $sock = $ready[0]->accept();
+    }
+    else
+    {
+      $sock = $ready[0];
+    }
+
     $self->PipeRemoteIn($sock);
     $self->PipeRemoteOut($sock);
     return(1);
