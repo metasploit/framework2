@@ -47,7 +47,10 @@ sub shell_proxy
     
     $b->send("[*] Proxy shell started on port ". $s->sockport ."\n");
     $b->send("[*] Please click <a href='telnet://" . Pex::InternetIP() .":".$s->sockport."'>here</a>.<br>\n");
-
+    $b->send("<br></body></html>");
+    $b->shutdown(2);
+    $b->close();
+    
     my $proxy = fork(); 
     return $proxy if $proxy;
 
