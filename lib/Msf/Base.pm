@@ -71,6 +71,11 @@ sub _OverridePrint {
   $Msf::Base::_OverridePrint = shift if(@_);
   return($Msf::Base::_OverridePrint);
 }
+sub _OverridePrintStderr {
+  my $self = shift;
+  $Msf::Base::_OverridePrintStderr = shift if(@_);
+  return($Msf::Base::_OverridePrintStderr);
+}
 sub _OverridePrintLine {
   my $self = shift;
   $Msf::Base::_OverridePrintLine = shift if(@_);
@@ -307,6 +312,13 @@ sub Print {
   }
   print STDOUT @_;
 }
+sub Print {
+  my $self = shift;
+  if(defined($self->_OverridePrintStderr)) {
+    return(&{$self->_OverridePrintStderr}($self, @_));
+  }
+  print STDERR @_;
+}
 
 sub PrintLine {
   my $self = shift;
@@ -322,7 +334,7 @@ sub PrintDebug {
   if(defined($self->_OverridePrintDebug)) {
     return(&{$self->_OverridePrintDebug}($self, $level. @_));
   }
-  $self->Print(@_) if($self->DebugLevel >= $level);
+  $self->PrintStderr(@_) if($self->DebugLevel >= $level);
 }
 sub PrintDebugLine {
   my $self = shift;

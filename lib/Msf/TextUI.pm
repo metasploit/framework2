@@ -187,6 +187,13 @@ sub DumpPayloadSummary {
         my $reqd = $mopts{$k}->[0] ? "required" : "optional";
         $output .= "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
     }
+    $output .= "\nAdvanced Options:\n";
+    my %aopts = %{$p->Advanced};
+    foreach my $k (sort(keys(%aopts)))
+    {
+        my $reqd = $mopts{$k}->[0] ? "required" : "optional";
+        $output .= "    $reqd:" .  (" " x 13) . $k . (" " x (15 - length($k))) . $mopts{$k}->[2] . "\n";
+    }
     
     my $desc = $self->WordWrap($p->Description, 4, 60);
     $desc =~ s/\n/\n    /g;

@@ -33,7 +33,7 @@ Msf::UI::ActiveStateSucks();
 
 my $ui = Msf::TextUI->new($Bin);
 my $VERSION = $ui->Version;
-$ui->SetTempEnv('DebugLevel', 0);
+#$ui->SetTempEnv('DebugLevel', 0);
 
 my $payloadArch = ['x86'];
 my $payloadOS = ['linux'];
@@ -53,6 +53,10 @@ foreach my $key (keys(%{$encodersIndex})) {
 $ui->SetTempEnv('_Encoders', $encodersIndex);
 
 getopts("i:a:o:t:b:e:s:lh", \%opts);
+
+foreach my $opt (@ARGV) {
+  $ui->SetTempEnv(split('=', $opt));
+}
 
 if ($opts{'h'}) {
     Usage();
