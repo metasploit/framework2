@@ -48,8 +48,8 @@ my $payloadsIndex = $ui->LoadPayloads;
 my $encoders = $ui->LoadEncoders;
 my $nops     = $ui->LoadNops;
 
-$ui->SetTempEnv('_Exploits', $exploitsIndex);
-$ui->SetTempEnv('_Payloads', $payloadsIndex);
+$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
 $ui->SetTempEnv('_Encoders', $encoders);
 $ui->SetTempEnv('_Nops', $nops);
 
@@ -79,33 +79,36 @@ if(!defined($mod) || !defined($exploits->{$mod})) {
 
 my $exploit = $exploits->{$mod};
 
+my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
 
 my $payloadName = $ui->GetEnv('PAYLOAD');
-my $payload = $payloads->{$payloadName};
+my $payload = $validPayloads->{$payloadName};
 
-print "HAH\n" if(defined($payloadName));
+# Mmmmm, candy
+$ui->SetTempEnv('_Exploits', $exploits);
+$ui->SetTempEnv('_Payloads', $payloads);
+$ui->SetTempEnv('_Exploit', $exploit);
+$ui->SetTempEnv('_PayloadName', $payloadName);
+$ui->SetTempEnv('_Payload', $payload);
+$ui->SetTempEnv('_ValidPayloads', $validPayloads);
 
 if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
 {
   $ui->PrintLine('[*] Invalid payload specified.');
-  Payloads();
+  $ui->Payloads;
   exit(0);
 }
 
-# Mmmmm, candy
 
-$ui->SetTempEnv('_Exploit', $exploit);
-$ui->SetTempEnv('_PayloadName', $payloadName);
-$ui->SetTempEnv('_Payload', $payload);
 
 # Main Dispatch
 for(uc($ARG[0])) {
-  $_ eq 'S' && do { Summary(); last; };
-  $_ eq 'O' && do { Options(); last; };
-  $_ eq 'A' && do { Advanced(); last; };
-  $_ eq 'P' && do { Payloads(); last; };
-  $_ eq 'T' && do { Targets(); last; };
-  $_ eq 'C' && do { Check(); last; };
+  $_ eq 'S' && do { $ui->Summary; last; };
+  $_ eq 'O' && do { $ui->Options; last; };
+  $_ eq 'A' && do { $ui->AdvancedOptions; last; };
+  $_ eq 'P' && do { $ui->Payloads; last; };
+  $_ eq 'T' && do { $ui->Targets; last; };
+  $_ eq 'C' && do { $ui->Check; last; };
   $_ eq 'E' && do { Exploit(); last; };
   Usage();
 }
@@ -113,65 +116,6 @@ exit(0);
 
 
 ################################################################################
-
-sub Summary {
-  print $ui->DumpExploitSummary($exploit) . "\n";
-}
-
-sub Options {
-  if (defined($exploit->Payload) && ! $payload)
-  {
-    die("[*] You must specify a payload before viewing the available options.\n");
-  }
-  print "============\n= Options\n\n";
-  print $ui->DumpOptions(2, 'Exploit', $exploit);
-
-  print $ui->DumpOptions(2, 'Payload', $payload) if(defined($exploit->Payload));
-}
-
-sub Advanced {
-  if (defined($exploit->Payload) && ! $payload) {
-    die("[*] You must specify a payload before viewing the available options.\n");
-  }
-
-  print "============\n= Advanced Options\n\n";
-  print $ui->DumpAdvancedOptions(2, 'Payload', $payload) if(defined($exploit->Payload));
-  print $ui->DumpAdvancedOptions(2, 'Exploit', $exploit);
-}
-
-sub Payloads {
-  if (!defined($exploit->Payload)) {
-    die("[*] This exploit does not use payloads.\n");
-  }
-
-  my $match = $ui->MatchPayloads($exploit, $payloads);
-
-  print "============\n= Payloads\n\n";
-  print $ui->DumpPayloads(2, $match) . "\n";
-}
-
-sub Targets {
-  my @targets = $exploit->Targets;
-  if (! defined(@targets) || ! scalar(@targets))
-  {
-    die("[*] This exploit does not define any targets.\n");
-  }
-
-  print "============\n= Targets\n\n";
-  for(my $i = 0; $i < scalar(@targets); $i++)
-  {
-    printf ("  %d  $targets[$i]\n", $i);
-  }
-  print "\n";
-}
-
-sub Check {
-  $exploit->Validate; # verify that all required exploit options have been set
-  return if($exploit->PrintError);
-  my $res = $exploit->Check;
-  return if($exploit->PrintError);
-  print "Check:   $res\n";
-}
 
 sub Exploit {
     if (defined($exploit->Payload) && !$payload) {

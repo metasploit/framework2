@@ -162,4 +162,126 @@ sub DumpPayloadSummary {
     return($output);
 }
 
+
+
+
+# ===
+sub Summary {
+  my $self = shift;
+  my $exploit = $self->GetTempEnv('_Exploit');
+  print $self->DumpExploitSummary($exploit) . "\n";
+}
+
+sub Payloads {
+  my $self = shift;
+  my $exploit = $self->GetTempEnv('_Exploit');
+  my $payloads = $self->GetTempEnv('_Payloads');
+
+  if (!$exploit->Payload) {
+    $self->PrintLine('[*] This exploit does not use payloads.');
+    return;
+  }
+
+  my $match = $self->MatchPayloads($exploit, $payloads);
+
+  $self->PrintLine;
+  $self->PrintLine('Metasploit Framework Usable Payloads');
+  $self->PrintLine('====================================');
+  $self->PrintLine;
+  print $self->DumpPayloads(2, $match) . "\n";
+}
+
+sub Options {
+  my $self = shift;
+  my $exploit = $self->GetTempEnv('_Exploit');
+  my $payload = $self->GetTempEnv('_Payload');
+  my $payloadName = $self->GetTempEnv('_PayloadName');
+
+  if($exploit->Payload && !defined($payloadName)) {
+    $self->PrintLine('[*] You must specify a payload before viewing the available options.');
+    return;
+  }
+
+  if($exploit->Payload && !$payload) {
+    $self->PrintLine("[*] Invalid payload specified: $payloadName");
+    return;
+  }
+
+  $self->PrintLine;
+  $self->PrintLine('Exploit and Payload Options');
+  $self->PrintLine('===========================');
+  $self->PrintLine;
+  print $self->DumpOptions(2, 'Exploit', $exploit);
+  print $self->DumpOptions(2, 'Payload', $payload) if($exploit->Payload);
+  $self->PrintLine;
+  $self->PrintLine;
+}
+
+sub AdvancedOptions {
+  my $self = shift;
+  my $exploit = $self->GetTempEnv('_Exploit');
+  my $payload = $self->GetTempEnv('_Payload');
+  my $payloadName = $self->GetTempEnv('_PayloadName');
+
+  if($exploit->Payload && !defined($payloadName)) {
+    $self->PrintLine('[*] You must specify a payload before viewing the available options.');
+    return;
+  }
+
+  if($exploit->Payload && !$payload) {
+    $self->PrintLine("[*] Invalid payload specified: $payloadName");
+    return;
+  }
+
+  $self->PrintLine;
+  $self->PrintLine('Exploit and Payload Advanced Options');
+  $self->PrintLine('====================================');
+  $self->PrintLine;
+  print $self->DumpAdvancedOptions(2, 'Payload', $payload) if($exploit->Payload);
+  print $self->DumpAdvancedOptions(2, 'Exploit', $exploit);
+  $self->PrintLine;
+  $self->PrintLine;
+}
+
+sub Targets {
+  my $self = shift;
+  my $exploit = $self->GetTempEnv('_Exploit');
+
+  my @targets = $exploit->Targets;
+  if(!@targets) {
+    $self->PrintLine('[*] This exploit does not define any targets.');
+    return;
+  }
+
+  $self->PrintLine;
+  $self->PrintLine('Supported Exploit Targets');
+  $self->PrintLine('=========================');
+  $self->PrintLine;
+  for(my $i = 0; $i < scalar(@targets); $i++)
+  {
+    $self->PrintLine(sprintf("  %d  $targets[$i]", $i));
+  }
+  $self->PrintLine;
+}
+
+
+sub Check {
+  my $self = shift;
+  my $exploit = $self->GetTempEnv('_Exploit');
+
+  $exploit->Validate; # verify that all required exploit options have been set
+  return if($exploit->PrintError);
+
+  my $res = $exploit->Check;
+  return if($exploit->PrintError);
+  print "Check:   $res\n";
+}
+
+
+
+
+
+
+
+
 1;

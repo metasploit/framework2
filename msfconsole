@@ -426,113 +426,41 @@ sub eShow
 
 }
 
-sub ePayloads
-{
-    my $exploit = $state->{'Exploit'}->{'Exploit'};
-    my $exploitPayloads = xValidPayloads($exploit);
-    
-    if ($exploit->Payload)
-    {
-        print "\nMetasploit Framework Usable Payloads\n";
-        print   "====================================\n\n";
-        print $ui->DumpPayloads(2, $exploitPayloads) . "\n";
-    } else {
-         xMsg("payloads", "this exploit does not require a payload");
-    }
+sub ePayloads {
+  SaveTemp();
+  FillTemp();
+  $ui->Payloads;
+  RestoreTemp();
+}
+sub eOptions {
+  SaveTemp();
+  FillTemp();
+  $ui->Options;
+  RestoreTemp();
+}
+sub eAdvanced {
+  SaveTemp();
+  FillTemp();
+  $ui->AdvancedOptions;
+  RestoreTemp();
+}
+sub eTargets  {
+  SaveTemp();
+  FillTemp();
+  $ui->Targets;
+  RestoreTemp();
 }
 
-sub eOptions
-{
-    my $exploit = $state->{'Exploit'}->{'Exploit'};
-    my $exploitPayloads = xValidPayloads($exploit);
-
-    my $payload = $ui->GetEnv('PAYLOAD');
-
-    if ($exploit->Payload && ! $payload)
-    {
-        xMsg("options", "a payload must be specified first: 'set PAYLOAD <payloadname>'");
-        return;
-    }
-    
-    if ($exploit->Payload && ! exists($payloads->{$payload}))
-    {
-        xMsg("options", "invalid payload specified: $payload");
-        return;
-    }
-    
-    $payload = $payloads->{$payload};
-
-    print "\nExploit and Payload Options\n";
-    print   "============================\n\n";
-    print $ui->DumpOptions(2, 'Exploit', $exploit);
-    print $ui->DumpOptions(2, 'Payload', $payload) if(defined($payload));
-    print "\n\n";
-}
-
-sub eAdvanced
-{
-    my $exploit = $state->{'Exploit'}->{'Exploit'};
-    my $exploitPayloads = xValidPayloads($exploit);
-
-    my $payload = $ui->GetEnv('PAYLOAD');
-
-    if ($exploit->Payload && ! $payload)
-    {
-        xMsg("advanced", "a payload must be specified first: 'set PAYLOAD <payloadname>'");
-        return;
-    }
-    
-    if ($exploit->Payload && ! exists($payloads->{$payload}))
-    {
-        xMsg("advanced", "invalid payload specified: $payload");
-        return;
-    }
-    
-    $payload = $payloads->{$payload};
-
-    print "\nExploit and Payload Advanced Options\n";
-    print   "====================================\n\n";
-    print $ui->DumpAdvancedOptions(2, 'Payload', $payload) if(defined($payload));
-    print $ui->DumpAdvancedOptions(2, 'Exploit', $exploit);
-    print "\n\n";
-}
-
-sub eTargets 
-{
-    my $exploit = $state->{'Exploit'}->{'Exploit'};
-    my @targets = $exploit->Targets;
-    if (! @targets)
-    {
-        xMsg("targets", "this exploit has no targets defined");
-        return;
-    }
-    
-    print "\nSupported Exploit Targets\n";
-    print   "=========================\n\n";
-    
-    for(my $i = 0; $i < scalar(@targets); $i++)
-    {
-        printf ("  %d  $targets[$i]\n", $i);
-    }
-    print "\n\n";
-}
-
-sub eCheck   
-{ 
-    my $exploit = $state->{'Exploit'}->{'Exploit'};
-    
-    $exploit->Validate;
-    return if($exploit->PrintError);
-
-    my $res = $exploit->Check;
-    return if($exploit->PrintError);
-
-    print "Check: $res\n"
+sub eCheck { 
+  SaveTemp();
+  FillTemp();
+  $ui->Check;
+  RestoreTemp();
 }
 
 sub eExploit 
 {
-    $ui->SaveTempEnv('_Save');
+    SaveTemp();
 
     $ui->SetTempEnv('_Exploits', $exploits);
     $ui->SetTempEnv('_Payloads', $payloads);
@@ -650,8 +578,7 @@ sub eExploit
     print "\n";
     
 CLEANUP:
-    $ui->LoadTempEnv('_Save');
-    $ui->DeleteTempEnv('_Save');
+    RestoreTemp();
 }
 
 
@@ -916,4 +843,32 @@ sub xTabCompletion
         # If no names matched, then return NULL.
         return undef;
     }
+}
+
+sub SaveTemp {
+  $ui->SaveTempEnv('_Save');
+}
+
+sub RestoreTemp {
+  $ui->LoadTempEnv('_Save');
+  $ui->DeleteTempEnv('_Save');
+}
+
+sub FillTemp {
+  $ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+  $ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+  $ui->SetTempEnv('_Encoders', $encoders);
+  $ui->SetTempEnv('_Nops', $nops);
+
+  $ui->SetTempEnv('_Exploits', $exploits);
+  $ui->SetTempEnv('_Payloads', $payloads);
+
+  my $exploit = $state->{'Exploit'}->{'Exploit'};
+  $ui->SetTempEnv('_Exploit', $exploit);
+
+  my $payloadName = $ui->GetEnv('PAYLOAD');
+  $ui->SetTempEnv('_PayloadName', $payloadName);
+  my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
+  $ui->SetTempEnv('_Payload', $validPayloads->{$payloadName});
+  $ui->SetTempEnv('_ValidPayloads', $validPayloads);
 }
