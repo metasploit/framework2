@@ -11,7 +11,7 @@ my $info =
 {
     'Authors'      => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
     'Arch'         => [ 'x86' ],
-    'Priv'         => 1,
+    'Priv'         => 0,
     'OS'           => [ 'win32' ],
     'Win32Payload' =>
     {
