@@ -86,6 +86,9 @@ dup_loop:
 %endif
 	jns  dup_loop
 
+	%undef  ASSUME_REG_EAX
+	%define ASSUME_REG_EAX 0
+
 	%endif
 
 execve:

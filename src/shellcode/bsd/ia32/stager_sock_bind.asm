@@ -64,10 +64,14 @@ listen:
 accept:
 	push edx
 	push ebx
+%ifndef USE_SINGLE_STAGE
 	mov  dh, 0x10
+%endif
 	push edx
 	mov  al, 30
 	int  0x80
+
+%ifndef USE_SINGLE_STAGE
 
 read:
 	push ecx
@@ -82,3 +86,13 @@ read:
 	pop  eax
 	int  0x80
 	ret
+
+%else
+
+%ifdef FD_REG_EBX
+	xchg eax, ebx
+%else
+	xchg eax, edi
+%endif
+
+%endif
