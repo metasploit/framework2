@@ -184,11 +184,7 @@ sub Error {
   my $self = shift;
   $self->PrintLine(@_);
 }
-#sub FatalError {
-#  my $self = shift;
-#  $self->PrintLine(@_);
-#  exit(1);
-#}
+
 sub PrintLine {
   my $self = shift;
   if(defined($self->{'PrintLine'})) {
