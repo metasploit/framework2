@@ -165,7 +165,6 @@ foreach (keys(%{$upd})) {
         delete($upd->{$_});
     }
 
-    print STDERR "$_ => ".$now->{$_} ." ?= ". $new->{$_}."\n";
     # Ignore updates we already have
     if ($now->{$_} eq $new->{$_}) {
         delete($upd->{$_});
@@ -236,7 +235,7 @@ foreach my $entry (keys(%{$upd})) {
     if ($new->{$entry} ne md5_hex($data)) {
         print "$entry: ". $new->{$entry} ." != " .md5_hex($data)."\n";
         my $errmsg = $data ? 'checksum mismatch' : 'download failed';
-        print "[*] Error updating $entry: $errmsg\n";
+        print "[*] Failed to update $entry: $errmsg\n";
         next;
     }
     
@@ -400,25 +399,27 @@ sub SSLVerify {
 
 sub ProcessHTTP {
     my $http = shift;
-    my @chunks = split(/\r\n\r\n/, $http);
-    my $head = shift(@chunks);
-    my $body = join("\r\n\r\n", @chunks);
-    return if $head !~ /HTTP\/1.. 200\s+/;
-    return $body;
+    my $idx = index($http, "\r\n\r\n");
+    return if -1 == $idx;
+    my $head = substr($http, 0, $idx);
+    my $body = substr($http, $idx + 4);
+    return if $head !~ /HTTP\/1..\s+2/;
+    return $body;  
 }
 
 sub WriteFile {
     my $file = shift;
     my $data = shift;
 
-    # create subdirectories if needed
     my @path = split(/\//, $file);
     pop(@path);
-    my $cdir;
+    
+    my $cdir = ".";
     foreach (@path) {
-        $cdir .= "/$_";
-        print "making $cdir\n";
-        mkdir($cdir, 0755);
+        $cdir .= "/".$_;
+        if (! -d $cdir) {
+            mkdir($cdir, 0755);
+        }
     }
     
     open (my $out, ">$file") || return;
