@@ -325,7 +325,7 @@ sub reverse_shell_staged_upexec
 # Multistage bind payloads that result in a shell
 sub bind_shell_staged
 {
-     my ($self, $exploit) = @_;
+    my ($self, $exploit) = @_;
     my $host = $self->GetVar('RHOST');
     my $port = $self->GetVar('LPORT');
     my $victim = $self->Connector($exploit, $host, $port);

@@ -69,11 +69,13 @@ sub Build {
         my ($offset, $opack) = @{ $stage->{'Offsets'}->{$opt} };
         my $type = $opts->{$opt}->[1];    
         
-        $self->PrintDebugLine(3, "Win32StagedPayload: opt=$opt type=$type");   
         if (my $val = $self->GetVar($opt))
         {
+            $self->PrintDebugLine(3, "Win32StagedPayload: opt=$opt type=$type offset=$offset");
             $val = ($type eq 'ADDR') ? gethostbyname($val) : pack($opack, $val);
             substr($generated, $offset, length($val), $val);
+        } else {
+         $self->PrintDebugLine(3, "Win32StagedPayload: NOT SET opt=$opt type=$type offset=$offset");
         }
     }
          
