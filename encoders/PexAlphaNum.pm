@@ -22,7 +22,7 @@ sub EncodePayload {
   my $self = shift;
   my $rawshell = shift;
   my $badChars = shift;
-  return(Pex::Encoder::EncodeAlphaNum($rawshell, $badChars));
+  return(Pex::Encoder::EncodeAlphaNum($rawshell, $badChars, $self->GetVar("GETPCTYPE")));
 }
 
 1;
