@@ -14,8 +14,8 @@ use Pex::Utils;
 
 my $info = {
   'Name'    => 'Pex Nop Generator',
-  'Version' => '1.0',
-  'Authors' => [ 'spoonm <ninjatools [at] hush.com> [Artistic License]', ],
+  'Version' => '$Revision$',
+  'Authors' => [ 'spoonm <ninjatools [at] hush.com>', ],
   'Arch'    => [ 'x86' ],
   'Desc'    =>  'Pex Nop Generator',
   'Refs'    => [ ],

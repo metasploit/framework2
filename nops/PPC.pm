@@ -14,8 +14,8 @@ use Pex::Utils;
 
 my $info = {
   'Name'    => 'PPC Nop Generator',
-  'Version' => '1.0',
-  'Authors' => [ 'H D Moore <hdm [at] metasploit.com> [Artistic License]', ],
+  'Version' => '$Revision$',
+  'Authors' => [ 'H D Moore <hdm [at] metasploit.com>', ],
   'Arch'    => [ 'ppc' ],
   'Desc'    =>  'Pex Nop Generator',
   'Refs'    => [ ],
