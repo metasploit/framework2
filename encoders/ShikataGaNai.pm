@@ -219,8 +219,8 @@ sub _BuildFPUs {
   for(my $b = 0xc0; $b <= 0xc7; $b++) {
     push(@fpus, "\xdd" . chr($b));
   }
-  # fninit
-  push(@fpus, "\xdb\xe3");
+  # fninit - no worky
+  # push(@fpus, "\xdb\xe3");
 
   # fld st(i)
   for(my $b = 0xc0; $b <= 0xc7; $b++) {
