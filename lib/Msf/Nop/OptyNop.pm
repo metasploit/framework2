@@ -386,15 +386,8 @@ my $table = [
   [ "\xff\xc8",           2, $reg1, [ $sreg1b ] ], # dec reg
   # \xff\xd0 -> \xff\xd8 call reg1, deadspace?
   # \xff\xe0 -> \xff\xe8 jmp reg1, deadspace?
-  [ "\xff\xd0",           2, $reg1, [ $sreg1b ] ], # rcl reg1, cl
-  [ "\xff\xd8",           2, $reg1, [ $sreg1b ] ], # rcr reg1, cl
-
-  [ "\xff\xe0",           2, $reg1, [ $sreg1b ] ], # shl reg1, cl
-  [ "\xff\xe8",           2, $reg1, [ $sreg1b ] ], # shr reg1, cl
-
   [ "\xff\xf0",           2, $reg1, [ $sreg1b ] ], # push reg
   # \xff\xf8 deadspace?
-
 ];
 
 sub _TableLength {
