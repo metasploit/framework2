@@ -14,7 +14,8 @@ use Pex::Text;
 my $none  = 0;
 my $reg1  = 1;
 my $reg2  = 2;
-my $reg2r = 4;
+# Is the smash register location reversed? (only for reg2's?)
+my $regrev = 4;
 
 my $eax = 0;
 my $ecx = 1;
@@ -40,7 +41,7 @@ my $reg = 8;
 # someday this will all be leeter, but it's not so bad for now :)
 
 # This is a blacklist entry, it means you CANNOT do it if you have this flag
-my $osize = $reg2r << 1; # \x66
+my $osize = $regrev << 1; # \x66
 my $asize = $osize << 1; # \x67
 
 # segment overrides also seem unsafe...
@@ -275,7 +276,7 @@ sub _CheckInsReg2 {
   ));
 
   # check to make sure that a generation is possible w/ current constraints
-  return(0) if(!$self->_CheckReg2Possible(substr($code, -1, 1), ($flags & $reg2r) ? 1 : 0));
+  return(0) if(!$self->_CheckReg2Possible(substr($code, -1, 1), ($flags & $regrev) ? 1 : 0));
   return(1);
 }
 
@@ -483,13 +484,14 @@ sub _SetRegs {
   my $flags = $table->[$index]->[2];
 
   if(($flags & 0x03) == $reg2) {
+    my $reverse = ($flags & $regrev) ? 1 : 0;
     my ($r1, $r2, $r) = (0, 0, 0);
     do {
       $r2 = int(rand(8));
       $r1 = int(rand(8));
       $r = $r2 << 3 + $r1;
-    } while($self->_BadRegCheck($r1)
-        || $self->_BadRegCheck($r2)
+    } while((!$reverse && $self->_BadRegCheck($r1))
+        || ($reverse && $self->_BadRegCheck($r2))
         || Pex::Text::BadCharCheck($byte | chr($r)));
 
     return($byte | chr($r));
@@ -518,12 +520,13 @@ sub _ValidReg {
   my $flags = $table->[$index]->[2];
 
   if(($flags & 0x03) == $reg2) {
+    my $reverse = ($flags & $regrev) ? 1 : 0;
     return(0) if(($byte & 0xc0) ne $ins);
-    goto regcheck;
+    return(0) if(!$reverse && $self->_SmashCheckReg($index, $reg & 0x07));
+    return(0) if($reverse && $self->_SmashCheckReg($index, ($reg & 0x38) >> 3));
   }
   elsif(($flags & 0x03) == $reg1) {
     return(0) if(($byte & 0xf8) ne $ins);
-regcheck:
     return(0) if($self->_SmashCheckReg($index, $reg & 0x07));  
   }
   else {
