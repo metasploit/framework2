@@ -100,4 +100,20 @@ sub UnpackSigned {
   return($value);
 }
 
+my $regs = {
+  'al' => 0, 'ax' => 0, 'eax' => 0,
+  'cl' => 1, 'cx' => 1, 'ecx' => 1,
+  'dl' => 2, 'dx' => 2, 'edx' => 2,
+  'bl' => 3, 'bx' => 3, 'ebx' => 3,
+  'ah' => 4, 'sp' => 4, 'esp' => 4,
+  'ch' => 5, 'bp' => 5, 'ebp' => 5,
+  'dh' => 6, 'si' => 6, 'esi' => 6,
+  'bh' => 7, 'di' => 7, 'edi' => 7,
+};
+
+sub RegNameToNumber {
+  my $name = shift;
+  return($regs->{lc($name)});
+}
+
 1;
