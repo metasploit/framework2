@@ -99,10 +99,8 @@ After months of working around ActiveState bugs, we finally decided to scrap it
 and only support Cygwin Perl. The Metasploit Framework Win32 installer bundles a
 stripped-down copy of the Cygwin environment, this is the preferred way to use
 the Framework on the Windows platform. If you would like to install the
-Framework into an existing Cygwin environment, please refer to the file
-'docs/QUICKSTART.cygwin' in the installation directory; there are a number of
-issues with installing the Term::ReadLine::Gnu and Net::SSLeay modules that
-require jumping through hoops to solve.  
+Framework into an existing Cygwin environment, please refer to appendix
+\ref{CYGWIN}.
    
     \section{Platform Caveats}
     \label{INSTALL-CAVEAT}
@@ -168,17 +166,14 @@ web site.
 \par
 After you have installed the Framework, you should verify that everything is
 working correctly.  The quickest way to do this is to execute the
-\texttt{msfconsole} user interface. This interface should display an ASCII Metasploit
+\texttt{msfconsole} user interface. This interface should display an metasploit
 logo, print the current version, number of payloads, number of exploits, and
-drop to a 'msf' prompt. From this prompt, type \texttt{help} to get a list of
-valid commands. You are currently in the 'main' mode; this allows you to list
+drop to a "msf> " prompt. From this prompt, type \texttt{help} to get a list of
+valid commands. You are currently in the "main" mode; this allows you to list
 exploits, list payloads, and configure global options.  To list all available
 exploits, type \texttt{show exploits}. To obtain more information about a given
 exploit, type \texttt{info module\_name}. 
 
-
-    \subsection{Console Efficiency}
-    \label{CONSOLE-EFF}
 \par
 The \texttt{msfconsole} interface was designed to be flexible and fast. If you
 enter a command that is not recognized by the console, it will scan the system
@@ -190,62 +185,45 @@ the Windows package, but may require software installation for other operating
 systems. For more information on tab completion, please refer to appendix
 \ref{REF-TAB}.
 
-
-
-    \subsection{Selecting an Exploit}
-    \label{CONSOLE-SEL}
 \par
-From the msf prompt, you can choose an exploit with the \texttt{use} command.
-This command takes the name of the exploit module as the first argument, enters
-exploit mode, and loads the Temporary environment for that exploit. You can
-switch between active exploits with the \texttt{use} command and drop back to
-the main shell with the \texttt{back} command. 
-   
-    \subsection{Exploit Basics}
-    \label{CONSOLE-SEL}
-\par
-After selecting an exploit, your available command selection changes. Enter the 
-\texttt{help} command again to get an idea of what is available. The
-\texttt{show} command now has a completely different set of arguments, these
-allow you to view the standard options, advanced options, exploit targets, and
-compatible payloads. The  \texttt{check} command invokes the vulnerability check
-mode of the selected exploit. The  \texttt{exploit} command actually launches
-the selected exploit.  
+The \texttt{msfconsole} startup will similar to the text below.
+
+\begin{verbatim}
++ -- --=[ msfconsole v2.3 [63 exploits - 71 payloads]
+
+msf > 
+\end{verbatim}
+
 
     \section{The Command Line Interface}
     \label{STARTED-CLI}
 \par
-If the console is overkill for your needs, you may want to try the msfcli
-interface. This interface takes a match string as the first parameter, followed
-by the options in a VAR=VAL format, and finally an action code to specify what
-should be done. The match string is used to determine which exploit you want to
-launch; in the event that more than one module matches, a list of possible
-modules will be provided. 
+If you are looking for a way to automate exploit testing, or simply do not want
+to use an interactive interface, \texttt{msfcli} may be the solution. This
+interface takes a match string as the first parameter, followed by the options
+in a VAR=VAL format, and finally an action code to specify what should be done.
+The match string is used to determine which exploit you want to launch; if more
+than one module matches, a list of possible modules will be provided. 
 
 \par
 The action code is a single letter; S for summary, O for options, A for advanced
 options, P for payloads, T for targets, C to try a vulnerability check, and E to
 exploit. The saved environment will be loaded and used at startup, this allows
 you to configure various default options in the Global environment of
-msfconsole, save them, and take advantage of them in the msfcli interface.  
-The command line interface is well suited for automated exploitation and batch
-testing, combined with a custom payload and an intelligent scanner, it could be
-ruthless :) 
+\texttt{msfconsole}, save them, and take advantage of them in the
+\texttt{msfcli} interface. 
 
 
-    \section{The Web Interface}
+    \section{The Web Interface - XXX }
     \label{STARTED-WEB}
 \par
-The msfweb interface is a functional web server that allows you launch attacks
-from your web browser. This interface is still very primitive, but might be
-useful for users working in a team environment (pen-testing, etc). The
-connection to the exploited host is proxied to a random listening port on the
-web server and the user is given a telnet protocol link to this dynamically
-created listener.
+The \texttt{msfweb} interface is a complete stand-alone web server that allows
+you to harness most of the Framework functionality through a web browser. This
+interface is still primitive, but may useful for live demonstrations and in a
+team-based penetration testing environment.
 
 \par
-The msfweb interface provides almost no security whatsoever; anyone on the
-network may connect to this web server or the dynamically selected proxy port.
+The msfweb interface provides almost no security whatsoever; anyone who can connect 
 The default configuration is to listen on the loopback address only, this can be
 changed by passing the -a option with a value consisting of address:port. Just
 like the command line interface, the saved environment is loaded on startup and
@@ -283,15 +261,6 @@ automatically loaded when the interface starts.
 
 
 \begin{verbatim}
-
-                |                    |      _) |
- __ `__ \   _ \ __|  _` |  __| __ \  |  _ \  | __|
- |   |   |  __/ |   (   |\__ \ |   | | (   | | |
-_|  _|  _|\___|\__|\__,_|____/ .__/ _|\___/ _|\__|
-                              _|
-
-+ -- --=[ msfconsole v2.3 [63 exploits - 71 payloads]
-
 msf > setg
 AlternateExit: 2
 DebugLevel: 0
@@ -893,7 +862,8 @@ to any non-false value (1, True, Yes, etc).
 
 \pagebreak
 \chapter{Cygwin}
-
+\label{CYGWIN}	
+	
 \par
 This chapter provides a brief description of how to install the Metasploit
 Framework in the Cygwin environment. Normal users should use pre-configured
@@ -937,7 +907,7 @@ interface extremely efficient.
 
 \par
 If you have Visual Studio installed, you may need to "unset LIBS" before trying
-to compile anything, the double-quote in the path will break certain Makefiles.
+to compile anything, the double-quotes in the path will break certain Makefiles.
 
 
 	\section{Rebasing}
@@ -952,7 +922,7 @@ C:\cygwin\bin\cygperl.exe: *** unable to remap [...]
 \end{verbatim}
 
 \par
-You can obtain the latest version of it from
+You can obtain the latest version of it from:
 \url{http://www.tishler.net/jason/software/rebase/}.
 
 
