@@ -17,6 +17,9 @@ package Pex::DCERPC;
 use strict;
 use Pex;
 
+# This module is light years from being complete, however it
+# is capable of some simple tasks (dumping MGMT interfaces).
+
 my %UUIDS =
 (
     'MGMT'      => 'afa8bd80-7d8a-11c9-bef4-08002b102989',  # v2.0
@@ -99,6 +102,44 @@ sub Request {
         ). $data;
 }
 
+sub MGMT_INQ_IF_IDS {
+    my ($host, $port) = @_;
+    my ($res, $rpc, %ints);
+
+    my $s = Pex::Socket->new();
+    return if ! $s->Tcp($host, $port);
+
+    $s->Send(Bind(UUID('MGMT'), '1.0', DCEXFERSYNTAX(), '2'));
+    $res = $s->Recv(60, 5);
+    $rpc = DecodeResponse($res);
+    
+    if ($rpc->{'AckResult'} != 0) {
+        print "Bind Error: " .$rpc->{'AckReason'}."\n";
+        return;
+    }
+
+    $s->Send(Request(0));
+    $res = $s->Recv(-1, 5);
+    $rpc = DecodeResponse($res);
+    
+    if ($rpc->{'Type'} eq 'fault') {
+        printf ("Call Error: 0x%.8x\n", $rpc->{'Status'});
+        return;
+    }
+    
+    # very ugly inq_if_ids() response parsing :( 
+    my $status  = unpack('N', $rpc->{'StubData'});
+    my $ifcount = unpack('V', substr($rpc->{'StubData'}, 4, 4));
+    my $ifstats = substr($rpc->{'StubData'}, 12, 4 * $ifcount);
+    my $iflist  = substr($rpc->{'StubData'}, 12 + (4 * $ifcount));
+    
+    while (length($iflist) >= 20) {   
+        my $if = Bin_to_UUID($iflist);
+        $ints{$if}=unpack('v',substr($iflist, 16)).".".unpack('v',substr($iflist, 18));
+        $iflist = substr($iflist, 20);
+    }
+    return %ints;
+}
 
 sub DecodeResponse {
     my $raw = shift || return {};
@@ -187,46 +228,5 @@ sub DecodeResponse {
     
     return $res;
 }
-
-
-sub MGMT_INQ_IF_IDS {
-    my ($host, $port) = @_;
-    my ($res, $rpc, %ints);
-
-    my $s = Pex::Socket->new();
-    return if ! $s->Tcp($host, $port);
-
-    $s->Send(Bind(UUID('MGMT'), '1.0', DCEXFERSYNTAX(), '2'));
-    $res = $s->Recv(60, 5);
-    $rpc = DecodeResponse($res);
-    
-    if ($rpc->{'AckResult'} != 0) {
-        print "Bind Error: " .$rpc->{'AckReason'}."\n";
-        return;
-    }
-
-    $s->Send(Request(0));
-    $res = $s->Recv(-1, 5);
-    $rpc = DecodeResponse($res);
-    
-    if ($rpc->{'Type'} eq 'fault') {
-        printf ("Call Error: 0x%.8x\n", $rpc->{'Status'});
-        return;
-    }
-    
-    # very ugly inq_if_ids() response parsing :( 
-    my $status  = unpack('N', $rpc->{'StubData'});
-    my $ifcount = unpack('V', substr($rpc->{'StubData'}, 4, 4));
-    my $ifstats = substr($rpc->{'StubData'}, 12, 4 * $ifcount);
-    my $iflist  = substr($rpc->{'StubData'}, 12 + (4 * $ifcount));
-    
-    while (length($iflist) >= 20) {   
-        my $if = Bin_to_UUID($iflist);
-        $ints{$if}=unpack('v',substr($iflist, 16)).".".unpack('v',substr($iflist, 18));
-        $iflist = substr($iflist, 20);
-    }
-    return %ints;
-}
-
 
 1;
