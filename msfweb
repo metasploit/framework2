@@ -800,14 +800,19 @@ sub SessionUpdate {
 	my $cache_file = $ui->GetEnv('_CacheDir'). sprintf("/cache%.8x.dat", $sid);
 	my $cache_data;
 
-	if (! open(CACHE, "<$cache_file")) {
-		if (open(CACHE, ">>$cache_file")) {
-			$init = time;
-			print CACHE "<!-- INIT:$init -->\n";
-			close (CACHE);
-		} else { print STDERR "Could not write cache file: ($cache_file) $!"; exit(0); }
+	my $count = 10;
+	while ($count && ! open(CACHE, "<$cache_file")) {
+		sleep(1);
+		$count--;
 	}
-				
+	
+	if (! $count) {
+		$res  = "<div class='textBold'>!!! Timeout reached waiting for the session log</div>\n";
+		$res .= "</pre></body></html>\n";
+		$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+		exit(0);
+	}
+	
 	while (1) {
 		$res = undef;
 		
