@@ -116,12 +116,15 @@ sub Insbranch {
   my $ref = shift;
   my $len = shift;
 
+# We jump to 1 instruction before the payload so in cases where the delay slot of a branch with the the anull bit set that is not taken the first instruction of the
+#   payload is not anulled. 
   $len = ($len / 4) - 1;
 
   return if(! $len);
   $len = 0x3fffff if($len >= 0x400000);
 
   return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | $len)); 
+#  return pack("N", ((int(rand(2)) << 29) | ($ref->[0] << 25) | (2 << 22) | int(rand($len - 1)) + 1)); 
 }
 
 sub Nops {
