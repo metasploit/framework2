@@ -53,7 +53,7 @@ Framework, its goal is to provide a basic overview of what the Framework is, how
 it works, and what you can do with it. As with most open-source projects,
 correct documentation takes back seat to actual development. If you would like
 to contribute to the project and have strong technical writing skills, please
-contact the developers at the email address listed at the end of this document. 
+contact the developers at msfdev[at]metasploit.com.
 
 \par
 The Metasploit Framework is a complete environment for writing, testing, and
@@ -63,9 +63,10 @@ majority of the Framework is composed of object-oriented Perl code, with
 optional components written in C, assembler, and Python.  
 
 \par
-There are four core project developers and a large group of people that have
-provided ideas or code to the project. Please refer to the Credits exploit
-module for a complete listing of the people involved in the project. 
+The Framework development team is made up of four full-time members and a handful
+of part-time contributors. Please refer to the Credits exploit module for a complete
+listing of the people involved in the project. If you have contributed to the project
+and do not see your name listed there, please let use know.
 
 \par
 \pagebreak
@@ -79,7 +80,7 @@ Installing the Framework is as easy as extracting the tarball, changing into the
 created directory, and executing your preferred user interface. We strongly
 recommend that you compile and install the Term::ReadLine::Gnu Perl module found
 in the "extras" subdirectory. This package enables extensive tab-completion
-support in the msfconsole interface; msfconsole is the preferred UI for everyday
+support in the \texttt{msfconsole} interface; \texttt{msfconsole} is the preferred UI for everyday
 use.  If SSL support is desired, you should install the Net::SSLeay Perl module
 as well, this can also be found in the "extras" subdirectory.  Please refer to 
 appendices \ref{REF-TAB} and \ref{REF-SSL} for detailed instructions.
@@ -134,8 +135,8 @@ The following platforms are known to be problematic:
 \end{itemize}
 
 \par
-We have received numerous reports of the Framework working just fine on Solaris,
-AIX, and even the Sharp Zaurus (Linux-based). These systems often require an
+We have received numerous reports of the Framework working on Solaris,
+AIX, and even the Sharp Zaurus. These systems often require an
 updated version of Perl in conjunction with the GNU utilities to function
 correctly.
 
@@ -189,7 +190,7 @@ systems. For more information on tab completion, please refer to appendix
 The \texttt{msfconsole} startup will similar to the text below.
 
 \begin{verbatim}
-+ -- --=[ msfconsole v2.3 [63 exploits - 71 payloads]
++ -- --=[ \texttt{msfconsole} v2.3 [63 exploits - 71 payloads]
 
 msf > 
 \end{verbatim}
@@ -214,26 +215,32 @@ you to configure various default options in the Global environment of
 \texttt{msfcli} interface. 
 
 
-    \section{The Web Interface - XXX }
+    \section{The Web Interface}
     \label{STARTED-WEB}
 \par
-The \texttt{msfweb} interface is a complete stand-alone web server that allows
-you to harness most of the Framework functionality through a web browser. This
-interface is still primitive, but may useful for live demonstrations and in a
-team-based penetration testing environment.
+The \texttt{msfweb} interface is a stand-alone web server that allows
+you to harness the power of the Framework through a browser. This interface 
+is still primitive, but may useful for live demonstrations and in a team-based 
+penetration testing environment.
 
 \par
-The msfweb interface provides almost no security whatsoever; anyone who can connect 
+Starting with version 2.3, \texttt{msfweb} provides an fast multi-user web shell. This 
+system allows you to share your active sessions with other \texttt{msfweb} users. The
+shell console (and the rest of msfweb) have been tested with Firefox 1.0, Internet Explorer 6.0,
+and the Safari/Konqueror browsers. 
+
+\par
+The \texttt{msfweb} interface provides almost no security whatsoever; anyone who can connect 
+to the \texttt{msfweb} service could potentially gain access to the underlying system. 
 The default configuration is to listen on the loopback address only, this can be
-changed by passing the -a option with a value consisting of address:port. Just
-like the command line interface, the saved environment is loaded on startup and
-can affect module settings. We do not recommend that the msfweb interface be
-used in production environments. 
+changed by using -a option to specify the local IP address. If you would like to open the
+server up to the entire network, pass 0.0.0.0 to the -a option of msfweb. Just like the 
+command-line interface, the saved environment is loaded on startup and can affect module 
+settings. We do not recommend that the \texttt{msfweb} interface be used in production 
+environments or exposed to untrusted networks. 
+
 
 \pagebreak
-
-
-
 \chapter{The Environment}
 
 \par
@@ -487,7 +494,7 @@ useful when firing a UDP-based exploit at a network broadcast address.
 	\subsection{AlternateExit}
 \par
 This option is a workaround for a bug found in certain versions of the Perl
-interpreter. If the msfconsole interface crashes with a segmentation fault on
+interpreter. If the \texttt{msfconsole} interface crashes with a segmentation fault on
 exit, try setting the value of this variable to 2. 
 	
 \pagebreak
@@ -497,7 +504,7 @@ exit, try setting the value of this variable to 2.
 
 	\section{Choosing an Exploit Module}
 \par
-From the msfconsole interface, you may view the available exploit modules
+From the \texttt{msfconsole} interface, you may view the available exploit modules
 through with the \texttt{show exploits} command. Select an exploit with the
 \texttt{use} command, specifying the short module name as the argument. The
 \texttt{info} command can be used to view information about a specific exploit module. 
@@ -739,19 +746,20 @@ vncviewer to connect to 127.0.0.1 on port 5900.
 \section{Web Site}
 \par
 The metasploit.com web site is the first place to check for updated modules and
-new releases. This web site also hosts the Opcode Database and a decent Windows
-shellcode archive.  
+new releases. This web site also hosts the Opcode Database and a decent shellcode
+archive.  
 
 \section{Mailing List}
 \par
 You can subscribe to the Metasploit Framework mailing list by sending a blank
-email to framework-subscribe [at] metasploit.com. This is the preferred way to
+email to framework-subscribe[at]metasploit.com. This is the preferred way to
 submit bugs, suggest new features, and discuss the Framework with other users. 
 
 \section{Developers}
 \par
-If you would like to get involved in the development of the next version of the Framework, please contact the developers. They can be reached at: 
-msfdev [at] metasploit.com.
+If you are interested in helping out with the Framework project itself, or have any
+questions related to module development, please contact the development team. The
+Framework development team can be reached at msfdev[at]metasploit.com.
 
 \pagebreak
 \appendix
@@ -761,15 +769,16 @@ msfdev [at] metasploit.com.
 
 \par
 We recommend that you use a robust, secure terminal emulator when
-utilizing the command-line interfaces. 
+utilizing the command-line interfaces. Examples include \texttt{konsole},
+\texttt{gnome-terminal}, and recent versions of \texttt{PuTTY}.
 
 \par
-We do not recommend that the msfweb interface be used on untrusted
+We do not recommend that the \texttt{msfweb} interface be used on untrusted
 networks. Actually, we don't recommend that you use msfweb at all, it is
 more of a proof-of-concept than a real tool.
 
 \par
-We do not recommend that you install msfpayload.cgi on a web server that
+We do not recommend that you install \texttt{msfpayload.cgi} on a web server that
 is exposed to an untrusted network. It is possible to configure it in such a
 way that it does not open any vulnerabilities, but we leave this as an
 exercise to the user (Hint: symlink to cgi-bin and remove potentially
@@ -790,12 +799,12 @@ below for more information on this topic:
 
 	\section{Web Interface}
 \par
-The msfweb interface does not adequately filter certain arguments,
+The \texttt{msfweb} interface does not adequately filter certain arguments,
 allowing a hostile web site operator to perform a cross-site scripting
-attack on the msfweb user.
+attack on the \texttt{msfweb} user.
 
 \par
-The msfweb interface does not provide any access control functionality. If
+The \texttt{msfweb} interface does not provide any access control functionality. If
 the service is configured to listen on a different interface (default is
 loopback), a malicious attacker could abuse this to exploit remote systems
 and potentially access local files. The local file access attack can be
@@ -805,12 +814,12 @@ as input and then exploiting a (fake) service to obtain the file contents.
 	
 	\section{Payload CGI}
 \par
-The msfpayload.cgi script does not adequately filter certain arguments,
+The \texttt{msfpayload.cgi} script does not adequately filter certain arguments,
 allowing a hostile web site operator to perform a cross-site scripting
 attack against users of the web site hosting this script.
 
 \par
-The msfpayload.cgi script can be used to obtain information about files on
+The \texttt{msfpayload.cgi} script can be used to obtain information about files on
 the system on which it is installed. This can be accomplished through the
 user of certain payloads which accept a local file path as input.
 
@@ -902,7 +911,7 @@ recent version of Python as well.
 Now that Cygwin is installed, you should install the perl modules in the
 "extras" subdirectory of this package. This can usually be accomplished by
 extracting each package via tar -zxf [file], changing into the directory, typing
-perl Makefile.PL, make, and make install. Tab completion makes the msfconsole
+perl Makefile.PL, make, and make install. Tab completion makes the \texttt{msfconsole}
 interface extremely efficient. 
 
 \par
