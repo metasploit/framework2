@@ -66,7 +66,7 @@ my $table = [
   [ \&Insarithmetic, [ 2, 38 ], ],			# srl
   [ \&Insarithmetic, [ 2, 39 ], ],			# sra
   [ \&Insarithmetic, [ 4, 40 ], ],			# rdy
-  [ \&Insarithmetic, [ 3, 48 ], ],			# wry
+#  [ \&Insarithmetic, [ 3, 48 ], ],			# wry
   [ \&Insbranch, [ 0 ] ],				# bn[,a]
   [ \&Insbranch, [ 1 ] ],				# be[,a]
   [ \&Insbranch, [ 2 ] ],				# ble[,a]
