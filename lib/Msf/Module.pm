@@ -83,7 +83,15 @@ sub Keys        { my $self = shift; return($self->Info->{'Keys'}); }
 sub Priv        { my $self = shift; return($self->Info->{'Priv'}); }
 sub UserOpts    { my $self = shift; return($self->Info->{'UserOpts'}); }
 sub Refs        { my $self = shift; return($self->Info->{'Refs'}); }
-sub Description { my $self = shift; return($self->Info->{'Description'}); }
+
+sub Description {
+  my $self = shift;
+  my $desc = $self->Info->{'Description'};
+  $desc =~ s/^\s+//gm;
+  $desc =~ s/\s+$//gm;
+  $desc =~ s/\s+/ /gm;
+  return($desc);
+}
 
 sub Loadable {
   return(1);
