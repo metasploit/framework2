@@ -22,11 +22,16 @@ sub Ping
 {
     my $host = shift || return;
     my $port = shift || 1434;
-    my $s = Pex::Socket->new();
     my $r;
     my %x;
     
-    $s->Udp($host, $port);
+    my $s = Pex::Socket::Udp->new
+    (
+        'PeerAddr'  => $host, 
+        'PeerPort'  => $port, 
+    );
+    return if $s->IsError;
+
     $s->Send("\x02");
     $r = $s->Recv(-1, 10);
     $s->Close();
@@ -45,11 +50,14 @@ sub Login
     my $port = shift || 1433;
     my $user = shift || "sa";
     my $pass = shift || "";
-    
-    my $s = Pex::Socket->new();
     my $r;
     
-    $s->Tcp($host, $port);
+    my $s = Pex::Socket::Tcp->new
+    (
+        'PeerAddr'  => $host, 
+        'PeerPort'  => $port, 
+    );
+    return if $s->IsError;
  
     my $p_hdr = 
     "\x02\x00\x02\x00\x00\x00\x02\x00\x00\x00".

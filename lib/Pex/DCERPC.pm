@@ -106,8 +106,12 @@ sub MGMT_INQ_IF_IDS {
     my ($host, $port) = @_;
     my ($res, $rpc, %ints);
 
-    my $s = Pex::Socket->new();
-    return if ! $s->Tcp($host, $port);
+    my $s = Msf::Socket::Tcp->new
+    (
+        'PeerAddr'  => $host, 
+        'PeerPort'  => $port, 
+    );
+    return if $s->IsError;
 
     $s->Send(Bind(UUID('MGMT'), '1.0', DCEXFERSYNTAX(), '2'));
     $res = $s->Recv(60, 10);
