@@ -24,6 +24,8 @@ my $exit_types =
     "seh"     => Pex::Utils::RorHash("SetUnhandledExceptionFilter"),
 };
 
+# The fork code was written by Jarkko Turkulainen <jt[at]klake.org>
+
 my $prefork_exit = 346;
 my $prefork_plen = 272;
 my $prefork_code =
@@ -63,7 +65,7 @@ sub InitWin32 {
     $self->{'Win32Payload'} = $self->{'Info'}->{'Win32Payload'};
     delete($self->{'Info'}->{'Win32Payload'});
     
-    $self->{'Info'}->{'UserOpts'}->{'EXITFUNC'} = [0, 'DATA', 'Exit technique: "process", "thread", "seh"'];
+    $self->{'Info'}->{'UserOpts'}->{'EXITFUNC'} = [0, 'DATA', 'Exit technique: "process", "thread", "seh"', 'seh'];
     $self->{'Info'}->{'UserOpts'}->{'PREFORK'}  = [0, 'BOOL', 'Execute payload in forked process'];
 }
 
@@ -72,6 +74,7 @@ sub Size {
     my $size = 0;
     $size += length($prefork_code) if $self->GetVar('PREFORK');
     $size += length($self->{'Win32Payload'}->{'Payload'});
+    $self->PrintDebugLine(3, "Win32Payload: returning Size of $size");
     return $size;
 }
 
@@ -83,25 +86,33 @@ sub Build {
     my $exit_offset = ($self->GetVar('PREFORK')) ? $prefork_exit : $self->{'Win32Payload'}->{'Offsets'}->{'EXITFUNC'}->[0];
     my $generated   = ($self->GetVar('PREFORK')) ? $prefork_code . $payload : $payload;
 
+    $self->PrintDebugLine(3, "Win32Payload: forkstub=$forkstub exitoffset=$exit_offset");
+    $self->PrintDebugLine(3, "Win32Payload: generated code: " . length($generated) . " bytes\n");
+
     my $opts = $self->{'Info'}->{'UserOpts'};
     foreach my $opt (keys(%{ $opts }))
     {
+        $self->PrintDebugLine(3, "Win32Payload: opt=$opt");
+        
         next if $opt eq 'EXITFUNC';
         next if $opt eq 'PREFORK';
         
         my ($offset, $opack) = @{ $self->{'Win32Payload'}->{'Offsets'}->{$opt} };
         my $type = $opts->{$opt}->[1];    
         
+        $self->PrintDebugLine(3, "Win32Payload: opt=$opt type=$type");   
         if (my $val = $self->GetVar($opt))
         {
-            $val = ($type eq 'ADDR') ? $val = gethostbyname($val) : $val = pack($opack, $val);
+            $val = ($type eq 'ADDR') ? gethostbyname($val) : pack($opack, $val);
             substr($generated, $forkstub+$offset, length($val), $val);
+            $self->PrintDebugLine(3, "Win32Payload: forkstub+offset=" .  $forkstub+$offset . " ($opack)");  
         }
     }
 
     my $exit_func = ($self->GetVar('EXITFUNC')) ? $self->GetVar('EXITFUNC') : 'seh';
     my $exit_hash = exists($exit_types->{$exit_func}) ? $exit_types->{$exit_func} : $exit_types->{'seh'};
     substr($generated, $exit_offset, 4, pack('L', $exit_hash));
+    $self->PrintDebugLine(3, "Win32Payload: exitfunc: $exit_offset -> $exit_hash ($exit_func)");  
     return $generated;
 }
 
