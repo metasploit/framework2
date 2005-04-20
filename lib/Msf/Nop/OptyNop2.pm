@@ -13,65 +13,98 @@ sub _BadChars {
 }
 
 sub _GenerateSled {
-	my $s = shift;
-	my $l = shift;
+	my $self = shift;
+	my $len  = shift;
 
-	return if($l <= 0);
+	return if($len <= 0);
 
-	my ($b, $m);
-	my $p = 256;
-	my $pc = 0;
-	my $c = [ ];
+	# our output sled string
+	my $data;
+	# our last byte (current state)
+	my $prev = 256;
+	# the current stream len ( length($data) )
+	my $dlen = 0;
+
+	#
+	# initialize the byte count table
+	#
+	my $counts = [ ];
 	for(my $i = 0; $i < 256; $i++) {
-		$c->[$i] = 0;
-	}
-	foreach my $r (@{$s->_BadRegs}) {
-		$m |= 1 << $r;
+		$counts->[$i] = 0;
 	}
 
-	while($l--) {
-		$p = $s->f($m, $pc, $p, $c);
-		return if($p == -1);
-		$b = chr($p) . $b;
-		$pc++;
+	#
+	# The badreg mask
+	#
+	my $mask;
+	foreach my $r (@{$self->_BadRegs}) {
+		$mask |= 1 << $r;
 	}
-	return($b);
-}
+	$mask <<= 16;
 
-sub f {
-	my $s  = shift;
-	my $m  = shift;
-	my $pc = shift;
-	my $p  = shift;
-	my $c  = shift;
-
-	my $nt = $s->_Table->[$p];
-	my $nl = @{$nt};
-
-	return(-1) if($nl == 0);
-
-	Pex::Utils::FisherYates($nt);
-
-	my $lv = -1;
-	my $l  = -1;  
-
-	foreach my $e (@{$nt}) {
-		next if(($e >> 16) & $m);
-		next if(($e >> 8 & 0xff) > $pc);
-		my $b = $e & 0xff;
-		next if(Pex::Text::BadCharCheck($s->_BadChars, chr($b)));
-
-		if($lv == -1 || $lv > $c->[$b]) {
-			$l  = $b;
-			$lv = $c->[$b];
-		}
+	#
+	# The bad byte lookup table
+	#
+	my $badbytes = [ ];
+	foreach my $bad (split('', $self->_BadChars)) {
+		$badbytes->[ord($bad)] = 1;
 	}
 
+	my $table = $self->_Table;
 
-	return(-1) if($l == -1);
+	while($len--) {
+		#
+		# Find our next byte
+		#
 
-	$c->[$l]++;
-	return($l);
+		# current best value
+		my $low = -1;
+		# table were we store the current best choices
+		my @lows;
+
+		# array of arrays to save memory, iterate
+		foreach my $nt (@{$table->[$prev]}) {
+		foreach my $e (@{$nt}) {
+			# modifies a register we want to save
+			next if($e & $mask);
+			# requried length is more than our current stream length
+			next if(($e >> 8 & 0xff) > $dlen);
+
+			my $b = $e & 0xff;
+			# the choice is a bad byte
+			next if($badbytes->[$b]);
+
+			# a better value...
+			if($low == -1 || $low > $counts->[$b]) {
+				$low = $counts->[$b];
+				@lows = ($b);
+			}
+			# an equally good value...
+			elsif($low == $counts->[$b]) {
+				push(@lows, $b);
+			}
+		}}
+
+		# we failed to find even 1 possiblity, bummer, abort :(
+		return(-1) if($low == -1);
+
+		# return a random pick of our best choices...
+		$prev = $lows[int(rand(@lows))];
+
+		#
+		# Ok, we found our next byte
+		#
+
+		# up the counter for the byte we just added
+		$counts->[$prev]++;
+
+		# prepend it to our seld
+		$data = chr($prev) . $data;
+
+		# up our sled count
+		$dlen++;
+	}
+	return($data);
 }
 
 1;
