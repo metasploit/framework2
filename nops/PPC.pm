@@ -17,7 +17,7 @@ my $info = {
   'Version' => '$Revision$',
   'Authors' => [ 'H D Moore <hdm [at] metasploit.com>', ],
   'Arch'    => [ 'ppc' ],
-  'Desc'    =>  'This is a very minimal PPC nop generator',
+  'Desc'    =>  'This is a simple PPC nop generator',
   'Refs'    => [ ],
 };
 
@@ -29,16 +29,35 @@ sub new {
 }
 
 sub Nops {
-  my $self = shift;
-  my $length = shift;
+	my $self = shift;
+	my $length = shift;
 
-  my $exploit = $self->GetVar('_Exploit');
-  my $random  = $self->GetVar('RandomNops');
-  my $badChars = $exploit->PayloadBadChars;
+	my $exploit = $self->GetVar('_Exploit');
+	my $random  = $self->GetVar('RandomNops');
+	my $badChars = $exploit->PayloadBadChars;
 
-  # Much room for future improvement :(
-  return(pack('N',0x60606060) x ($length / 4));
-  
+	if ($random) {
+		
+		# Extremely simple "add" instruction generator
+		for (1 .. 1024) {		
+			# Ignore target registers r0 or r1
+			my $regs_d = int(rand() * (0x8000 - 0x0800)) + 0x0800;
+			my $regs_b = substr(unpack("B*", pack("n", $regs_d)), 1, 15);
+			my $flag_o = int(rand() * 2);
+			my $flag_r = int(rand() * 2);
+			my $packed = pack("B*", "011111" . "$regs_b" . "$flag_o" . "100001010" . "$flag_r");
+			my $failed = 0;
+			
+			foreach (unpack("C*", $packed)) {
+				$failed++ if index($badChars, chr($_)) != -1;
+			}
+			next if $failed;
+			
+			return ($packed x  ($length / 4));
+		}
+	}
+
+	return(pack('N',0x60606060) x ($length / 4));  
 }
 
 1;
