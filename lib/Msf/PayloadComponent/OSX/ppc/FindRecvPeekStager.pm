@@ -20,7 +20,7 @@
 package Msf::PayloadComponent::OSX::ppc::FindRecvPeekStager;
 
 use strict;
-use base 'Msf::PayloadComponent::OSX::Payload';
+use base 'Msf::PayloadComponent::FindConnection';
 use vars qw{@ISA};
 
 my $info =
