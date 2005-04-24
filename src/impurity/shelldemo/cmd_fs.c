@@ -20,74 +20,95 @@
 #include "cmd.h"
 
 
+void ls_dofile(struct stat, char *);
+
 void cmd_ls(int argc, char * argv[])
 {
 	char * path = ".";
 	DIR * dirp;
 	struct dirent * dp;
-
+	struct stat sb;
+	
 	if(argc > 1)
 		path = argv[1];
-
-	if((dirp = opendir(path)) == NULL)
+	
+	if(stat(path, &sb) == -1)
 	{
-		perror("opendir");
+		perror("stat");
 		return;
 	}
-
-	while((dp = readdir(dirp)) != NULL)
+	
+	if(!S_ISDIR(sb.st_mode))
 	{
-		char buf[MAXPATHLEN+1];
-		char perm[11] = "----------";
-		struct stat sb;
-
-		if(strlen(path) + strlen(dp->d_name) + 1 > MAXPATHLEN)
-			continue;
-		snprintf(buf, MAXPATHLEN, "%s/%s", path, dp->d_name);
-		if(stat(buf, &sb) == -1)
-			continue;
-
-		if(sb.st_mode & 0400) perm[1] = 'r';
-		if(sb.st_mode & 0200) perm[2] = 'w';
-		if(sb.st_mode & 0100) perm[3] = 'x';
-		if(sb.st_mode & 0040) perm[4] = 'r';
-		if(sb.st_mode & 0020) perm[5] = 'w';
-		if(sb.st_mode & 0010) perm[6] = 'x';
-		if(sb.st_mode & 0004) perm[7] = 'r';
-		if(sb.st_mode & 0002) perm[8] = 'w';
-		if(sb.st_mode & 0001) perm[9] = 'x';
-		if(sb.st_mode & S_ISVTX)
-		{
-			if(sb.st_mode & 0001)
-				perm[9] = 't';
-			else
-				perm[9] = 'T';
-		}
-		if(sb.st_mode & S_ISGID)
-		{
-			if(sb.st_mode & 0010)
-				perm[6] = 'S';
-			else
-				perm[6] = 's';
-		}
-		if(sb.st_mode & S_ISUID)
-		{
-			if(sb.st_mode & 0100)
-				perm[3] = 'S';
-			else
-				perm[3] = 's';
-		}
-		if(S_ISBLK(sb.st_mode)) perm[0] = 'b';
-		if(S_ISCHR(sb.st_mode)) perm[0] = 'c';
-		if(S_ISDIR(sb.st_mode)) perm[0] = 'd';
-		if(S_ISLNK(sb.st_mode)) perm[0] = 'l'; /* XXX: works? */
-		if(S_ISFIFO(sb.st_mode)) perm[0] = 'p';
-		if(S_ISSOCK(sb.st_mode)) perm[0] = 's';
-
-		printf("%s %3i %s %s %5i %s %s\n", perm, (int)sb.st_nlink, \
-			get_uid_str(sb.st_uid), get_gid_str(sb.st_gid), \
-			(int)sb.st_size, get_time_str("%b %d %H:%M"), dp->d_name);
+		ls_dofile(sb, path);
 	}
+	else
+	{
+		if((dirp = opendir(path)) == NULL)
+		{
+			perror("opendir");
+			return;
+		}
+		
+		while((dp = readdir(dirp)) != NULL)
+		{
+			char buf[MAXPATHLEN+1];
+			
+			if(strlen(path) + strlen(dp->d_name) + 1 > MAXPATHLEN)
+				continue;
+			snprintf(buf, MAXPATHLEN, "%s/%s", path, dp->d_name);
+			if(stat(buf, &sb) == -1)
+				continue;
+		
+			ls_dofile(sb, dp->d_name);
+		}
+	}
+}
+
+void ls_dofile(struct stat sb, char * file_name)
+{
+	char perm[11] = "----------";
+	
+	if(sb.st_mode & 0400) perm[1] = 'r';
+	if(sb.st_mode & 0200) perm[2] = 'w';
+	if(sb.st_mode & 0100) perm[3] = 'x';
+	if(sb.st_mode & 0040) perm[4] = 'r';
+	if(sb.st_mode & 0020) perm[5] = 'w';
+	if(sb.st_mode & 0010) perm[6] = 'x';
+	if(sb.st_mode & 0004) perm[7] = 'r';
+	if(sb.st_mode & 0002) perm[8] = 'w';
+	if(sb.st_mode & 0001) perm[9] = 'x';
+	if(sb.st_mode & S_ISVTX)
+	{
+		if(sb.st_mode & 0001)
+			perm[9] = 't';
+		else
+			perm[9] = 'T';
+	}
+	if(sb.st_mode & S_ISGID)
+	{
+		if(sb.st_mode & 0010)
+			perm[6] = 'S';
+		else
+			perm[6] = 's';
+	}
+	if(sb.st_mode & S_ISUID)
+	{
+		if(sb.st_mode & 0100)
+			perm[3] = 'S';
+		else
+			perm[3] = 's';
+	}
+	if(S_ISBLK(sb.st_mode)) perm[0] = 'b';
+	if(S_ISCHR(sb.st_mode)) perm[0] = 'c';
+	if(S_ISDIR(sb.st_mode)) perm[0] = 'd';
+	if(S_ISLNK(sb.st_mode)) perm[0] = 'l'; /* XXX: works? */
+	if(S_ISFIFO(sb.st_mode)) perm[0] = 'p';
+	if(S_ISSOCK(sb.st_mode)) perm[0] = 's';
+
+	printf("%s %3i %s %s %6i %s %s\n", perm, (int)sb.st_nlink, \
+		get_uid_str(sb.st_uid), get_gid_str(sb.st_gid), \
+		(int)sb.st_size, get_time_str("%b %d %H:%M"), file_name);
 }
 
 void cmd_getcwd(int argc, char * argv[])

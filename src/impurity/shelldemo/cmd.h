@@ -8,14 +8,15 @@
 	#define	_CMD_H
 
 	/* Base */
+	/* Re-do help to specify a category and print the commands in that category */
 	void cmd_help(int, char * []);
 	void cmd_fork(int, char * []);
 	void cmd_exec(char *);
-	void cmd_forkexec(char *);
+	void cmd_system(char *);
 	void cmd_quit(int, char * []);
 
 	/* File descriptor handling */
-	/* XXX: Take arg for perms, O_EXCL?? */
+	/* XXX: Take arg for perms (like lseek), O_EXCL?? */
 	void cmd_open(int, char * []);
 	void cmd_lseek(int, char * []);
 	void cmd_read(int, char * []);
@@ -25,7 +26,7 @@
 	void cmd_dup2(int, char * []);
 
 	/* File system */
-	/* XXX: copy, stat (Using access too?), mount/unmount, showmount */
+	/* XXX: copy, mount/unmount, showmount */
 	void cmd_ls(int, char * []);
 	void cmd_getcwd(int, char * []);
 	void cmd_chmod(int, char * []);
