@@ -33,7 +33,7 @@ struct __cmdhandler handlerlist[] =
 	{ "help", &cmd_help, 1, 0, 0 },
 	{ "fork", &cmd_fork, 1, 0, 0 },
 	{ "exec", &cmd_exec, 0, 0, 0 },
-	{ "forkexec", &cmd_forkexec, 0, 0, 0 },
+	{ "system", &cmd_system, 0, 0, 0 },
 	{ "quit", &cmd_quit, 1, 0, 0 },
 	{ "exit", &cmd_quit, 1, 0, 0 },
 
