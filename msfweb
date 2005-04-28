@@ -718,7 +718,7 @@ sub SessionCommand {
 	"<li><a href='".$cmdurl."DIE' onClick='$verify'>Session::Kill</a>$lspace".
 	"<li><a href='".$cmdurl."INT'>Session::Break</a>$lspace".
 	"<li><a href='http://metasploit.com/' target='_blank'>Metasploit::Website</a>$lspace".
-	"<li><a href='http://s1.amazon.com/exec/varzea/pay/T2FKAC37FCOAYS/104-6179093-5143961' target='_blank'>Metasploit::Donate</a> ".		
+	"<li><a href='http://metasploit.com/donate.html' target='_blank'>Metasploit::Donate</a> ".		
 	"</ul>\n".
 	"</div>";
 		
