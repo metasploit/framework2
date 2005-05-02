@@ -632,11 +632,11 @@ requirement is a special loader payload. The Framework includes a Linux loader
 for Impurity executables, the payload is named
 \texttt{linux\_ia32\_reverse\_impurity} and requires the PEXEC option to be set
 to the path of the executable. Impurity executables must be compiled in a
-specific way, please see the documentation in the src/shellcode/linux/impurity
-subdirectory for more information about this process. The included "shelldemo"
-application in the data subdirectory allows you to list, access, read, write,
-and open file handles in the exploited process. The original mailing list post
-is archived online at:   
+specific way, please see the documentation in the src/impurity subdirectory
+for more information about this process. The included "shelldemo" application
+application in the data subdirectory allows you to access file handles, change
+privileges and file system permissions, break out of chroot, and more! The
+original mailing list post is archived online at:
 
 \url{http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html}
 
