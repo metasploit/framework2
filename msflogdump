@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##
-#         Name: msfcli
+#         Name: msflogdump
 #       Author: spoonm <ninjatools [at] hush.com>
 #      Version: $Revision$
 #  Description: Simple utility to view log files created with msf
@@ -36,6 +36,12 @@ my $RED    = "\033[31m";
 
 foreach my $filename (@ARGV) {
   open(INFILE, "<$filename") or do { print STDOUT "Error opening $_: $!\n"; next; };
+
+   my $printmode = 2; # this variable keeps track of what the last line printed was, 
+       # it is 0 if the line was from the client and 1 if it was from the server
+       # this value is used to only put a timestamp on the first of a series of lines
+       # from a given source.
+
   while(<INFILE>) {
     s/\r//g;
     chomp;
@@ -48,10 +54,24 @@ foreach my $filename (@ARGV) {
       print "-" x 60 . "\n" if($in eq 'Out');
     }
     elsif(/(.*?) CLIENT (.*)/ig) {
-      print $BLUE . HexToAscii($2) . $NORMAL;
+      if ($printmode != 0) {
+         print '[' . localtime($1) . '] ' . $BLUE . HexToAscii($2) . $NORMAL;
+         $printmode = 0;
+      } else {
+         print $BLUE . HexToAscii($2) . $NORMAL;
+      }
+	
     }
     elsif(/(.*?) SERVER (.*)/ig) {
-      print $RED . HexToAscii($2) . $NORMAL;
+      if ($printmode != 1) {
+        print '[' . localtime($1) . '] ' . $RED . HexToAscii($2) . $NORMAL;
+        $printmode = 1;
+      } else {
+        print $RED . HexToAscii($2) . $NORMAL;
+      }
+    }
+    else {
+      print $_ . "\n";
     }
   }
 }

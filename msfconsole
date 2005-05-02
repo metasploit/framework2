@@ -24,6 +24,7 @@ use vars qw($VERSION);
 use IO::Socket;
 use POSIX;
 use Getopt::Std;
+use Sys::Hostname;
 
 use Pex::PsuedoShell;
 use Msf::TextUI;
@@ -111,9 +112,11 @@ $state->{'LocalAddress'} = Pex::Utils::SourceIP();
 xAddAddressCache($state->{'LocalAddress'});
 
 if (! defined($opts{'q'})) {
+
+    my $username = ($ENV{'USER'} || $ENV{'USERNAME'} || 'unknown');
+    Msf::Logging->PrintLine('[' . localtime(time()) . '] msfconsole started on host ' . hostname() . ' by user ' . $username );
     Msf::TextUI::PrintAsciiLogo();
 
-    # print initialization message
     printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n", 
            $FRAMEVERSION, 
            scalar(keys(%{$exploits})),
@@ -298,6 +301,7 @@ sub eUnset
 
 sub gExit
 {
+    Msf::Logging->PrintLine('[' . localtime(time()) . '] msfconsole closed' );
     POSIX::_exit(0) if($ui->GetEnv('AlternateExit') == 1);
     if($ui->GetEnv('AlternateExit') == 2) {
       exec('true');

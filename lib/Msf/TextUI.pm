@@ -425,7 +425,7 @@ sub Check {
   $exploit->Validate; # verify that all required exploit options have been set
   return if($exploit->PrintError);
 
-  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $exploit->SelfEndName . ' CHECK ' . $exploit->GetVar('RHOST'));
+  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $exploit->SelfEndName . ' CHECK FROM ' . $exploit->GetVar('LHOST') . ":" . $exploit->GetVar('LPORT') . ' TO ' . $exploit->GetVar('RHOST') . ":" . $exploit->GetVar('RPORT') );
 
   my $res = $exploit->Check;
 # This isn't ready yet.
@@ -494,7 +494,7 @@ sub Exploit {
     $self->SetTempEnv('EncodedPayload', $encodedPayload);
   }
 
-  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $exploit->SelfEndName . ' EXPLOIT ' . $exploit->GetVar('RHOST'));
+  Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $exploit->SelfEndName . ' EXPLOIT FROM ' . $exploit->GetVar('LHOST') . ":" . $exploit->GetVar('LPORT') . ' TO ' . $exploit->GetVar('RHOST') . ":" . $exploit->GetVar('RPORT') . ' USING PAYLOAD ' . $exploit->GetVar('PAYLOAD') . ' AND TARGET ' . $targets[$target] );
 
 #fixme
   if(!defined($payload)) {

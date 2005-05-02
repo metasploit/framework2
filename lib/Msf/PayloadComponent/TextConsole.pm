@@ -173,8 +173,12 @@ sub StartLog {
 		$self->Log('');
 		return;
 	}
-
-	my $logFile = time() . '_' . $self->GetVar('_Exploit')->SelfEndName . '_' . $self->PipeRemoteName . '.log';
+	
+	# User friendly name for the log file
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time());
+	
+	my $stamp   = sprintf("%.4d-%.2d_%.2d_%.2d_%.2d_%.2d_", $year + 1900, $mon + 1, $mday, $hour, $min, $sec);
+	my $logFile = $stamp . $self->GetVar('_Exploit')->SelfEndName . '_' . $self->PipeRemoteName . '.log';
 
 	Msf::Logging->PrintLine('[' . localtime(time()) . '] ' . $self->GetVar('_Exploit')->SelfEndName . ' EXPLOIT SUCCESS');
 
