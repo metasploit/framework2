@@ -34,7 +34,7 @@ use Pex::Text;
 my $envDebug = 0;
 
 sub Version {
-  return("2.3");
+  return("2.4");
 }
 
 sub new {
