@@ -22,11 +22,12 @@ use Pex;
 
 my %UUIDS =
 (
-    'MGMT'      => 'afa8bd80-7d8a-11c9-bef4-08002b102989',  # v2.0
-    'REMACT'    => '4d9f4ab8-7d1c-11cf-861e-0020af6e7c57',  # v0.0
-    'SYSACT'    => '000001a0-0000-0000-c000-000000000046',  # v0.0
-    'LSA_DS'    => '3919286a-b10c-11d0-9ba8-00c04fd92ef5',  # v0.0
-    'SAMR'      => '12345778-1234-abcd-ef00-0123456789ac',  # v1.0
+	'MGMT'      => 'afa8bd80-7d8a-11c9-bef4-08002b102989',  # v2.0
+	'REMACT'    => '4d9f4ab8-7d1c-11cf-861e-0020af6e7c57',  # v0.0
+	'SYSACT'    => '000001a0-0000-0000-c000-000000000046',  # v0.0
+	'LSA_DS'    => '3919286a-b10c-11d0-9ba8-00c04fd92ef5',  # v0.0
+	'SAMR'      => '12345778-1234-abcd-ef00-0123456789ac',  # v1.0
+	'MSMQ'      => 'fdb3a030-065f-11d1-bb9b-00a024ea5525',  # v1.0
 );
 
 sub UUID { return UUID_to_Bin($UUIDS{shift()}) }
@@ -203,6 +204,7 @@ sub DecodeResponse {
     return if length($raw) < 24;
     
     my $type = unpack('C', substr($raw, 2, 1));
+    $res->{'Raw'} = $raw;
 
     # process a bind_ack message
     if ($type == 12)
