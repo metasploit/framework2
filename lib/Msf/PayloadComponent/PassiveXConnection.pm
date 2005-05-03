@@ -154,6 +154,14 @@ sub ShutdownHandler
 		$self->{'PxChildPid'} = 0;
 	}
 
+	# Close the listener if it's valid
+	if (defined($self->{'pxHttpListener'}))
+	{
+		$self->{'pxHttpListener'}->close;
+
+		$self->{'pxHttpListener'} = undef;
+	}
+
 	$self->PrintLine('[*] Exiting PassiveX Handler.');
 }
 
