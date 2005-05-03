@@ -31,7 +31,7 @@ my $info =
 {
 	'UserOpts'          =>
 		{
-			'PXHTTPHOST'  => [ 1, 'ADDR', 'Local HTTP listener hostname', "0.0.0.0"                              ],
+			'PXHTTPHOST'  => [ 1, 'ADDR', 'Local HTTP listener hostname',                                        ],
 			'PXHTTPPORT'  => [ 1, 'PORT', 'Local HTTP listener port',     "8080"                                 ],
 			'PXAXDLL'     => [ 1, 'DATA', 'ActiveX DLL to Inject',        "$RealBin/data/passivex/passivex.dll"  ],
 			'PXAXCLSID'   => [ 1, 'DATA', 'ActiveX CLSID',                "B3AC7307-FEAE-4e43-B2D6-161E68ABA838" ],
@@ -910,7 +910,7 @@ sub ExtraDelay
 {
 	my $self = shift;
 
-	sleep(10);
+	select(undef, undef, undef, 10);
 }
 
 1;
