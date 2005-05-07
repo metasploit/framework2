@@ -150,6 +150,14 @@ initialize_structs:
 	mov   byte [edi], 0x44
 	inc   byte [edi + 0x2c]
 	inc   byte [edi + 0x2d]
+
+; set lpDesktop to WinSta0\Default so that this works with non-interactive services
+	push  0x00746c75
+   push  0x61666544
+   push  0x5c306174
+	push  0x536e6957
+	mov   [edi + 8], esp
+
 execute_process:
 	lea   ebx, [edi + 0x44]
 	push  ebx
