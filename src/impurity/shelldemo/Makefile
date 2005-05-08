@@ -2,7 +2,7 @@ SRC	= cmd_base.c cmd_expl.c cmd_fd.c cmd_fs.c cmd_misc.c \
           cmd_privs.c cmd_proc.c cmd_sys.c main.c misc.c
 	  	  
 CFLAGS	= -Wall -s -static
-LDFALGS = -Wl,-T,../script-ld-impurity 
+LDFLAGS = -Wl,-T,../script-ld-impurity 
 
 BIN	= $(SRC:.c=.o)
 
