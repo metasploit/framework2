@@ -2544,6 +2544,9 @@ sub Run {
 				waitpid(-1, WNOHANG);
 			}
 		}
+		
+		# Resolve an annoying issue with Cygwin...
+		next;
 	}
 }
 
