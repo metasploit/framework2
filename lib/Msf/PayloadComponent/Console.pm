@@ -163,7 +163,7 @@ sub PipeRemoteName {
 	my $self = shift;
 
 	$self->{'PipeRemoteName'} = shift() if @_;
-	if (! exists($self->{'PipeRemoteName'})) {
+	if (! defined($self->{'PipeRemoteName'})) {
 		$self->{'PipeRemoteName'} = 'remote';
 	}
 	return $self->{'PipeRemoteName'};

@@ -40,12 +40,10 @@ sub ChildHandler {
   # Is three seconds long enough?
   my $resp = $s->Recv(-1, 3);
   
-  print "sent, recv: $resp\n";
-  
   if($resp =~ /ABCDEFG/) {
     $self->PipeRemoteIn($sock);
     $self->PipeRemoteOut($sock);
-    $self->PrintLine('[*] Findsock found shell...');
+    $self->PrintLine('[*] FindConnection found a shell...');
     $self->HandleConsole;
     exit(0);
   }
