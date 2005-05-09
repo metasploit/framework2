@@ -317,7 +317,9 @@ sub gUnknown
     {
         xMsg($cmd, "command not found");
     } else {
-        system("$cmd ". join(" ", @args));
+		my $cmdline = "$cmd ". join(" ", @args);
+		Msf::Logging->PrintLine('[' . localtime(time()) . "] executing system command line '$cmdline'");	
+        system($cmdline);
     }
 }
 

@@ -58,7 +58,7 @@ foreach my $filename (@ARGV) {
          print '[' . localtime($1) . '] ' . $BLUE . HexToAscii($2) . $NORMAL;
          $printmode = 0;
       } else {
-         print $BLUE . HexToAscii($2) . $NORMAL;
+         print $BLUE . HexToAscii($2) . $NORMAL . "\n";
       }
 	
     }
@@ -67,7 +67,7 @@ foreach my $filename (@ARGV) {
         print '[' . localtime($1) . '] ' . $RED . HexToAscii($2) . $NORMAL;
         $printmode = 1;
       } else {
-        print $RED . HexToAscii($2) . $NORMAL;
+        print $RED . HexToAscii($2) . $NORMAL . "\n";
       }
     }
     else {
@@ -83,7 +83,7 @@ sub HexToAscii {
 }
 
 sub Usage {
-    print STDERR "\nUsage: $0 <log1> ... <log99>\n\n";
+    print STDERR "\nUsage: $0 <~/.msf/logs/session_logfile_path.log>\n\n";
     exit(0);
 }
 
