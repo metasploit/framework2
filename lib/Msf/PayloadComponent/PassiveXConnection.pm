@@ -904,13 +904,13 @@ sub IsMultistage
 }
 
 #
-# Wait 10 seconds to give time for the DLL to register
+# Wait 30 seconds to give time for the DLL to register
 #
 sub ExtraDelay
 {
 	my $self = shift;
 
-	select(undef, undef, undef, 10);
+	select(undef, undef, undef, 30);
 }
 
 1;
