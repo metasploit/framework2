@@ -21,7 +21,7 @@ This release is available from the Metasploit.com web site:
 Screen shots of the new release are online and available from:
   - http://metasploit.com/projects/Framework/screenshots.html
   
-A demonstration of the new msfweb interface is running live from:
+A demonstration of the msfweb interface is running live from:
   - http://metasploit.com:55555/
   
 
@@ -54,6 +54,8 @@ For more information about the Framework and this release in general,
 please refer to the online documentation, particularly the User Guide:
   - http://metasploit.com/projects/Framework/documentation.html
 
+We would like to thank Catalin Patulea <cat@vv.carleton.ca> for helping us 
+optimize and improve the Opcode DB, queries are now drastically faster.
 
 Enjoy!
 
