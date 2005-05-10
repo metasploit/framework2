@@ -9,9 +9,12 @@ of the Cygwin environment.
 Some highlights in this release:
 
 
+ - General bug fixes over 2.3
  - Includes the PassiveX staging system
-
  - New exploits
+ - SunRPC API and several SunRPC exploits (snmpXdmid, KCMS)
+ - Re-written shelldemo impurity binary
+ - More and smaller payloads (including win32_bind and win32_reverse)
   
 
 This release is available from the Metasploit.com web site:
