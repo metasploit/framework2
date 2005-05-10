@@ -74,14 +74,35 @@ if (! $action || $action =~ /^S/)
     exit(0);
 }
 
-Usage() if $action !~ /^C|^P|^R/;
+Usage() if $action !~ /^C|^P|^R|^X/;
 
 if ($action =~ /^R/) { print $p->Build; exit; }
 
-if ($p->Multistage)
-{
-    print STDERR "Warning: Multistage payloads only return first stage\n\n";
+if ($p->Multistage) {
+    print STDERR "Warning: Multistage payloads only return first stage\n";
 }
+
+if ($action =~ /^X/) {
+	my (%pos, %parch);
+	
+	map {   $pos{$_}++ } @{ $p->OS };
+	map { $parch{$_}++ } @{ $p->Arch };
+
+	# Generate a PE image for Windows payloads
+	if ($pos{'win32'} && $parch{'x86'}) {
+		ExportWinPE();
+	}
+	
+	# Generate a shell script if there is no architecture
+	if (! scalar(keys(%parch))) {
+		print "#!/bin/sh\n" . $p->Build;
+		exit(0);
+	}
+	
+	print STDERR "Error: No export format is implemented for this payload\n";
+	exit(0);
+}
+
 
 my $r = $action =~ /^C/ ? Pex::Text::BufferC($p->Build) : Pex::Text::BufferPerl($p->Build);
 
@@ -90,12 +111,67 @@ exit(0);
 
 sub Usage
 {
-    print STDERR "\n   Usage: $0 <payload> [var=val] <S|C|P|R>\n\n";
+    print STDERR "\n   Usage: $0 <payload> [var=val] <S|C|P|R|X>\n\n";
     print STDERR "Payloads: \n";
     print STDERR $ui->DumpPayloads(2, $payloads);
     print STDERR "\n";
     exit(0);
 }
+
+sub ExportWinPE {
+	my $pedata;
+	local $/;
+	
+	if(! open(TMP, "<$RealBin/data/msfpayload/template.exe")) {
+		print STDERR "Error: Could not access the template executable: $!\n";
+		exit(0);
+	}
+
+	$pedata = <TMP>;
+	close (TMP);
+	
+	# Comments are limited to 512 bytes
+	# Payloads are limited to 8192 bytes
+	
+	my $bin = $p->Build;
+	if (length($bin) > 8192) {
+		print STDERR "Error: The payload was too large to generate as an EXE\n";
+		exit(0);
+	}
+	
+	my $bin_off = index($pedata, 'PAYLOAD:');
+	if ($bin_off == -1) {
+		print STDERR "Error: Could not determine the payload start offset\n";
+		exit(0);
+	}
+	
+	# Replace the stub data with the actual payload
+	substr($pedata, $bin_off, 8192, pack('a8192', $bin));
+
+
+	my $com_off = index($pedata, 'COMMENT:');
+	if ($com_off == -1) {
+		print STDERR "Error: Could not determine the comment start offset\n";
+		exit(0);
+	}
+		
+	# Generate a comment for the executable
+	my $com = "Created by msfpayload, a component of the Metasploit Framework ($FRAMEVERSION). ".
+			  "This executable contains the ".$p->SelfEndName." payload, ".
+			  "generated with the following set of options: ";
+
+	foreach (keys %{ $ui->GetTempEnv() }) {
+		next if $_ =~ /^_/;
+		$com .= $_ ."=". $ui->GetTempEnv($_)." ";
+	}
+	
+	# Replace the stub comment with payload information
+	substr($pedata, $com_off, 512, pack('a512', $com));
+	
+	print $pedata;
+	exit(0);
+}
+
 sub Version {
     my $ver = Pex::Utils::Rev2Ver($VERSION);
     print STDERR qq{
