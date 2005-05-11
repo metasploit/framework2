@@ -16,7 +16,7 @@ Some highlights in this release:
     + Minishare 1.41 Buffer Overflow
 
  - Addition of the new SunRPC and XDR Perl API
-     + Allows for clean RPC exploit development
+    + Allows for clean RPC exploit development
     + Used by two new exploit modules (KCMS and snmpXdmid)
     + Updated sadmind exploit uses the new API
 
@@ -31,12 +31,12 @@ Some highlights in this release:
         * http://www.uninformed.org/?v=1&a=3&t=pdf
  
  - Stability improvements and numerous bugs fixes
-     + The msfweb interface is slightly less of a memory pig
+    + The msfweb interface is slightly less of a memory pig
     + Many exploits have been updated and improved
     + New external references added to the exploit modules
 
  - General improvements to the payload system
-     + Brand new "shelldemo" binary for the impurity stager
+    + Brand new "shelldemo" binary for the impurity stager
     + Size reductions to win32_bind, win32_reverse, and others
     + Can now make standalone executables with msfpayload
     + Interact with metasploit payloads via payload_handler.pm
