@@ -1,6 +1,6 @@
 The Metasploit Framework is an advanced open-source exploit
 development platform. The 2.4 release includes three user interfaces,
-71 exploits and 75 payloads.
+72 exploits and 75 payloads.
 
 The Framework will run on any modern operating system that has a working
 Perl interpreter. The Windows installer includes a slimmed-down version
@@ -8,18 +8,43 @@ of the Cygwin environment.
 
 Some highlights in this release:
 
+ - Previously unreleased exploits (20 others added since 2.3)
+	+ Solaris KCMS Arbitary File Read
+	+ Solaris snmpXdmid AddComponent Overflow
+	+ Metasploit Framework Payload Handler
+	+ Microsoft Message Queueing Service MSO5-017
+	+ Minishare 1.41 Buffer Overflow
 
- - General bug fixes over 2.3
- - Includes the PassiveX staging system
- - New exploits
- - SunRPC API and several SunRPC exploits (snmpXdmid, KCMS)
- - Re-written shelldemo impurity binary
- - More and smaller payloads (including win32_bind and win32_reverse)
+ - Addition of the new SunRPC and XDR Perl API
+ 	+ Allows for clean RPC exploit development
+	+ Used by two new exploit modules (KCMS and snmpXdmid)
+	+ Updated sadmind exploit uses the new API
+
+ - Includes the new win32 PassiveX payload system
+ 	+ Loads an arbitary ActiveX through Internet Explorer
+	+ PassiveX payload loads the next stage over HTTP
+	+ HTTP transport emulates a standard TCP connection
+	+ Interact with cmd.exe, VNC, or Meterpreter over HTTP
+	+ Uses Internet Explorer settings for proxy access
+	+ Fully-functional on systems with Internet Explorer 6
+	+ Extensive documentation is available online:
+		* http://www.uninformed.org/?v=1&a=3&t=pdf
+ 
+ - Stability improvements and numerous bugs fixes
+ 	+ The msfweb interface is slightly less of a memory pig
+	+ Many exploits have been updated and improved
+	+ New external references added to the exploit modules
+
+ - General improvements to the payload system
+ 	+ Brand new "shelldemo" binary for the impurity stager
+	+ Size reductions to win32_bind, win32_reverse, and others
+	+ Can now make standalone executables with msfpayload
+	+ Interact with metasploit payloads via payload_handler.pm
   
 
 This release is available from the Metasploit.com web site:
-  - Unix:  http://metasploit.com/framework-2.4.tar.gz
-  - Win32: http://metasploit.com/framework-2.4.exe
+  - Unix:  http://metasploit.com/tools/framework-2.4.tar.gz
+  - Win32: http://metasploit.com/tools/framework-2.4.exe
 
 Screen shots of the new release are online and available from:
   - http://metasploit.com/projects/Framework/screenshots.html
@@ -28,9 +53,14 @@ A demonstration of the msfweb interface is running live from:
   - http://metasploit.com:55555/
   
 
-Exploit modules designed for the 2.3 release should maintain
+Exploit modules designed for the 2.2 and 2.3 releases should maintain
 compatibility with 2.4. If you run into any problems using older
 modules with this release, please let us know.
+
+The Opcode Database now includes Service Pack 1 for Windows 2003
+Server, increasing the record count to over 10 million. We would like to
+thank Catalin Patulea <cat[at]vv.carleton.ca> for helping us optimize and
+improve the database -- queries are now drastically faster.
 
 The Framework development team consists of four active members and a
 handful of part-time contributors. Check out the 'Credits' exploit
@@ -44,21 +74,10 @@ Framework with other users.
 If you would like to contact us directly, please email us at:
 msfdev[at]metasploit.com.
 
-Starting with the 2.2 release, it is now possible to perform a system-wide
-installation of the Framework. Simply extract the tarball into the
-directory of your choice and create symbolic links from the msf*
-executables to a directory in the system path. Users may maintain their
-own exploit module collections by placing them into ~/.msf/exploits/. If
-you are interested in adding the Framework to a operating system
-distribution, please drop us a line and we will gladly help with the
-integration and testing process.
-
 For more information about the Framework and this release in general,
 please refer to the online documentation, particularly the User Guide:
   - http://metasploit.com/projects/Framework/documentation.html
 
-We would like to thank Catalin Patulea <cat@vv.carleton.ca> for helping us 
-optimize and improve the Opcode DB, queries are now drastically faster.
 
 Enjoy!
 
