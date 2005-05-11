@@ -58,8 +58,7 @@ my $info =
 			 0x7c8803a6,     # 0x1df4 <reader+16>:     mtlr    r4
 			 0x44000002,     # 0x1df8 <reader+20>:     sc
 			 0x7c000278,     # 0x1dfc <reader+24>:     xor     r0,r0,r0
-			 0x4e800020,     # 0x1e00 <reader+28>:     blr
-			 0x7c000278,     # 0x1e04 <reader+32>:     xor     r0,r0,r0			 
+			 0x4e800020,     # 0x1e00 <reader+28>:     blr		 
 		),
     },
 };
