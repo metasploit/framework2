@@ -224,7 +224,7 @@ sub gSave {
     print "Saved configuration to: " . $ui->ConfigFile . "\n";
 }
 
-sub gVersion { print "msfconsole version $VERSION\n" }
+sub gVersion { print "msfconsole version ". Pex::Utils::Rev2Ver($VERSION)."\n" }
 
 sub gSet {
     my $cmd = shift;

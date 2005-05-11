@@ -26,6 +26,7 @@ my $UPDATE_PATH  = '/projects/Framework/updates/msfupdate.html';
 my $SSL_VERIFIED = 0;
 my $SSL_ISSUER   = '/C=US/ST=Texas/L=San Antonio/O=The Metasploit Project/OU=Development/CN=Metasploit CA/emailAddress=cacert@metasploit.com';
 my $SSL_CERTS    = "$RealBin/docs";
+my $OPSYS        = $^O;
 
 select(STDOUT); $|++;
 
@@ -56,6 +57,10 @@ if ($opts{v}) {
 
 if ($opts{h} || (! $opts{m} && ! $opts{r} && ! $opts{u} && ! $opts{U})) {
     Usage();
+}
+
+if ($opts{O}) {
+   $OPSYS = 'paranoid';
 }
 
 chdir($RealBin);
@@ -413,6 +418,7 @@ sub Usage {
     print STDERR "         -a             Do not prompt, default to overwrite all files\n";
     print STDERR "         -x             Do not require confirmation for non-SSL updates\n";
     print STDERR "         -f             Disable ssl support entirely, use with -x to avoid warnings\n";
+    print STDERR "         -O             Removes the operating system name from the user agent\n";
     
     # Too buggy and dangerous to use
     # print STDERR "         -U             Upgrade to a new major revision of the Framework\n";
@@ -512,7 +518,7 @@ sub DownloadFile {
         exit(0);
     }
     
-    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV $FRAMEWORK ($^O)\r\n\r\n";
+    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV $FRAMEWORK ($OPSYS)\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
     
