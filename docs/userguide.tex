@@ -66,7 +66,7 @@ optional components written in C, assembler, and Python.
 The Framework development team is made up of four full-time members and a handful
 of part-time contributors. Please refer to the Credits exploit module for a complete
 listing of the people involved in the project. If you have contributed to the project
-and do not see your name listed there, please let use know.
+and do not see your name listed there, please let us know.
 
 \par
 \pagebreak
@@ -80,10 +80,11 @@ Installing the Framework is as easy as extracting the tarball, changing into the
 created directory, and executing your preferred user interface. We strongly
 recommend that you compile and install the Term::ReadLine::Gnu Perl module found
 in the "extras" subdirectory. This package enables extensive tab-completion
-support in the \texttt{msfconsole} interface; \texttt{msfconsole} is the preferred UI for everyday
-use.  If SSL support is desired, you should install the Net::SSLeay Perl module
-as well, this can also be found in the "extras" subdirectory.  Please refer to 
-appendices \ref{REF-TAB} and \ref{REF-SSL} for detailed instructions.
+support in the \texttt{msfconsole} interface; \texttt{msfconsole} is the
+preferred UI for everyday use.  If SSL support is desired, you should install
+the Net::SSLeay Perl module as well, this can also be found in the "extras"
+subdirectory.  Please refer to appendices \ref{REF-TAB} and \ref{REF-SSL} for
+detailed instructions.
 
 \par
 To perform a system-wide installation, we recommend that you copy the entire
@@ -97,8 +98,8 @@ payloads, nops, or encoders.
     \label{INSTALL-WIN32}
 \par
 After months of working around ActiveState bugs, we finally decided to scrap it
-and only support Cygwin Perl. The Metasploit Framework Win32 installer bundles a
-stripped-down copy of the Cygwin environment, this is the preferred way to use
+and only support Cygwin Perl. The Metasploit Framework Win32 installer includes a
+slimmed-down copy of the Cygwin environment, this is the preferred way to use
 the Framework on the Windows platform. If you would like to install the
 Framework into an existing Cygwin environment, please refer to appendix
 \ref{CYGWIN}.
@@ -136,9 +137,8 @@ The following platforms are known to be problematic:
 
 \par
 We have received numerous reports of the Framework working on Solaris,
-AIX, and even the Sharp Zaurus. These systems often require an
-updated version of Perl in conjunction with the GNU utilities to function
-correctly.
+AIX, and even the Sharp Zaurus. These systems often require an updated version
+of Perl in conjunction with the GNU utilities to function correctly.
 
 
     \section{Updating the Framework}
@@ -156,7 +156,7 @@ the security of the metasploit.com web server. To learn more about the
 \par
 If you would prefer to not use the online update system, you can still download
 updated modules and the current stable snapshot package from the metasploit.com
-web site. 
+web site. At this time, \texttt{msfupdate} does not support proxy servers.
 \pagebreak
 
 
@@ -166,9 +166,9 @@ web site.
     \label{STARTED-CONSOLE}
 \par
 After you have installed the Framework, you should verify that everything is
-working correctly.  The quickest way to do this is to execute the
-\texttt{msfconsole} user interface. This interface should display an metasploit
-logo, print the current version, number of payloads, number of exploits, and
+working correctly.  The easiest way to do this is to execute the
+\texttt{msfconsole} user interface. This interface should display an ascii art
+logo, print the current version, some module counts, and
 drop to a "msf> " prompt. From this prompt, type \texttt{help} to get a list of
 valid commands. You are currently in the "main" mode; this allows you to list
 exploits, list payloads, and configure global options.  To list all available
@@ -178,7 +178,7 @@ exploit, type \texttt{info module\_name}.
 \par
 The \texttt{msfconsole} interface was designed to be flexible and fast. If you
 enter a command that is not recognized by the console, it will scan the system
-path to determine if you typed a system command. If it finds a match, that
+path to determine if it is a system command. If it finds a match, that
 command will be executed with the supplied arguments. This allows you to use
 your standard set of tools without having to leave the console. We highly
 recommend that you enable tab completion support, this is included by default in
@@ -190,7 +190,7 @@ systems. For more information on tab completion, please refer to appendix
 The \texttt{msfconsole} startup will similar to the text below.
 
 \begin{verbatim}
-+ -- --=[ msfconsole v2.4 [71 exploits - 75 payloads]
++ -- --=[ msfconsole v2.4 [72 exploits - 75 payloads]
 
 msf > 
 \end{verbatim}
@@ -209,8 +209,8 @@ than one module matches, a list of possible modules will be provided.
 \par
 The action code is a single letter; S for summary, O for options, A for advanced
 options, P for payloads, T for targets, C to try a vulnerability check, and E to
-exploit. The saved environment will be loaded and used at startup, this allows
-you to configure various default options in the Global environment of
+exploit. The saved environment will be loaded and used at startup, allowing you
+to configure convenient default options in the Global environment of
 \texttt{msfconsole}, save them, and take advantage of them in the
 \texttt{msfcli} interface. 
 
@@ -220,14 +220,18 @@ you to configure various default options in the Global environment of
 \par
 The \texttt{msfweb} interface is a stand-alone web server that allows
 you to harness the power of the Framework through a browser. This interface 
-is still primitive, but may useful for live demonstrations and in a team-based 
-penetration testing environment.
+is still primitive, but may be useful for team-based penetration testing
+environments and live demonstrations. If you plan on using \texttt{msfweb} on
+the Windows platform, keep in mind that Cygwin does not support copy-on-write
+(COW) for forked processes. Since \texttt{msfweb} uses the \texttt{fork()} call
+to handle new connections, it will run much slower and use much more memory than
+if it was running on a comparable Unix system.
 
 \par
 Starting with version 2.3, \texttt{msfweb} provides an fast multi-user web shell. This 
 system allows you to share your active sessions with other \texttt{msfweb} users. The
-shell console (and the rest of msfweb) have been tested with Firefox 1.0, Internet Explorer 6.0,
-and the Safari/Konqueror browsers. 
+shell console (and the rest of \texttt{msfweb}) have been tested with Firefox
+1.0, Internet Explorer 6.0, and the Safari/Konqueror browsers. 
 
 \par
 The \texttt{msfweb} interface provides almost no security whatsoever; anyone who can connect 
@@ -236,16 +240,15 @@ The default configuration is to listen on the loopback address only, this can be
 changed by using -a option to specify the local IP address. If you would like to open the
 server up to the entire network, pass 0.0.0.0 to the -a option of msfweb. Just like the 
 command-line interface, the saved environment is loaded on startup and can affect module 
-settings. We do not recommend that the \texttt{msfweb} interface be used in production 
-environments or exposed to untrusted networks. 
-
+settings. We do not recommend that you expose the \texttt{msfweb} interface to
+an untrusted network. 
 
 \pagebreak
 \chapter{The Environment}
 
 \par
 The environment system is a core component of the Framework; the interfaces use
-it to configure various options, the payloads use it patch opcodes, the exploits
+it to configure settings, the payloads use it patch opcodes, the exploits
 use it to define parameters, and it is used internally to pass options between
 modules. The environment system is logically divided into a Global and Temporary environment.  
 
@@ -372,7 +375,7 @@ API. This section describes the most commonly used environment variables.
 
 \par
 For a complete listing of all environment variables, please see the file
-Environment.txt in the docs subdirectory of the Framework. 
+Environment.txt in the "docs" subdirectory of the Framework. 
 
 
 	\subsection{DebugLevel}
@@ -387,15 +390,16 @@ This variable is used to enable or disable session logging. Session logs are
 stored in ~/.msf/logs by default, the directory can be changed used the
 \texttt{LogDir} environment variable. You can use the \texttt{msflogdump}
 utility to view the generated session logs. These logs contain the complete
-environment for the exploit as well as per-packet timestamps.  
+environment for the exploit as well as per-packet timestamps. 
 
 	\subsection{LogDir}
 \par
 This option specifies what directory the log files should be stored in. It
-defaults to ~/.msf/logs. There are two types of log files, the main log and the
-session logs. The main log will record each significant action performed by the
-console interface. A new session log will be created for each successful exploit
-attempt.  
+defaults to ~/.msf/logs. There are two types of log files, the msfconsole log and the
+session logs. The msfconsole.log will record each significant action performed by the
+console interface. Starting with version 2.4, the \texttt{msfconsole} interface will
+record when it was started, stopped, and what system commands were executed. A
+new session log will be created for each successful exploit attempt. 
 
 	\subsection{Encoder}
 \par
@@ -411,7 +415,7 @@ msf> set Encoder ShikataGaNai
 \par
 This option tells the Framework to not fall through to remaining Encoders if the
 entire preferred list fails.  This is useful for keeping your stealthiness on a
-network, and not accidentally falling through to an unwanted Encoder because
+network and not accidentally falling through to an unwanted Encoder because
 your preferred Encoder failed.  
 
 	\subsection{Nop}
@@ -433,7 +437,8 @@ applies to the Nop preferred list.
 \par
 This option allows randomized nop sleds to be used instead of the standard nop
 opcode. RandomNops should be stable with all exploit modules included in the
-Framework and is now enabled by default. 
+Framework and is now enabled by default. Not all architectures and nop generator
+modules support randomization.
 
 	\subsection{ConnectTimeout}
 \par
@@ -582,8 +587,39 @@ extended at run-time. In normal terms, this means that it provides you with a
 basic shell and allows you to add new features to it as needed. Please refer to
 the Meterpreter documentation for an in-depth description of how it works and
 what you can do with it. The Meterpreter manual can be found in the "docs"
-subdirectory of the Framework as well as from the following URL:
+subdirectory of the Framework as well as online at:
+
 \url{http://metasploit.com/projects/Framework/docs/meterpreter.pdf}
+
+\section{PassiveX Payloads}
+\par
+Starting with the 2.4 release, the Metasploit Framework can be used to load
+arbitrary ActiveX controls into a target process. This feature works by patching
+the registry of the target system and causing the exploited process to launch
+internet explorer with a URL pointing back to the Framework. The Framework
+starts up a simple web server that accepts the request and sends back a web page
+instructing it to load an ActiveX component. The exploited system then downloads,
+registers, and executes the ActiveX. 
+
+\par
+The basic PassiveX payload, \texttt{win32\_passivex}, supports any custom
+ActiveX that you develop. In addition to the base payload, three other PassiveX
+modules are included in the Framework. These can be used to execute a command
+shell, load the Meterpreter, or inject a VNC service. When any of these three
+payloads are used, the PassiveX object will emulate a TCP connection through
+HTTP GET and POST requests. This allows you to interact with a command shell,
+VNC, or the Meterpreter using nothing but standard HTTP traffic.
+
+\par
+Since PassiveX uses the Internet Explorer browser to load the ActiveX component,
+it will pass right through an outbound web proxy, using whatever system and
+authentication settings that have already been configured. The PassiveX system
+included in 2.4 will only work when the target system has Internet Explorer 6.0
+or newer installed. Future versions may work around this limitation. For more
+information about PassiveX, please see the Uninformed Journal article titled
+"Post-Exploitation on Windows using ActiveX Controls", located online at:
+
+\url{http://www.uninformed.org/?v=1&a=3&t=pdf}
 
 
 \section{InlineEgg Python Payloads}
@@ -599,7 +635,9 @@ The Metasploit Framework supports InlineEgg payloads through the ExternalPayload
 module interface; this allows transparent support if the Python scripting
 language is installed. To enable the InlineEgg payloads, the
 \texttt{EnablePython} environment variable must be set to non-zero value. This
-change was made version 2.2 to speed up the module reload process. 
+change was made version 2.2 to speed up the module reload process. Starting with
+the 2.4 release, the Python interpreter is no longer included in the Windows
+installer.
 
 \par
 This release includes InlineEgg examples for Linux, BSD, and Windows. The Linux
@@ -631,14 +669,18 @@ for arbitrarily complex payloads to be written in standard C, the only
 requirement is a special loader payload. The Framework includes a Linux loader
 for Impurity executables, the payload is named
 \texttt{linux\_ia32\_reverse\_impurity} and requires the PEXEC option to be set
-to the path of the executable. Impurity executables must be compiled in a
+to the path of the executable. 
+\par
+Impurity executables must be compiled in a
 specific way, please see the documentation in the src/impurity subdirectory
-for more information about this process. The included "shelldemo" application
-application in the data subdirectory allows you to access file handles, change
-privileges and file system permissions, break out of chroot, and more! The
-original mailing list post is archived online at:
+for more information about this process. The QUICKSTART.impurity file in the
+"docs" subdirectory steps through the process of using Impurity to execute the
+"shelldemo" application inside another process. The "shelldemo" allows you to
+access file handles, change privileges and file system permissions, break out of
+chroot, and more! The original mailing list post is archived online at:
 
 \url{http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html}
+
 
 
 \section{Chainable Proxies}
@@ -656,13 +698,14 @@ this time.
 
 \section{Win32 UploadExec Payloads}
 \par
-Although Unix systems normally include all of the tools you need
+Although Unix systems normally include all of the tools you need for
 post-exploitation, Windows systems are notoriously lacking in a decent command
-line tool kit. The UploadExec payloads included in this release allow you to
+line toolkit. The UploadExec payloads included in this release allow you to
 simultaneously exploit a Windows system, upload your favorite tool, and execute
 it, all across the payload socket connection. When combined with a
 self-extracting rootkit or scripting language interpreter (perl.exe!), this can
-be a very powerful feature. 
+be a very powerful feature. The Meterpreter payloads are usually much better
+suited for penetration testing tasks.  
 
 \section{Win32 DLL Injection Payloads}
 \par
@@ -721,6 +764,18 @@ subdirectory of the Framework installation and is named 'vncdll.dll'. The source
 code of the DLL can be found in the src/shellcode/win32/dllinject/vncinject
 subdirectory of the Framework installation. 
 
+\par
+As of the 2.4 release, there are a few situations where the VNC inject payload
+will simply not work. These problems are often cause by strange execution
+environments or other issues related to a specific exploit or injection method.
+These issues will be addressed as time permits:
+\begin{itemize}
+	\item The cabrightstor\_uniagent exploit will cause the VNC payload to
+	crash, possibly due to a strange heap state.
+	\item The executables generated by \texttt{msfpayload}'s 'X' option are not
+	will cause the VNC payload to crash after spawning the command shell.
+\end{itemize}
+
 \begin{verbatim}
 msf > use lsass_ms04_011
 msf lsass_ms04_011 > set RHOST some.vuln.host
@@ -753,13 +808,15 @@ archive.
 \par
 You can subscribe to the Metasploit Framework mailing list by sending a blank
 email to framework-subscribe[at]metasploit.com. This is the preferred way to
-submit bugs, suggest new features, and discuss the Framework with other users. 
+submit bugs, suggest new features, and discuss the Framework with other users.
+The mailing list archive can be found online at:
+\url{http://metasploit.com/archive/framework/threads.html}
 
 \section{Developers}
 \par
-If you are interested in helping out with the Framework project itself, or have any
+If you are interested in helping out with the Framework project, or have any
 questions related to module development, please contact the development team. The
-Framework development team can be reached at msfdev[at]metasploit.com.
+Metasploit Framework development team can be reached at msfdev[at]metasploit.com.
 
 \pagebreak
 \appendix
@@ -777,12 +834,6 @@ We do not recommend that the \texttt{msfweb} interface be used on untrusted
 networks. Actually, we don't recommend that you use msfweb at all, it is
 more of a proof-of-concept than a real tool.
 
-\par
-We do not recommend that you install \texttt{msfpayload.cgi} on a web server that
-is exposed to an untrusted network. It is possible to configure it in such a
-way that it does not open any vulnerabilities, but we leave this as an
-exercise to the user (Hint: symlink to cgi-bin and remove potentially
-hazardous payloads).
 
 
 	\section{Console Interfaces}
@@ -811,18 +862,6 @@ and potentially access local files. The local file access attack can be
 accomplished by malicious arguments to the payloads which use a local file
 as input and then exploiting a (fake) service to obtain the file contents.
 	
-	
-	\section{Payload CGI}
-\par
-The \texttt{msfpayload.cgi} script does not adequately filter certain arguments,
-allowing a hostile web site operator to perform a cross-site scripting
-attack against users of the web site hosting this script.
-
-\par
-The \texttt{msfpayload.cgi} script can be used to obtain information about files on
-the system on which it is installed. This can be accomplished through the
-user of certain payloads which accept a local file path as input.
-
 
 \pagebreak
 \chapter{General Tips}
