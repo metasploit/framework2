@@ -9,37 +9,37 @@ of the Cygwin environment.
 Some highlights in this release:
 
  - Previously unreleased exploits (20 others added since 2.3)
-	+ Solaris KCMS Arbitary File Read
-	+ Solaris snmpXdmid AddComponent Overflow
-	+ Metasploit Framework Payload Handler
-	+ Microsoft Message Queueing Service MSO5-017
-	+ Minishare 1.41 Buffer Overflow
+    + Solaris KCMS Arbitary File Read
+    + Solaris snmpXdmid AddComponent Overflow
+    + Metasploit Framework Payload Handler
+    + Microsoft Message Queueing Service MSO5-017
+    + Minishare 1.41 Buffer Overflow
 
  - Addition of the new SunRPC and XDR Perl API
- 	+ Allows for clean RPC exploit development
-	+ Used by two new exploit modules (KCMS and snmpXdmid)
-	+ Updated sadmind exploit uses the new API
+     + Allows for clean RPC exploit development
+    + Used by two new exploit modules (KCMS and snmpXdmid)
+    + Updated sadmind exploit uses the new API
 
  - Includes the new win32 PassiveX payload system
- 	+ Loads an arbitary ActiveX through Internet Explorer
-	+ PassiveX payload loads the next stage over HTTP
-	+ HTTP transport emulates a standard TCP connection
-	+ Interact with cmd.exe, VNC, or Meterpreter over HTTP
-	+ Uses Internet Explorer settings for proxy access
-	+ Fully-functional on systems with Internet Explorer 6
-	+ Extensive documentation is available online:
-		* http://www.uninformed.org/?v=1&a=3&t=pdf
+     + Loads an arbitary ActiveX through Internet Explorer
+    + PassiveX payload loads the next stage over HTTP
+    + HTTP transport emulates a standard TCP connection
+    + Interact with cmd.exe, VNC, or Meterpreter over HTTP
+    + Uses Internet Explorer settings for proxy access
+    + Fully-functional on systems with Internet Explorer 6
+    + Extensive documentation is available online:
+        * http://www.uninformed.org/?v=1&a=3&t=pdf
  
  - Stability improvements and numerous bugs fixes
- 	+ The msfweb interface is slightly less of a memory pig
-	+ Many exploits have been updated and improved
-	+ New external references added to the exploit modules
+     + The msfweb interface is slightly less of a memory pig
+    + Many exploits have been updated and improved
+    + New external references added to the exploit modules
 
  - General improvements to the payload system
- 	+ Brand new "shelldemo" binary for the impurity stager
-	+ Size reductions to win32_bind, win32_reverse, and others
-	+ Can now make standalone executables with msfpayload
-	+ Interact with metasploit payloads via payload_handler.pm
+     + Brand new "shelldemo" binary for the impurity stager
+    + Size reductions to win32_bind, win32_reverse, and others
+    + Can now make standalone executables with msfpayload
+    + Interact with metasploit payloads via payload_handler.pm
   
 
 This release is available from the Metasploit.com web site:
