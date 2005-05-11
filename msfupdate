@@ -18,7 +18,7 @@ no utf8;
 no locale;
 
 my $VERSION      = '$Revision$';
-my $FRAMEWORK    = '2.3';
+my $FRAMEWORK    = '2.4';
 my ($REV)        = $VERSION =~ m/\$Revisio.:\s+([^\s]+)/;
 
 my $UPDATE_HOST  = 'metasploit.com';
@@ -417,7 +417,7 @@ sub Usage {
     # Too buggy and dangerous to use
     # print STDERR "         -U             Upgrade to a new major revision of the Framework\n";
     # Developer options
-    # print STDERR "         -r             Rebuild the local version database\n";
+    # print STDERR "         -r             Rebuild the local version database (internal only)\n";
     print "\n";
     exit(0);
 }
@@ -511,8 +511,8 @@ sub DownloadFile {
         print STDERR "[*] Could not connect to $host: $!\n";
         exit(0);
     }
-
-    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV $FRAMEWORK\r\n\r\n";
+    
+    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV $FRAMEWORK ($^O)\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
     
