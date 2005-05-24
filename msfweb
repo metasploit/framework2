@@ -1735,9 +1735,6 @@ qq[
 	# Now things get interesting :-)
 	my $epid = fork();
 	
-	# Reseed the PRNG for the forked process
-	srand() if ! $epid;
-	
 	# The main process will keep our IPC open as long as we stay alive
 	if ($epid) {
 		
@@ -2501,6 +2498,8 @@ sub Run {
 					# Spawn off the child process
 					my $pid = fork();
 					if (! $pid) {
+						# Reseed the PRNG
+						srand();
 						
 						# Close the http listener inside the child
 						$httpd->close;					
