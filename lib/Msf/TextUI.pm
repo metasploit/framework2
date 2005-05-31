@@ -351,7 +351,11 @@ sub Options {
 
   $self->PrintLine;
   print $self->DumpOptions(2, 'Exploit', $exploit);
-  print $self->DumpOptions(2, 'Payload', $payload) if($payloadName);
+  
+  if ($exploit->Payload && $payloadName) {
+    print $self->DumpOptions(2, 'Payload', $payload);
+  }
+  
   if(@targets) {
     my $name = 'Target Not Specified';
     my $target = $exploit->GetVar('TARGET');

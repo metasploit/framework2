@@ -743,11 +743,11 @@ sub xCreateSetValueList
             ($dflt, $desc) = @{$x->Advanced->{$n}};
         }
                 
-        if ($p && exists($p->UserOpts->{$n})) {
+        if ($x->Payload && $p && exists($p->UserOpts->{$n})) {
             ($req, $type, $desc, $dflt) = @{$p->UserOpts->{$n}};  
         }
                 
-        if ($p && exists($p->Advanced->{$n})) {
+        if ($x->Payload && $p && exists($p->Advanced->{$n})) {
             ($req, $type) = (0, 'DATA');
             ($dflt, $desc) = @{$p->Advanced->{$n}};
         }
