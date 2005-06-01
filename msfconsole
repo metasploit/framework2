@@ -271,7 +271,7 @@ sub eSet {
     }
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
-    if ($ui->GetEnv('PAYLOAD')) {
+    if ($ui->GetEnv('PAYLOAD') && $state->{'Exploit'}->{'Exploit'}->Payload) {
         $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
     }
     $prompt .= ' > ';
@@ -291,7 +291,7 @@ sub eUnset
     $ui->UnsetTempEnv($key);
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
-    if ($ui->GetEnv('PAYLOAD')) {
+    if ($ui->GetEnv('PAYLOAD') && $state->{'Exploit'}->{'Exploit'}->Payload) {
         $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
     }
     $prompt .= ' > ';
@@ -365,7 +365,7 @@ sub gUse
     }
     
     my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
-    if ($ui->GetEnv('PAYLOAD'))
+    if ($ui->GetEnv('PAYLOAD') && $state->{'Exploit'}->{'Exploit'}->Payload)
     {
         $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
     }
@@ -907,14 +907,22 @@ sub FillTemp {
   # look into just having it done once....
   $exploit->ApplyAutoOpts;
 
-  my $payloadName = $ui->GetEnv('PAYLOAD');
-  $ui->SetTempEnv('_PayloadName', $payloadName);
-  my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
-  my $payload = $validPayloads->{$payloadName};
-  # make sure the OO stuff is good for whoever might use this...
-  $payload->_Load if($payload);
-  $ui->SetTempEnv('_Payload', $payload);
-  $ui->SetTempEnv('_ValidPayloads', $validPayloads);
+  # setup payload data if exploit requires a payload
+  if($exploit->Payload) {
+    my $payloadName = $ui->GetEnv('PAYLOAD');
+    $ui->SetTempEnv('_PayloadName', $payloadName);
+    my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
+    my $payload = $validPayloads->{$payloadName};
+    # make sure the OO stuff is good for whoever might use this...
+    $payload->_Load if($payload);
+    $ui->SetTempEnv('_Payload', $payload);
+    $ui->SetTempEnv('_ValidPayloads', $validPayloads);
+  }
+  else {
+    $ui->SetTempEnv('_PayloadName', undef);
+    $ui->SetTempEnv('_Payload', undef);
+    $ui->SetTempEnv('_ValidPayloads', undef);
+  }
 }
 
 sub Usage {
