@@ -560,8 +560,8 @@ sub new {
     my $cls = shift();
     my $arg = shift() || { };
     my $self = bless $arg, $cls;
-    $self->NativeOS('Unix');
-    $self->NativeLM('Metasploit Framework');
+    $self->NativeOS('Windows 2000 2195');
+    $self->NativeLM('Windows 2000 5.0');
     return $self;
 }
 
