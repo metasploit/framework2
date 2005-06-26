@@ -5,13 +5,22 @@ use constant REG_SZ => 1;
 use constant REG_EXPAND_SZ => 2;
 use constant REG_BINARY => 3;
 
+use constant HKEY_CLASSES_ROOT => 0x80000000;
+use constant HKEY_CURRENT_USER => 0x80000001;
+use constant HKEY_LOCAL_MACHINE => 0x80000002;
+use constant HKEY_USERS => 0x80000003;
+use constant HKEY_PERFORMANCE_DATA => 0x80000004;
+use constant HKEY_CURRENT_CONFIG => 0x80000005;
+use constant HKEY_DYN_DATA => 0x80000006;
+
+
 ##
 # RPC Procedure 4
 ##
 sub RegRead {
 	my $subkey = Unicode( shift() . "\x00" );
 	my $subval = Unicode( shift() . "\x00" );
-	my $hive   = @_ ? shift() : 0x80000002;
+	my $hive   = @_ ? shift() : HKEY_LOCAL_MACHINE;
 	
 	my $data = 
 		# Encode the subkey path
@@ -51,7 +60,7 @@ sub RegRead {
 ##
 sub RegEnum {
 	my $subkey = Unicode( shift() . "\x00" );
-	my $hive   = @_ ? shift() : 0x80000002;
+	my $hive   = @_ ? shift() : HKEY_LOCAL_MACHINE;
 	
 	my $data = 
 		# Encode the subkey path
@@ -83,7 +92,7 @@ sub RegWrite {
 	my $subkey = Unicode( shift() . "\x00" );
 	my $subval = Unicode( shift() . "\x00" );
 	my $write  = Unicode( shift() );
-	my $hive   = @_ ? shift() : 0x80000002;
+	my $hive   = @_ ? shift() : HKEY_LOCAL_MACHINE;
 	
 	my $data = 
 		# Encode the subkey path
