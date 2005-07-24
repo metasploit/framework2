@@ -616,7 +616,18 @@ sub StateToOptions {
     my $res = {};
     
     foreach (keys(%{$state})) {
-        if (m/^OPT\_(.*)/ && defined($state->{$_})) { $res->{$1} = $state->{$_} }
+        if (m/^OPT\_(.*)/ && defined($state->{$_})) {
+			my $name = $1;
+			
+			# Block all options starting with underscore (thanks Dino!)
+			if ($name !~ /^_/) {
+				$res->{$name} = $state->{$_};
+			}
+			else {
+				# XXX - report a possible "refang" attack?
+				next;
+			}
+		}
     }
     return $res;
 }
