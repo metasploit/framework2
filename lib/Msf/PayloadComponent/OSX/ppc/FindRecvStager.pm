@@ -54,7 +54,8 @@ my $info =
 			0x3881effc,     # 0x1df4 <gotsock>:       addi    r4,r1,-4100
 			0x7c8903a6,     # 0x1df8 <gotsock+4>:     mtctr   r4
 			0x4c810420,     # 0x1dfc <gotsock+8>:     blectr
-		),
+			0x7cc63279,     # 0x1e00 <gotsock+12>:    xor.    r6,r6,r6
+			 ),
     },
 };
 

