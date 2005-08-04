@@ -312,17 +312,22 @@ sub PrintError {
 # Print Foo
 sub Print {
   my $self = shift;
+  my @args = @_;
   if(defined($self->_OverridePrint)) {
-    return(&{$self->_OverridePrint}($self, @_));
+    return(&{$self->_OverridePrint}($self, @args));
   }
-  print STDOUT @_;
+  @args = map { s/\e/\[ESC\]/g } @args;
+  print STDOUT @args;
 }
+
 sub PrintStderr {
   my $self = shift;
+  my @args = @_;
   if(defined($self->_OverridePrintStderr)) {
-    return(&{$self->_OverridePrintStderr}($self, @_));
+    return(&{$self->_OverridePrintStderr}($self, @args));
   }
-  print STDERR @_;
+  @args = map { s/\e/\[ESC\]/g } @args;
+  print STDERR @args;
 }
 
 sub PrintLine {
