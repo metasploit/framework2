@@ -1,9 +1,15 @@
 package Pex::BEServerRPC;
 use strict;
 
+use constant REG_NONE => 1;
 use constant REG_SZ => 1;
 use constant REG_EXPAND_SZ => 2;
 use constant REG_BINARY => 3;
+use constant REG_DWORD => 4;
+use constant REG_LITTLE_ENDIAN => 4;
+use constant REG_BIG_ENDIAN => 5;
+use constant REG_LINK => 6;
+use constant REG_MULTI_SZ => 7;
 
 use constant HKEY_CLASSES_ROOT => 0x80000000;
 use constant HKEY_CURRENT_USER => 0x80000001;
@@ -18,10 +24,11 @@ use constant HKEY_DYN_DATA => 0x80000006;
 # RPC Procedure 4
 ##
 sub RegRead {
-	my $subkey = Unicode( shift() . "\x00" );
-	my $subval = Unicode( shift() . "\x00" );
-	my $hive   = @_ ? shift() : HKEY_LOCAL_MACHINE;
-	
+	my %args = @_;
+	my $subkey = Unicode( $args{'SubKey'} . "\x00" );
+	my $subval = Unicode( $args{'SubVal'} . "\x00" );
+	my $hive   = $args{'Hive'} ? $args{'Hive'} : HKEY_LOCAL_MACHINE;
+
 	my $data = 
 		# Encode the subkey path
 		pack('VVV',
@@ -59,8 +66,9 @@ sub RegRead {
 # RPC Procedure 7
 ##
 sub RegEnum {
-	my $subkey = Unicode( shift() . "\x00" );
-	my $hive   = @_ ? shift() : HKEY_LOCAL_MACHINE;
+	my %args = @_;
+	my $subkey = Unicode( $args{'SubKey'} . "\x00" );
+	my $hive   = $args{'Hive'} ? $args{'Hive'} : HKEY_LOCAL_MACHINE;
 	
 	my $data = 
 		# Encode the subkey path
@@ -89,10 +97,16 @@ sub RegEnum {
 # RPC Procedure 5
 ##
 sub RegWrite {
-	my $subkey = Unicode( shift() . "\x00" );
-	my $subval = Unicode( shift() . "\x00" );
-	my $write  = Unicode( shift() );
-	my $hive   = @_ ? shift() : HKEY_LOCAL_MACHINE;
+	my %args = @_;
+	my $subkey = Unicode( $args{'SubKey'} . "\x00" );
+	my $subval = Unicode( $args{'SubVal'} . "\x00" );
+	my $hive   = $args{'Hive'} ? $args{'Hive'} : HKEY_LOCAL_MACHINE;
+	my $type   = $args{'Type'} ? $args{'Type'} : REG_SZ;
+	my $write  = $args{'Data'};
+
+	if ($type == REG_SZ || $type == REG_EXPAND_SZ) {
+		$write = Unicode( $write . "\x00" );
+	}
 	
 	my $data = 
 		# Encode the subkey path
@@ -110,7 +124,7 @@ sub RegWrite {
 		). DwordPad($subval).
 		
 		# The registry key type
-		pack('V', REG_SZ).
+		pack('V', $type).
 		
 		# The size of the output buffer
 		pack('V', length($write)).
