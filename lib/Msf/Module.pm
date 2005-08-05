@@ -319,7 +319,11 @@ sub RefConvert {
   
   if ($type eq 'MSB') {
     return 'http://www.microsoft.com/technet/security/bulletin/'.$data.'.mspx';
-  }  
+  } 
+  
+  if ($type eq 'NSS') {
+    return 'http://www.nessus.org/plugins/index.php?view=single&id='.$data;
+  }
   
   return $data;
 }

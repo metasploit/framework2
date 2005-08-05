@@ -1,6 +1,3 @@
-
-###############
-
 ##
 #         Name: Base.pm
 #       Author: spoonm <ninjatools [at] hush.com>
@@ -316,7 +313,7 @@ sub Print {
   if(defined($self->_OverridePrint)) {
     return(&{$self->_OverridePrint}($self, @args));
   }
-  @args = map { s/\e/\[ESC\]/g } @args;
+  @args[0] =~ s/\e/\[ESC\]/g;
   print STDOUT @args;
 }
 
@@ -326,7 +323,7 @@ sub PrintStderr {
   if(defined($self->_OverridePrintStderr)) {
     return(&{$self->_OverridePrintStderr}($self, @args));
   }
-  @args = map { s/\e/\[ESC\]/g } @args;
+  @args[0] =~ s/\e/\[ESC\]/g;
   print STDERR @args;
 }
 
