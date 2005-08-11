@@ -23,6 +23,8 @@ my %UUIDS =
 	'LSA_DS'    => '3919286a-b10c-11d0-9ba8-00c04fd92ef5',  # v0.0
 	'SAMR'      => '12345778-1234-abcd-ef00-0123456789ac',  # v1.0
 	'MSMQ'      => 'fdb3a030-065f-11d1-bb9b-00a024ea5525',  # v1.0
+	'EVENTLOG'  => '82273fdc-e32a-18c3-3f78-827929dc23ea',  # v0.0
+	'SVCCTL'    => '367abb81-9844-35f1-ad32-98f038001003',  # v2.0
 );
 
 sub UUID { return UUID_to_Bin($UUIDS{shift()}) }
