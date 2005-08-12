@@ -1534,7 +1534,7 @@ sub SMBSessionSetupNTLMv2 {
 	  (
 		'command'       => SMB_COM_SESSION_SETUP_ANDX,
 		'flags1'        => 0x18,
-		'flags2'        => 0x2003,
+		'flags2'        => 0x2001,
 		'multiplex_id'  => $self->MultiplexID,
 		'request'       => $log->Fetch,
 	  );
