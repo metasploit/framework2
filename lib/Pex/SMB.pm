@@ -1233,7 +1233,7 @@ sub SMBNegotiate {
 
 	my $neg_res;
 
-	if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {
+	if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {SMBSessionS
 		$neg_res = $STNegResLM->copy;
 	}
 
@@ -1267,7 +1267,8 @@ sub SMBNegotiate {
 
 sub SMBSessionSetup {
 	my $self = shift;
-
+	my ($user, $pass, $wdom) = @_;
+	
 	return if $self->Error;
 
 	if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {
@@ -1275,8 +1276,19 @@ sub SMBSessionSetup {
 	}
 
 	if ($self->Dialect =~ /^(NT LANMAN 1.0|NT LM 0.12)$/) {
-		return ($self->NTLMVersion == 1) ?
-		  $self->SMBSessionSetupNTLMv1(@_) : $self->SMBSessionSetupNTLMv2(@_);
+	
+		my $res;
+		
+		if (! $self->NTLMVersion || $self->NTLMVersion == 2) {
+			$res =  $self->SMBSessionSetupNTLMv2(@_);
+		}
+		
+		if ( (! $res && ! $user) || $self->NTLMVersion == 1) {
+			$self->ClearError;
+			$res = $self->SMBSessionSetupNTLMv1(@_);
+		}
+		
+		return $res;
 	}
 
 	$self->Error('SMBSessionSetup does not know dialect '.$self->Dialect);
@@ -1385,7 +1397,7 @@ sub SMBSessionSetupNTLMv1 {
 	my $lmh = length($pass) ? $self->CryptLM($pass, $self->ChallengeKey) : '';
 	my $nth = length($pass) ? $self->CryptNT($pass, $self->ChallengeKey) : '';
 	my $pwl = length($lmh);
-
+	
 	my $data = $lmh. $nth.
 	  $user . "\x00".
 	  $wdom . "\x00".
@@ -1397,11 +1409,11 @@ sub SMBSessionSetupNTLMv1 {
 	  (
 		'word_count' => 13,
 		'x_cmd'      => 255,
-		'max_buff'   => 0xffdf,
+		'max_buff'   => 0xff00,
 		'max_mpx'    => 2,
 		'vc_num'      => 1,
-		'pass_len_lm'  => $pwl,
-		'pass_len_nt'  => $pwl,
+		'pass_len_lm' => $pwl,
+		'pass_len_nt' => $pwl,
 		'bcc_len'    => length($data),
 		'request'    => $data,
 		'sess_key'   => $self->SessionID,
@@ -1465,7 +1477,9 @@ sub SMBSessionSetupNTLMv1 {
 	if (! $self->DefaultDomain) {
 		$self->DefaultDomain($grp);
 	}
+	
 	return $log_res;
+	
 }
 
 sub SMBSessionSetupNTLMv2 {
@@ -1481,12 +1495,13 @@ sub SMBSessionSetupNTLMv2 {
 	my $auth_dest = $self->NTUnicode(uc($user)).NTUnicode(uc($wdom));
 	my $auth_hmac = Digest::HMAC_MD5::hmac_md5($auth_dest, $auth_hkey);
 
+
 	my $auth_blob = $auth_hmac .
 	  pack( 'VVVV',
 		rand() * 0xffffffff,
 		0,
 		0x48d70000 + rand() * 0xffff,
-		0x01c51b00 + rand() * 365,
+		0x01c51d00 + rand() * 365,
 	  ).
 	  'PPPPPPPP'.
 	  pack('Vvv', 0, 0, 0);
@@ -1502,9 +1517,9 @@ sub SMBSessionSetupNTLMv2 {
 	  (
 		'word_count' => 13,
 		'x_cmd'      => 255,
-		'max_buff'   => 0xffdf,
-		'max_mpx'    => 2,
-		'vc_num'     => 1,
+		'max_buff'   => 17408,
+		'max_mpx'    => 0xff00,
+		'vc_num'     => 0,
 		'pass_len_lm'  => length($auth_hkey),
 		'pass_len_nt'  => length($auth_blob),
 		'bcc_len'    => length($data),
@@ -1519,7 +1534,7 @@ sub SMBSessionSetupNTLMv2 {
 	  (
 		'command'       => SMB_COM_SESSION_SETUP_ANDX,
 		'flags1'        => 0x18,
-		'flags2'        => 0x2001,
+		'flags2'        => 0x2003,
 		'multiplex_id'  => $self->MultiplexID,
 		'request'       => $log->Fetch,
 	  );
@@ -2010,7 +2025,6 @@ sub SMBNTTrans {
 	return $trans_res;
 }
 
-# XXX - Written to use with lsarpc pipe
 sub SMBCreate {
 	my $self = shift;
 	my $file = shift;
@@ -2027,7 +2041,7 @@ sub SMBCreate {
 		'x_off'         => 0,
 		'filename_len'  => length($file),
 		'create_flags'  => 0x16,
-		'access_mask'   => 0x20089, #0x2019f,
+		'access_mask'   => 0x2019f, # 0x20089
 		'share_access'  => 7,
 		'create_opts'   => 0x40,
 		'impersonation' => 2,
