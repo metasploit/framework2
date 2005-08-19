@@ -102,7 +102,7 @@ sub HandleConnection
   if ($self->GetVar('AUTOVNC')) {
     my $pid = fork();
     if (! $pid) {
-        system("vncviewer 127.0.0.1:".$self->GetVar('VNCPORT'));
+        system("vncviewer 127.0.0.1::".$self->GetVar('VNCPORT'));
         exit(0);
     }
   }
