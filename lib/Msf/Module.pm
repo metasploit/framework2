@@ -325,6 +325,10 @@ sub RefConvert {
     return 'http://www.nessus.org/plugins/index.php?view=single&id='.$data;
   }
   
+  if ($type eq 'MIL') {
+    return 'http://milw0rm.com/metasploit.php?id='.$data;
+  } 
+  
   return $data;
 }
 
