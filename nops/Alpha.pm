@@ -29,9 +29,8 @@ sub new {
 }
 
 # XXX: Operate: */v?
-# XXX: FPU: BUNCH of stuff
 # XXX: InsMemory (for lda and the like) 
-# Bad: ct[lt]z, ctpop, ld[bw]u, sext[bw], st[bw], sqrt*, ftoi*, itof*, max*, min*, perr, (un)pk* 
+# Bad: ct[lt]z, ctpop, ld[bw]u, sext[bw], st[bw], sqrt*, ftoi*, itof*, max*, min*, perr, (un)pk*, FPU anything 
 my $table = [
 	[ \&InsBranch,	[ 0x30 ], ],				# br
 	[ \&InsBranch,	[ 0x31 ], ],				# fbeq
@@ -48,13 +47,6 @@ my $table = [
 	[ \&InsBranch,	[ 0x3d ], ],				# bne
 	[ \&InsBranch,	[ 0x3e ], ],				# bge
 	[ \&InsBranch,	[ 0x3f ], ],				# bgt
-
-	[ \&InsFPU,	[ 0x17, 0x02a ], ],			# fcmoveq
-	[ \&InsFPU,	[ 0x17, 0x02b ], ],			# fcmovne
-	[ \&InsFPU,	[ 0x17, 0x02c ], ],			# fcmovlt
-	[ \&InsFPU,	[ 0x17, 0x02d ], ],			# fcmovge
-	[ \&InsFPU,	[ 0x17, 0x02e ], ],			# fcmovle
-	[ \&InsFPU,	[ 0x17, 0x02f ], ],			# fcmovgt
 
 	[ \&InsOperate,	[ 0, [ 0x10, 0x00 ] ], ],		# addl
 	[ \&InsOperate,	[ 0, [ 0x10, 0x02 ] ], ],		# s4addl
