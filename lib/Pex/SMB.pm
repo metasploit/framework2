@@ -1233,7 +1233,7 @@ sub SMBNegotiate {
 
 	my $neg_res;
 
-	if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {SMBSessionS
+	if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {
 		$neg_res = $STNegResLM->copy;
 	}
 
@@ -1779,7 +1779,7 @@ sub SMBTrans {
 	my $log = $STTrans->copy;
 	$log->Set
 	  (
-		'word_count'      => 16,
+		'word_count'      => 14 + $setup_count,
 		'param_count_tot' => $parm_count,
 		'data_count_tot'  => $data_count,
 		'param_count_max' => 1024,
