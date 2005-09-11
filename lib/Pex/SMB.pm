@@ -19,6 +19,7 @@
 package Pex::SMB;
 use Pex::Struct;
 use Digest::HMAC_MD5;
+use Digest::MD5 qw(md5);
 
 use strict;
 
@@ -324,6 +325,29 @@ $STSetupXRes->Set
 	'bcc_len'       => 0,
   );
 
+# SMB Session SetupX NTLMv2 Negotiate Response (w/null X)
+my $STSetupNTv2XRes = Pex::Struct->new
+  ([
+		'word_count'    => 'u_8',
+		'x_cmd'         => 'u_8',
+		'reserved1'     => 'u_8',
+		'x_off'         => 'l_u_16',
+		'action'        => 'l_u_16',
+		'secblob_len'   => 'l_u_16',
+		'bcc_len'       => 'l_u_16',
+		'request'       => 'string',
+	]);
+$STSetupNTv2XRes->Set
+  (
+	'word_count'    => 0,
+	'x_cmd'         => 0,
+	'reserved1'     => 0,
+	'x_off'         => 0,
+	'action'        => 0,
+	'secblob_len'   => 0,
+	'bcc_len'       => 0,
+  );
+  
 my $STTConnectX = Pex::Struct->new
   ([
 		'word_count'    => 'u_8',
@@ -893,9 +917,10 @@ sub new {
 	my $cls = shift();
 	my $arg = shift() || { };
 	my $self = bless $arg, $cls;
-    $self->NativeOS('Windows 2000 2195');
-    $self->NativeLM('Windows 2000 5.0');
+	$self->NativeOS('Windows 2000 2195');
+	$self->NativeLM('Windows 2000 5.0');
 	$self->Encrypted(1);
+	$self->ExtendedSecurity(0);
 	return $self;
 }
 
@@ -920,6 +945,12 @@ sub Encrypted {
 	my $self = shift;
 	$self->{'Encrypted'} = shift if @_;
 	return $self->{'Encrypted'};
+}
+
+sub ExtendedSecurity {
+	my $self = shift;
+	$self->{'ExtendedSecurity'} = shift if @_;
+	return $self->{'ExtendedSecurity'};
 }
 
 sub Dialect {
@@ -1196,7 +1227,7 @@ sub SMBNegotiate {
 	  (
 		'command'       => SMB_COM_NEGOTIATE,
 		'flags1'        => 0x18,
-		'flags2'        => 0x2001,
+		'flags2'        => 0x2801,
 		'multiplex_id'  => $self->MultiplexID,
 		'request'       => $neg->Fetch
 	  );
@@ -1227,6 +1258,7 @@ sub SMBNegotiate {
 		return;
 	}
 
+	
 	# Parse the negotiation response based on the dialect recieved
 	my $dia = unpack('v', substr($smb_res->Get('request'), 1, 2));
 	$self->Dialect($dialects[$dia]);
@@ -1248,6 +1280,18 @@ sub SMBNegotiate {
 
 	$neg_res->Fill($smb_res->Get('request'));
 
+	# Determine if the remote side supports extended security negotiation
+	if ($neg_res->Get('caps') & 0x80000000) {
+		$self->ExtendedSecurity(1);
+	}
+	
+	$self->SessionID($neg_res->Get('sess_key'));
+	
+	# No domain name, netbios name, or challenge key with extended
+	if ($self->ExtendedSecurity) {
+		return $neg_res;
+	}
+
 	my $extra_len = $neg_res->Get('bcc_len') - $neg_res->Get('key_len');
 	if ($extra_len) {
 		my $extrainfo = substr($smb_res->Get('request'), ($extra_len * -1));
@@ -1260,15 +1304,12 @@ sub SMBNegotiate {
 	}
 
 	$self->ChallengeKey($neg_res->Get('enc_key'));
-	$self->SessionID($neg_res->Get('sess_key'));
-
 	return $neg_res;
 }
 
 sub SMBSessionSetup {
 	my $self = shift;
-	my ($user, $pass, $wdom) = @_;
-	
+
 	return if $self->Error;
 
 	if ($self->Dialect =~ /^(LANMAN1.0|LM1.2X002)$/) {
@@ -1276,19 +1317,8 @@ sub SMBSessionSetup {
 	}
 
 	if ($self->Dialect =~ /^(NT LANMAN 1.0|NT LM 0.12)$/) {
-	
-		my $res;
-		
-		if (! $self->NTLMVersion || $self->NTLMVersion == 2) {
-			$res =  $self->SMBSessionSetupNTLMv2(@_);
-		}
-		
-		if ( (! $res && ! $user) || $self->NTLMVersion == 1) {
-			$self->ClearError;
-			$res = $self->SMBSessionSetupNTLMv1(@_);
-		}
-		
-		return $res;
+		return ($self->ExtendedSecurity == 1) ?
+		  $self->SMBSessionSetupNTLMv2(@_) : $self->SMBSessionSetupNTLMv1(@_);
 	}
 
 	$self->Error('SMBSessionSetup does not know dialect '.$self->Dialect);
@@ -1397,7 +1427,7 @@ sub SMBSessionSetupNTLMv1 {
 	my $lmh = length($pass) ? $self->CryptLM($pass, $self->ChallengeKey) : '';
 	my $nth = length($pass) ? $self->CryptNT($pass, $self->ChallengeKey) : '';
 	my $pwl = length($lmh);
-	
+
 	my $data = $lmh. $nth.
 	  $user . "\x00".
 	  $wdom . "\x00".
@@ -1409,11 +1439,11 @@ sub SMBSessionSetupNTLMv1 {
 	  (
 		'word_count' => 13,
 		'x_cmd'      => 255,
-		'max_buff'   => 0xff00,
+		'max_buff'   => 0xffdf,
 		'max_mpx'    => 2,
 		'vc_num'      => 1,
-		'pass_len_lm' => $pwl,
-		'pass_len_nt' => $pwl,
+		'pass_len_lm'  => $pwl,
+		'pass_len_nt'  => $pwl,
 		'bcc_len'    => length($data),
 		'request'    => $data,
 		'sess_key'   => $self->SessionID,
@@ -1477,55 +1507,70 @@ sub SMBSessionSetupNTLMv1 {
 	if (! $self->DefaultDomain) {
 		$self->DefaultDomain($grp);
 	}
-	
 	return $log_res;
-	
 }
 
 sub SMBSessionSetupNTLMv2 {
 	my $self = shift;
 	my $user = @_ ? shift : "";
 	my $pass = @_ ? shift : "";
-	my $wdom = @_ ? shift : "";
+	my $group = @_ ? shift : "";
 	my $sock = $self->Socket;
 
 	return if $self->Error;
+	
+	my $name  = "WORKSTATION1";
+	
+	my $auth_blob =
+		"\x60" . $self->ASN1Encode(		
+			"\x06". $self->ASN1Encode("\x2b\x06\x01\x05\x05\x02").	
+			"\xa0" . $self->ASN1Encode(
+			
+				"\x30" . $self->ASN1Encode(
+					# mechType
+					"\xa0" . $self->ASN1Encode(
+						"\x30". $self->ASN1Encode(
+							"\x06". $self->ASN1Encode("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a")
+						)
+					).
 
-	my $auth_hkey = $self->CryptNT($pass, $self->ChallengeKey);
-	my $auth_dest = $self->NTUnicode(uc($user)).NTUnicode(uc($wdom));
-	my $auth_hmac = Digest::HMAC_MD5::hmac_md5($auth_dest, $auth_hkey);
+					# mechToken
+					"\xa2". $self->ASN1Encode(
+						"\x04". $self->ASN1Encode(
+							"NTLMSSP\x00".
+							pack('VV', 1, 0x80201).
 
+							pack('v', length($group)). # length
+							pack('v', length($group)). # maximum length
+							pack('V', 32).
 
-	my $auth_blob = $auth_hmac .
-	  pack( 'VVVV',
-		rand() * 0xffffffff,
-		0,
-		0x48d70000 + rand() * 0xffff,
-		0x01c51d00 + rand() * 365,
-	  ).
-	  'PPPPPPPP'.
-	  pack('Vvv', 0, 0, 0);
-
-	my $data = $auth_hkey . $auth_blob.
-	  $user . "\x00".
-	  $wdom . "\x00".
+							pack('v', length($name)). # length
+							pack('v', length($name)). # maximum length
+							pack('V', 32 + length($group)).
+							$group . $name
+						)
+					)
+				)
+			)
+		);
+	
+	my $data =
 	  $self->NativeOS."\x00".
 	  $self->NativeLM."\x00";
 
-	my $log = $STSetupXNT->copy;
+	my $log = $STSetupXNTv2->copy;
 	$log->Set
 	  (
-		'word_count' => 13,
+		'word_count' => 12,
 		'x_cmd'      => 255,
-		'max_buff'   => 17408,
-		'max_mpx'    => 0xff00,
-		'vc_num'     => 0,
-		'pass_len_lm'  => length($auth_hkey),
-		'pass_len_nt'  => length($auth_blob),
-		'bcc_len'    => length($data),
-		'request'    => $data,
+		'max_buff'   => 0xffdf,
+		'max_mpx'    => 2,
+		'vc_num'     => 1,
+		'secblob_len' => length($auth_blob),
+		'bcc_len'    => length($data) + length($auth_blob),
+		'request'    => $auth_blob . $data,
 		'sess_key'   => $self->SessionID,
-		'caps'       => 64, # NT Error Codes
+		'caps'       => 0x8000d05c, # NT Error Codes + Extended SMB
 	  );
 
 	my $ses = $STSession->copy;
@@ -1534,7 +1579,7 @@ sub SMBSessionSetupNTLMv2 {
 	  (
 		'command'       => SMB_COM_SESSION_SETUP_ANDX,
 		'flags1'        => 0x18,
-		'flags2'        => 0x2001,
+		'flags2'        => 0x2801,
 		'multiplex_id'  => $self->MultiplexID,
 		'request'       => $log->Fetch,
 	  );
@@ -1555,14 +1600,145 @@ sub SMBSessionSetupNTLMv2 {
 	$smb_res->Fill($ses_res->Get('request'));
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
+	# We want to see the MORE PROCESSING error mesasage
+	if ($smb_res->Get('error_class') != 0xc0000016) {
+		# Just return the error back to the user
+		$self->Error('Session setup returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		return;
+	}
+
+	if ($smb_res->Get('command') != SMB_COM_SESSION_SETUP_ANDX) {
+		$self->Error('Session setup returned command '.$smb_res->Get('command'));
+		return;
+	}
+	
+	# Really ghetto way of extracting the NTLM challenge :(
+	my $idx = index($smb_res->Get('request'), "NTLMSSP\x00\x02\x00\x00\x00");
+	if ($idx == -1 ) {
+		$self->Error('Session setup failed to obtain NTLM challenge :(');
+		return;
+	}
+	
+	# This is required for the next stage to succeed
+	my $temp_uid = $smb_res->Get('user_id');
+	
+	$self->ChallengeKey(substr($smb_res->Get('request'), $idx + 24, 8));
+
+	# XXX Much of this is easy to signature :(
+	my $clnt = "\x00\x01\x02\x03\x04\x05\x06\x07";
+	my $nonc = $self->ChallengeKey().$clnt;
+	my $hash_nonc = md5($nonc);
+
+	my $resp_ntlm = $self->CryptNT($pass, substr($hash_nonc, 0, 8));
+	my $resp_lmv2 = $clnt . ("\x00" x 16);
+
+	my $ptr = 0;
+	$group = $self->NTUnicode($group);
+	$user = $self->NTUnicode($user);
+	$name = $self->NTUnicode($name);
+	
+	$auth_blob =
+		"\xa1" . $self->ASN1Encode(
+		"\x30" . $self->ASN1Encode(
+		"\xa2" . $self->ASN1Encode(
+		"\x04" . $self->ASN1Encode(
+		
+		"NTLMSSP\x00".
+		pack('V', 3).
+
+		# Lan Manager Response
+		pack('v', 24). # length
+		pack('v', 24). # maximum length
+		pack('V', ($ptr += 64)).
+
+		# NTLM Response
+		pack('v', 24). # length
+		pack('v', 24). # maximum length
+		pack('V', ($ptr += 24)).
+
+		# Domain Name
+		pack('v', length($group)). # length
+		pack('v', length($group)). # maximum length
+		pack('V', ($ptr += 24)).
+
+		# User Name
+		pack('v', length($user)). # length
+		pack('v', length($user)). # maximum length
+		pack('V', ($ptr += length($group))).		
+
+		# Host Name
+		pack('v', length($name)). # length
+		pack('v', length($name)). # maximum length
+		pack('V', ($ptr += length($user))).	
+
+		# Session Key
+		pack('v', 0). # length
+		pack('v', 0). # maximum length
+		pack('V', 0). # no session key
+
+		# Flags
+		pack('V', 0x80201).
+		$resp_lmv2.
+		$resp_ntlm.
+		$group.
+		$user.
+		$name
+	))));
+
+	$data =
+	  $self->NativeOS."\x00".
+	  $self->NativeLM."\x00";
+
+	$log = $STSetupXNTv2->copy;
+	$log->Set
+	  (
+		'word_count' => 12,
+		'x_cmd'      => 255,
+		'max_buff'   => 0xffdf,
+		'max_mpx'    => 2,
+		'vc_num'     => 1,
+		'secblob_len' => length($auth_blob),
+		'bcc_len'    => length($data) + length($auth_blob),
+		'request'    => $auth_blob . $data,
+		'sess_key'   => $self->SessionID,
+		'caps'       => 0x8000d05c, # NT Error Codes + Extended SMB
+	  );
+
+	$ses = $STSession->copy;
+	$smb = $STSMB->copy;
+	$smb->Set
+	  (
+		'command'       => SMB_COM_SESSION_SETUP_ANDX,
+		'flags1'        => 0x18,
+		'flags2'        => 0x2801,
+		'multiplex_id'  => $self->MultiplexID,
+		'user_id'       => $temp_uid,
+		'request'       => $log->Fetch,
+	  );
+
+	$ses->Set('type' => 0, 'flags' => 0, 'request' => $smb->Fetch);
+	$sock->Send($ses->Fetch);
+	$res = $self->SMBRecv();
+	
+	if (! $res) {
+		$self->Error('Session setup failed due to null response');
+		return;
+	}
+
+	$ses_res = $STSession->copy;
+	$ses_res->Fill($res);
+
+	$smb_res = $STSMB->copy;
+	$smb_res->Fill($ses_res->Get('request'));
+	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+
 	# Handle login errors here...
 	if ($smb_res->Get('error_class') != 0) {
-
-		# Fall back to NTLMv1 for anonymous sessions only
 		if ($user eq '') {
-			return $self->SMBSessionSetupNTLMv1($user, $pass, $wdom);
+			$self->ClearError;
+			return $self->SMBSessionSetupNTLMv1($user, $pass, $group);
 		}
-
+		
 		# Just return the error back to the user
 		$self->Error('Session setup returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
 		return;
@@ -1573,10 +1749,10 @@ sub SMBSessionSetupNTLMv2 {
 		return;
 	}
 
-	my $log_res = $STSetupXRes->copy;
+	my $log_res =$STSetupNTv2XRes->copy;
 	$log_res->Fill($smb_res->Get('request'));
 
-	if ($log_res->Get('action') == 1 || $user eq '') {
+	if ($log_res->Get('action') != 0 || $user eq '') {
 		$self->AuthUser('NULL');
 	} else {
 		$self->AuthUser($user);
@@ -1585,15 +1761,16 @@ sub SMBSessionSetupNTLMv2 {
 	$self->AuthUserID($smb_res->Get('user_id'));
 
 	$log_res->Set('request' => substr($smb_res->Get('request'), $log_res->Length));
-
-	my ($nos, $nlm, $grp) = split(/\x00/, $log_res->Get('request'));
+	
+	my ($nos, $nlm, $grp) = split(/\x00/, substr($log_res->Get('request'), $log_res->Get('secblob_len')));
 	$self->PeerNativeOS($nos);
 	$self->PeerNativeLM($nlm);
 
 	if (! $self->DefaultDomain) {
 		$self->DefaultDomain($grp);
 	}
-	return $log_res;
+	
+	return $log_res;	
 }
 
 
@@ -1768,7 +1945,7 @@ sub SMBTrans {
 	# The pipe name, parameters, and data go together
 	my $contents = $pipe . $parm . $data;
 
-	my $data_count  = length($data);
+	my $data_count = length($data);
 	my $parm_count = length($parm);
 	
 	# Subtract one to make this a starting-from-zero offset
@@ -2025,6 +2202,7 @@ sub SMBNTTrans {
 	return $trans_res;
 }
 
+
 sub SMBCreate {
 	my $self = shift;
 	my $file = shift;
@@ -2041,7 +2219,7 @@ sub SMBCreate {
 		'x_off'         => 0,
 		'filename_len'  => length($file),
 		'create_flags'  => 0x16,
-		'access_mask'   => 0x2019f, # 0x20089
+		'access_mask'   => 0x2019f,
 		'share_access'  => 7,
 		'create_opts'   => 0x40,
 		'impersonation' => 2,
@@ -2353,6 +2531,8 @@ sub LANMAN_NetShareEnum {
 	my $self = shift;
 	my $res;
 
+	my @type = qw{ disk printer device ipc special temp };
+
 	my $targ = '\PIPE\LANMAN'."\x00";
 
 	my $parm =
@@ -2381,7 +2561,7 @@ sub LANMAN_NetShareEnum {
 
 		my $share_comm = unpack('Z*', substr($data_bytes, $share_coff));
 
-		$shares{$share_name} = [ $share_type, $share_comm ];
+		$shares{$share_name} = [ $type[$share_type], $share_comm ];
 	}
 
 	return %shares;
@@ -2482,8 +2662,26 @@ sub ASN1Encode {
 	my $self = shift;
 	my $data = shift;
 	my $dlen = length($data);
-	return if $dlen > 0x7f;
-	return chr($dlen) . $data;
+	
+	if ($dlen < 0x80) {
+		return chr($dlen).$data;
+	}
+	
+	if ($dlen < 0x100) {
+		return(chr(0x81).chr($dlen).$data);
+	}
+	
+	if ($dlen < 0x100000) {
+		return(chr(0x82).pack('n', $dlen).$data);
+	}
+	
+	if ($dlen <= 0xffffffff) {
+		return(chr(0x84).pack('N', $dlen).$data);
+	}
+	
+	print "ERROR: TOO LONG = $dlen\n";
+	return;
+	
 }
 
 
@@ -2920,46 +3118,5 @@ sub add {
 	}
 	return ( $r_high << 16 ) | $r_low;
 }
+
 1;
-
-__DATA__
-
-# NTLMSSP Negotiation
-
-	if (0) {
-    	my $blob  =
-		"\x60" . $self->ASN1Encode(		
-			"\x06". $self->ASN1Encode("\x2b\x06\x01\x05\x05\x02").	
-			"\xa0" . $self->ASN1Encode(
-
-				# mechType
-				"\x30" . $self->ASN1Encode(
-					"\xa0" . $self->ASN1Encode(
-						"\x30". $self->ASN1Encode(
-							"\x06". $self->ASN1Encode("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a")
-						)
-					)
-				).
-
-				# mechToken
-				"\xa2". $self->ASN1Encode(
-					"\x04". $self->ASN1Encode(
-						"NTLMSSP\x00".
-						pack('VV', 1, 0x60080215).
-
-						pack('v', length($group)). # length
-						pack('v', length($group)). # maximum length
-						"\x20\x00".	# offset
-						"\x00".     # padding?
-
-						pack('v', length($name)). # length
-						pack('v', length($name)). # maximum length
-						"\x00\x29". # offset
-						"\x00\x00\x00". # padding
-						$group. 
-						$name
-					)
-				)
-			)
-		);
-	}
