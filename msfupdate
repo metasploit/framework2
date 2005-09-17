@@ -47,7 +47,7 @@ BEGIN
 }
 
 my %opts;
-getopts('hrvusmaxf', \%opts);
+getopts('hrvusmaxfp:', \%opts);
 
 if ($opts{v}) {
     print "Msfupdate Version: $REV\n";
@@ -65,6 +65,7 @@ if ($opts{O}) {
 
 chdir($RealBin);
 
+my $proxy = $opts{'p'};
 my ($old_data, $now_data, $new_data);
 my ($old, $now, $new);
 my ($mod, $upx, $upd);
@@ -117,7 +118,7 @@ if ($opts{u} || $opts{U}) {
         }
     }
     
-    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/.current");
+    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/.current", $proxy);
 }
 
 $now = Hashit($now_data);
@@ -135,7 +136,7 @@ if ($opts{m}) {
     }
     
     print "[*] Modifications since the last update:\n";
-    foreach (keys(%{$mod})) {
+    foreach (sort keys(%{$mod})) {
         print "\t".$mod->{$_}."\t$_\n";
     }
     print "\n";
@@ -256,7 +257,7 @@ if ($opts{U}) {
     $FRAMEWORK = $mver;
     
     # Download the file list for the new framework version
-    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/.current");
+    $new_data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/.current", $proxy);
 
     # Rebuild the tables
     $new = Hashit($new_data);
@@ -339,7 +340,7 @@ if (! keys(%{$upd})) {
 }
 
 print "[*] Online Update Task Summary\n\n";
-foreach my $entry (keys(%{$upd})) {
+foreach my $entry (sort keys(%{$upd})) {
     next if $opts{U};
     
     if ($mod->{$entry}) {
@@ -384,7 +385,7 @@ foreach my $entry (@tasks) {
     if ($mod->{$entry}) {
         next;
     } 
-    my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/$entry");
+    my $data = DownloadFile($UPDATE_HOST, "$UPDATE_PATH/$entry", $proxy);
     if ($new->{$entry} ne md5_hex($data)) {
         print "$entry: ". $new->{$entry} ." != ". md5_hex($data) ."\n";
         my $errmsg = $data ? 'checksum mismatch' : 'download failed';
@@ -419,6 +420,7 @@ sub Usage {
     print STDERR "         -x             Do not require confirmation for non-SSL updates\n";
     print STDERR "         -f             Disable ssl support entirely, use with -x to avoid warnings\n";
     print STDERR "         -O             Removes the operating system name from the user agent\n";
+	print STDERR "         -p             Specifies a proxy: <http|socks4>:<hostname>:<port>\n";
     
     # Too buggy and dangerous to use
     # print STDERR "         -U             Upgrade to a new major revision of the Framework\n";
@@ -493,7 +495,7 @@ sub ScanDirs {
 
 
 sub CheckVersion {
-    my $data = DownloadFile($UPDATE_HOST, $UPDATE_PATH);
+    my $data = DownloadFile($UPDATE_HOST, $UPDATE_PATH, $proxy);
     my ($vers, $mtime) = split(/\s+/, $data);
     return $vers;
 }
@@ -501,15 +503,30 @@ sub CheckVersion {
 sub DownloadFile {
     my $host = shift;
     my $path = shift;
+	my $prox = shift;
+	
     my $port = $SSL_SUPPORT ? 443 : 80;
     my $data;
     
     $path = EscapeURI($path);
     
+	my ($proxy_type, $proxy_host, $proxy_port);
+	if ($prox =~ m/^(socks4|http):([^:]+):(\d+)/) {
+		($proxy_type, $proxy_host, $proxy_port) = ($1, $2, $3);
+	}
+	
+	if ($prox && ! $proxy_host) {
+		print STDERR "[*] Invalid proxy format ($prox), please use one of the following:\n";
+		print STDERR "\tSOCKS: socks4:<hostname|ip address>:<port>\n";
+		print STDERR "\t HTTP:   http:<hostname|ip address>:<port>\n\n";
+		exit(0);
+	}
+	
+	
     my $sock = IO::Socket::INET->new
     (
-        PeerAddr    => $host,
-        PeerPort    => $port,
+        PeerAddr    => $proxy_host || $host,
+        PeerPort    => $proxy_port || $port,
         Proto       => 'tcp',
     );
     
@@ -517,7 +534,20 @@ sub DownloadFile {
         print STDERR "[*] Could not connect to $host: $!\n";
         exit(0);
     }
-    
+	
+	if ($proxy_type eq 'http') {
+		$sock->Send("CONNECT ".$host.":".$port." HTTP/1.0\r\n\r\n");
+	}
+	
+	if ($proxy_type eq 'socks4') {
+        $sock->send("\x04\x01".pack('n',$port).gethostbyname($host)."\x00");
+        $sock->recv(my $res, 8);
+        if (! $res || ($res && ord(substr($res,1,1)) != 90)) {
+            print STDERR "[*] Failed to established connection through socks4 proxy $proxy_host\n";
+			exit(0);
+        }	
+	}
+	
     my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV $FRAMEWORK ($OPSYS)\r\n\r\n";
 
     if ($SSL_SUPPORT) { 
