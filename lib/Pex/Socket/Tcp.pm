@@ -202,6 +202,28 @@ sub ConnectProxies {
         
         if ($lastproxy->[0] eq 'http') {
             my $res = $sock->send("CONNECT ".$proxy->[1].":".$proxy->[2]." HTTP/1.0\r\n\r\n");
+
+			# Look for the HTTP response message from the Proxy server
+			my $sel = IO::Select->new($sock);
+			my $resp = '';
+
+			if ($sel->can_read(10)) {
+				while (my $line = <$sock>)  {
+					last if $line eq "\r\n";
+					$resp .= $line;
+				}
+			} else {
+				$self->SetError("HTTP proxy at $lastproxy->[1]:$lastproxy->[2] failed to respond");
+				$sock->close;
+				return;
+			}
+
+			if ($resp !~ /HTTP\/1\.\d\s+2/) {
+				$self->SetError("HTTP proxy at $lastproxy->[1]:$lastproxy->[2] returned an error response");
+				print $resp;
+				$sock->close;
+				return;
+			}
         }
         
         if ($lastproxy->[0] eq 'socks4') {
