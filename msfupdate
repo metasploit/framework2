@@ -536,7 +536,7 @@ sub DownloadFile {
     }
 	
 	if ($proxy_type eq 'http') {
-		$sock->Send("CONNECT ".$host.":".$port." HTTP/1.0\r\n\r\n");
+		$sock->send("CONNECT ".$host.":".$port." HTTP/1.0\r\n\r\n");
 	}
 	
 	if ($proxy_type eq 'socks4') {
@@ -544,6 +544,9 @@ sub DownloadFile {
         $sock->recv(my $res, 8);
         if (! $res || ($res && ord(substr($res,1,1)) != 90)) {
             print STDERR "[*] Failed to established connection through socks4 proxy $proxy_host\n";
+			if (length($res)) {
+				print STDERR "    Data: ". unpack("H*", $res) ."\n";
+			}
 			exit(0);
         }	
 	}
