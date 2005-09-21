@@ -537,22 +537,50 @@ sub DownloadFile {
 	
 	if ($proxy_type eq 'http') {
 		$sock->send("CONNECT ".$host.":".$port." HTTP/1.0\r\n\r\n");
+		
+		# Look for the HTTP response message from the Proxy server
+		my $sel = IO::Select->new($sock);
+		my $resp = '';
+		
+		if ($sel->can_read(5)) {
+			while (my $line = <$sock>)  {
+				last if $line eq "\r\n";
+				$resp .= $line;
+			}
+		} else {
+			print STDERR "[*] No reply received from the HTTP proxy\n";
+			exit(0);
+		}
+		
+		if ($resp !~ /HTTP\/1\.\d\s+2/) {
+			foreach my $line (split(/\r\n/, $resp)) {
+				$line =~ s/\r|\n//g;
+				$line =~ s/\e//g;
+				print STDERR "[*] Proxy: " . $line . "\n";
+			}
+			print STDERR "[*] Connection failed\n";
+			exit(0);
+		}
 	}
 	
 	if ($proxy_type eq 'socks4') {
         $sock->send("\x04\x01".pack('n',$port).gethostbyname($host)."\x00");
         $sock->recv(my $res, 8);
+		
         if (! $res || ($res && ord(substr($res,1,1)) != 90)) {
             print STDERR "[*] Failed to established connection through socks4 proxy $proxy_host\n";
 			if (length($res)) {
-				print STDERR "    Data: ". unpack("H*", $res) ."\n";
+				print STDERR "[*] Response: ". unpack("H*", $res) ."\n";
 			}
 			exit(0);
         }	
 	}
 	
-    my $req = "GET $path HTTP/1.0\r\nUser-Agent: msfupdate/$REV $FRAMEWORK ($OPSYS)\r\n\r\n";
-
+    my $req = 
+		"GET $path HTTP/1.0\r\n".
+		"Host: ".$host.":".$port."\r\n".
+		"User-Agent: msfupdate/$REV $FRAMEWORK ($OPSYS)\r\n\r\n";
+	
     if ($SSL_SUPPORT) { 
     
         # Reset the verified flag
@@ -586,16 +614,15 @@ sub DownloadFile {
         }
         
         Net::SSLeay::ssl_write_all($ssl, $req);
-        $sock->shutdown(1);    
         
         my $cert = Net::SSLeay::get_peer_certificate($ssl);
-        
+
         $data = Net::SSLeay::ssl_read_all($ssl);
-        
+		
         Net::SSLeay::free ($ssl);
         Net::SSLeay::CTX_free ($ctx);
         $sock->close;
-        
+
         $data = ProcessHTTP($data);
         return $data;
     }
@@ -604,6 +631,7 @@ sub DownloadFile {
     $sock->shutdown(1);
     while (<$sock>) { $data .= $_ }
     close ($sock);
+	
     $data = ProcessHTTP($data);    
     return $data;
 }
