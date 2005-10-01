@@ -2684,21 +2684,6 @@ sub ASN1Encode {
 	
 }
 
-sub STTrans
-{
-	return $STTrans;
-}
-
-sub STSession
-{
-	return $STSession;
-}
-
-sub STSMB
-{
-	return $STSMB;
-}
-
 
 ############################################
 # This is straight from Authen::NTLM::DES  #
