@@ -176,6 +176,10 @@ sub DumpExploitSummary {
   $output .=   '  Keywords: ' . join(", ", @{$exploit->Keys}) ."\n"; 
   $output .=   'Privileged: ' . ($exploit->Priv ? "Yes" : "No") . "\n";
 
+  if ($exploit->DisclosureDate) {
+    $output .=   'Disclosure: ' . $exploit->DisclosureDate . "\n";
+  }
+  
   $output .=   "\n";
   
   $output .=   "Provided By:\n";

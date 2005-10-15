@@ -1085,7 +1085,11 @@ sub ModuleInfo {
 		$res .= "<tr><td align='right' width=80 class='textBold'> Size:</td>";
 		$res .= "<td class='textNormal'>".$module->Size." bytes</td></tr>\n";
 	}	
-	
+
+	if ($module->can('DisclosureDate') && $module->DisclosureDate) {
+		$res .= "<tr><td align='right' width=80 class='textBold'> Disclosure:</td>";
+		$res .= "<td class='textNormal'>".$module->DisclosureDate."</td></tr>\n";
+	}		
 	
 	if (scalar( @{ $module->Arch } )) {
 		$res .= "<tr><td align='right' width=80 class='textBold'>Arch:</td>";
