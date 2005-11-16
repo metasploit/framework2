@@ -1,4 +1,3 @@
-
 ###############
 
 ##
@@ -21,6 +20,7 @@ use Pex::Struct;
 use Digest::HMAC_MD5;
 use Digest::MD5 qw(md5);
 
+use warnings;
 use strict;
 
 use constant SMB_COM_CREATE_DIR         => 0x00;
@@ -913,110 +913,40 @@ $STDeleteRes->Set
 # This actual class code starts here #
 ######################################
 
+# only one accessor/mutator function please...
+my @_functions = qw(Socket Error Encrypted ExtendedSecurity Dialect SessionID ChallengeKey NativeOS NativeLM PeerNativeOS PeerNativeLM DefaultDomain DefaultNBName AuthUser AuthUserID LastTreeID LastFileID NTLMVersion);
+{ 
+    no strict 'refs';
+    foreach my $func (@_functions) {
+        *$func = sub {
+            my ($self, $arg) = @_;
+            $self->{$func} = $arg if defined($arg);
+            return $self->{$func};
+        };
+    }
+}
+
 sub new {
 	my $cls = shift();
 	my $arg = shift() || { };
 	my $self = bless $arg, $cls;
-	$self->NativeOS('Windows 2000 2195');
-	$self->NativeLM('Windows 2000 5.0');
-	$self->Encrypted(1);
-	$self->ExtendedSecurity(0);
+    $self->_init();
 	return $self;
 }
 
-sub Socket {
-	my $self = shift;
-	$self->{'Socket'} = shift if @_;
-	return $self->{'Socket'};
-}
 
-sub Error {
-	my $self = shift;
-	$self->{'LastError'} = shift if @_;
-	return $self->{'LastError'};
+sub _init {
+    my ($self) = @_;
+
+    $self->NativeOS('Windows 2000 2195');
+	$self->NativeLM('Windows 2000 5.0');
+	$self->Encrypted(1);
+	$self->ExtendedSecurity(0);
 }
 
 sub ClearError {
 	my $self = shift;
 	delete($self->{'LastError'});
-}
-
-sub Encrypted {
-	my $self = shift;
-	$self->{'Encrypted'} = shift if @_;
-	return $self->{'Encrypted'};
-}
-
-sub ExtendedSecurity {
-	my $self = shift;
-	$self->{'ExtendedSecurity'} = shift if @_;
-	return $self->{'ExtendedSecurity'};
-}
-
-sub Dialect {
-	my $self = shift;
-	$self->{'Dialect'} = shift if @_;
-	return $self->{'Dialect'};
-}
-
-sub SessionID {
-	my $self = shift;
-	$self->{'SessionID'} = shift if @_;
-	return $self->{'SessionID'};
-}
-
-sub ChallengeKey {
-	my $self = shift;
-	$self->{'ChallengeKey'} = shift if @_;
-	return $self->{'ChallengeKey'};
-}
-
-sub NativeOS {
-	my $self = shift;
-	$self->{'NativeOS'} = shift if @_;
-	return $self->{'NativeOS'};
-}
-
-sub NativeLM {
-	my $self = shift;
-	$self->{'NativeLM'} = shift if @_;
-	return $self->{'NativeLM'};
-}
-
-sub PeerNativeOS {
-	my $self = shift;
-	$self->{'PeerNativeOS'} = shift if @_;
-	return $self->{'PeerNativeOS'};
-}
-
-sub PeerNativeLM {
-	my $self = shift;
-	$self->{'PeerNativeLM'} = shift if @_;
-	return $self->{'PeerNativeLM'};
-}
-
-sub DefaultDomain {
-	my $self = shift;
-	$self->{'DefaultDomain'} = shift if @_;
-	return $self->{'DefaultDomain'};
-}
-
-sub DefaultNBName {
-	my $self = shift;
-	$self->{'DefaultNBName'} = shift if @_;
-	return $self->{'DefaultNBName'};
-}
-
-sub AuthUser {
-	my $self = shift;
-	$self->{'AuthUser'} = shift if @_;
-	return $self->{'AuthUser'};
-}
-
-sub AuthUserID {
-	my $self = shift;
-	$self->{'AuthUserID'} = shift if @_;
-	return $self->{'AuthUserID'};
 }
 
 sub MultiplexID {
@@ -1047,23 +977,6 @@ sub TreeID {
 	}
 }
 
-sub LastTreeID {
-	my $self = shift;
-	$self->{'LastTreeID'} = shift if @_;
-	return $self->{'LastTreeID'};
-}
-
-sub LastFileID {
-	my $self = shift;
-	$self->{'LastFileID'} = shift if @_;
-	return $self->{'LastFileID'};
-}
-
-sub NTLMVersion {
-	my $self = shift;
-	$self->{'NTLMVersion'} = shift if @_;
-	return $self->{'NTLMVersion'};
-}
 
 sub CryptLM {
 	my $self = shift;
@@ -2529,7 +2442,6 @@ sub TRANS2_FIND_FIRST2 {
 
 sub LANMAN_NetShareEnum {
 	my $self = shift;
-	my $res;
 
 	my @type = qw{ disk printer device ipc special temp };
 
@@ -2571,7 +2483,6 @@ sub SMBTransNP {
 	my $self = shift;
 	my $fid  = @_ ? shift : $self->LastFileID;
 	my $data = @_ ? shift : '';
-	my $res;
 
 	my $setup_count = 2;
 	my $setup_data  = pack('vv', 0x26, $fid);
