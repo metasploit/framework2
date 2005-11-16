@@ -1164,9 +1164,9 @@ sub PayloadOptions
     $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n"; 
 	
     foreach (keys(%{$state})) {
-        next if $_ eq 'client';
+        next if lc($_) eq 'client';
         if ($_ ne "MODE") {
-            $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
+            $res .= "<input type='hidden' name='".XSS_Filter($_)."' value='" . XSS_Filter($state->{$_}) . "'>\n";
         } else {
             $res .= "<input type='hidden' name='MODE' value='GENERATE'>\n";
         }
@@ -1438,11 +1438,11 @@ sub ExploitOptions
     }
 
     foreach (keys(%{$state})) {
-        next if $_ eq 'client';
-		next if $_ eq 'parent';
+        next if lc($_) eq 'client';
+		next if lc($_) eq 'parent';
 		
         if ($_ ne "MODE") {
-            $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
+            $res .= "<input type='hidden' name='".XSS_Filter($_)."' value='" . XSS_Filter($state->{$_}) . "'>\n";
         } else {
             $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
         }
@@ -1632,7 +1632,7 @@ sub ExploitExec
         $res .= "\n<form action='$burl' method='GET'>\n";
         foreach (keys(%{$state})) {
             if ($_ ne "MODE")  {
-                $res .= "<input type='hidden' name='$_' value='" . $state->{$_} . "'>\n";
+                $res .= "<input type='hidden' name='".XSS_Filter($_)."' value='" . XSS_Filter($state->{$_}) . "'>\n";
             } else {
                 $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
             }
@@ -2099,7 +2099,7 @@ sub CharsToBytes {
 # XXX - not complete
 sub XSS_Filter {
 	my $data = shift;
-	
+	$data =~ s/\&/\&amp;/g;
 	$data =~ s/\</\&lt;/g;
 	$data =~ s/\>/\&gt;/g;
 	return $data;
