@@ -23,6 +23,8 @@ use Digest::MD5 qw(md5);
 use warnings;
 use strict;
 
+use FindBin qw{$RealBin};
+
 use constant SMB_COM_CREATE_DIR         => 0x00;
 use constant SMB_COM_DELETE_DIR         => 0x01;
 use constant SMB_COM_CLOSE              => 0x04;
@@ -51,7 +53,9 @@ use constant NT_TRANSACT_SET_SECURITY_DESC       => 3; # Set security descriptor
 use constant NT_TRANSACT_NOTIFY_CHANGE           => 4; # Start directory watch
 use constant NT_TRANSACT_RENAME                  => 5; # Reserved (Handle-based)
 use constant NT_TRANSACT_QUERY_SECURITY_DESC     => 6; # Retrieve security
- 
+
+
+my %_errors;
 
 ##############################
 ## pre-generated structures ##
@@ -202,6 +206,43 @@ $STNegResNT->Set
   );
 
 # SMB Session Setup LM
+my $STSetupX = Pex::Struct->new
+  ([
+		'word_count'    => 'u_8',
+		'x_cmd'         => 'u_8',
+		'reserved1'     => 'u_8',
+		'x_off'         => 'l_u_16',
+		'max_buff'      => 'l_u_16',
+		'max_mpx'       => 'l_u_16',
+		'vc_num'        => 'l_u_16',
+		'sess_key'      => 'l_u_32',
+		'pass_len'      => 'l_u_16',
+        'unicode_pass_len' => 'l_u_16',
+		'reserved2'     => 'l_u_32',
+        'capabilities'  => 'l_u_32',
+        'bcc_len'       => 'l_u_16',
+        'request'       => 'string',
+	]);
+$STSetupX->SetSizeField( 'request' => 'bcc_len' );
+$STSetupX->Fill("\x00" x $STSetupX->Size());
+
+$STSetupX->Set(
+        'word_count'    => 0,
+		'x_cmd'         => 0,
+		'reserved1'     => 0,
+		'x_off'         => 0,
+		'max_buff'      => 0,
+		'max_mpx'       => 0,
+		'vc_num'        => 0,
+		'sess_key'      => 0,
+		'pass_len'      => 0,
+        'unicode_pass_len' => 0,
+		'reserved2'     => 0,
+        'capabilities'  => 0,
+        'bcc_len'       => 0
+    );
+
+# SMB Session Setup LM
 my $STSetupXLM = Pex::Struct->new
   ([
 		'word_count'    => 'u_8',
@@ -347,7 +388,7 @@ $STSetupNTv2XRes->Set
 	'secblob_len'   => 0,
 	'bcc_len'       => 0,
   );
-  
+
 my $STTConnectX = Pex::Struct->new
   ([
 		'word_count'    => 'u_8',
@@ -362,7 +403,7 @@ my $STTConnectX = Pex::Struct->new
 $STTConnectX->SetSizeField( 'request' => 'bcc_len' );
 $STTConnectX->Set
   (
-	'word_count'    => 0,
+    'word_count'    => 0,
 	'x_cmd'         => 0,
 	'reserved1'     => 0,
 	'x_off'         => 0,
@@ -627,7 +668,7 @@ my $STCreateX = Pex::Struct->new
 $STCreateX->SetSizeField( 'request' => 'bcc_len' );
 $STCreateX->Set
   (
-	'word_count'    => 0,
+    'word_count'    => 0,
 	'x_cmd'         => 0,
 	'reserved1'     => 0,
 	'x_off'         => 0,
@@ -727,7 +768,7 @@ my $STWriteX = Pex::Struct->new
 $STWriteX->SetSizeField( 'request' => 'bcc_len' );
 $STWriteX->Set
   (
-	'word_count'    => 0,
+    'word_count'    => 0, 
 	'x_cmd'         => 0,
 	'reserved1'     => 0,
 	'x_off'         => 0,
@@ -926,6 +967,8 @@ my @_functions = qw(Socket Error Encrypted ExtendedSecurity Dialect SessionID Ch
     }
 }
 
+_parse_errors("$RealBin/data/smb_errors.txt");
+
 sub new {
 	my $cls = shift();
 	my $arg = shift() || { };
@@ -937,7 +980,6 @@ sub new {
 
 sub _init {
     my ($self) = @_;
-
     $self->NativeOS('Windows 2000 2195');
 	$self->NativeLM('Windows 2000 5.0');
 	$self->Encrypted(1);
@@ -1159,18 +1201,17 @@ sub SMBNegotiate {
 
 	my $smb_res = $STSMB->copy;
 	$smb_res->Fill($ses_res->Get('request'));
-	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
+	$smb_res->Set( 'request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Negotiate returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Negotiate returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
 	if ($smb_res->Get('command') != SMB_COM_NEGOTIATE) {
-		$self->Error('Negotiate returned command '.$smb_res->Get('command'));
+		$self->Error('Negotiate returned command '. $smb_res->Get('command'));
 		return;
 	}
-
 	
 	# Parse the negotiation response based on the dialect recieved
 	my $dia = unpack('v', substr($smb_res->Get('request'), 1, 2));
@@ -1295,7 +1336,7 @@ sub SMBSessionSetupClear {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Session setup returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Session Setup returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -1329,10 +1370,10 @@ sub SMBSessionSetupClear {
 }
 
 sub SMBSessionSetupNTLMv1 {
-	my $self = shift;
-	my $user = @_ ? shift : "";
-	my $pass = @_ ? shift : "";
-	my $wdom = @_ ? shift : "";
+    my $self = shift;
+    my $user = @_ ? shift : "";
+    my $pass = @_ ? shift : "";
+    my $wdom = @_ ? shift : "";
 	my $sock = $self->Socket;
 
 	return if $self->Error;
@@ -1391,7 +1432,7 @@ sub SMBSessionSetupNTLMv1 {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Session setup returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Session Setup returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -1424,10 +1465,10 @@ sub SMBSessionSetupNTLMv1 {
 }
 
 sub SMBSessionSetupNTLMv2 {
-	my $self = shift;
-	my $user = @_ ? shift : "";
-	my $pass = @_ ? shift : "";
-	my $group = @_ ? shift : "";
+    my $self = shift;
+    my $user = @_ ? shift : "";
+    my $pass = @_ ? shift : "";
+    my $group = @_ ? shift : "";
 	my $sock = $self->Socket;
 
 	return if $self->Error;
@@ -1514,11 +1555,13 @@ sub SMBSessionSetupNTLMv2 {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	# We want to see the MORE PROCESSING error mesasage
-	if ($smb_res->Get('error_class') != 0xc0000016) {
-		# Just return the error back to the user
-		$self->Error('Session setup returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
-		return;
-	}
+    {
+        my $error = $smb_res->Get('error_class');
+        if ($error != 0xc0000016) {
+            $self->Error('Session setup returned : ' . $self->error_name($error));
+            return;
+        }
+    }
 
 	if ($smb_res->Get('command') != SMB_COM_SESSION_SETUP_ANDX) {
 		$self->Error('Session setup returned command '.$smb_res->Get('command'));
@@ -1653,7 +1696,7 @@ sub SMBSessionSetupNTLMv2 {
 		}
 		
 		# Just return the error back to the user
-		$self->Error('Session setup returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Session setup returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -1744,7 +1787,7 @@ sub SMBSessionSetupNTLMv2BLOB {
 	# Handle login errors here...
 	if ($smb_res->Get('error_class') != 0) {
 		# Just return the error back to the user
-		$self->Error('Session setup returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Session setup returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -1824,7 +1867,7 @@ sub SMBTConnect {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Tree connect returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Tree connect returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -1915,7 +1958,7 @@ sub SMBTrans {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Transaction returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Transaction returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -2004,7 +2047,7 @@ sub SMBTrans2 {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Transaction2 returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Transaction2 returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -2094,7 +2137,7 @@ sub SMBNTTrans {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('NtTransact returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('NtTransact returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -2114,7 +2157,6 @@ sub SMBNTTrans {
 
 	return $trans_res;
 }
-
 
 sub SMBCreate {
 	my $self = shift;
@@ -2173,7 +2215,7 @@ sub SMBCreate {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Create returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Create returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -2244,7 +2286,7 @@ sub SMBOpen {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Open returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Open returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -2307,7 +2349,7 @@ sub SMBDelete {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Delete returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Delete returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -2367,7 +2409,7 @@ sub SMBClose {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Delete returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Delete returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -2555,7 +2597,7 @@ sub SMBWrite {
 	$smb_res->Set('request' => substr($ses_res->Get('request'), $smb_res->Length));
 
 	if ($smb_res->Get('error_class') != 0) {
-		$self->Error('Write returned NT status '.sprintf("0x%.8x",$smb_res->Get('error_class')));
+		$self->Error('Write returned NT status ' .$self->error_name($smb_res->Get('error_class')));
 		return;
 	}
 
@@ -2595,6 +2637,32 @@ sub ASN1Encode {
 	
 }
 
+sub error_name {
+    my ($self, $error) = @_;
+
+    if (defined($_errors{$error})) {
+        return $_errors{$error};
+    } else {
+        return sprintf('0x%.8x',$error);
+    }
+}
+
+sub _parse_errors {
+    my ($file) = @_;
+
+    open (F, '<', $file) || die;
+
+    while (<F>) {
+        next if /^#/;
+        if (/^([[:xdigit:]]{8})\s+([\w_]+)/) {
+            my $code = $1;
+            my $string = $2;
+
+            my $num = unpack("L",pack("H*", $code));
+            $_errors{$num} = $string;
+        }
+    }
+}
 
 ############################################
 # This is straight from Authen::NTLM::DES  #

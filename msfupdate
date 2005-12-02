@@ -47,7 +47,7 @@ BEGIN
 }
 
 my %opts;
-getopts('hrvusmaxfp:', \%opts);
+getopts('hrvusmaxfOp:', \%opts);
 
 if ($opts{v}) {
     print "Msfupdate Version: $REV\n";
