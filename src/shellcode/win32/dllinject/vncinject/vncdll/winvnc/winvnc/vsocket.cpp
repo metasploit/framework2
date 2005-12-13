@@ -73,6 +73,8 @@ class VSocket;
 // *** THIS IS NOT CURRENTLY USED ANYWHERE
 const VInt rfbMaxClientWait = 5000;
 
+extern HANDLE VncTerminateEvent;
+
 ////////////////////////////
 // Socket implementation initialisation
 
@@ -189,6 +191,8 @@ VSocket::Close()
 	  close(sock);
 #endif
       sock = -1;
+
+		SetEvent(VncTerminateEvent);
     }
   return VTrue;
 }
