@@ -40,9 +40,16 @@ my $FRAMEVERSION = $ui->Version;
 my $VERSION = '$Revision$';
 
 my %opts = ();
+my %tenv = ();
+
 getopts("i:a:o:t:b:e:s:lhvn:", \%opts);
 Usage()   if($opts{'h'});
 Version() if($opts{'v'});
+
+# Parse the command line options and store them in the env
+while(my($key, $val) = split('\=', shift(@ARGV))) {
+    $ui->SetTempEnv($key, $val) if defined($val);
+}
 
 #$ui->SetTempEnv('DebugLevel', 0);
 
