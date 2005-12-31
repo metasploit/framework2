@@ -1251,8 +1251,8 @@ sub SMBNegotiate {
 		my $extrainfo = substr($smb_res->Get('request'), ($extra_len * -1));
 
 		my ($name_dom, $name_host) = split(/\x00\x00/, $extrainfo);
-		$name_dom  =~ s/\x00//g;
-		$name_host =~ s/\x00//g;
+		$name_dom  =~ s/\x00//g if $name_dom;
+		$name_host =~ s/\x00//g if $name_host;
 		$self->DefaultDomain($name_dom);
 		$self->DefaultNBName($name_host);
 	}
