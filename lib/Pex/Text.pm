@@ -123,7 +123,7 @@ sub CharsInBuffer {
 }
 
 sub EnglishText {
-  my $size = shift;
+  my $size = int(shift());
   my $string;
   my $start = 33;
   my $stop = 126;
@@ -136,7 +136,7 @@ sub EnglishText {
 }
 
 sub AlphaNumText {
-  my $size = shift;
+  my $size = int(shift());
   my @chars = @_ ? split('', shift) : ('A' .. 'Z', 'a' .. 'z', '0' .. '9');
 
   my $data;
@@ -147,7 +147,7 @@ sub AlphaNumText {
 }
 
 sub LowerCaseText {
-  my $size = shift;
+  my $size = int(shift());
   my @chars = @_ ? split('', shift) : ('a' .. 'z');
 
   my $data;
@@ -158,7 +158,7 @@ sub LowerCaseText {
 }
 
 sub UpperCaseText {
-  my $size = shift;
+  my $size = int(shift());
   my @chars = @_ ? split('', shift) : ('A' .. 'Z');
 
   my $data;
@@ -184,7 +184,7 @@ sub InverseChars {
 
 # size, BadCharsString...
 sub RandomChars {
-  my $size = shift;
+  my $size = int(shift());
   my $badChars = shift;
   my @chars = split('', InverseChars($badChars));
   my $data;
@@ -197,7 +197,7 @@ sub RandomChars {
 }
 
 sub RandomData {
-  my $size = shift;
+  my $size = int(shift());
   my $string;
 
   for(my $i = 0; $i < $size; $i++) {
