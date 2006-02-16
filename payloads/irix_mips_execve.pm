@@ -21,7 +21,7 @@ my $info =
   'Priv'         => 0,
   'OS'           => [ 'irix' ],
   'Size'         => '',
-  'Keys'         => ['inetd'], # can use execve for inetd-based exploits
+  # 'Keys'         => ['inetd'], # can use execve for inetd-based exploits
 };
 
 sub new {
