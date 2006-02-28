@@ -353,7 +353,9 @@ sub LoadImage {
     $self->_LoadImport();
     $self->_LoadExport();
     $self->_LoadResources();  
-    $self->_LoadVersionData();    
+    $self->_LoadVersionData(); 
+	$self->_LoadHTMLData(); 
+	$self->_LoadTypeLibData(); 
 
     return($self);    
 }
@@ -553,21 +555,22 @@ sub _ParseResourceName {
 
 sub _ParseResourceEntry { 
     my $self = shift;
-    my ($rdata, $rname, $rvalue) = @_;
+    my ($rdata, $rname, $rvalue, $pname) = @_;
     my $res = { };
   
     my ($drva, $dsize, $dcode) = unpack('V3', substr(${$rdata}, $rvalue, 12));
-    
-    $res->{'Name'} = $self->_ParseResourceName($rdata, $rname);
-    $res->{'Code'} = $dcode;
-    $res->{'RVA'}  = $drva;
-    $res->{'Size'} = $dsize;
+
+    $res->{'Name'}  = $self->_ParseResourceName($rdata, $rname);
+    $res->{'Code'}  = $dcode;
+    $res->{'RVA'}   = $drva;
+    $res->{'Size'}  = $dsize;
+	$res->{'RName'} = $pname;
     return $res;
 }
 
 sub _ParseResourceDirectory {
     my $self = shift;
-    my ($rtable, $rdata, $rname, $rvalue, $cindex) = @_;
+    my ($rtable, $rdata, $rname, $rvalue, $cindex, $pname) = @_;
     
     # Sanity check to prevent infinite loops ]:|
     return if length($cindex) > 65535;
@@ -606,13 +609,17 @@ sub _ParseResourceDirectory {
         my ($rname, $rvalue) = unpack('VV', substr(${$rdata}, $rvalue + 16 + ($rindex * 8), 8));
         my $path = $cindex."/".$rindex;
 
+		if ($rname & 0x80000000) {
+			$pname = $self->_ParseResourceName($rdata, $rname);
+		}
+
         if ($rvalue & 0x80000000) {
             # Recursively parse the subdirectory
-            $self->_ParseResourceDirectory($rtable, $rdata, $rname, $rvalue, $path);
+            $self->_ParseResourceDirectory($rtable, $rdata, $rname, $rvalue, $path, $pname);
         }
         else {
             # Place resource entry into the hash
-            $rtable->{'Entries'}->{$path} = $self->_ParseResourceEntry($rdata, $rname, $rvalue);
+            $rtable->{'Entries'}->{$path} = $self->_ParseResourceEntry($rdata, $rname, $rvalue, $pname);
             $rtable->{'Types'}->{$base}->{$path} = $rtable->{'Entries'}->{$path};            
             $self->_DebugLog($rtable->{'Entries'}->{$path}->{'Name'}."\tENT\t$path\t($base)");
         }
@@ -640,6 +647,7 @@ sub _ResID2Name {
         '12'     => 'GROUP_CURSOR',
         '14'     => 'GROUP_ICON',
         '16'     => 'VERSION',
+		'23'     => 'RT_HTML',
         '32767'  => 'ERROR',
         '8192'   => 'NEWRESOURCE',
         '8194'   => 'NEWBITMAP',
@@ -650,6 +658,60 @@ sub _ResID2Name {
     
     return ($tid) if $tid !~ /^\d/;
     return $tmap{$tid} || $tid;
+}
+
+sub _LoadHTMLData {
+    my $self  = shift;
+    my $vdata = $self->{'RESOURCE'}->{'Types'}->{'RT_HTML'};
+    
+    return if ! $vdata;
+
+    my ($versionFile, $versionProd);
+    
+	foreach my $res (keys %{ $vdata }) {
+    	my $vblock_rva = $vdata->{$res}->{'RVA'};
+    	my $vblock = $self->Resource($res);		
+
+		# Auditing DLL resources is fun :-)
+		if (0) {
+			my $fname = $vdata->{$res}->{'RName'};
+			$fname =~ s/\/|\.\.//g;
+
+			my $based = "/tmp/html/".$self->{'FILENAME'};
+			system("mkdir", "-p", $based);
+
+			open(X, ">$based/$fname");
+			print X $vblock;
+			close(X);
+		}
+	}
+}
+
+sub _LoadTypeLibData {
+    my $self  = shift;
+    my $vdata = $self->{'RESOURCE'}->{'Types'}->{'TYPELIB'};
+    
+    return if ! $vdata;
+
+    my ($versionFile, $versionProd);
+    
+	foreach my $res (keys %{ $vdata }) {
+    	my $vblock_rva = $vdata->{$res}->{'RVA'};
+    	my $vblock = $self->Resource($res);		
+
+		# Extract embedded typelib info
+		if (0) {
+			my $fname = $vdata->{$res}->{'RName'};
+			$fname =~ s/\/|\.\.//g;
+
+			my $based = "/tmp/typelib/".$self->{'FILENAME'};
+			system("mkdir", "-p", $based);
+
+			open(X, ">$based/$fname");
+			print X $vblock;
+			close(X);
+		}
+	}
 }
 
 sub _LoadVersionData {
