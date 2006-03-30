@@ -326,7 +326,7 @@ sub RefConvert {
   }
   
   if ($type eq 'MIL') {
-    return 'http://milw0rm.com/metasploit.php?id='.$data;
+    return 'http://www.milw0rm.com/metasploit/'.$data;
   } 
   
   return $data;

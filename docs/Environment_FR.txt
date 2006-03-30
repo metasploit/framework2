@@ -1,0 +1,125 @@
+La référence d'environnement
+Les variables d'environnement de Metasploit Framework
+=====================================================
+
+Les options fournies par l'utilisateur sont en général en majuscules, à 
+l'exception
+des options avancées qui sont couremment en minuscules et majuscules.
+
+Les options au niveau du Framework sont en général écrites en minuscules et 
+majuscules,
+tandis que les variables internes sont en règle générale préfixées avec un 
+underscore.
+
+[ General ]
+
+EnablePython - Cette variable permet de savoir si les charges utiles 
+externes (celles
+							 écrites en python et utilisant InlineEgg) sont activées ou non : 
+elles ne
+							 le sont pas par défaut, afin de réduire le temps de chargement des 
+modules.
+							 Si vous avez l'intention de développer ou d'utiliser des charges 
+utilisant
+							 la librairie InlineEgg, veuillez vous assurer au préalable que cette 
+variable
+							 est bien activée.
+
+DebugLevel   - Cette variable permet de contrôler la prolixité des messages 
+de debug fournis
+							 par les composants du Framework. Elle va de 0 (aucun message ne 
+s'affichera
+							 alors) à 5 (prolixité maximale).
+
+Logging      - Cette variable permet de savoir si les actions et les 
+sessions d'exploits
+							 ayant réussi doivent être enregistrés ou non. Toute action ayant 
+appelé les
+							 fonctions exploit() ou check() au sein d'un module d'exploit sera 
+enregistrée,
+							 chaque enregistrement contenant la date exacte de chacune des 
+commandes et
+							 réponses au sein d'une session d'exploit. Ces logs peuvent être 
+visualisés avec
+							 la commande 'msflogdump'.
+
+LogDir       - Cette variable définit le répertoire où seront enregistrés 
+les logs de session
+							 précédents (le répertoire par défaut est le sous-répertoire logs 
+dans ~/.msf).
+
+AlternateExit - Permet d'éviter qu'un interpréteur Perl peu stable ne 
+provoque un erreur de
+								segmentation dans le Framework en sortie. Mettre à '2' cette 
+variable permet
+								d'éviter ce genre de messages d'erreur en sortie.
+
+
+
+[ Sockets ]
+
+UdpSourceIp     - Utilise l'adresse IP indiquée pour toutes les requêtes UDP 
+lancées (usurpation).
+
+ForceSSL        - Force l'utilisation de SSL pour toutes les connexions TCP.
+
+ConnectTimeout  - Timeout standard d'une connexion de socket.
+
+RecvTimeout     - Timeout pour les appels Recv(-1)
+
+RecvTimeoutLoop - Timeout pour les boucles Recv(-1) après les données 
+initiales.
+
+Proxies         - Cette variable permet d'utiliser les divers modes de proxy 
+proposés pour les sockets TCP.
+									La syntaxe sorrespondante doit être de la forme TYPE:HOST:PORT:, 
+chaque proxy devant être
+									séparé par une virgule. Les proxies seront utilisés dans l'ordre 
+spécifié.
+
+
+[ Encoders ]
+Encoder                 - Utilisé pour choisir un encodeur spécifique 
+(chemin complet)
+EncoderDontFallThrough  - Ne poursuit pas si l'encodeur spécifié échoue.
+
+
+[ Nops ]
+Nop                 - Utilisé pour choisir un module Nop donné (chemin 
+complet)
+NopDontFallThrough  - Ne poursuit pas si le module Nop spécifié échoue.
+RandomNops          - Rend aléatoire les nops x86 (si possible).
+
+
+[ Socket Ninja ]
+NinjaHost        - Addresse de la console socketNinja
+NinjaPort        - Port de la console socketNinja
+NinjaDontKill    - Ne met pas fin à l'exploit après que sN ait obtenu une 
+connexion (multi-utilisateur)
+
+
+[ Variables Internes ]
+
+Ces variables ne devraient jamais être renseignées par un utilisateur ou 
+utilisées au sein d'un module.
+
+_Exploits        - Utilisé pour enregistrer un hachage des exploits chargés
+_Payloads        - Utilisé pour enregistrer un hachage des charges utiles 
+chargées
+_Nops            - Utilisé pour enregistrer un hachage des nops chargés
+_Encoders        - Utilisé pour enregistrer un hachage des encodeurs chargés
+_Exploit         - Utilisé pour enregistrer l'exploit actuellement utilisé
+_Payload         - Utilisé pour enregistrer la charge utile actuellement 
+utilisée
+_PayloadName     - Nom de la charge utile actuellement sélectionnée
+_BrowserSocket   - Utilisé par msfweb pour retracer la socket à partir du 
+navigateur
+_Console         - Utilisé pour redéfinir la classe Console entre UI's
+_PrintLineBuffer - Usage interne à msfweb
+_CacheDir        - Usage interne à msfweb
+_IconDir         - Usage interne à msfweb
+_Theme           - Usage interne à msfweb
+_Defanged        - Usage interne à msfweb
+_GhettoIPC       - Usage interne à msfweb
+_SessionOD       - Usage interne à msfweb
+
