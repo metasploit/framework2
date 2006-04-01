@@ -173,6 +173,11 @@ sub ProcessScript {
 
 sub Load {
 
+	
+	my $genv = $ui->_Env;
+	my $senv = $ui->_TempEnvs;
+	my $tenv = $ui->_TempEnv;
+
     $exploitsIndex = $ui->LoadExploits;
     $payloadsIndex = $ui->LoadPayloads;
     $encodersIndex = $ui->LoadEncoders;
@@ -215,6 +220,10 @@ sub Load {
         gUse('use', $state->{'Exploit'}->{'Name'});
       }
     }
+	
+	$ui->_Env($genv);
+	$ui->_TempEnvs($senv);
+	$ui->_TempEnv($tenv);	
 }
 
 sub gSave {
