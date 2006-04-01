@@ -67,6 +67,13 @@ Load();
 my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
 $console->tabCompletion(\&xTabCompletion);
 
+# configure the last exploit
+if ( (my $le = $ui->GetEnv('LastModule')) ) {
+	$state->{'Mode'} = 'Exploit';
+	$state->{'Exploit'}->{'Name'} = $le;
+	gUse('use', $le);
+}
+		
 # virtual command table
 my %virtualCmds = ();
 
@@ -172,8 +179,6 @@ sub ProcessScript {
 }
 
 sub Load {
-
-	
 	my $genv = $ui->_Env;
 	my $senv = $ui->_TempEnvs;
 	my $tenv = $ui->_TempEnv;
@@ -215,7 +220,7 @@ sub Load {
         xMsg('reload', 'Error reloading current exploit, moving back to Main.');
         eBack();
       }
-      # ok, call gUse to reload tab completetion, etc
+      # ok, call gUse to reload tab completion, etc
       else {
         gUse('use', $state->{'Exploit'}->{'Name'});
       }
@@ -223,12 +228,18 @@ sub Load {
 	
 	$ui->_Env($genv);
 	$ui->_TempEnvs($senv);
-	$ui->_TempEnv($tenv);	
+	$ui->_TempEnv($tenv);
 }
 
 sub gSave {
     my $cmd = shift;
-    $ui->SaveTempEnv($state->{'Exploit'}->{'Name'}) if($state->{'Mode'} eq 'Exploit');
+	if($state->{'Mode'} eq 'Exploit') {
+		$ui->SetGlobalEnv('LastModule', $state->{'Exploit'}->{'Name'});
+		$ui->SaveTempEnv($state->{'Exploit'}->{'Name'});
+	} else {
+		$ui->UnsetGlobalEnv('LastModule');
+	}
+	
     $ui->SaveConfig;
     print "Saved configuration to: " . $ui->ConfigFile . "\n";
 }
