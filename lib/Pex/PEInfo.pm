@@ -61,6 +61,11 @@ sub Raw {
     return $self->{'RAW'};
 }
 
+sub Filename {
+	my $self = shift;
+	return $self->{'FILENAME'};
+}
+
 sub ImageHeader {
     my $self = shift;
     my $name = shift;
@@ -124,6 +129,11 @@ sub ImageBase {
         $self->_LoadImport();
     }
     return $self->{'OPT_IMG_HDR'}->{'ImageBase'};
+}
+
+sub EntryPoint {
+    my $self = shift;
+    return $self->{'OPT_IMG_HDR'}->{'EntryPoint'};
 }
 
 sub Imports {
