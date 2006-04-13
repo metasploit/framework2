@@ -180,6 +180,8 @@ sub identify {
 
 	while (my $line = <SIGS>) {
 
+		next if $line =~ /^\s*#/;
+		
 		if ($line =~ m/\[(.*)\]/) {
 			if ($name) {
 				$sigs{$name} = [$regx, $ep_only];
@@ -400,6 +402,7 @@ Modes:
          -x  <regex>   Search for regex match
          -a  <address> Show code at specified virtual address
          -D            Display detailed PE information
+		 -S            Attempt to identify the packer/compiler
 Options:
          -A  <count>   Number of bytes to show after match
          -B  <count>   Number of bytes to show before match
