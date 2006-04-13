@@ -162,8 +162,9 @@ sub identify {
 	my $sigf = $RealBin.'/data/msfpescan/identify.txt';
 	my %sigs = ();
 
-	my $ep       = $pe->EntryPoint;
+	my $ep       = $pe->VirtualToOffset($pe->EntryPoint + $pe->ImageBase);
 	my $filename = $pe->Filename;
+
 
 	if(! open(SIGS, "<" .$sigf)) {
 		print STDERR "[*] Could not load the signature database: $!\n";
@@ -171,7 +172,7 @@ sub identify {
 	}
 
 	# If ep_only is set, only scan from the endpoint offset
-	my $edata = substr($data, $ep, 16384);
+	my $edata = substr($data, $ep, 8192);
 
 	my $name;
 	my $regx;
@@ -183,7 +184,7 @@ sub identify {
 	if (! length($edata)) {
 		$ep_off = 1;
 	}
-	
+
 	while (my $line = <SIGS>) {
 
 		next if $line =~ /^\s*#/;
@@ -211,6 +212,9 @@ sub identify {
 		if ($line =~ m/ep_only\s*=\s*T.*\s*/i) {
 			$ep_only = 1 if ! $ep_off;
 		}
+	}
+	if ($name) {
+		$sigs{$name} = [$regx, $ep_only];
 	}
 
 	foreach my $sig (keys %sigs) {

@@ -3036,3 +3036,8 @@ ep_only = True
 [Ste@lth PE 1.01 -> BGCorp]
 signature = ?? ?? ?? ?? ?? BA ?? ?? ?? 00
 ep_only = True
+
+[GCC-Win32 / XMINGW]
+signature = 55 89 e5 83 ec 08 c7 04 24 01 00 00 00
+ep_only = False
+
