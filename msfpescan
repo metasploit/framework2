@@ -220,14 +220,21 @@ sub identify {
 	foreach my $sig (keys %sigs) {
 		my $regex = $sigs{$sig}->[0];
 		my @addrs= ();
-		my $eoffs = ($sigs{$sig}->[1] ? $ep : 0);
-		my $tdata = ($sigs{$sig}->[1] ? $edata : $data);
-
-		while($tdata =~ m/($regex)/g) {
-			my $found = $1;
-			my $index = pos($tdata) - length($found);
-			my $va = $pe->OffsetToVirtual($index+$eoffs);
-			push @addrs, $va if $va;
+		
+		# Only compare the entry point?
+		if ($sigs{$sig}->[1]) {
+			
+			if ($edata =~ /^($regex)/) {
+				push @addrs, $pe->EntryPoint + $pe->ImageBase;
+			}
+			
+		} else {
+			while($data =~ m/($regex)/g) {
+				my $found = $1;
+				my $index = pos($data) - length($found);
+				my $va = $pe->OffsetToVirtual($index);
+				push @addrs, $va if $va;
+			}
 		}
 		if (@addrs) {
 			print "$filename: $sig (".scalar(@addrs)." matches)\n";
