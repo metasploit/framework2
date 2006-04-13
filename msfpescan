@@ -176,8 +176,14 @@ sub identify {
 	my $name;
 	my $regx;
 	my $ep_only = 0;
+	my $ep_off  = 0;
 	my $sidx = 0;
 
+	# If the entrypoint was mangled, disable ep scanning
+	if (! length($edata)) {
+		$ep_off = 1;
+	}
+	
 	while (my $line = <SIGS>) {
 
 		next if $line =~ /^\s*#/;
@@ -187,6 +193,7 @@ sub identify {
 				$sigs{$name} = [$regx, $ep_only];
 			}
 			$name = $1." [".$sidx++."]";
+			$ep_only = 0;
 			next;
 		}
 
@@ -202,7 +209,7 @@ sub identify {
 			}
 		}
 		if ($line =~ m/ep_only\s*=\s*T.*\s*/i) {
-			$ep_only = 1;
+			$ep_only = 1 if ! $ep_off;
 		}
 	}
 
