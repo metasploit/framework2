@@ -333,7 +333,9 @@ sub dumpinfo {
 	my $resources       = $pe->Resources;
 	my $version         = $pe->VersionStrings;
 	my $col;
-
+	my %setUEF          = ();
+	my $setUEF_IAT      = 0;
+	
 	print "\n\n[ Image Headers ]\n\n";
 	$col = Msf::ColPrint->new(4, 4);
 	foreach my $hdr (@img_hdrs) {
@@ -365,6 +367,10 @@ sub dumpinfo {
 			$col->AddRow($module, $func,
 				"IAT ".sprintf("0x%.8x", $imports->{$module}->{$func}->{'iat'})
 			  );
+			
+			if (lc($func) eq 'setunhandledexceptionfilter') {
+				$setUEF_IAT = $imports->{$module}->{$func}->{'iat'};
+			}
 		}
 		$col->AddRow("", "", "");
 	}
@@ -389,6 +395,27 @@ sub dumpinfo {
 	}
 	print $col->GetOutput;
 
+
+	return if not $setUEF_IAT;
+	
+	
+	print "\n\n[ SetUnhandledExceptionFilter ]\n\n";
+	$col = Msf::ColPrint->new(4, 4);
+
+	my $data  = $pe->Raw;
+	my $regex = "(\x68|\xff\x15)".pack("V", $setUEF_IAT);
+	$regex .= '.' x $args->{'after'} if($args->{'after'});
+	$regex = ('.' x $args->{'before'}) . $regex if($args->{'before'});
+
+	while($data =~ m/($regex)/g) {
+		my $found = $1;
+		my $index = pos($data) - length($found);
+		my $va = $pe->OffsetToVirtual($index);
+		if ($va) {
+			$col->AddRow(sprintf("0x%.8x", $va), hexOutput($found));
+		}
+	}
+	print $col->GetOutput;
 }
 
 sub hexOutput {
@@ -420,7 +447,7 @@ Modes:
          -x  <regex>   Search for regex match
          -a  <address> Show code at specified virtual address
          -D            Display detailed PE information
-		 -S            Attempt to identify the packer/compiler
+         -S            Attempt to identify the packer/compiler
 Options:
          -A  <count>   Number of bytes to show after match
          -B  <count>   Number of bytes to show before match
