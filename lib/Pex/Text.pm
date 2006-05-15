@@ -284,4 +284,21 @@ sub PatternOffset {
      return @results;
 }
 
+sub URLEncode {
+	my $data = shift;
+	my $res;
+
+	foreach my $c (unpack('C*', $data)) {
+		if (
+			($c >= 0x30 && $c <= 0x39) ||
+			($c >= 0x41 && $c <= 0x5A) ||
+			($c >= 0x61 && $c <= 0x7A)
+		  ) {
+			$res .= chr($c);
+		} else {
+			$res .= sprintf("%%%.2x", $c);
+		}
+	}
+	return $res;
+}
 1;
