@@ -953,6 +953,7 @@ sub request {
                 return ('RESPONSE => ' . $self->{'response'}->{'Type'},"STUB DATA = " .  $self->bin2hex($self->{'response'}->{'StubData'}));
             }
         } else {
+			$response ||= '';
             warn "ACK response => $response";
         }
     } elsif ($protocol eq 'ncacn_ip_tcp') {
