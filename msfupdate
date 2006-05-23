@@ -18,7 +18,7 @@ no utf8;
 no locale;
 
 my $VERSION      = '$Revision$';
-my $FRAMEWORK    = '2.5';
+my $FRAMEWORK    = '2.6';
 my ($REV)        = $VERSION =~ m/\$Revisio.:\s+([^\s]+)/;
 
 my $UPDATE_HOST  = 'metasploit.com';
