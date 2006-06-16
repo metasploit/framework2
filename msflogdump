@@ -1,0 +1,98 @@
+#!/usr/bin/perl
+
+##
+#         Name: msflogdump
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Simple utility to view log files created with msf
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+use Getopt::Std;
+use strict;
+no utf8;
+no locale;
+
+my $VERSION = '$Revision$';
+
+my %opts;
+getopts('hv', \%opts);
+
+Version() if($opts{'v'});
+if ($opts{'h'} || ! scalar(@ARGV)) {
+    Usage();
+}
+
+
+# heh, shokdial is good for something
+my $NORMAL = "\033[0m";
+my $BLUE   = "\033[34m";
+my $RED    = "\033[31m";
+
+foreach my $filename (@ARGV) {
+  open(INFILE, "<$filename") or do { print STDOUT "Error opening $_: $!\n"; next; };
+
+   my $printmode = 2; # this variable keeps track of what the last line printed was, 
+       # it is 0 if the line was from the client and 1 if it was from the server
+       # this value is used to only put a timestamp on the first of a series of lines
+       # from a given source.
+
+  while(<INFILE>) {
+    s/\r//g;
+    chomp;
+
+    if(/Socket(In|Out): ([^ ]+) ([^ ]+)/ig) {
+      my $in   = $1;
+      my $src  = $2;
+      my $dest = $3;
+      print "Socket$in: $BLUE$src$NORMAL -> $RED$dest$NORMAL\n";
+      print "-" x 60 . "\n" if($in eq 'Out');
+    }
+    elsif(/(.*?) CLIENT (.*)/ig) {
+      if ($printmode != 0) {
+         print '[' . localtime($1) . '] ' . $BLUE . HexToAscii($2) . $NORMAL;
+         $printmode = 0;
+      } else {
+         print $BLUE . HexToAscii($2) . $NORMAL . "\n";
+      }
+	
+    }
+    elsif(/(.*?) SERVER (.*)/ig) {
+      if ($printmode != 1) {
+        print '[' . localtime($1) . '] ' . $RED . HexToAscii($2) . $NORMAL;
+        $printmode = 1;
+      } else {
+        print $RED . HexToAscii($2) . $NORMAL . "\n";
+      }
+    }
+    else {
+      print $_ . "\n";
+    }
+  }
+}
+
+sub HexToAscii {
+  my $hex = shift;
+  $hex =~ s/([0-9a-f]{2})/chr(hex($1))/egi;
+  return($hex);
+}
+
+sub Usage {
+    print STDERR "\nUsage: $0 <~/.msf/logs/session_logfile_path.log>\n\n";
+    exit(0);
+}
+
+sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
+    print STDERR qq{
+  Msflogdump Version:  $ver
+
+};
+  exit(0);
+}
+

@@ -1,0 +1,21 @@
+This document lists the current known bugs for version 2.4 of the
+Metasploit Exploit Framework. If you run across an issue that is
+not included, please send the following information to
+msfdev [at] metasploit.com.
+
+1) What operating system, version, and service pack you are running.
+2) The 'Revision' number found in the header of the problem script.
+3) A description of the problem and how it can reproduced.
+4) The complete output of perl -V.
+
+
+
+Known Bugs and Incompatibilities
+==================================
+
+- The linux_ia32_reverse_udp payload requires the --noediting option to be
+supported by the bash shell on the target system. This will prevent this 
+payload from working on older distributions.
+
+- The linux_ia32_adduser payload may fail on older Linux distributions that use
+PAM (namely Red Hat 6.x). 

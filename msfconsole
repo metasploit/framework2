@@ -1,0 +1,970 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfconsole
+#       Author: H D Moore <hdm [at] metasploit.com>
+#       Author: spoonm <ninjatools [at] hush.com>
+#  Description: Console shell interface to the Metasploit Exploit Framework
+#      Version: $Revision$
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use strict;
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
+use vars qw($VERSION);
+use IO::Socket;
+use POSIX;
+use Getopt::Std;
+use Sys::Hostname;
+
+use Pex::PsuedoShell;
+use Msf::TextUI;
+use Pex;
+
+no utf8;
+no locale;
+
+Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
+
+my $ui = Msf::TextUI->new($RealBin);
+my $FRAMEVERSION = $ui->Version;
+my $VERSION = '$Revision$';
+
+$SIG{'CHLD'} = sub { while (waitpid(-1, WNOHANG) == 0) { } };
+
+my $exploitsIndex;
+my $payloadsIndex;
+my $encodersIndex;
+my $nopsIndex;
+
+my $exploits;
+my $eclasses;
+my $payloads;
+my $encoders;
+my $nops;
+
+my %opts;
+getopts('hvqs:', \%opts);
+
+Usage() if($opts{'h'});
+Version() if($opts{'v'});
+
+my $state = {'Mode' => 'Main'};
+
+# load the modules
+Load();
+
+my $console = Pex::PsuedoShell->new('Metasploit Console', 'msf > ', 0);
+$console->tabCompletion(\&xTabCompletion);
+
+# configure the last exploit
+if ( (my $le = $ui->GetEnv('LastModule')) ) {
+	$state->{'Mode'} = 'Exploit';
+	$state->{'Exploit'}->{'Name'} = $le;
+	gUse('use', $le);
+}
+		
+# virtual command table
+my %virtualCmds = ();
+
+# global command tables
+my %globalCmds =
+(
+    'version'   => [\&gVersion,       "Show console version"],
+    'help'      => [\&gHelp,          "Show the main console help"],
+    '?'         => [\&gHelp,          "Show the main console help"],
+    'quit'      => [\&gExit,          "Exit the console"],
+    'exit'      => [\&gExit,          "Exit the console"],
+    'use'       => [\&gUse,           "Select an exploit by name"],
+    'info'      => [\&gInfo,          "Display detailed exploit or payload information"],
+    'cd'        => [\&gChdir,         "Change working directory"],
+    'save'      => [\&gSave,          "Save configuration to disk"],
+    'setg'      => [\&gSet,           "Set a global environment variable"],
+    'unsetg'    => [\&gUnset,         "Remove a global environment variable"],
+    'reload'    => [\&Load,           "Reload exploits and payloads"],
+);
+
+
+# main mode commands
+my %mainCmds =
+(
+    'show'      => [\&mShow,   "Show available exploits and payloads"],
+);
+
+# exploit mode commands
+my %exploitCmds = 
+(
+    'set'       => [\&eSet,           "Set a temporary environment variable"],
+    'unset'     => [\&eUnset,         "Remove a temporary environment variable"],
+    'back'      => [\&eBack,          "Drop back to the main menu"],
+    'show'      => [\&eShow,          "Show options, advanced, payloads, or targets"],
+    'check'     => [\&eCheck,         "Perform vulnerability check"],
+    'rcheck'    => [\&eReloadCheck,   "Perform vulnerability check"],	
+    'exploit'   => [\&eExploit,       "Launch the actual exploit"],
+    'rexploit'  => [\&eReloadExploit, "Reload and exploit, for us tester types"],
+);
+
+
+$state->{'LocalAddress'} = Pex::Utils::SourceIP();
+xAddAddressCache($state->{'LocalAddress'});
+
+if (! defined($opts{'q'})) {
+
+    my $username = ($ENV{'USER'} || $ENV{'USERNAME'} || 'unknown');
+    Msf::Logging->PrintLine('[' . localtime(time()) . '] msfconsole started on host ' . hostname() . ' by user ' . $username );
+    Msf::TextUI::PrintAsciiLogo();
+
+    printf("\n+ -- --=[ msfconsole v%s [%d exploits - %d payloads]\n\n", 
+           $FRAMEVERSION, 
+           scalar(keys(%{$exploits})),
+           scalar(keys(%{$payloads}))
+    );
+}
+
+ProcessCmd('use', shift(@ARGV)) if(@ARGV);
+ProcessScript($opts{'s'}) if(exists($opts{'s'}));
+
+while (1)
+{
+    SetupCmds();
+    last if(!ProcessCmd($console->readCommand()));
+}
+print "\n";
+
+sub SetupCmds {
+  %virtualCmds = %globalCmds;
+  
+  my $stateMode = $state->{'Mode'};
+    
+  if ($stateMode eq 'Main')    { foreach (keys(%mainCmds)){ $virtualCmds{$_} = $mainCmds{$_} } }
+  if ($stateMode eq 'Exploit') { foreach (keys(%exploitCmds)){ $virtualCmds{$_} = $exploitCmds{$_} } }
+}
+
+sub ProcessCmd {
+  my $cmd = shift;
+  my @args = @_;
+
+  SetupCmds();
+
+  return(0) if(!defined($cmd));
+
+  if(exists($virtualCmds{$cmd})) {
+    $virtualCmds{$cmd}->[0]($cmd, @args);
+  }
+  else {
+    gUnknown($cmd, @args);
+  }
+  return(1);
+}
+
+sub ProcessScript {
+  my $file = shift;
+  open(INFILE, "<$file") or die("Cannot open script: $file: $!\n");
+  local $/;
+  my $data = <INFILE>;
+  close(INFILE);
+  foreach my $line (split("\n", $data)) {
+    ProcessCmd(Pex::PsuedoShell->parseCommands($line));
+  }
+}
+
+sub Load {
+	my $genv = $ui->_Env;
+	my $senv = $ui->_TempEnvs;
+	my $tenv = $ui->_TempEnv;
+
+    $exploitsIndex = $ui->LoadExploits;
+    $payloadsIndex = $ui->LoadPayloads;
+    $encodersIndex = $ui->LoadEncoders;
+    $nopsIndex     = $ui->LoadNops;
+    $exploits = { };
+    $eclasses = { };
+    $payloads = { };
+    $encoders = { };
+    $nops     = { };
+    
+    foreach my $key (sort(keys(%{$exploitsIndex}))) {
+        $exploits->{$exploitsIndex->{$key}->SelfEndName} = $exploitsIndex->{$key};
+        $eclasses->{$exploitsIndex->{$key}->ModuleClass}++;
+    }
+    
+    foreach my $key (sort(keys(%{$encodersIndex}))) {
+        $encoders->{$encodersIndex->{$key}->SelfEndName} = $encodersIndex->{$key};
+    } 
+       
+    foreach my $key (sort(keys(%{$nopsIndex}))) {
+        $nops->{$nopsIndex->{$key}->SelfEndName} = $nopsIndex->{$key};
+    }    
+    
+    foreach my $key (keys(%{$payloadsIndex})) {
+        $payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
+    }
+
+
+    # Important, reload the exploit object in state
+    if($state->{'Mode'} eq 'Exploit') {
+      my $exploit = $exploits->{$state->{'Exploit'}->{'Name'}};
+
+      # check to make sure the module reloaded, it could have had errors..
+      if(!$exploit) {
+        xMsg('reload', 'Error reloading current exploit, moving back to Main.');
+        eBack();
+      }
+      # ok, call gUse to reload tab completion, etc
+      else {
+        gUse('use', $state->{'Exploit'}->{'Name'});
+      }
+    }
+	
+	$ui->_Env($genv);
+	$ui->_TempEnvs($senv);
+	$ui->_TempEnv($tenv);
+}
+
+sub gSave {
+    my $cmd = shift;
+	if($state->{'Mode'} eq 'Exploit') {
+		$ui->SetGlobalEnv('LastModule', $state->{'Exploit'}->{'Name'});
+		$ui->SaveTempEnv($state->{'Exploit'}->{'Name'});
+	} else {
+		$ui->UnsetGlobalEnv('LastModule');
+	}
+	
+    $ui->SaveConfig;
+    print "Saved configuration to: " . $ui->ConfigFile . "\n";
+}
+
+sub gVersion { print "msfconsole version ". Pex::Utils::Rev2Ver($VERSION)."\n" }
+
+sub gSet {
+    my $cmd = shift;
+    if(@_ == 1) {
+        print "$_[0]: " . $ui->GetGlobalEnv($_[0]) . "\n";
+    }
+    elsif(@_ == 2) {
+        print "$_[0] -> $_[1]\n";
+        $ui->SetGlobalEnv($_[0], $_[1]);
+    }
+    else {
+        foreach (sort(keys(%{$ui->GetGlobalEnv}))) {
+            print "$_: " . $ui->GetGlobalEnv($_) . "\n";
+        }
+    }
+}
+
+sub gUnset
+{
+    my ($cmd, $key) = @_;
+
+    if(!defined($key))
+    {
+        my $ok = xAskYN('Clear env? [yes/no]: ');
+		return if $ok ne 'yes';
+        $ui->UnsetGlobalEnv;
+    }
+    $ui->UnsetGlobalEnv($key);
+}
+
+sub eSet {
+    my $cmd = shift;
+    if(@_ == 1) {
+        print "$_[0]: " . $ui->GetTempEnv($_[0]) . "\n";
+    }
+    elsif(@_ == 2) {
+        print "$_[0] -> $_[1]\n";
+        $ui->SetTempEnv($_[0], $_[1]);
+    }
+    else {
+        foreach (sort(keys(%{$ui->GetTempEnv}))) {
+            print "$_: " . $ui->GetTempEnv($_) . "\n";
+        }
+    }
+    
+    my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
+    if ($ui->GetEnv('PAYLOAD') && $state->{'Exploit'}->{'Exploit'}->Payload) {
+        $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
+    }
+    $prompt .= ' > ';
+    $console->_prompt($prompt);
+}
+
+sub eUnset
+{
+    my ($cmd, $key) = @_;
+
+    if(!defined($key))
+    {
+        my $ok = xAskYN('Clear temporary env? [yes/no]: ');
+		return if $ok ne 'yes';
+        $ui->UnsetTempEnv;
+    }
+    $ui->UnsetTempEnv($key);
+    
+    my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
+    if ($ui->GetEnv('PAYLOAD') && $state->{'Exploit'}->{'Exploit'}->Payload) {
+        $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
+    }
+    $prompt .= ' > ';
+    $console->_prompt($prompt);
+}
+
+
+sub gExit
+{
+    Msf::Logging->PrintLine('[' . localtime(time()) . '] msfconsole closed' );
+    POSIX::_exit(0) if($ui->GetEnv('AlternateExit') == 1);
+    if($ui->GetEnv('AlternateExit') == 2) {
+      exec('true');
+    }
+    exit(0);
+}
+
+sub gUnknown
+{
+    my ($cmd, @args) = @_;
+    
+    if (! xCheckSystemCommand($cmd)) 
+    {
+        xMsg($cmd, "command not found");
+    } else {
+		my $cmdline = "$cmd ". join(" ", @args);
+		Msf::Logging->PrintLine('[' . localtime(time()) . "] executing system command line '$cmdline'");	
+        system($cmdline);
+    }
+}
+
+sub gHelp
+{
+    my ($cmd, @args) = @_;
+    
+    my $col = Msf::ColPrint->new(8, 6);
+    print "\nMetasploit Framework " . $state->{'Mode'}  . " Console Help\n";
+    print   "======================================\n\n";
+    foreach my $cmd (sort(keys(%virtualCmds)))
+    {
+        $col->AddRow($cmd, $virtualCmds{$cmd}->[1]);
+    }
+    print $col->GetOutput . "\n";
+}
+
+sub gUse 
+{
+    my ($cmd, @args) = @_;
+    if (! exists($exploits->{$args[0]}))
+    {
+        xMsg("use", "please specify a valid exploit name");
+        return;
+    }
+    
+    my $exploit = $exploits->{$args[0]};
+    
+    # switch to exploit mode
+    $state->{'Mode'} = 'Exploit';
+    
+    # wipe out any previous exploit state
+    delete($state->{'Exploit'});
+    
+    $state->{'Exploit'}->{'Exploit'} = $exploit;
+    $state->{'Exploit'}->{'Name'} = $args[0];
+    $state->{'Exploit'}->{'Payloads'} = xValidPayloads($exploit);
+
+    $ui->LoadTempEnv($args[0]);
+
+    if(defined($exploit->UseMessage)) {
+      print $exploit->UseMessage . "\n";
+    }
+    
+    my $prompt = 'msf '.$state->{'Exploit'}->{'Name'};
+    if ($ui->GetEnv('PAYLOAD') && $state->{'Exploit'}->{'Exploit'}->Payload)
+    {
+        $prompt .= '('.$ui->GetEnv('PAYLOAD').')';
+    }
+    $prompt .= ' > ';
+    $console->_prompt($prompt);
+}
+
+sub eBack
+{
+    $ui->SaveTempEnv($state->{'Exploit'}->{'Name'});
+    $ui->UnsetTempEnv;
+    $state->{'Mode'} = 'Main';
+    $console->_prompt("msf > ");
+}
+
+sub gChdir
+{
+    my ($cmd, @args) = @_;
+    
+    if (! $args[0])
+    {
+        chdir($ENV{'HOME'});
+        return;
+    }
+    
+    if (chdir($args[0]))
+    {
+        xMsg("chdir", "changed to directory $args[0]");
+    } else {
+        xMsg("chdir", "failed to change directory $!");
+    }
+}
+
+sub gInfo {
+  my $cmd = shift;
+  my @args = @_;
+  my $module;
+  my $type;
+
+  # Support old info exploit/payload syntax
+  if(@args == 2) {
+    $module = $args[1];
+    $type = $args[0];
+  }
+  elsif(@args == 1) {
+    $module = $args[0];
+  }
+    
+  if(!defined($module) || ($type ? $type !~ /^(encoder|exploit|payload|nop)$/ : 0)) {
+    xMsg("info", "usage: info [type] <module name>");
+    return;
+  }
+
+  if($exploits->{$module} && ($type ? $type eq 'exploit' : 1)) {
+    print "\n" . $ui->DumpExploitSummary($exploits->{$module});
+  }
+  elsif($payloads->{$module} && ($type ? $type eq 'payload' : 1)) {
+    print "\n" . $ui->DumpPayloadSummary($payloads->{$module});
+  }
+
+  # Kinda a hack, we rebuild the keys for exploits and payloads, but
+  # not for nops or encoders...
+  elsif($encoders->{$module} && ($type ? $type eq 'encoder' : 1)) {
+    print "\n" . $ui->DumpEncoderSummary($encoders->{$module});
+  }
+  elsif($nops->{$module} && ($type ? $type eq 'nop' : 1)) {
+    print "\n" . $ui->DumpNopSummary($nops->{$module});
+  }
+  
+  else {
+    xMsg("info", "invalid module name");
+  }
+}
+
+sub mShow 
+{
+    my ($cmd, @args) = @_;
+    my $c = $state->{'CONF'};
+    
+    if (lc($args[0]) eq "exploits")
+    {
+        print "\nMetasploit Framework Loaded Exploits\n";
+        print   "====================================\n\n";
+        
+        print $ui->DumpExploits(2, $exploits, $args[1]) . "\n";
+        return;
+    }
+    
+    if (lc($args[0]) eq "payloads")
+    {
+        print "\nMetasploit Framework Loaded Payloads\n";
+        print   "====================================\n\n";
+        
+        print $ui->DumpPayloads(2, $payloads) . "\n";
+        return;
+    }
+
+    if (lc($args[0]) eq "encoders")
+    {
+        print "\nMetasploit Framework Loaded Encoders\n";
+        print   "====================================\n\n";
+        
+        print $ui->DumpEncoders(2, $encoders) . "\n";
+        return;
+    }
+
+    if (lc($args[0]) eq "nops")
+    {
+        print "\nMetasploit Framework Loaded Nop Engines\n";
+        print   "=======================================\n\n";
+        
+        print $ui->DumpNops(2, $nops) . "\n";
+        return;
+    }
+
+    if (lc($args[0]) eq "config")
+    {
+        print "\nMetasploit Framework Configuration\n";
+        print   "====================================\n\n";
+        
+        foreach my $v (sort(keys(%{$c}))) {
+            print "  $v" . (" " x (30-length($v))) . $c->{$v} ."\n";
+        }
+        print "\n";
+        return;
+    }
+
+    xMsg("show", "requires an option: 'exploits', 'payloads', 'encoders', or 'nops'");
+}
+
+
+sub eShow 
+{
+    my ($cmd, @args) = @_;
+    if (lc($args[0]) eq 'options')  { eOptions();  return }
+    if (lc($args[0]) eq 'advanced') { eAdvanced(); return }
+    if (lc($args[0]) eq 'targets')  { eTargets();  return }
+    if (lc($args[0]) eq 'payloads') { ePayloads(); return }
+
+    xMsg("show", "specify 'targets', 'payloads', 'options', or 'advanced'");
+
+}
+
+sub ePayloads {
+  SaveTemp();
+  FillTemp();
+  $ui->Payloads;
+  RestoreTemp();
+}
+sub eOptions {
+  SaveTemp();
+  FillTemp();
+  $ui->Options;
+  RestoreTemp();
+}
+sub eAdvanced {
+  SaveTemp();
+  FillTemp();
+  $ui->AdvancedOptions;
+  RestoreTemp();
+}
+sub eTargets  {
+  SaveTemp();
+  FillTemp();
+  $ui->Targets;
+  RestoreTemp();
+}
+
+sub eCheck {
+  return if($state->{'Mode'} ne 'Exploit');
+  xUpdateAddrCache();
+  SaveTemp();
+  FillTemp();
+  $ui->Check;
+  RestoreTemp();
+}
+
+sub eReloadCheck {
+  Load();
+  return eCheck(@_);
+}
+
+sub eExploit {
+  return if($state->{'Mode'} ne 'Exploit');
+  xUpdateAddrCache();
+  SaveTemp();
+  FillTemp();
+  $ui->Exploit;
+  RestoreTemp();
+}
+
+sub eReloadExploit {
+  Load();
+  return eExploit(@_);
+}
+
+sub xMsg
+{
+    my ($loc, $msg) = @_;
+    print STDERR "msfconsole: $loc: $msg\n";
+}
+
+sub xValidPayloads
+{
+    my $exploit = shift;
+    if($exploit->Payload) {
+      $state->{'Exploit'}->{'Payloads'} = $ui->MatchPayloads($exploit, $payloads);
+      return $state->{'Exploit'}->{'Payloads'};
+    }
+    return;
+}
+
+sub xCheckSystemCommand
+{
+    my $cmd = shift;
+    return(1) if -e $cmd;
+    foreach my $d (split(/:/, $ENV{'PATH'})) { 
+    
+        if ($^O eq 'cygwin') {
+            return(1) if -e "$d/$cmd";
+        } else {
+            return(1) if -x "$d/$cmd";
+        }
+    }
+    return(0);
+}
+
+sub xGetAddressCache
+{
+    my $cache = $state->{'CacheAddress'};
+    return keys(%{$cache});
+}
+
+sub xAddAddressCache
+{
+    my $addr = shift;
+    $state->{'CacheAddress'}->{$addr}++
+}
+
+sub xUpdateAddrCache 
+{
+    my $x = $state->{'Exploit'}->{'Exploit'};
+    my $p = $ui->GetEnv('PAYLOAD');
+    my %options = ();
+
+    
+    # create a list of all exploit options of type ADDR
+    foreach (keys(%{$x->UserOpts})) {
+        next if $x->UserOpts->{$_}->[1] ne 'ADDR';
+        $options{$_}++;
+    }
+    foreach (keys(%{$x->Advanced})) {
+        next if $x->Advanced->{$_}->[1] ne 'ADDR';
+        $options{$_}++;
+    }  
+
+    # create a list of all payload options of type ADDR
+    if ($x->Payload && $p && exists($payloads->{$p}))
+    {
+        $p = $payloads->{$p};
+	$p->_Load;
+        foreach (keys(%{$p->UserOpts})) {
+            next if $p->UserOpts->{$_}->[1] ne 'ADDR';
+            $options{$_}++;
+        }        
+        foreach (keys(%{$p->Advanced})) {
+            next if $p->Advanced->{$_}->[1] ne 'ADDR';
+            $options{$_}++;
+        }
+    }
+    
+    # scan environments and add to the cache
+    foreach (keys(%options)) {
+        my $value = $ui->GetTempEnv($_) || $ui->GetEnv($_) || undef;
+        next if ! $value;
+        $state->{'CacheAddress'}->{$value}++;
+    }
+}
+
+sub xAskYN {
+	my $quest	= shift;
+	my $cinp	= IO::Handle->new_from_fd(0, '<');
+	my $cout	= IO::Handle->new_from_fd(1, '>');
+	my $iblock	= $cinp->blocking;
+	
+	$cinp->blocking(1);
+
+	my $res = 'run';
+	while ($res && $res ne 'yes' && $res ne 'no') {
+		$cout->printflush($quest);
+		if ( defined($res = $cinp->getline)) {
+			chomp($res);
+			$res = lc($res);
+		} 
+		else { $cout->printflush("\nError reading from input: $!\n"); }
+	}
+	$cinp->blocking($iblock);
+	return $res;
+}
+
+
+#
+# TAB COMPLETION ROUTINES
+#
+
+sub xCreateSetList
+{
+    if ($state->{"Mode"} eq "Main") { return keys(%{$ui->GetGlobalEnv}) } 
+    
+    if ($state->{"Mode"} eq "Exploit") 
+    {
+        my %options = ();
+        
+        my $x = $state->{'Exploit'}->{'Exploit'};
+        my $p = $ui->GetEnv('PAYLOAD');
+        
+        foreach (keys(%{$x->UserOpts})) { $options{$_}++ }
+        foreach (keys(%{$x->Advanced})) { $options{$_}++ }
+        
+        if ($x->Payload && $p && exists($payloads->{$p}))
+        {
+            $p = $payloads->{$p};
+	    $p->_Load;
+            foreach (keys(%{$p->UserOpts})) { $options{$_}++ }
+            foreach (keys(%{$p->Advanced})) { $options{$_}++ }
+        }
+         
+        if ($x->Payload) { $options{"PAYLOAD"}++ }
+        if ($x->TargetsList) { $options{"TARGET"}++  }
+
+        foreach my $e (keys(%{ $ui->GetEnv })) {
+            $options{$e}++;
+        }
+        
+        foreach my $e (keys(%{ $ui->GetTempEnv })) {
+            $options{$e}++;
+        }   
+
+        return(keys(%options));
+    }
+}
+
+sub xCreateSetValueList
+{
+    if ($state->{"Mode"} eq "Main") { return ' ' } 
+    
+    if ($state->{"Mode"} eq "Exploit") 
+    {
+        my %results = ();
+        
+        my $n = $state->{'SetName'};
+        my $x = $state->{'Exploit'}->{'Exploit'};
+        my $v = $state->{'Exploit'}->{'Payloads'};
+        my $p = $ui->GetEnv('PAYLOAD');
+
+        if ($x->Payload && $p && exists($payloads->{$p})) { $p = $payloads->{$p} }
+        
+        if (uc($n) eq "PAYLOAD") { return keys(%{$v}) }
+        
+        if (uc($n) eq "TARGET")
+        {
+            my $tidx = 0;
+            foreach ($x->TargetsList) { $results{$tidx}++ ; $tidx++;}
+            return keys(%results);
+        }
+        
+        my ($req, $type, $desc, $dflt);
+        
+        if (exists($x->UserOpts->{$n})) {
+            ($req, $type, $desc, $dflt) = @{$x->UserOpts->{$n}};  
+        }
+        
+        if (exists($x->Advanced->{$n})) {
+            ($req, $type) = (0, 'DATA');
+            ($dflt, $desc) = @{$x->Advanced->{$n}};
+        }
+                
+        if ($x->Payload && $p && exists($p->UserOpts->{$n})) {
+            ($req, $type, $desc, $dflt) = @{$p->UserOpts->{$n}};  
+        }
+                
+        if ($x->Payload && $p && exists($p->Advanced->{$n})) {
+            ($req, $type) = (0, 'DATA');
+            ($dflt, $desc) = @{$p->Advanced->{$n}};
+        }
+        
+        if ($dflt) { return ($dflt) }
+        
+        if ($type eq "ADDR") { return xGetAddressCache() }
+        if ($type eq "BOOL") { return ("TRUE", "FALSE") }
+        if ($type eq "FILE") { return undef }
+        if ($type eq "PATH") { return undef }
+        return ' ';
+    }
+}
+
+sub xTabCompletion
+{
+    my ($text, $line, $start, $end) = @_;
+    my ($cmd, @args) = split(/\s+/, $line);
+    
+    # default to match of space
+    $state->{'TabVals'} = [' '];
+    
+    # this handles command matching
+    if ($start == 0) { $state->{'TabVals'} = [sort(keys(%virtualCmds))] }
+    
+    if (lc($cmd) eq "use") { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
+    
+    if (lc($cmd) eq "show")
+    {
+        if ($state->{'Mode'} eq 'Main') {
+            
+            # Handle ModuleClass tab completion stuff
+            if ($args[0] eq 'exploits') {
+                $state->{'TabVals'} = [sort(keys(%{$eclasses}))];
+            }
+            # Default to the standard show options
+            else {
+                $state->{'TabVals'} = ['exploits', 'payloads', 'encoders', 'nops'];
+            }
+        }
+		
+        if ($state->{'Mode'} eq 'Exploit') {
+            $state->{'TabVals'} = ['advanced', 'options', 'targets', 'payloads'] 
+        }
+    }
+    
+    if (lc($cmd) eq "info")
+    {
+        # display variables if no args are specified
+        if (! $args[0] || (! $args[1] && ($args[0] && $text))) { 
+            
+            my %allmods;
+            for (keys(%{$exploits}), keys(%{$payloads}), keys(%{$encoders}), keys(%{$nops})) {
+                $allmods{$_}++;
+            }
+            
+            $state->{'TabVals'} = ['exploit', 'payload', 'encoder', 'nop', sort(keys(%allmods))] 
+        }
+        if (! $args[1] || (! $args[2] && ($args[1] && $text)))
+        {
+            if ($args[0] eq "exploit") { $state->{'TabVals'} = [sort(keys(%{$exploits}))] }
+            if ($args[0] eq "payload") { $state->{'TabVals'} = [sort(keys(%{$payloads}))] }
+            if ($args[0] eq "encoder") { $state->{'TabVals'} = [sort(keys(%{$encoders}))] }
+            if ($args[0] eq "nop"    ) { $state->{'TabVals'} = [sort(keys(%{$nops}))] }            
+        }
+    }
+        
+    if (
+        ($state->{'Mode'} eq "Main"    && lc($cmd) =~ /^(un|)setg$/) ||
+        ($state->{'Mode'} eq "Exploit" && lc($cmd) =~ /^(un|)set$/)
+       )
+    {
+        # display variables if no args are specified
+        if (! $args[0] || (! $args[1] && ($args[0] && $text)))
+        {
+            $state->{'TabVals'} = [sort(xCreateSetList())];
+        } elsif (! $args[1] || (! $args[2] && ($args[1] && $text)))
+        {
+            $state->{'SetName'} = $args[0];
+            $state->{'TabVals'} = [sort(xCreateSetValueList())];
+        }
+    }
+    
+    # revert to file completion for non-commands
+    if (! scalar(@{$state->{'TabVals'}}) && ! exists($virtualCmds{$cmd})) {
+        $state->{'TabVals'} = []; 
+    }
+    
+    
+
+    my @matches = $console->_term->completion_matches($text, \&xTabCompletionMatcher);
+    return(@matches); 
+}
+
+
+# This is a localized closure for matching speed, this routine has been borrowed
+# from http://lists.n0i.net/pipermail/perl/2003-October/000015.html
+{
+    my $list_index;
+    my @name;
+    
+    sub xTabCompletionMatcher
+    {
+        my ($text, $mstate) = @_;
+        $text = quotemeta($text);
+
+        # If this is a new word to complete, initialize now.  This
+        # includes saving the length of TEXT for efficiency, and
+        # initializing the index variable to 0.
+
+        unless ($mstate) {
+	        $list_index = 0;
+            @name = @{$state->{'TabVals'}};
+            return undef if (scalar(@name) == 0);
+        }
+
+        # Return the next name which partially matches from the
+        # command list.
+        while ($list_index <= $#name) {
+	        $list_index++;
+	        return $name[$list_index - 1]
+                if ($name[$list_index - 1] =~ /^$text/);
+        }
+
+        # If no names matched, then return NULL.
+        return undef;
+    }
+}
+
+sub SaveTemp {
+  $ui->SaveTempEnv('_Save');
+}
+
+sub RestoreTemp {
+  $ui->LoadTempEnv('_Save');
+  $ui->DeleteTempEnv('_Save');
+}
+
+sub FillTemp {
+  $ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+  $ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+  $ui->SetTempEnv('_Encoders', $encodersIndex);
+  $ui->SetTempEnv('_Nops', $nopsIndex);
+
+  $ui->SetTempEnv('_Exploits', $exploits);
+  $ui->SetTempEnv('_Payloads', $payloads);
+
+  my $exploit = $state->{'Exploit'}->{'Exploit'};
+  $ui->SetTempEnv('_Exploit', $exploit);
+  
+  $ui->SetTempEnv('_UI', $ui);
+
+  # XXX added by spoon, maybe this should be looked at...
+  # applying the AutoOpts settings to the local temp env we have setup,
+  # specifically this fixes things like the EXITFUNC display issues
+  # this will later get called again in Exploit::Prepare, maybe we should
+  # look into just having it done once....
+  $exploit->ApplyAutoOpts;
+
+  # setup payload data if exploit requires a payload
+  if($exploit->Payload) {
+    my $payloadName = $ui->GetEnv('PAYLOAD');
+    $ui->SetTempEnv('_PayloadName', $payloadName);
+    my $validPayloads = $ui->MatchPayloads($exploit, $payloads);
+    my $payload = $validPayloads->{$payloadName};
+    # make sure the OO stuff is good for whoever might use this...
+    $payload->_Load if($payload);
+    $ui->SetTempEnv('_Payload', $payload);
+    $ui->SetTempEnv('_ValidPayloads', $validPayloads);
+  }
+  else {
+    $ui->SetTempEnv('_PayloadName', undef);
+    $ui->SetTempEnv('_Payload', undef);
+    $ui->SetTempEnv('_ValidPayloads', undef);
+  }
+}
+
+sub Usage {
+    print STDERR qq{
+  Usage: $0 <options> <exploit>
+Options:
+         -h             You're looking at me baby
+         -v             List version information
+         -s   <file>    Process file of console commands
+         -q             No splash screen on startup
+
+};
+    exit(0);
+}
+
+sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
+    print STDERR qq{
+   Framework Version:  $FRAMEVERSION
+  Msfconsole Version:  $ver
+
+};
+
+  exit(0);
+}

@@ -1,0 +1,75 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: winvnc - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP58F.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /I "..\omnithread" /I ".." /I "..\.." /D "NDEBUG" /D "__x86__" /D "__WIN32__" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_OMNITHREAD_DLL" /D _WIN32_WINNT=0x400 /FR"..\Release/" /Fp"..\Release/winvnc.pch" /YX /Fo"..\Release/" /Fd"..\Release/" /FD /c 
+"C:\Personal\Research\ib\vncdll\winvnc\winvnc\vncdesktop.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP58F.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP590.bat" with contents
+[
+@echo off
+cl /nologo /MT /Fo..\Release\ /Fd..\Release\ /c buildtime.cpp
+]
+Creating command line "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP590.bat"
+Compiling...
+vncdesktop.cpp
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP591.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib advapi32.lib ole32.lib /nologo /subsystem:windows /incremental:no /pdb:"..\Release/winvnc.pdb" /machine:I386 /out:"..\Release/winvnc.exe" 
+\Personal\Research\ib\vncdll\winvnc\Release\buildtime.obj
+\Personal\Research\ib\vncdll\winvnc\Release\d3des.obj
+\Personal\Research\ib\vncdll\winvnc\Release\rfbRegion_X11.obj
+\Personal\Research\ib\vncdll\winvnc\Release\rfbUpdateTracker.obj
+\Personal\Research\ib\vncdll\winvnc\Release\stdhdrs.obj
+\Personal\Research\ib\vncdll\winvnc\Release\translate.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncabout.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncacceptdialog.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncauth.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncbuffer.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncclient.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncconndialog.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncdesktop.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncencodecorre.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncencodehext.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncencoder.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncencoderre.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncencodezrle.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vnchttpconnect.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncinsthandler.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vnckeymap.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vnclog.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncmenu.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncproperties.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncserver.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncservice.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vncsockconnect.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vnctimedmsgbox.obj
+\Personal\Research\ib\vncdll\winvnc\Release\vsocket.obj
+\Personal\Research\ib\vncdll\winvnc\Release\winvnc.obj
+\Personal\Research\ib\vncdll\winvnc\Release\winvnc.res
+\Personal\Research\ib\vncdll\winvnc\Release\nt.obj
+\Personal\Research\ib\vncdll\rdr\Release\rdr.lib
+\Personal\Research\ib\vncdll\zlib\Release\zlib.lib
+\Personal\Research\ib\vncdll\Xregion\Release\Xregion.lib
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP591.tmp"
+
+buildtime.cpp
+<h3>Output Window</h3>
+Linking...
+   Creating library ..\Release/winvnc.lib and object ..\Release/winvnc.exp
+
+
+
+<h3>Results</h3>
+winvnc.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

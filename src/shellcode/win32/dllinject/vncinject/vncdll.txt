@@ -1,0 +1,5 @@
+This directory contains the source code to the DLL inject VNC server payload.
+This DLL expects Init() to be called with the payloads socket descriptor
+and will start a VNC RFB session across this socket. Please refer to the
+README.txt and BUILDING.txt files in the vncdll subdirectories for more
+information.

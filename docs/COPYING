@@ -1,0 +1,37 @@
+The Metasploit Exploit Framework source code is dual-licensed under the GNU
+General Public License v2.0 and the Artistic License. The package is Copyright
+(c) 2003-2006 Metasploit LLC, contributions from others and their
+individual copyrights are marked at the top of each file. Copies of the GPL and
+Artistic licenses can be found in the "docs" subdirectory, named "COPYING.GNU"
+and "COPYING.Artistic" respectively.
+
+The exploit modules included in this package are individually licensed and
+Copyright (c) by their respective authors. Please see the Author field of each
+module to determine what license is specified. If you need a module under a
+different license (GPL module and you want to include it in non-GPL code),
+please contact the author directly.
+
+The payload modules included in this package are individually licensed and
+Copyright (c) by their respective authors. Please see the Author field of each
+module to determine what license is specified. Some of the assembly payloads
+were obtained from public resources that did not specify the terms of license.
+These payloads are being treated as public domain and will be removed or
+rewritten if a dispute arises.
+
+The Meterpreter is dual-licensed under the GNU General Public License v2.0 and
+the Artistic License. The Meterpreter component is Copyright (c) 2004-2005 Matt
+Miller. Please contact Matt Miller directly for questions regarding the license
+and licensing of the Meterpreter. 
+
+The InlineEgg library and some of the examples are Copyright (c) 2002, 2003 Core
+Security Technologies, Core SDI Inc and under a non-commercial license. Please
+see the COPYING.InlineEgg file in the "docs" subdirectory for more information.
+This code may not be included or referenced in any form by a commercial
+derivative of the Metasploit Exploit Framework.
+
+The Impurity components are licensed under the GNU General Public License v2.0
+and Copyright (c) 2003 Alexander E. Cuttergo. Modifications have been made from
+the original version and the additional components are Copyright (c) 2003 H D
+Moore / METASPLOIT.COM. The assembly payloads and handler routines that are
+incorporated into the Metasploit Exploit Framework are compatible with, but not
+derivative works of, the original Impurity release.

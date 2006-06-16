@@ -1,0 +1,2576 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfweb
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Version: $Revision$
+#  Description: Web interface to the Metasploit Exploit Framework
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use strict;
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
+use Msf::WebUI;
+
+use POSIX;
+use IO::Socket;
+use Getopt::Std;
+
+no utf8;
+no locale;
+
+Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
+
+my $ui = Msf::WebUI->new($RealBin);
+my $VERSION = $ui->Version;
+
+$ui->SetGlobalEnv('_Console', 'Msf::PayloadComponent::WebConsole');
+
+my @sections = qw{ EXPLOITS PAYLOADS SESSIONS };
+
+my $exploitsIndex;
+my $payloadsIndex;
+my $encodersIndex;
+my $nopsIndex;
+my $exploits	= { };
+my $payloads	= { };
+my $moduleTypes	= { };
+my $moduleKeys	= { };
+my $moduleArch	= { };
+my $moduleOS	= { };
+my $moduleList	= { };
+my $modules	    = { };
+
+my $burl;
+my %args;
+
+# Cache control date
+my $cache_start = HTTPDate();
+my %cache_hosts = ();
+
+# Configuration defaults...
+my %config	= 
+(
+	'BindAddr'	=> '127.0.0.1',
+	'BindPort'	=> 55555,
+	'LogFile'	=> '-',
+	'LogLevel'	=> 0,
+	'Reload'	=> 0,
+	'Theme'		=> 'default',
+	'ThemeDir'	=> "$RealBin/data/msfweb/themes",
+	'IconDir'	=> "$RealBin/data/msfweb/icons",
+	'CacheDir'	=> $ui->_DotMsfDir. "/msfweb",	
+	'Defanged'	=> 0,
+);
+
+
+# Process the command line options
+getopts("a:l:v:p:t:T:C:r:hD", \%args);
+
+# Show the help output
+if ($args{'h'}) { Usage() }
+
+
+# IP address and possible TCP port
+if (exists($args{'a'}))
+{
+    my ($host, $port) = split(/:/, $args{'a'});
+	$config{'BindAddr'} = $host;
+	
+	if ($port) {
+		$config{'BindPort'} = $port;
+	}
+}
+
+# TCP port
+if (exists($args{'p'})) {
+	$config{'BindPort'} = $args{'p'};
+}
+
+# Log file name
+if (exists($args{'l'})) {
+	$config{'LogFile'} = $args{'l'};
+}
+
+# Log verbosity level
+if (exists($args{'v'})) {
+	$config{'LogLevel'} = $args{'v'};
+}
+
+# Theme name
+if (exists($args{'t'})) {
+	$config{'Theme'} = $args{'t'};
+}
+
+# Theme directory
+if (exists($args{'T'})) {
+	$config{'ThemeDir'} = $args{'T'};
+}
+
+# Cache directory
+if (exists($args{'C'})) {
+	$config{'CacheDir'} = $args{'C'};
+}
+
+# Reload modules
+if (exists($args{'r'})) {
+	$config{'Reload'}++;
+}
+
+# Check for 'defanged' option
+if (exists($args{'D'})) {
+	$config{'Defanged'}++;
+}
+
+my $bindstr = $config{'BindAddr'}. ':' .$config{'BindPort'};
+print STDERR "+----=[ Metasploit Framework Web Interface ($bindstr)\n\n";
+
+# Create the .msf directory if it does not exist
+if (! -d $ui->_DotMsfDir) {
+	mkdir($ui->_DotMsfDir, 0700);
+};
+
+# Create the cache directory if it does not exist
+if (! -d $config{'CacheDir'}) {
+	mkdir($config{'CacheDir'}, 0700);
+}
+
+# Check to see if we can write files to the cache directory
+if (! -d $config{'CacheDir'} || ! open(T, ">>".$config{'CacheDir'}.'/.test_'.$$) ) {
+	print STDERR "ERROR: the specified cache directory is not accessible: $!\n";
+	exit(1);
+}
+unlink($config{'CacheDir'}.'/.test_'.$$) && close(T);
+$ui->SetTempEnv('_CacheDir', $config{'CacheDir'} );
+
+# Create a cache prefix based on the master pid
+# This prevents locking issues in Cygwin...
+$ui->SetTempEnv('_CachePath', sprintf('%s/%.4x_', $config{'CacheDir'}, $$));
+
+# XXX Clear old session logs on startup
+
+# Verify that the specified theme actually exists
+if (! -r  $config{'ThemeDir'} .'/'. $config{'Theme'} .'/style.css') {
+	print STDERR "ERROR: the specified theme does not exist\n";
+	exit(1);
+}
+$ui->SetTempEnv('_Theme', $config{'ThemeDir'} .'/'. $config{'Theme'} );
+
+
+# Verify that the icon directory exists
+if (! -r  $config{'IconDir'} .'/win32.gif') {
+	print STDERR "ERROR: the specified icon directory does not exist\n";
+	exit(1);
+}
+$ui->SetTempEnv('_IconDir', $config{'IconDir'});
+
+
+# Set defanged mode if needed...
+$ui->SetTempEnv('_Defanged', $config{'Defanged'});
+
+
+# Create the inital list of modules
+LoadAllModules();
+
+# Pregenerate the complete lists without any filters
+if (! $config{'Reload'} ) {
+	ExploitList();
+	PayloadList();
+}
+
+my $ghettoWeb = GhettoWeb->new
+(
+	'host'	=> $config{'BindAddr'},
+	'port'	=> $config{'BindPort'},
+	'fnWeb'	=> \&ProcessWebRequest,
+	'fnIPC'	=> \&ProcessIPCRequest,
+	'fnHRP'	=> \&HTTPRequest,
+);
+
+$ghettoWeb->LogFile($config{'LogFile'});
+$ghettoWeb->LogLevel($config{'LogLevel'});
+
+$ghettoWeb->Run();
+
+if ($ghettoWeb->IsError) {
+	print STDERR "[*] Error: ".$ghettoWeb->GetError."\n";
+}
+
+
+exit(0);
+
+
+########################################################
+#                 !!! WARNING !!!                      #
+#                                                      #
+#    Viewing the code below may result in the loss     #
+#    of vision, nausea, indigestion, insomnia, or      #
+#    even INSTANT DEATH. You have been warned.         #
+#                                                      #
+########################################################
+
+######################################################################
+######################################################################
+######################################################################
+
+sub Usage {
+    print STDERR qq{
+Usage: $0 <options>
+
+Options:
+	-a	<ip address>  Bind to this IP instead of the loopback address
+	-p	<tcp port>    Bind to this TCP port instead of 55555
+	-l	<log file>    The path name to use for a log file (stderr)
+	-v	<log level>   A number between 0 and 10 that controls log verbosity
+	-t	<theme name>  Select a specific theme: default, gwhite, gblack
+	-T	<theme dir>   Use an alternate directory for msfweb themes
+	-C	<cache dir>   Use a specific directory for session cache files
+	-r	<boolean>     Reload all modules with each new web request
+
+};
+    exit(0);
+}
+
+sub ProcessResRequest {
+	my ($req, $cli, $ipc) = @_;
+	my ($is_icon, $is_theme);
+
+	# Process requests for shared icons
+	if (exists($req->{'params'}->{'ICON'})) {
+		my $os = $req->{'params'}->{'ICON'};
+		my $icondir = $ui->GetTempEnv('_IconDir') || "$RealBin/data/msfweb/icons";
+		
+		my %icons =
+		(
+			'aix'	=> ['image/gif', 'aix.gif'],
+			'amiga'	=> ['image/gif', 'amiga.gif'],	
+			'beos'	=> ['image/gif', 'be.gif'],
+			'bsd'	=> ['image/gif', 'bsd.gif'],
+			'cisco'	=> ['image/gif', 'cisco.gif'],
+			'hpux'	=> ['image/gif', 'hpux.gif'],
+			'irix'	=> ['image/gif', 'irix.gif'],
+			'linux'	=> ['image/gif', 'linux.gif'],
+			'novell'=> ['image/gif', 'novell.gif'],						
+			'os2'	=> ['image/gif', 'os2.gif'],
+			'osx'	=> ['image/gif', 'osx.gif'],
+			'sun'	=> ['image/gif', 'sun.gif'],
+			'win32'	=> ['image/gif', 'win32.gif'],
+
+			# special case icons
+			'any'	    => ['image/gif', 'any.gif'],
+			'unknown'	=> ['image/gif', 'unknown.gif'],
+			'favorite'	=> ['image/x-icon', 'favicon.ico'],
+		);
+		
+		my ($type, $path) = @{ $icons{$os} || $icons{'unknown'} };
+		my $data;
+		
+		if ( open (X, "<$icondir/$path") ) {
+			binmode (X);
+			while (<X>) { $data .= $_ }
+			close (X);
+		}
+
+		$cli->Send(HTTPResponse(200, $data, $type));
+		return;
+	}
+
+	# Process requests for theme-based resources
+	if (exists($req->{'params'}->{'ID'})) {
+		my $theme = $ui->GetTempEnv('_Theme') || "$RealBin/data/msfweb/themes/default";	
+		my %files =
+		(
+			'LOGO'	=> ['image/jpg', 'logo.jpg'],
+			'STYLE'	=> ['text/css',  'style.css'],
+		);
+
+		if ( exists( $files{ $req->{'params'}->{'ID'} } ) ) {
+			my ($type, $path) = @{ $files{ $req->{'params'}->{'ID'} } };
+			my $data;
+
+			if ( open (X, "<$theme/$path") ) {
+				binmode (X);
+				while (<X>) { $data .= $_ }
+				close (X);
+			}
+
+			$cli->Send(HTTPResponse(200, $data, $type));
+		}
+		return;
+	}
+}
+
+
+sub ProcessIPCRequest {
+	my $self	= shift;
+	my $ipc		= shift;
+
+	my $req = $ipc->getline || return;
+	chomp($req);
+	
+	my ($cmd, @args) = split(/\s+/, $req);
+	$self->Log(3, "IPC: $ipc $$ $cmd ($args[0] | $args[1])");
+	
+	return if ! $cmd;
+	
+	
+	if ($cmd eq 'SESSION') {
+		my $sid = $self->SessionNew($ipc);
+		$ipc->printflush("SID $sid\n");
+
+	}
+	
+	# NEW <sid> <pid of exploit pipe handler>
+	if ($cmd eq 'NEW') {
+		$self->SessionPipePID(@args);
+		$ipc->printflush("SHELL\n");
+	}
+	
+	if ($cmd eq 'SHUTDOWN') {
+		$ipc->printflush("SHUTDOWN\n");
+		$self->SessionRemove($args[0]);
+	}
+	
+	if ($cmd eq 'CMD' || $cmd eq 'DATA') {
+		my $out = $self->SessionIPC($args[0]);
+		if ($out) {
+			$out->printflush("$cmd ".$args[1]."\n");
+			$ipc->printflush("$cmd OK\n");
+		}
+		else {
+			$ipc->printflush("$cmd ERROR\n");
+		}
+
+	}
+	
+	if ($cmd eq 'INFO') {
+		$self->SessionInfo($args[0], $args[1]);
+	}
+	
+	# XXX replace this :/
+	if ($cmd eq 'LIST') {
+		my @list = $self->SessionList();
+		my $data;
+		foreach my $sid (@list) {
+			$data .= 'sid='. unpack('H*', $sid). ',' .$self->SessionInfo($sid). ' ';
+		}
+		$ipc->printflush("LIST $data\n");
+	}
+}
+
+sub ProcessWebRequest {
+	my $self = shift;
+	my ($req, $cli, $ipc) = @_;
+    my $state = $req->{'params'};
+	my $mbase = $req->{'base'};
+	my $res;
+		
+	my $cinfo = $cli->PeerAddr .':'. $cli->PeerPort;
+	my $log = "HTTP: $cinfo $$ ". $req->{'path'} ." ". $state->{'MODE'};
+	
+	
+	# Dirty hack to support /favicon.ico requests
+	if ($req->{'path'} eq '/favicon.ico') {
+		$req->{'path'} = '/RESOURCE?ICON=favorite';
+		$req->{'base'} = 'RESOURCE';
+		$state->{'ICON'} = 'favorite';
+	}
+	
+	if (exists($state->{'MODULE'})) {
+		$log .= " module=". $state->{'MODULE'};
+	}
+	
+	if ($req->{'base'} eq 'RESOURCE') {
+		$log .= " ICON=". $state->{'ICON'} if $state->{'ICON'};
+		$log .= " ID=". $state->{'ID'} if $state->{'ID'};		
+	}
+
+	$self->Log(3, $log);
+		
+	# Process resource requests
+	if ($req->{'base'} eq 'RESOURCE') {
+		ProcessResRequest($req, $cli, $ipc);
+		exit(0);
+	}
+
+	# Generate the base URL
+	$burl = "/$mbase?";
+	
+	# Reload all modules only when the -r option has been specified
+	if ($config{'Reload'}) {
+		LoadAllModules();
+	}
+	
+	# Start with a standard header
+	$res .= HTML_Header($req);
+	
+    my $logaction;
+    if (defined (my $mid = $state->{'MODULE'} )) {
+
+		my $mname;
+		my $icons;
+				        
+		if ($mbase eq 'EXPLOITS' && exists($exploits->{$mid}) ) {
+			$mname = $exploits->{$mid}->Name;
+			$mname .= ' ('.$state->{'PAYLOAD'}.')' if exists($state->{'PAYLOAD'});
+			
+			foreach ( KeysToIcons( @{ $exploits->{$mid}->OS } ) ) {
+				$icons  .= "<img src='/RESOURCE?ICON=$_' border=0 class='iconset' alt='$_'> ";
+			}
+		}
+		
+		if ($mbase eq 'PAYLOADS' && exists($payloads->{$mid}) ) {
+			$mname = $payloads->{$mid}->Name;
+			foreach ( KeysToIcons( @{ $payloads->{$mid}->OS } ) ) {
+				$icons  .= "<img src='/RESOURCE?ICON=$_' border=0 class='iconset' alt='$_'> ";
+			}			
+		}
+		
+		if (! defined($mname)) {
+			$mname = 'Invalid Module';
+		}						
+
+        $res .= "<table width='100%' cellspacing=0 border=0 cellpadding=0>\n";
+		$res .= "<tr><td class='moduleIcons' align='center'>$icons</td>";
+		$res .= "<td class='moduleName'><div class='textBold'>$mname</div></td></tr>\n";
+		$res .= "</table><br>\n";
+    }
+
+    $state->{'client'} = $cli;
+	$state->{'parent'} = $ipc;
+	
+
+	
+							
+	if ($req->{'base'} eq 'EXPLOITS') {
+		
+    	if ($state->{'MODE'} eq 'MAIN')    { $res .= ExploitList($state) }
+		if ($state->{'MODE'} eq 'SELECT')  { $res .= ExploitTarget($state) }
+    	if ($state->{'MODE'} eq 'PAYLOAD') { $res .= ExploitPayload($state) }
+    	if ($state->{'MODE'} eq 'OPTIONS') { $res .= ExploitOptions($state) }
+    	if ($state->{'MODE'} eq 'TARGETS') { $res .= ExploitTargets($state) }
+    	if ($state->{'MODE'} eq 'CHECK')   { $res .= ExploitCheck($state) }
+
+    	# ExploitExec doesn't return on success
+    	if ($state->{'MODE'} eq 'EXPLOIT') { $res .= ExploitExec($state) }
+
+		$res .= HTML_Footer();  
+	}
+
+	if ($req->{'base'} eq 'PAYLOADS') {
+	
+    	if ($state->{'MODE'} eq 'MAIN')      { $res .= PayloadList($state) }
+		if ($state->{'MODE'} eq 'SELECT')    { $res .= PayloadOptions($state) }
+		if ($state->{'MODE'} eq 'GENERATE')  { $res .= PayloadGenerate($state) }
+		$res .= HTML_Footer();
+	}
+	
+	if ($req->{'base'} eq 'SESSIONS') {
+	
+    	if ($state->{'MODE'} eq 'MAIN')      { $res .= SessionList($state) }
+		if ($state->{'MODE'} eq 'LOAD')      { $res = SessionLoad($state) }
+		if ($state->{'MODE'} eq 'COMMAND')   { $res = SessionCommand($state) }
+		if ($state->{'MODE'} eq 'UPDATE')    { $res = SessionUpdate($state) }
+	}	
+			
+    
+	
+    $cli->Send(HTTPResponse(200, $res));
+    $cli->Close();
+	
+    exit(0);
+}
+
+
+sub HTML_Header {
+	my $req = shift;
+	
+    my $header = qq
+[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>Metasploit Framework Web Console v$VERSION</title>
+		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+		 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    </head>
+    <body>
+	<br>
+	
+	<div align='center'><img src='/RESOURCE?ID=LOGO' alt='msfweb'></div>
+	<br>
+	
+	<table align='center' cellpadding=8 border=0 cellspacing=1 width='100%' class='tblInner'>
+		<tr><td>
+			<table align='center' cellpadding=8 cellspacing=1 width='100%' class='tblOuter' >
+			<tr>
+];
+
+	my $lastTab = 'tabLight';
+	my $currTab;
+	
+	$header .= "\t\t\t";
+	
+	my $width = int( 100 / scalar(@sections) ) .'%';
+	foreach my $section (@sections) {
+		$lastTab = ($lastTab eq 'tabLight') ? 'tabDark' : 'tabLight';
+		$currTab = ($section eq $req->{'base'}) ? 'tabActive' : $lastTab;		
+		$header .= qq[ <td class='$lastTab' width='$width' align='center'> <a href='/$section' class='$currTab'>$section</a> </td> ];
+	}
+	$header .= qq[
+			</tr>
+			</table>
+        </td></tr>
+
+        <tr><td colspan=5>
+		<br>
+	];
+	
+	return $header;
+
+}
+
+sub HTML_Footer {
+    return qq[
+		<br>
+		</td>
+	</tr>
+</table>
+
+<div align='center' class='copy'>
+	<br>copyright &copy; 2003-2005 metasploit.com<br><br>
+</div>
+</body>
+</html>
+	];
+}
+
+
+sub KeysToIcons {
+	my @keys = @_;
+	my %icons;
+	my %match;
+	
+	@icons { qw { aix amiga beos bsd cisco hpux irix linux novell os2 osx sun win32 unknown } } = ();
+	my %osmaps =
+	(
+		'solaris'	=> 'sun',
+		'ios'		=> 'cisco',
+		'openbsd'	=> 'bsd',
+		'freebsd'	=> 'bsd',
+		'netbsd'	=> 'bsd',
+		'bsdi'		=> 'bsd',
+		'macos'		=> 'mac',
+	);
+
+	if (! scalar(@keys) ) {
+		return ('any');
+	}
+
+	foreach (@keys) {
+		$match{ $_ }++ if exists($icons{$_});
+		$match{ $osmaps{ $_ } }++ if exists($icons{ $osmaps{ $_ } });
+	}
+	
+	if (! scalar(keys %match)) {
+		$match{'unknown'}++;
+	}
+
+	return sort keys %match;
+}
+
+sub URLEncode {
+    my ($data) = @_;
+    my $res;
+    foreach (split(//, $data))  
+    { $res .= sprintf("%%%.2x", ord($_)) }
+    return $res;
+}
+
+sub StateToURL {
+    my ($mode, $state) = @_;
+    my (%tmp, $res);
+    $res = $burl;
+	
+    foreach (keys(%{$state})) {
+        next if $_ eq "client";
+        next if $_ eq "parent";
+		
+        my $value = $_ eq "MODE" ? $mode : $state->{$_};
+        $res .= $_ . "=" . URLEncode($value) . "&";
+    }
+    return $res;
+}
+
+sub StateToOptions {
+    my ($state) = @_;
+    my $res = {};
+    
+    foreach (keys(%{$state})) {
+        if (m/^OPT\_(.*)/ && defined($state->{$_})) {
+			my $name = $1;
+			
+			# Block all options starting with underscore (thanks Dino!)
+			if ($name !~ /^_/) {
+				$res->{$name} = $state->{$_};
+			}
+			else {
+				# XXX - report a possible "refang" attack?
+				next;
+			}
+		}
+    }
+    return $res;
+}
+
+sub SessionList { 
+	my $state	= shift;
+	my $ipc		= $state->{'parent'}; 
+	my $res;
+	
+	my %slist;
+	$ipc->printflush("LIST\n");
+	
+	if ( defined(my $raw = $ipc->getline) ) {
+		if ( (my ($data) = $raw =~ m/^LIST\s+(.*)\n/) ) {
+			foreach my $entry (split(/\s+/, $data)) {
+				my %hash = IPCDataToHash($entry);
+				my $sid = $hash{'sid'};
+				$slist{$sid} = \%hash;
+			}
+		}
+	}
+	
+	if (! scalar(keys(%slist))) {
+		$res .= "<p class='textBold'>There are no active sessions.<br\><br\></p>\n";
+		$res .= HTML_Footer();
+		return $res;
+	}
+
+	$res .= "<p class='textBold'>Session List:<br\><br\></p>\n";
+    $res .= "<table align='center' cellpadding=0 border=0 cellspacing=0 width='95%'>\n";
+	$res .= "<tr>";
+	
+	foreach (qw{Time Session User Exploit Target Payload}) {
+		$res .= "<td class='textBold' align='center'>$_</td>";
+	}
+	
+	$res .= "</tr><tr><td colspan=6><br\></td></tr>\n";
+
+	foreach my $sid (sort { $a <=> $b } keys %slist ) {
+		my $ses			= $slist{$sid};
+		my $s_module	= $ses->{'module'};
+		my $s_payload	= $ses->{'payload'};
+		my $s_client	= $ses->{'client'};
+		my $s_target	= $ses->{'target'};
+		my $s_time		= scalar(localtime($ses->{'start'}));
+		
+		my $mlink = '/EXPLOITS?MODE=SELECT&amp;MODULE='.URLEncode($s_module);
+		my $plink = ($s_payload ne 'unknown') ? '/PAYLOADS?MODE=SELECT&amp;MODULE='.URLEncode($s_payload) : '#';
+		
+        $res .= "<tr>";
+		$res .= "<td class='textNormal'>$s_time</td>";
+		$res .= "<td class='textNormal'><a href='/SESSIONS?MODE=LOAD&SID=$sid' target='_blank'>Session $sid</a></td>";
+		$res .= "<td class='textNormal'>$s_client</td>";
+		$res .= "<td class='textNormal'><a href='$mlink'>$s_module</a></td>";
+		$res .= "<td class='textNormal'>$s_target</td>";
+		$res .= "<td class='textNormal'><a href='$plink'>$s_payload</a></td>";
+		$res .= "</tr>";
+	}
+	
+    $res .= "</table>\n";
+	$res .= HTML_Footer();
+	return $res;
+}
+
+sub SessionLoad { 
+	my $state	= shift;
+	my $sid		= $state->{'SID'} + 0;
+	my $res		= qq
+[<html>
+    <head>
+        <title>Metasploit Framework v$VERSION - Session $sid </title>
+		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+    </head>
+<frameset rows="*, 90" border=0 frameborder=0 framespacing=0>
+  <frame src="/SESSIONS?MODE=UPDATE&SID=$sid" name="update">
+  <frame src="/SESSIONS?MODE=COMMAND&SID=$sid" name="command">
+  <noframes><body>This feature requires frames...</body></noframes>
+</frameset>
+];
+	
+	return $res;
+}
+
+# Quick command bar to send commands to the shell
+sub SessionCommand { 
+	my $state	= shift;
+	my $data	= $state->{'IDATA'};	
+	my $ipc		= $state->{'parent'};	
+	my $sid		= $state->{'SID'} + 0;
+	my $cmd		= $state->{'CMD'};
+	my $cmdurl	= "/SESSIONS?MODE=COMMAND&amp;SID=$sid&amp;CMD=";
+
+	my $lspace  = "&nbsp;" x 4;
+	my $verify	= 'javascript:if(!confirm("Are you sure that you want to kill this session?")){return false; }';
+	my $cmdbar	=
+	"<div class='textBold' class='CommandBar'>\n".
+	"<ul id='CommandBarList'>\n".
+	"<li>Session Commands:$lspace".
+	"<li><a href='".$cmdurl."DIE' onClick='$verify'>Session::Kill</a>$lspace".
+	"<li><a href='".$cmdurl."INT'>Session::Break</a>$lspace".
+	"<li><a href='http://metasploit.com/' target='_blank'>Metasploit::Website</a>$lspace".
+	"<li><a href='http://metasploit.com/donate.html' target='_blank'>Metasploit::Donate</a> ".		
+	"</ul>\n".
+	"</div>";
+		
+	my $res		= qq
+[<html>
+    <head>
+        <title>Metasploit Framework Web Console v$VERSION</title>
+		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+    </head>
+<body>
+
+<form action='/SESSIONS' name='cmdform'>
+<input type='hidden' name='MODE' value='COMMAND'>
+<input type='hidden' name='SID' value='$sid'>
+
+<input type='text'   name='IDATA' size=80 maxsize=4000>
+<input type='submit' name='RUN'  value='Run' class='button'>
+</form>
+$cmdbar
+<script language='javascript'>
+<!--
+	window.focus();
+	document.cmdform.IDATA.value="";	
+	document.cmdform.IDATA.focus();
+//-->
+</script>
+</body>
+</html>
+];
+	
+	# Process any special command sequences
+	if ($cmd) {
+		$ipc->printflush("CMD $sid ".unpack("H*", $cmd)."\n");
+		my $raw = $ipc->getline;
+		
+		if ($raw =~ /ERROR/) {
+			$ipc->printflush("SHUTDOWN $sid\n");
+		}	
+	}
+	# Process incoming data (shell commands)...
+	elsif ($data) {
+		$data .= "\n";
+		$ipc->printflush("DATA $sid ".unpack("H*", $data)."\n");
+		my $raw = $ipc->getline;
+		
+		if ($raw =~ /ERROR/) {
+			$ipc->printflush("SHUTDOWN $sid\n");
+		}
+	}
+
+	return $res;
+}
+
+sub SessionUpdate { 
+	my $state	= shift;
+	my $ipc		= $state->{'parent'};
+	my $chi		= $state->{'client'};
+	my $sid		= $state->{'SID'} + 0;
+	my $cmd		= $state->{'CMD'};
+
+	my $res		= qq
+[<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>Metasploit Framework Web Shell v$VERSION - Session $sid </title>
+		<link type='text/css' rel='stylesheet' href='/RESOURCE?ID=STYLE'>
+		 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    </head>
+    <body>
+	<pre>
+];
+
+	# Use chunked transfer mode to return partial responses
+	my $out = "HTTP/1.1 200 OK\r\n".
+	          "Connection: close\r\n".
+			  "Date: ". HTTPDate()."\r\n".
+			  "Content-Type: text/html\r\n".
+			  "Transfer-Encoding: chunked\r\n\r\n";
+	
+    $chi->Send($out);
+	$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+	
+	my $init = 0;
+	my $foff = 0;
+	my $idle = 0;
+	my $tick = time();
+	
+	my $cache_file = $ui->GetEnv('_CachePath'). sprintf("cache%.8x.dat", $sid);
+	my $cache_data;
+
+	my $count = 10;
+	while ($count && ! open(CACHE, "<$cache_file")) {
+		sleep(1);
+		$count--;
+	}
+	
+	if (! $count) {
+		$res  = "<div class='textBold'>!!! Timeout reached waiting for the session log</div>\n";
+		$res .= "</pre></body></html>\n";
+		$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+		exit(0);
+	}
+	
+	binmode(CACHE);
+	
+	while (1) {
+		$res = undef;
+		
+		if (! $chi->Socket->connected) {
+			exit(0);
+		}
+		
+		# Read the init time stamp from the top
+		seek(FILE, 0, 0);
+		my $init_data = <CACHE>;
+		
+		# Seek to the last data marker
+		seek(CACHE, $foff, 0);
+		
+		# Read until we hit EOF
+		for ($foff = tell(CACHE); my $data = <CACHE>; $foff = tell(CACHE)) {
+			$res .= $data;
+		}
+		
+		# Clear stdio errors and seek to the last tell
+		seek(CACHE, $foff, 1);
+		seek(CACHE, $foff, 0);
+
+		# If there is a new data, display it
+		if ($res) {
+			$res .= "<script language='javascript'>self.scrollTo(0, 999999999)</script>";
+			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+			$tick = time();
+			$idle = 0;
+		}
+		
+		# Send a comment as a keep alive
+		if ($tick + 10 < time()) {
+			$res = "<!-- MSF -->";
+			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+			$tick = time();
+			$idle++;
+		}
+		
+		# If we have been idle for five minutes, shut down the reader
+		if ($idle > 30) {
+			$res =  "<div class='textBold'>!!! Idle timeout reached, reload to start again.</div>\n";
+			$res .= "</pre></body></html>\n";
+			$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+			exit(0);
+		}
+		
+		# Sleep a quarter of a second to reduce CPU usage 
+		select(undef, undef, undef, 0.25);
+	}
+	
+	$res = "</pre></body></html>\n";
+	$chi->Send(sprintf("%x\r\n%s\r\n", length($res), $res));
+	exit(0);
+}
+
+
+sub PayloadList {
+	my $state = shift;
+	my $mtype = 'payloads';
+	my $mfilt = exists($state->{'FILTER'}) ? $state->{'FILTER'} : 'ALL';
+	
+	if (! $config{'Reload'} || ! defined( $moduleList->{$mtype}->{$mfilt} )) {
+		$moduleList->{$mtype}->{$mfilt} = ModuleList($mtype, $mfilt);
+	} 
+	return $moduleList->{$mtype}->{$mfilt};
+}
+
+sub ExploitList {
+	my $state = shift;
+	my $mtype = 'exploits';
+	my $mfilt = exists($state->{'FILTER'}) ? $state->{'FILTER'} : 'ALL';
+	
+	if (! $config{'Reload'} || ! defined( $moduleList->{$mtype}->{$mfilt} )) {
+		$moduleList->{$mtype}->{$mfilt} = ModuleList($mtype, $mfilt);
+	} 
+	return $moduleList->{$mtype}->{$mfilt};
+}
+
+sub ModuleList
+{
+	my $mtype = shift;
+	my $mfilt = shift;
+    my $mList;
+	my @links;
+	
+	my $moduleMerge = {};
+
+	my $mTypes		= $moduleTypes->{$mtype};
+	my $mKeys		= $moduleKeys->{$mtype};
+	my $mArch		= $moduleArch->{$mtype};
+	my $mOS			= $moduleOS->{$mtype};	
+	my $mALL		= {};
+
+
+	$mList  = "<form action='/".uc($mtype)."' method='GET'>\n";
+	$mList .= "<div align='center' class='navHead'>\n";
+	$mList .= "<select name='FILTER' onChange='javascript:form.submit()'>\n";
+	$mList .= "<option value='ALL'>&nbsp;\n";
+
+	# List of mTypes
+	if ($mtype eq 'exploits' && scalar(keys %{ $mTypes } )) {
+		$mList .= "<option value='ALL'>--- Exploit Class ---\n";
+		foreach my $kname  (sort( keys %{ $mTypes }) ) {
+			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';
+			$mList .= "<option value='$kname' $sel> class :: $kname\n";
+			$moduleMerge->{$kname} = $mTypes->{$kname};
+			if ($mfilt eq 'ALL') {
+				foreach my $mname (@{ $mTypes->{$kname} }) {
+					$mALL->{$mname}++;
+				}
+			}
+		}
+	}
+	
+	# List of mKeys
+	if (scalar(keys %{ $mKeys } )) {
+		$mList .= "<option value='ALL'>&nbsp;\n";
+		$mList .= "<option value='ALL'>--- Application ---\n";
+		foreach my $kname  (sort( keys %{ $mKeys }) ) {
+			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';
+			$mList .= "<option value='$kname' $sel> app :: $kname\n";
+			$moduleMerge->{$kname} = $mKeys->{$kname};
+			if ($mfilt eq 'ALL') {
+				foreach my $mname (@{ $mKeys->{$kname} }) {
+					$mALL->{$mname}++;
+				}
+			}
+		}
+	}
+	
+	# List of mOS
+	if (scalar(keys %{ $mOS } )) {
+		$mList .= "<option value='ALL'>&nbsp;\n";	
+		$mList .= "<option value='ALL'>--- Operating System ---\n";	
+		foreach my $kname (sort( keys %{ $mOS }) ) {
+			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';		
+			$mList .= "<option value='$kname' $sel> os :: $kname\n";
+			$moduleMerge->{$kname} = $mOS->{$kname};
+			if ($mfilt eq 'ALL') {
+				foreach my $mname (@{ $mOS->{$kname} }) {
+					$mALL->{$mname}++;
+				}
+			}			
+		}
+	}
+
+	# List of mArch
+	if (scalar(keys %{ $mArch } )) {
+		$mList .= "<option value='ALL'>&nbsp;\n";	
+		$mList .= "<option value='ALL'>--- Architecture  ---\n";
+		foreach my $kname (sort( keys %{ $mArch}) ) {
+			my $sel = ($mfilt eq $kname) ? 'SELECTED' : '';		
+			$mList .= "<option value='$kname' $sel> cpu :: $kname\n";
+			$moduleMerge->{$kname} = $mArch->{$kname};
+			if ($mfilt eq 'ALL') {
+				foreach my $mname (@{ $mArch->{$kname} }) {
+					$mALL->{$mname}++;
+				}
+			}		
+		}
+		$mList .= "</select>\n";
+	}
+	
+	$mList .= "<input type='submit' value=' Filter Modules ' class='button'></div></form><br\>\n";
+
+	if ($mfilt eq 'ALL') {
+		$moduleMerge->{'ALL'} = [ keys %{ $mALL } ];
+	}
+
+
+	$mList .= qq[ 
+<table class='moduleList' width='100%' cellspacing=0 border=0>
+
+];
+
+
+	# Build a hash mapping the module titles to the module names
+	my $mname = {};
+	foreach my $ename ( @{ $moduleMerge->{$mfilt} } ) {
+		my $mod = $modules->{$mtype}->{$ename};
+		$mname->{ $mod->Name } = $ename;
+	}
+
+	# Dump out all of the matching modules for this key, os, or arch
+	foreach my $etitle (sort keys %{ $mname } ) {
+		
+		my $ename = $mname->{ $etitle };
+		my $mod = $modules->{$mtype}->{$ename};
+		my $icons;
+		
+		foreach ( KeysToIcons( @{ $mod->OS } ) ) {
+			$icons  .= "<img src='/RESOURCE?ICON=". $_ ."' border=0 class='iconset' alt='".$_."'> ";
+		}
+		$mList .= "<tr>";
+		$mList .= "<td class='moduleIcons' align='center'>$icons</td>";
+		$mList .= "<td class='moduleName'><a href='/". uc($mtype) ."?MODE=SELECT&amp;MODULE=".URLEncode($ename)."'>";
+		$mList .= $mod->Name ."</a></td>";
+		$mList .= "</tr>\n";
+		
+		$mList .= "<tr><td class='moduleSpacer' colspan=2></tr>\n";
+		
+	}
+	
+	$mList .= qq[
+</table>
+];
+
+    return $mList;
+}
+
+sub ModuleInfo {
+	my $module = shift;
+	my $res;
+	
+	my $desc = XSS_Filter($module->Description);
+    
+	my ($rev)   = $module->Version() =~ m/\$Revisio.:\s+([^\$]+)/; 
+    $res .= "<table align='center' cellpadding=6 border=0 cellspacing=0 width='95%'>\n";
+    
+	my $class;
+	if ($module->can('ModuleClass') && $module->ModuleClass) {
+		$class = ' ('. $module->ModuleClass .')';
+	}
+		
+	$res .= "<tr><td align='right' width=80 class='textBold'>Name:</td>";
+	$res .= "<td class='textNormal'>" . $module->SelfEndName() . " v$rev $class</td></tr>\n";
+
+    my @authors = @{$module->Authors()};
+    my $author = shift(@authors);
+    $author =~ s/</&lt;/g;
+    $author =~ s/>/&gt;/g;
+    $res .= "<tr><td align='right' width=80 class='textBold'>Authors:</td>";
+	$res .= "<td class='textNormal'>$author</td></tr>\n";
+    
+	foreach my $author (@authors) {
+        $author =~ s/</&lt;/g;
+        $author =~ s/>/&gt;/g;
+        $res .= "<tr><td align='right' width=80>&nbsp;</td><td class='textNormal'>$author</td></tr>\n";
+    }
+	
+	if ($module->can('Multistage') && $module->Multistage) {
+		$res .= "<tr><td align='right' width=80 class='textBold'> Multistage:</td>";
+		$res .= "<td class='textNormal'>Yes</td></tr>\n";
+	}
+	
+	if ($module->can('Size') && $module->Size) {
+		$res .= "<tr><td align='right' width=80 class='textBold'> Size:</td>";
+		$res .= "<td class='textNormal'>".$module->Size." bytes</td></tr>\n";
+	}	
+
+	if ($module->can('DisclosureDate') && $module->DisclosureDate) {
+		$res .= "<tr><td align='right' width=80 class='textBold'> Disclosure:</td>";
+		$res .= "<td class='textNormal'>".$module->DisclosureDate."</td></tr>\n";
+	}		
+	
+	if (scalar( @{ $module->Arch } )) {
+		$res .= "<tr><td align='right' width=80 class='textBold'>Arch:</td>";
+		$res .= "<td class='textNormal'>". join(", ", @{ $module->Arch }) ."</td></tr>\n";
+	}
+		
+	if (scalar( @{ $module->OS } )) {
+		
+		$res .= "<tr><td align='right' width=80 class='textBold'>OS:</td>";
+		$res .= "<td class='textNormal'>". join(", ", @{ $module->OS }) ."</td></tr>\n";
+		
+	}
+
+    $res .= "<tr><td colspan=2 class='textNormal'>";
+    $res .= "<br>$desc<br><br>";
+
+    foreach my $ref (@{$module->RefLinks}) { $res .= " -  <a href='$ref' target='_blank'>$ref</a><br>\n" }
+	
+    $res .= "<br></td></tr></table>\n";
+	return $res;
+}
+
+sub PayloadEncoders {
+	my $payloadArch	= shift;
+	my $payloadOS	= shift;
+	my %res;
+	
+	foreach my $encoderName (keys %{ $encodersIndex }) {
+		my $encoder		= $encodersIndex->{$encoderName};		
+		my $encoderArch	= $encoder->Arch;
+		my $encoderOS	= $encoder->OS;
+
+		next if ! $ui->ListCheck($payloadArch,	$encoderArch);
+		next if ! $ui->ListCheck($payloadOS,	$encoderOS);
+		$res{ $encoderName } = $encoder;
+	}
+	return %res;
+}
+
+sub PayloadNops {
+	my $payloadArch	= shift;
+	my $payloadOS	= shift;
+	my %res;
+	
+	foreach my $nopName (keys %{ $nopsIndex }) {
+		my $nop		= $nopsIndex->{$nopName};		
+		my $nopArch	= $nop->Arch;
+		my $nopOS	= $nop->OS;
+
+		next if ! $ui->ListCheck($payloadArch,	$nopArch);
+		next if ! $ui->ListCheck($payloadOS,	$nopOS);
+		$res{ $nopName } = $nop;
+	}
+	return %res;
+}
+
+sub PayloadOptions
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+
+    if (! exists($payloads->{$module})) {
+        return "<div class='textBold'>Invalid Module</div>";
+    }
+
+    my $p = $payloads->{$module};
+    
+	$res .= ModuleInfo($p);	 
+	
+	$res .= "<form action='$burl' method='GET'>\n";  
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n"; 
+	
+    foreach (keys(%{$state})) {
+        next if lc($_) eq 'client';
+        if ($_ ne "MODE") {
+            $res .= "<input type='hidden' name='".XSS_Filter($_)."' value='" . XSS_Filter($state->{$_}) . "'>\n";
+        } else {
+            $res .= "<input type='hidden' name='MODE' value='GENERATE'>\n";
+        }
+    }
+  
+    my $popts =  $p->UserOpts();
+
+    foreach my $popt (sort(keys(%{$popts}))) {
+
+        my $dflt = $popts->{$popt}->[3];
+        my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
+        my $colc = $popts->{$popt}->[0] ? "textBold" : "textBoldDark";
+		
+        $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
+        
+        $res .= "<tr><td class='$colc'>$popt</td>".
+                "<td class='$colc'>$reqd</td>".
+				"<td class='$colc'>". $popts->{$popt}->[1] ."</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+                "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
+    }
+	
+    $res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+	
+	# Display encoding options only when an arch is set	
+	if (scalar( @{ $p->Arch } )) {
+		$res .= "<tr><td colspan=6 class='textBold'>";
+		$res .= "Max Size: ";
+		$res .= "<input type='text' size=10 name='MaxSize' value=''>";
+		$res .= "</td></tr>\n";
+		
+		$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+		
+		$res .= "<tr><td colspan=6 class='textBold'>";
+		$res .= "Restricted Characters (format: 0x00 0x01)<br\> ";
+		$res .= "<input type='text' size=45 name='BadChars' value='0x00 '>";
+		$res .= "</td></tr>\n";
+
+		$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+
+		my %encoderList = PayloadEncoders($p->Arch, $p->OS);
+		
+		$res .= "<tr><td colspan=6 class='textBold'>";
+		$res .= "Selected Encoder:<br\> ";
+		$res .= "<select name='ENCODER' size=1>\n";
+		$res .= "<option value='default'> Default Encoder\n";
+		foreach my $encoderName (keys %encoderList) {
+			$res .= "<option> $encoderName\n";
+		}
+		$res .= "</select>\n";
+		$res .= "</td></tr>\n";		
+	}
+	
+	$res .= "<tr><td colspan=6>&nbsp;</td></tr>\n";
+    $res .= "<tr><td colspan=6><input type='submit' name='ACTION' value='Generate Payload' class='button'></td></tr>\n";
+    $res .= "</form>\n";
+    $res .= "</table>\n";  
+    return $res;
+}
+
+
+
+sub PayloadGenerate
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+
+    if (! exists($payloads->{$module})) {
+        return "<div class='textBold'>Invalid Module</div>";
+    }
+
+    my $p = $payloads->{$module};
+    my $o = StateToOptions($state);
+	
+	my $optstr;
+    foreach my $k (keys(%{ $o })) {
+        $ui->SetTempEnv($k, $o->{$k});
+		$optstr .= " $k=".$o->{$k};
+    }
+	
+	my $badChars = CharsToBytes($state->{'BadChars'});
+	my $maxSize  = $state->{'MaxSize'} || 65000;
+	my $rawShell = $p->Build();
+
+	
+	my ($payloadArch)	= $p->Arch;
+	my ($payloadOS)		= $p->OS;
+
+	my $finalEncoder;
+	my $encodedPayload;
+	
+		
+	if (! $badChars) {
+		$finalEncoder = 'None';
+		$encodedPayload = Msf::EncodedPayload->new($rawShell, $rawShell);
+	}
+	
+	my %encoderList	= PayloadEncoders($payloadArch, $payloadOS);
+	my $encoderOpt	= $state->{'ENCODER'};
+	
+	if (scalar(@{ $p->Arch }) && $encoderOpt ne 'default' && ! exists($encoderList{$encoderOpt})) {
+		return "<div class='textBold'>Invalid encoder specified!</div>";
+	}
+	
+	# Shrink the list down to the single selected option
+	if ($encoderOpt ne 'default') {
+		%encoderList = ( $encoderOpt => $encoderList{ $encoderOpt } );
+	}
+	
+	foreach my $encoderName (keys %encoderList) {
+		next if ! $badChars;
+		
+		my $encoder			= $encoderList{$encoderName};
+		my $encodedShell	= $encoder->Encode($rawShell, $badChars);
+
+		next if ! $encodedShell;
+
+		if ($encoder->IsError) {
+			$encoder->ClearError;
+			next;
+		}
+
+		next if Pex::Text::BadCharCheck($badChars, $encodedShell);
+		
+		$encodedPayload = Msf::EncodedPayload->new($rawShell, $encodedShell);
+
+		if (length($encodedPayload->Payload) > $maxSize) {
+			undef($encodedPayload);
+			next;
+		}
+		
+		$finalEncoder = $encoder->SelfEndName;
+		last;
+	}
+
+	if (! $encodedPayload) {
+    	$res .= "<div class='textBold'>No encoders succeeded :( </div>\n";
+		return $res;
+	}	
+	
+	my $sC = Pex::Text::BufferC($encodedPayload->Payload);
+	my $sP = Pex::Text::BufferPerl($encodedPayload->Payload);
+
+	if ($p->Multistage) {
+		$res .= "<div class='textBold'>Warning: only the loading stage of multi-stage payloads will be displayed!</div>\n<br\>";	
+	}
+
+
+
+	$optstr =~ s/\<|\>//g;
+	$optstr .= " Size=".length($encodedPayload->Payload);
+	$optstr .= " Encoder=$finalEncoder";
+	
+	$res .= "<pre>\n";
+	$res .= "<div class='shellcode'>";
+	$res .= "/* $module - $optstr http://metasploit.com */\n";
+	$res .= "unsigned char scode[] =\n$sC\n\n\n";
+
+	$res .= "# $module - $optstr http://metasploit.com\n";
+	$res .= "my \$shellcode =\n$sP\n\n\n";
+
+	$res .= "</div></pre>\n";
+	
+	return $res;	
+}
+
+
+sub ExploitTarget
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    
+    if (! exists($exploits->{$module})) {
+        return "<div class='textBold'>Invalid Module</div>";
+    }
+    
+    my $x = $exploits->{$module};
+    
+	$res .= ModuleInfo($x);
+
+	# Display available targets
+
+    if (scalar($x->TargetsList) ) {
+        $res .= "<table align='align' cellpadding=2 border=0 cellspacing=0'>\n";
+		$res .= "<tr><td class='textBold' align='left'>Select Target:</td><td>&nbsp;</td></tr>";
+
+		my $tidx = 0;
+		my $colc = ListColor();
+        foreach my $k ( $x->TargetsList )
+        {
+            my $u = StateToURL('PAYLOAD', $state);
+			my $default;
+			
+			if ($tidx == $x->DefaultTarget) {
+				$default = "(default)";
+			}
+			$colc = ListColor($colc);
+			
+            $res .= "<tr><td>&nbsp;</td><td align='left' class='textBold$colc'>$tidx - <a href='".$u."OPT_TARGET=$tidx'> $k $default </a></td></tr>\n";
+			$tidx++;
+        }
+        $res .= "</table>\n";
+    } else {
+        $res .= ExploitPayload($state);
+    }
+	return $res;
+}
+
+sub ExploitPayload
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    
+    if (! exists($exploits->{$module})) {
+        return "<div class='textBold'>Invalid Module</div>";
+    }
+    
+    my $x = $exploits->{$module};
+
+	# Display available payloads
+
+    my $matches = $ui->MatchPayloads($x, $payloads) if($x->Payload);
+
+    if (defined($x->Payload) ) {
+		$res .= "<p class='textBold'>Select Payload:<br\></p>\n";
+        $res .= "<table align='center' cellpadding=2 border=0 cellspacing=0 width='95%'>\n";
+		$res .= "<tr><td class='textBold' align='center'>Payload</td>";
+		$res .= "    <td class='textBold' align='center'>Description</td></tr>\n";
+		$res .= "<tr><td colspan=2><br\></td></tr>\n";
+
+		my $colc = ListColor();				
+        foreach my $k (sort(keys(%{ $matches })))
+        {
+            my $u = StateToURL('OPTIONS', $state);
+            my $pname = $payloads->{$k}->Name();
+			$colc = ListColor($colc);
+            $res .= "<tr><td class='textNormal$colc'><a href='".$u."PAYLOAD=" . $k . "'>$k</a></td>";
+            $res .= "<td class='textBold$colc'>" .$pname . "</td></tr>\n";
+        }
+        $res .= "</table>\n";
+    } else {
+        $res .= ExploitOptions($state);
+    }
+	return $res;
+}
+
+sub ExploitOptions
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    
+    if (! exists($exploits->{$module})) {
+        return "<div class='textBold'>Invalid Module</div>";
+    }
+
+    my $x = $exploits->{$module};
+    my $p = $payloads->{$state->{'PAYLOAD'}};
+
+    $res .= "<form action='$burl' method='GET'>\n";    
+        
+    if (defined($x->Payload) && ! $state->{"PAYLOAD"})
+    {
+        $res .=  "<div class='textBold'>Payload must be selected first!</div>\n";
+        return $res;
+    }
+
+    foreach (keys(%{$state})) {
+        next if lc($_) eq 'client';
+		next if lc($_) eq 'parent';
+		
+        if ($_ ne "MODE") {
+            $res .= "<input type='hidden' name='".XSS_Filter($_)."' value='" . XSS_Filter($state->{$_}) . "'>\n";
+        } else {
+            $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
+        }
+    }
+
+    $res .= "<table align='center' cellpadding=2 border=0 cellspacing=0 width='95%'>\n";
+	
+    my $mopts = $x->UserOpts;
+    my $popts = defined($x->Payload) ? $p->UserOpts : {};
+
+	# Standard exploit options
+    foreach my $mopt (sort(keys(%{$mopts}))) {
+        my $dflt = $mopts->{$mopt}->[3];
+        my $reqd = $mopts->{$mopt}->[0] ? "Required" : "Optional";
+		my $colc = $mopts->{$mopt}->[0] ? "textBold" : "textBoldDark";
+		
+		if (exists($x->AutoOpts->{$mopt})) {
+			$dflt = $x->AutoOpts->{$mopt};
+		}
+		
+        $res .= "<tr><td class='$colc'>$mopt</td>".
+                "<td class='$colc'>$reqd</td>".
+				"<td class='$colc'>". $mopts->{$mopt}->[1] ."</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
+                "<td class='textNormal'>".$mopts->{$mopt}->[2]."</td></tr>\n";
+    }
+	
+	# Standard payload options
+    foreach my $popt (sort(keys(%{$popts}))) {
+
+        my $dflt = $popts->{$popt}->[3];
+        my $reqd = $popts->{$popt}->[0] ? "Required" : "Optional";
+        my $colc = $popts->{$popt}->[0] ? "textBold" : "textBoldDark";
+		
+        $dflt = Pex::Utils::SourceIP() if $popt eq "LHOST";
+ 
+ 		if (exists($x->AutoOpts->{$popt})) {
+			$dflt = $x->AutoOpts->{$popt};
+		}
+		       
+        $res .= "<tr><td class='$colc'>$popt</td>".
+                "<td class='$colc'>$reqd</td>".
+				"<td class='$colc'>". $popts->{$popt}->[1] ."</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+                "<td class='textNormal'>".$popts->{$popt}->[2]."</td></tr>\n"; 
+    }
+
+		
+	if ($p && @{ $p->Arch } ) {
+
+    	$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
+		my %encoderList = PayloadEncoders($p->Arch, $p->OS);
+
+		$res .= "<tr>\n";
+		$res .= "<td colspan=3 class='textBold'>";
+		$res .= "Preferred Encoder:<br\> ";
+		$res .= "<select name='ENCODER' size=1>\n";
+		$res .= "<option value='default'> Default Encoder\n";
+		foreach my $encoderName (keys %encoderList) {
+			$res .= "<option> $encoderName\n";
+		}	
+		$res .= "</select>\n";
+		$res .= "</td>\n";	
+
+
+		my %nopList = PayloadNops($p->Arch, $p->OS);
+		$res .= "<td colspan=2 class='textBold'>";
+		$res .= "Nop Generator:<br\> ";
+		$res .= "<select name='NOP' size=1>\n";
+		$res .= "<option value='default'> Default Generator\n";
+		foreach my $nopName (keys %nopList) {
+			$res .= "<option> $nopName\n";
+		}	
+		$res .= "</select>\n";
+		$res .= "</td>";
+		$res .= "</tr>\n";		
+	}
+	
+	$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
+			
+    $res .= "<tr>";
+	$res .= "<td colspan=3 align='right'> <input type='submit' name='ExploitAction' value='-Check-' class='button'> </td>";
+    $res .= "<td colspan=2 align='left'> <input type='submit' name='ExploitAction' value='-Exploit-' class='button'> </td>";
+	$res .= "</tr>\n";
+	
+
+	# Advanced option processing    
+	my $mopts = $x->Advanced();
+    my $popts = defined($x->Payload) ? $p->Advanced() : {};
+
+
+	if ( scalar(keys %{ $mopts} ) || scalar(keys %{ $popts} ) ) {
+		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
+		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
+		$res .= "<tr><td colspan=5 class='textBold' align='left'>Advanced Module Options</td></tr>\n";
+	}
+	
+	# Advanced exploit options	
+	foreach my $mopt (sort(keys(%{$mopts}))) {
+        my $dflt = $mopts->{$mopt}->[0];
+		my $colc = "textBoldDark";
+		
+		if (exists($x->AutoOpts->{$mopt})) {
+			$dflt = $x->AutoOpts->{$mopt};
+		}
+		
+		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
+        $res .= "<tr>".
+		        "<td class='textBoldDark'>* $mopt</td>".
+				"<td class='textBoldDark'>Optional</td>".
+				"<td class='textBoldDark'>DATA</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$mopt' value='$dflt'></td>".
+				"<td class='textNormal'>Advanced exploit option</td>".
+				"</tr>".
+				"<tr>".
+                "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$mopts->{$mopt}->[1]."</td></tr>\n";
+    }
+	
+	# Advanced payload options	
+	foreach my $popt (sort(keys(%{$popts}))) {
+        my $dflt = $popts->{$popt}->[0];
+		my $colc = "textBoldDark";
+		
+		if (exists($x->AutoOpts->{$popt})) {
+			$dflt = $x->AutoOpts->{$popt};
+		}
+		
+		$res .= "<tr><td colspan=5>&nbsp;</td></tr>\n";
+        $res .= "<tr>".
+		        "<td class='textBoldDark'>* $popt</td>".
+				"<td class='textBoldDark'>Optional</td>".
+				"<td class='textBoldDark'>DATA</td>".
+                "<td class='textNormal'><input type='text' name='OPT_$popt' value='$dflt'></td>".
+				"<td class='textNormal'>Advanced payload option</td>".
+				"</tr>".
+				"<tr>".
+                "<td class='textNormal' colspan=5>&nbsp;&nbsp; ".$popts->{$popt}->[1]."</td></tr>\n";
+    }
+	
+    $res .= "</table>\n";
+    $res .= "</form>\n";	
+    return $res;
+}
+
+sub ExploitExec
+{
+    my ($state) = @_;
+    my $module = $state->{'MODULE'};
+    my $res; 
+    my $exploit = $exploits->{$module};
+    
+    if (! $exploit) {
+        return "<div class='textBold'>Invalid Module</div>";
+    }
+
+    my $o = StateToOptions($state);
+    foreach my $k (keys(%{ $o })) {
+        $ui->SetTempEnv($k, $o->{$k});
+    }
+    
+    $ui->SetTempEnv('PAYLOAD', $state->{'PAYLOAD'});
+    
+    my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
+
+    my $payloadName = $ui->GetEnv('PAYLOAD');
+    my $payload = $validPayloads->{$payloadName};
+
+	if ($state->{'NOP'} && $state->{'NOP'} ne 'default') {
+		$ui->SetTempEnv('Nop', $state->{'NOP'});
+	}
+	
+	if ($state->{'ENCODER'} && $state->{'ENCODER'} ne 'default') {
+		$ui->SetTempEnv('Encoder', $state->{'ENCODER'});
+	}
+
+    # Mmmmm, candy
+    $ui->SetTempEnv('_Exploits', $exploits);
+    $ui->SetTempEnv('_Payloads', $payloads);
+    $ui->SetTempEnv('_Exploit', $exploit);
+    $ui->SetTempEnv('_PayloadName', $payloadName);
+    $ui->SetTempEnv('_Payload', $payload);
+    $ui->SetTempEnv('_ValidPayloads', $validPayloads);
+    $ui->SetTempEnv('_UI', $ui);
+   
+    
+    if ($state->{'ExploitAction'} eq '-Check-') {
+        $res .= "\n<form action='$burl' method='GET'>\n";
+        foreach (keys(%{$state})) {
+            if ($_ ne "MODE")  {
+                $res .= "<input type='hidden' name='".XSS_Filter($_)."' value='" . XSS_Filter($state->{$_}) . "'>\n";
+            } else {
+                $res .= "<input type='hidden' name='MODE' value='EXPLOIT'>\n";
+            }
+        }
+
+        $res .= "<input type='submit' name='ExploitAction' value='Launch Exploit' class='button'>\n";
+        $res .= "</form>\n";
+        $res .= "<hr><br><br>\n";
+
+		if ($ui->GetTempEnv('_Defanged')) {
+				$res .= "<br><div class='textBold'>This server has been started in 'Defanged' mode. ";
+				$res .= "Check and Exploit options are not available...</div>\n";
+				return $res;
+		} 
+		else {
+			$res .= "<br><div class='textBold'>Check Results: ";
+			$res .= (($ui->Check) ? "Vulnerable" : "Not Vulnerable") . "</div><br>\n";
+        	$res .= "<br>". join("<br>\n", @{$ui->DumpLines}) . "<br>\n";
+		}
+		
+        return $res;
+    }
+    $res .= "<table align='center' padding=4 border=0 cellspacing=0 width='95%'>\n";
+    
+    if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) ) {
+        $res .=  "<tr><td class='textBold'>Payload must be selected first!</td></tr></table>\n";
+        return $res;
+    }
+    
+	if ($ui->GetTempEnv('_Defanged')) {
+			$res .= "<br><div class='textBold'>This server has been started in 'Defanged' mode. ";
+			$res .= "Check and Exploit options are not available...</div>\n";
+			return $res;
+	} 
+  
+    # We hijack the socket from the web service
+    my $bout = $state->{'client'};
+	my $pout = $state->{'parent'};
+		
+	# Use chunked transfer mode to return partial responses
+	my $out = "HTTP/1.1 200 OK\r\n".
+	          "Connection: close\r\n".
+			  "Date: ". HTTPDate()."\r\n".
+			  "Content-Type: text/html\r\n".
+			  "Transfer-Encoding: chunked\r\n\r\n";
+	
+    $bout->Send($out);
+	
+	$out = HTML_Header().
+           "<div class='moduleOutput'>\n".
+           "<b>Processing exploit request (".$exploit->Name.")...</b><br>\n".
+           "<b>Using payload: " . XSS_Filter($payloadName) . "</div><br>\n".
+qq[		   
+		<br>
+		</td>
+	</tr>
+</table></td></tr></table>
+<br>
+];
+
+
+	# Close out the main table and prepare for incremental output
+	$out .=
+		"<br\><hr size=1 width='80%'>".
+		"<div align='center' class='navHead'> Exploit Output </div>\n".
+		"<hr size=1 width='80%'><br\>".	
+		"<div align='left' class='moduleOutput'>\n".
+		"<blockquote><blockquote>\n\n";
+	$bout->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
+	
+	
+	# Ask the parent for a session ID
+	$pout->printflush("SESSION\n");
+	my $raw = $pout->getline;
+	
+	
+	if (! $raw || $raw !~ /SID ([0-9]{0,16})/ ) {
+		$out = "[*] <div class='textBold'>msfweb: unable to obtain session...</div>";
+		$bout->Send(sprintf("%x\r\n%s\r\n", length($out), $out));
+		exit(0);
+	}
+	
+	my ($sid) = $raw =~ m/SID ([0-9]{0,16})/g;
+
+	
+	# Configure stdio for the child process
+	my ($einp, $eout, $einp_sock, $eout_sock);
+	
+	socketpair($einp_sock, $eout_sock, AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+	
+	my $einp = IO::Handle->new_from_fd(fileno($einp_sock), "a+");
+	my $eout = IO::Handle->new_from_fd(fileno($eout_sock), "a+");
+	
+	# Configure the environment...
+	$ui->SetTempEnv('_PipeInput',  $einp);
+	$ui->SetTempEnv('_PipeOutput', $einp);
+	$ui->SetTempEnv('_GhettoIPC',  $pout);
+	$ui->SetTempEnv('_SessionID',  $sid);
+    $ui->SetTempEnv('_BrowserSocket', $bout);	
+	
+	# Save the parent pid
+	my $top = $$;
+	
+	# Save off some information about this session
+	my %sess =
+	(
+		'module'	=> $module,
+		'client'	=> $bout->PeerAddr,
+		'target'	=> $ui->GetEnv('RHOST') || 'unknown',
+		'start'		=> time(),
+		'payload'	=> $ui->GetEnv('PAYLOAD') || 'unknown',
+	);
+	
+	
+	# Now things get interesting :-)
+	my $epid = fork();
+	
+	# The main process will keep our IPC open as long as we stay alive
+	if ($epid) {
+		
+		my $cache_file = $ui->GetEnv('_CachePath').sprintf("cache%.8x.dat", $sid);
+		
+		# Wait for the go-ahead message from the parent
+		my $ok = $pout->getline;
+		exit if ! $ok;
+		chomp($ok);
+
+		if ($ok eq 'SHUTDOWN') {
+			$eout->close;
+			$pout->close;
+			exit(0);
+		}
+		
+		if ($ok ne 'SHELL') {
+			$eout->close;
+			$pout->close;
+			exit(0);
+		}
+		
+		$SIG{'INT'} = $SIG{'TERM'} = sub 
+		{
+			# print STDERR "*** Shutting down processes for session $sid...\n";
+			$eout->printflush("!^! MSF_SHUTDOWN\n");
+			$eout->sync;
+			$eout->close;
+			$pout->close;
+			kill KILL => $epid;
+			exit(0);		
+		};
+		
+		my $info = IPCHashToData(%sess);
+		$pout->printflush("INFO $sid $info\n");
+		
+		# Remove the cache file if it already exists
+		unlink($cache_file);
+
+		# Open the file again for real this time
+		if (! open (CACHE, '>', $cache_file)) {
+			print STDERR "Could not create cache file: ($cache_file) $!\n";
+			$eout->close;
+			$pout->close;
+			exit(0);		
+		}
+		
+		# Set binary mode in case we need it
+		binmode(CACHE);	
+
+		my $cache = IO::Handle->new_from_fd(fileno(CACHE), 'w');
+		
+		if (not defined($cache)) {
+			print STDERR "Could not open cache file descriptor: ($cache_file) $!\n";
+			$eout->close;
+			$pout->close;
+			exit(0);
+		}
+
+		$cache->blocking(0);
+		$cache->autoflush(1);
+		
+		my $keepRunning = 1;
+		
+		while ($keepRunning) {
+			my $sel = IO::Select->new();
+			
+			foreach ($eout, $pout) {
+				$_->autoflush(1);
+				$_->blocking(0);
+				$sel->add($_);
+			}
+
+			my @rdy = $sel->can_read(0.25);
+			foreach my $fd (@rdy) {
+
+				# Output from the shell
+				if ($fd eq $eout) {
+					my ($data, $buff);
+					while ($eout->read($buff, 1024)) { $data .= $buff }
+					$cache->printflush(XSS_Filter($data));
+					$cache->sync;
+				}
+				
+				# Request from the server
+				if ($fd eq $pout) {
+					my $data = $pout->getline;
+					chomp ($data);
+				
+					if ($data eq 'SHUTDOWN') {
+						$keepRunning = 0;
+						next;
+					}
+					
+					# Command request from a client
+					if ($data =~ m/DATA\s+(.*)/) {
+						my $bytes = pack('H*', $1);
+						$eout->printflush($bytes);
+						
+						# write command to cache file
+						$bytes = XSS_Filter($bytes);
+						my $out = "\n<div class='textBold'>&gt;&gt; $bytes</div>\n";
+						$cache->printflush($out);
+						$cache->sync;
+						next;
+					}
+					
+					# Command request from a client
+					if ($data =~ m/CMD\s+(.*)/) {
+						my $cmd = pack('H*', $1);
+						my $out = "<div class='textBold'>&gt;&gt; ";
+
+						# Interrupt via magic command string :(
+						if ($cmd eq 'INT') {
+							$out .= "Session interrupt request...";
+							# $eout->printflush();
+							# $eout->printflush("!^! MSF_INTERRUPT\n");
+							kill INT => $epid;
+						}
+						
+						# Shutdown
+						if ($cmd eq 'DIE') {
+							$out .= "Session kill request...";
+							$keepRunning = 0;
+						}
+							
+						$out .= "</div>\n";
+						
+						$cache->printflush($out);
+						$cache->sync;
+						next;
+					}
+				}
+			}
+		}
+		
+		$cache->printflush("<div class='textBold'>&gt;&gt; Session is shutting down...</div>\n");
+		$cache->sync;
+		
+		# Call the signal handler subroutine created above
+		kill INT => $$;
+		exit(0);
+	}
+	
+	# Feel the magic o_0
+    $ui->Exploit();
+	
+	if (! $ui->GetTempEnv('_ShellServer')) {
+		$pout->printflush("SHUTDOWN $sid\n");
+	}	
+
+    exit(0);
+}
+
+
+# Primitive HTTP request parser
+sub HTTPRequest {
+	my $self	= shift;
+    my $cli		= shift;
+	my $opt		= shift;
+	
+	my $timeout	= exists($opt->{'Timeout'}) ? $opt->{'Timeout'} : 5;
+	my $raw;
+		
+	my ($meth, $uri, $path, $query);
+	my %headers;
+	my %params;
+	my @lines;
+	my $linec = 0;
+
+	# Read one line at a time until we hit the header separator
+	# Defend against cheesy denial of service attacks...
+		
+	while ($raw ne "\r\n")
+	{
+		$raw = $cli->RecvLine($timeout);
+		
+		if (! $raw) {
+			return { 'invalid' => 1 };
+		}
+		
+		if (length($raw) > 65535) {
+			return { 'oversized' => 1 };
+		}
+		
+		if (scalar(@lines) > 100) {
+			return {'oversized' => 1 };
+		}
+
+		push @lines, $raw;
+	}
+
+	my $rmeth	= shift(@lines);
+		
+	# Parse the request method and URI
+	if ($rmeth =~ m/^([^\s]+)\s+([^\s]+)\s+/) {
+		$meth	= lc($1);
+		$uri	= $2;
+	} 
+	else { return {'invalid' => 1 };  }
+	
+	# Read the HTTP request headers
+	foreach my $line (@lines) {
+		$line =~ s/\r|\n//g;
+		last if $line eq '';
+		if ($line =~ m/^([^:]+):(\s+|)(.*)$/) {
+			$headers{lc($1)} = $3;	
+		}
+	}
+
+	# Convert URI encoding to hex encoding
+    $uri =~ s/\+/%20/g;
+		
+	# Split out the path from the query string
+	if ($uri =~ m/^([^\?]+)(\?(.*)|)$/) {
+		$path	= $1;
+		$query	= $3;
+	}
+	
+	# Convert hex encoding to plain text
+	$path =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+	
+	# Remove some garbage from the request
+	$path =~ s/\x00|\x0a|\x0d|\<|\>|\s+$//g;
+	
+	# Remove parent paths and other bad joojoo
+	$path =~ s/\/\.\.\/|\/\.\/|\\//g;
+	
+	# Convert multiple forward slashes to a single
+	$path =~ s/\/+/\//g;
+
+	# Break the individual variables into chunks
+    my @chunks = split(/&/, $query);
+    
+	# Process the chunks and place into %params
+	foreach my $chunk (@chunks) {
+        my ($var, $val) = split(/=/, $chunk);
+        $val =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+        $params{$var} = $val;
+
+        # ignore empty values
+        $val =~ s/^\s+|\s+$//g;
+        
+		# strip out some hostile chars
+		$val =~ s/\x00|\x0a|\x0d//g;
+		
+		# avoid cheesy xss attacks
+        $val = XSS_Filter($val);      
+        
+        if (! length($val)) { delete($params{$var}) }
+    }
+    
+    # Create a nice big hash of the request
+	my $res  =
+	{
+		'method'	=> $meth,
+		'headers'	=> \%headers,
+		'params'	=> \%params,
+		'path'		=> $path,
+	};
+
+	# Process the URL
+	($res->{'base'}) = $path =~ m/^\/([^\?]+)/;
+	if (! $res->{'base'}) {
+		$res->{'base'} = 'EXPLOITS';
+	}
+
+	# Default to main mode
+	if (! $res->{'params'}->{'MODE'}) {
+		$res->{'params'}->{'MODE'} = 'MAIN';
+	}
+	
+	
+	# Cache resource requests...
+	if ( $res->{'base'} eq 'RESOURCE') {
+		
+		my $url = exists($params{'ID'}) ? $params{'ID'} : $params{'ICON'};
+		
+		# If they requested more than 100 different resources, cache block them
+		# Checks above limit any given request to 65K anyways...
+		
+		if (scalar( keys %{ $cache_hosts{$cli->PeerAddr} }) > 100) {
+			delete($cache_hosts{$cli->PeerAddr});
+			$cache_hosts{$cli->PeerAddr}->{'_blocked_'}++;
+		}
+		
+		# Clear the cache and return undef for cache attackers
+		if ($cache_hosts{$cli->PeerAddr}->{'_blocked_'}) {
+			$res->{'cache_block'}++;
+			return $res;
+		}
+		
+		if (	$url &&
+				$res->{'headers'}->{'if-modified-since'} &&
+				$cache_hosts{ $cli->PeerAddr }->{$url}	) {
+
+			$cli->Send(HTTPResponse(304, 'Probably cached...', 'text/html'));
+			$res->{'cached'}++;
+		}
+		else {
+			$cache_hosts{ $cli->PeerAddr }->{$url} = time();
+		}
+	}
+	
+	return $res;
+}
+
+sub HTTPResponse {
+	my $code = @_ ? shift() : 403;
+	my $body = @_ ? shift() : '';
+	my $type = @_ ? shift() : 'text/html';
+	my $data;
+	
+	$data = "HTTP/1.1 $code\r\n".
+			"Connection: close\r\n".
+			"Date: ". HTTPDate() ."\r\n".
+			"Cache-Control: private\r\n".
+			"Last-Modified: $cache_start\r\n".
+	        "Content-Length: ".length($body)."\r\n".
+			"Content-Type: $type\r\n".
+			"\r\n". $body;
+
+	return $data;
+}
+
+sub HTTPDate {
+	my $stime = shift() || [ gmtime() ];
+	return strftime("%a, %e %b %Y %H:%M:%S GMT", @{ $stime });
+}
+
+sub CharsToBytes {
+	my $chars = shift;
+	my $badChars;
+	foreach my $hc (split(/\s+/, $chars)) {
+		if ($hc =~ m/^0x(.|..)/) {
+			$badChars .= chr(hex($hc));
+		} else {
+			# it isn't hex char... maybe just plain char?
+			foreach (split(//, $hc)) {
+				$badChars .= $_;
+			}
+		}
+	}
+	return $badChars;
+}
+
+# XXX - not complete
+sub XSS_Filter {
+	my $data = shift;
+	$data =~ s/\&/\&amp;/g;
+	$data =~ s/\</\&lt;/g;
+	$data =~ s/\>/\&gt;/g;
+	return $data;
+}
+
+sub IPCDataToHash {
+	my $data = shift;
+	my %hash;
+	
+	foreach (split(/,/, $data)) {
+		my ($var, $val) = split(/\=/, $_);
+		next if ! $var;
+		next if ! $val;
+		$hash{$var} = pack("H*", $val);
+	}
+	return %hash;
+}
+
+sub IPCHashToData {
+	my %hash = @_;
+	my $data;
+	foreach (keys %hash) {
+		$data .= $_."=".unpack("H*", $hash{$_}).",";
+	}
+	return $data;
+}
+
+sub ListColor {
+	my $style = shift;
+	return ($style eq 'ColorA') ? 'ColorB' : 'ColorA';
+}
+
+sub LoadAllModules {
+	$exploitsIndex	= $ui->LoadExploits;
+	$payloadsIndex	= $ui->LoadPayloads;
+	$encodersIndex	= $ui->LoadEncoders;
+	$nopsIndex		= $ui->LoadNops;
+
+	$moduleTypes	= {};
+	$moduleKeys		= {};
+	$moduleOS		= {};
+	$moduleArch		= {};
+	$modules		= {};
+
+	
+	foreach my $key (keys(%{$exploitsIndex})) {
+		my $exploit = $exploitsIndex->{$key};
+		
+		$exploits->{$exploit->SelfEndName} = $exploit;
+		$modules->{'exploits'}->{$exploit->SelfEndName} = $exploit;
+		
+		push @{ $moduleTypes->{'exploits'}->{$exploit->ModuleClass} }, $exploit->SelfEndName;
+		
+		foreach my $kname ( @{ $exploit->Keys } ) {
+			push @{ $moduleKeys->{'exploits'}->{$kname} }, $exploit->SelfEndName;
+		}
+
+		foreach my $kname ( @{ $exploit->OS } ) {
+			push @{ $moduleOS->{'exploits'}->{$kname} }, $exploit->SelfEndName;
+		}
+		
+		foreach my $kname ( @{ $exploit->Arch } ) {
+			push @{ $moduleArch->{'exploits'}->{$kname} }, $exploit->SelfEndName;
+		}				
+	}
+
+	foreach my $key (keys(%{$payloadsIndex})) {
+		my $payload = $payloadsIndex->{$key};
+		
+		$payloads->{$payload->SelfEndName} = $payload;
+		$modules->{'payloads'}->{$payload->SelfEndName} = $payload;
+		
+		foreach my $kname ( @{ $payload->OS } ) {
+			push @{ $moduleOS->{'payloads'}->{$kname} }, $payload->SelfEndName;
+		}
+		
+		foreach my $kname ( @{ $payload->Arch } ) {
+			push @{ $moduleArch->{'payloads'}->{$kname} }, $payload->SelfEndName;
+		}				
+	}
+
+	$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+	$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+	$ui->SetTempEnv('_Encoders', $encodersIndex);
+	$ui->SetTempEnv('_Nops', $nopsIndex);
+	$ui->SetTempEnv('_UI', $ui);
+}
+
+
+
+####################
+package GhettoWeb; #
+####################
+
+use POSIX;
+use IO::Socket;
+use IO::Select;
+use Pex;
+
+sub new {
+	my $name	= shift;
+	my $self	= bless {}, $name;
+	$self->_config(@_);
+	$self->{'_Session'} = { };
+	$self->{'_LastSession'} = 0;	
+	return $self;
+}
+
+sub _config {
+	my $self = shift;
+	my %args = @_;
+	foreach (keys %args) {
+		$self->{'_Config'}->{$_} = $args{$_};
+	}
+};
+
+sub SessionNext {
+	my $self = shift;
+	my $curr = $self->{'_LastSession'};
+	$self->{'_LastSession'} = $curr + 1;
+
+	return $self->{'_LastSession'};
+}
+
+sub SessionNew {
+	my $self	= shift;
+	my $ipc		= shift;
+	my $sid 	= $self->SessionNext;
+	
+	$self->{'_Session'}->{$sid} =
+	{
+		'IPC'	=> $ipc,
+		'PID'	=> 0,
+		'Data'	=> '',
+	};
+	$self->Log(1, "IPC: creating new session $sid with IPC socket $ipc");	
+	return $sid;
+}
+
+sub SessionDataGet {
+	my $self = shift;
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+
+	my $data = $self->{'_Session'}->{$sid}->{'Data'};
+	$self->{'_Session'}->{$sid}->{'Data'} = '';
+	return $data;	
+}
+
+sub SessionDataPut {
+	my $self = shift;
+	my $sid  = shift;
+	my $data = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+
+	$self->{'_Session'}->{$sid}->{'Data'} .= $data;
+	return length($self->{'_Session'}->{$sid}->{'Data'});
+}
+
+sub SessionPipePID {
+	my $self = shift;
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+	$self->{'_Session'}->{$sid}->{'PID'} = shift if @_;
+	return $self->{'_Session'}->{$sid}->{'PID'};
+}
+
+sub SessionIPC {
+	my $self = shift;
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+	$self->{'_Session'}->{$sid}->{'IPC'} = shift if @_;
+	return $self->{'_Session'}->{$sid}->{'IPC'};
+}
+
+sub SessionRemove { 
+	my $self = shift;	
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+	
+	# shut down the pipe process
+	if ((my $pid = $self->SessionPipePID($sid))) {
+		$self->Log(3, "IPC: removing session $sid with Pipe PID $pid");
+		kill(9, $pid);
+	}
+	
+	# shut down the ipc channel
+	eval { $self->SessionIPC->close };
+	
+	# remove the entry from the session list
+	delete($self->{'_Session'}->{$sid});
+
+	return;
+}
+
+sub SessionList { 
+	my $self = shift;
+	return keys %{ $self->{'_Session'} };
+}
+
+sub SessionInfo {
+	my $self = shift;
+	my $sid  = shift;
+	
+	return if ! exists($self->{'_Session'}->{$sid});
+	$self->{'_Session'}->{$sid}->{'Info'} = shift if @_;
+	return $self->{'_Session'}->{$sid}->{'Info'};
+}
+
+sub SessionCheck { 
+	my $self = shift;	
+	my $sid  = shift;
+	return 0 if ! exists($self->{'_Session'}->{$sid});
+	return 1;
+}
+
+sub IsError {
+    my $self = shift;
+    return 1 if exists($self->{'_Error'});
+    return;
+}
+
+sub GetError {
+    my $self = shift;
+    return if ! exists($self->{'_Error'});
+    return $self->{'_Error'};
+}
+
+sub SetError {
+    my $self = shift;
+    my $boom = shift;
+    $self->{'_Error'} = $boom;
+    return $self->{'_Error'};
+}
+
+sub ClearError {
+    my $self = shift;
+    delete($self->{'_Error'});
+}
+
+sub LogFile {
+	my $self = shift;
+	$self->{'_LogFile'} = shift() if @_;
+	return $self->{'_LogFile'};
+}
+
+sub LogLevel {
+	my $self = shift;
+	$self->{'_LogLevel'} = shift() if @_;
+	return $self->{'_LogLevel'};
+}
+
+sub Log {
+    my $self	= shift;
+	my $lvl		= shift;
+	my $msg		= @_ ? shift() : return;
+	
+	return if $lvl > $self->LogLevel;
+	
+	if (! open(X, ">>".$self->LogFile) ) {
+		print STDERR "FATAL: could not open the log file '". $self->LogFile ."': $!\n";
+		exit(0);
+	}
+	
+	binmode(X);
+	
+	$msg = $self->TermEscape($msg);
+	
+    print X scalar(localtime())." <$lvl> $msg\n";
+    close(X);
+}
+
+sub TermEscape {
+	my $self = shift;
+	my $data = shift;
+	my $res;
+	
+	foreach my $c (unpack('C*', $data)) {
+		if ($c >= 0x20 && $c < 0x80) {	$res .= chr($c); }
+		else { $res .= sprintf("\\x%.2x", $c); }
+	}
+	return $res;
+}
+
+sub Run {
+	my $self = shift;
+	my $args = $self->{'_Config'};
+
+	my $host  = $args->{'host'};
+	my $port  = $args->{'port'};
+	my $fnWeb = $args->{'fnWeb'} || sub { };
+	my $fnIPC = $args->{'fnIPC'} || sub { };
+	my $fnHRP = $args->{'fnHRP'} || sub { };
+	
+	my $httpd = IO::Socket::INET->new 
+	(
+    	LocalAddr => $host,
+    	LocalPort => $port,
+    	ReuseAddr => 1,
+    	Listen    => 5,
+	);
+	
+	if (! $httpd) {
+		$self->SetError("Failed to start listener: $!");
+		return;
+	}
+	
+	$httpd->blocking(0);
+
+	$SIG{'CHLD'} = \&_Reaper;
+
+	my %socketInfo = 
+	(
+		$httpd	=> [$httpd, 0, 'listener'],
+	);
+
+	my $keepRunning = 1;
+	
+	# The main event loop
+	while ($keepRunning) {
+
+		my $sel = IO::Select->new();
+
+		foreach my $s (keys %socketInfo) {
+			# Process all but child-side sockets
+			if ($socketInfo{$s}->[2] ne 'ipc_child') {
+				my $sd = $socketInfo{$s}->[0];
+
+				if (! $sd) {
+					$self->Log(1, "ERROR: socketInfo{ $s } is invalid");
+					delete($socketInfo{$s});
+					next;
+				}
+
+				$sd->blocking(0);
+				$sd->autoflush(1);
+				$sel->add($sd);
+			}
+		}
+
+		# Select for new connections and data
+		my @ready = $sel->can_read(10);
+
+		# Process each flagged socket
+		foreach my $s (@ready) {
+
+			# A new connection
+			if ($s eq $httpd) {
+				my ($client) = $httpd->accept;
+				
+				if (! $client) {
+					$self->Log(1,  "ERROR: accept failed on primary listener socket: $@");
+					next;
+				}
+
+				$socketInfo{$client} = [$client, 0, 'client'];
+				$self->Log(4, "NEW: ".$client->peerhost .':'. $client->peerport);
+				next;
+			}
+
+			# A new HTTP request
+			if ($socketInfo{$s}->[2] eq 'client') {
+				my $cli = Msf::Socket::Tcp->new_from_socket($s);
+				my $cinfo = $cli->PeerAddr .':'. $cli->PeerPort;
+				
+				# Process the actual HTTP request
+				my $res = $fnHRP->($self, $cli);
+				
+				# Ignore requests that resulted in 'not modified' responses
+				if ( $res->{'cached'} ) {
+					$self->Log(5,  "HTTP: cache hit from $cinfo");
+					eval { $s->shutdown(2); $s->close; };
+					next;
+				}
+			
+				# Check for cache blocking (detected possible DoS)
+				if ($res->{'cache_block'}) {
+					$self->Log(3,  "HTTP: cache denial of service attack from $cinfo");
+					eval { $s->shutdown(2); $s->close; };	
+					next;
+				}
+				
+				if ($res->{'invalid'}) {
+					$self->Log(3,  "HTTP: invalid request from $cinfo");		
+					eval { $s->shutdown(2); $s->close; };
+					next;
+				}
+			
+				if ($res->{'oversized'}) {
+					$self->Log(3,  "HTTP: oversized request from $cinfo");		
+					eval { $s->shutdown(2); $s->close; };
+					next;			
+				}
+			
+				
+				
+				if ($res) {
+					my ($par, $chi);
+
+					# Do not create IPC pipes for resource requests
+					if ($res->{'base'} ne 'RESOURCE') {
+						# Create the comm channel between parent and child
+						socketpair($par, $chi, AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+					}
+					
+					# Spawn off the child process
+					my $pid = fork();
+					if (! $pid) {
+						# Reseed the PRNG
+						srand();
+						
+						# Close the http listener inside the child
+						$httpd->close;					
+						$fnWeb->($self, $res, $cli, $chi);
+						exit(0);
+					}
+					
+					# Do not track IPC pipes for resource requests
+					if ($res->{'base'} ne 'RESOURCE') {
+						$socketInfo{$par} = [$par, $pid, 'ipc'];
+						$socketInfo{$chi} = [$chi, $pid, 'ipc_child'];
+					}
+					
+				} 
+				
+				# XXX - local cleanup up the original socket?
+				delete($socketInfo{$s});
+				next;
+			}
+
+			# A new IPC request
+			if ($socketInfo{$s}->[2] eq 'ipc') {
+				my $ipc_pid = $socketInfo{$s}->[1];
+				$self->Log(3,  "IPC: $ipc_pid $s");
+				$fnIPC->($self, $s);
+				next;
+			}
+
+			# Unknown socket type...
+			$self->Log(1, "ERROR: unknown socket type ".$socketInfo{$s}->[2]);
+		}
+
+		# Remove sockets attach to dead processes
+		foreach my $s (keys %socketInfo) {
+			my $spid = $socketInfo{$s}->[1];
+			if ($spid && ! kill(0, $spid)) {
+				$self->Log(4, "DEL: $s $spid ".$socketInfo{$s}->[2]);
+				eval 
+				{ 
+					$socketInfo{$s}->[0]->shutdown(2); 
+					$socketInfo{$s}->[0]->close;
+				};
+				delete($socketInfo{$s});
+				waitpid(-1, WNOHANG);
+			}
+		}
+		
+		# Resolve an annoying issue with Cygwin...
+		next;
+	}
+}
+
+# Reinstate the signal handler for SysV boxes...
+sub _Reaper {
+	while (waitpid(-1, WNOHANG) == 0) { }
+	$SIG{'CHLD'} = \&_Reaper;
+}
+
+1;

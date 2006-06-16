@@ -1,0 +1,247 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfencode
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Version: $Revision$
+#  Description: Command line interface for encoding payloads
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use strict;
+
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
+use Getopt::Std;
+use POSIX;
+
+use Msf::TextUI;
+use Msf::ColPrint;
+use Pex;
+use Pex::Text;
+
+no utf8;
+no locale;
+
+Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
+
+my $ui = Msf::TextUI->new($RealBin);
+
+my $FRAMEVERSION = $ui->Version;
+my $VERSION = '$Revision$';
+
+my %opts = ();
+my %tenv = ();
+
+getopts("i:a:o:t:b:e:s:lhvn:", \%opts);
+Usage()   if($opts{'h'});
+Version() if($opts{'v'});
+
+# Parse the command line options and store them in the env
+while(my($key, $val) = split('\=', shift(@ARGV))) {
+    $ui->SetTempEnv($key, $val) if defined($val);
+}
+
+#$ui->SetTempEnv('DebugLevel', 0);
+
+my $payloadArch = ['x86'];
+my $payloadOS = ['linux'];
+my $badChars = '\x00';
+my $encodedPayload;
+my $finalEncoder;
+my $rawShell;
+my $maxSize = 0xfffffff;
+
+my $encoders = { };
+my $encodersIndex = $ui->LoadEncoders;
+
+foreach my $key (keys(%{$encodersIndex})) {
+    $encoders->{@{[split(/::/,$key)]}[-1]} = $encodersIndex->{$key};
+}
+
+$ui->SetTempEnv('_Encoders', $encodersIndex);
+
+foreach my $opt (@ARGV) {
+  $ui->SetTempEnv(split('=', $opt));
+}
+
+if($opts{'n'}) {
+  my $encoder = $opts{'n'};
+  Fatal('Invalid encoder specified') if(!exists($encoders->{$encoder}));
+  Info($encoders->{$encoder});
+}
+
+if ($opts{'i'} && ! -r $opts{'i'}) {
+    Fatal('Invalid input file specified');
+}
+
+if ($opts{'a'}) {
+    $payloadArch = [split(/,/, $opts{'a'})];
+}
+
+if ($opts{'o'}) {
+    $payloadOS = [split(/,/, $opts{'o'})];
+}
+
+if($opts{'t'} && $opts{'t'} !~ /perl|c|raw/) {
+    Fatal('Invalid output type specified');
+}
+
+if ($opts{'b'} && $opts{'b'} !~ /\\x/) {
+    Fatal('Bad character list format is "\x00\x01\x02"');
+}
+
+if ($opts{'e'} && ! exists($encoders->{$opts{'e'}})) {
+    Fatal('Invalid encoder specified');
+}
+
+if ($opts{'l'}) {
+    ListEncoders();
+}
+
+if ($opts{'s'}) {
+    $maxSize = $opts{'s'}+0;
+}
+
+my $input  = $opts{'i'} || "-";
+open(X, "<$input") || Fatal('Could not access input file');
+$rawShell = join("", <X>);
+close(X);
+
+if ($opts{'b'}) {
+    $badChars = $opts{'b'}; 
+}
+
+$badChars =~ s/\\x([a-f0-9][a-f0-9])/chr(hex($1))/egi;  
+
+my @encoderList = $ui->GetEncoders;
+if ($opts{'e'}) {
+    unshift @encoderList, 'Msf::Encoder::'.$opts{'e'};
+}
+
+my $encoderName;
+foreach $encoderName (@encoderList) {
+    my $encoder = $ui->MakeEncoder($encoderName);
+    if(!$encoder) {
+      print STDERR "[*] Failed to make encoder $encoderName\n";
+      next;
+    }
+    
+    my $encoderArch = $encoder->Arch;
+    my $encoderOS = $encoder->OS;
+        
+    if(!$ui->ListCheck($payloadArch, $encoderArch)) {
+      print STDERR "[*] $encoderName failed, doesn't support all architectures\n";
+      next;
+    }
+
+    if(!$ui->ListCheck($payloadOS, $encoderOS)) {
+      print STDERR "[*] $encoderName failed, doesn't support all operating systems\n";
+      next;
+    }
+
+    my $encodedShell = $encoder->Encode($rawShell, $badChars);
+
+    if(!$encodedShell) {
+      print STDERR "[*] $encoderName failed to return an encoded payload\n";
+      next;
+    }
+
+    if($encoder->IsError) {
+      print STDERR "$encoderName failed with an error: ".$encoder->GetError."\n";
+      $encoder->ClearError;
+      next;
+    }
+
+    if(Pex::Text::BadCharCheck($badChars, $encodedShell)) {
+      print STDERR "[*] $encoderName failed, bad chars in encoded payload\n";
+      next;
+    }
+
+    $encodedPayload = Msf::EncodedPayload->new($rawShell, $encodedShell);
+    
+    if (length($encodedPayload->Payload) > $maxSize) {
+        print STDERR "[*] $encoderName failed, encoded payload too large (".length($encodedPayload->Payload)." bytes)\n";
+        undef($encodedPayload);
+        next;
+    }
+    
+    $finalEncoder = $encoderName;
+    last;
+}
+
+if(!$encodedPayload) {
+    print STDERR "[*] No encoders succeeded :(\n";
+    exit(0);
+}
+
+print STDERR "[*] Using $finalEncoder with final size of ".length($encodedPayload->Payload)." bytes\n";
+
+if (! $opts{'t'} || $opts{'t'} =~ /perl/i) {
+    print Pex::Text::BufferPerl($encodedPayload->Payload);
+} elsif ($opts{'t'} =~ /c/) {
+    print Pex::Text::BufferC($encodedPayload->Payload);
+} else {
+    print $encodedPayload->Payload;
+}
+
+sub Fatal {
+    my $msg = shift;
+    print STDERR "[*] $msg\n";
+    exit(0);
+}
+
+sub Info {
+  my $encoder = shift;
+  print "\n" . $ui->DumpEncoderSummary($encoder);
+  exit(0);
+}
+
+sub Usage {
+    print STDERR qq{
+  Usage: $0 <options> [var=val]
+Options:
+         -i <file>      Specify the file that contains the raw shellcode
+         -a <arch>      The target CPU architecture for the payload
+         -o <os>        The target operating system for the payload
+         -t <type>      The output type: perl, c, or raw
+         -b <chars>     The characters to avoid: '\\x00\\xFF'
+         -s <size>      Maximum size of the encoded data
+         -e <encoder>   Try to use this encoder first
+         -n <encoder>   Dump Encoder Information
+         -l             List all available encoders
+         
+};
+    exit(0);
+}
+sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
+    print STDERR qq{
+   Framework Version:  $FRAMEVERSION
+   Msfencode Version:  $ver
+
+};
+  exit(0);
+}
+
+sub ListEncoders {
+    my $col = Msf::ColPrint->new(2, 4);
+    $col->AddRow('Encoder Name', 'Arch', 'Description');
+    $col->AddHr('=');
+    foreach my $name (sort(keys(%{$encoders})))
+    {
+        my $encoder = $encoders->{$name};
+        $col->AddRow($name, join(', ',@{$encoder->Arch}), $encoder->Description);
+    }
+    print "\n" . $col->GetOutput . "\n";
+    exit(0);
+}

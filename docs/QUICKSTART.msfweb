@@ -1,0 +1,22 @@
+1) Start up the web server
+
+hdm@pagefault framework $ ./msfweb 
+[*] Starting Metasploit Web Interface on 127.0.0.1:55555..
+
+
+2) Open up your favorite browser to http://127.0.0.1:55555
+
+3) Select your exploit from the available list
+
+4) Select the appropriate target value
+
+5) Select the appropriate payload 
+
+6) Specify all required options and choose the correct target
+
+7) Click the "-Check-" button to check for the vulnerability
+
+8) Click the "-Exploit-" button to actually exploit the target
+
+9) Wait until the exploit completes, then click the link to the session
+

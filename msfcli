@@ -1,0 +1,189 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfcli
+#       Author: H D Moore <hdm [at] metasploit.com>
+#       Author: spoonm <ninjatools [at] hush.com>
+#      Version: $Revision$
+#  Description: Command line interface to the Metasploit Exploit Framework
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use strict;
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
+use IO::Socket;
+use Getopt::Std;
+use POSIX;
+
+use Msf::TextUI;
+use Pex;
+
+no utf8;
+no locale;
+
+Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
+
+my $ui = Msf::TextUI->new($RealBin);
+my $FRAMEVERSION = $ui->Version;
+my $VERSION = '$Revision$';
+
+my %opts;
+getopts('hv', \%opts);
+Usage()   if($opts{'h'});
+Version() if($opts{'v'});
+
+my $mod = shift;
+my @ARG;
+my %tenv;
+
+# parse the command line options
+while(my($key, $val) = split('\=', shift(@ARGV))) {
+  if(!defined($val)) {
+    push(@ARG, $key);
+  }
+  else {
+    $tenv{$key} = $val;
+  }
+}
+
+my $exploits = { };
+my $payloads = { };
+my $exploitsIndex = $ui->LoadExploits;
+my $payloadsIndex = $ui->LoadPayloads;
+my $encoders = $ui->LoadEncoders;
+my $nops     = $ui->LoadNops;
+
+
+# A quick note:
+# The Load methods return a hash of instantiated objects
+# We should instantiate new objects when we are going to use them
+# But since the cli only does 1 exploitation a run, its ok.
+
+foreach my $key (sort(keys(%{$exploitsIndex}))) {
+    $exploits->{$exploitsIndex->{$key}->SelfEndName}=$exploitsIndex->{$key};
+}
+
+foreach my $key (keys(%{$payloadsIndex})) {
+  $payloads->{$payloadsIndex->{$key}->SelfEndName} = $payloadsIndex->{$key};
+}
+
+if(!defined($mod)) {
+  Msf::TextUI::PrintAsciiLogo();
+  ListExploits();
+  exit(0);
+}
+
+
+my $exploit = $exploits->{$mod};
+if (! $exploit) {
+    my %matches;
+    foreach my $exp (keys(%{$exploits})) {
+        next if $exp !~ /$mod/i;
+        $matches{$exp}=$exploits->{$exp};
+    }
+    if (scalar(keys(%matches)) == 0) {
+        Msf::TextUI::PrintAsciiLogo();
+        ListExploits();
+        exit(0);    
+    }    
+    if (scalar(keys(%matches)) == 1) {
+        $exploit = $matches{@{[keys(%matches)]}[0]};
+    }
+    if (scalar(keys(%matches)) >= 2) {
+        $exploits = \%matches;
+        Msf::TextUI::PrintAsciiLogo();
+        ListExploits();
+        exit(0); 
+    }    
+}
+
+my $exploitName = $exploit->SelfEndName;
+$ui->LoadTempEnv($exploitName);
+
+# merge command line env variables into temp env
+foreach (keys(%tenv)) {
+	$ui->SetTempEnv($_, $tenv{$_});
+}
+
+$ui->SetTempEnv('_ExploitsIndex', $exploitsIndex);
+$ui->SetTempEnv('_PayloadsIndex', $payloadsIndex);
+$ui->SetTempEnv('_Encoders', $encoders);
+$ui->SetTempEnv('_Nops', $nops);
+
+
+my $validPayloads = $ui->MatchPayloads($exploit, $payloads) if($exploit->Payload);
+my $payloadName = $ui->GetEnv('PAYLOAD');
+my $payload = $validPayloads->{$payloadName};
+
+
+# Mmmmm, candy
+$ui->SetTempEnv('_UI', $ui);
+$ui->SetTempEnv('_Exploits', $exploits);
+$ui->SetTempEnv('_Payloads', $payloads);
+$ui->SetTempEnv('_Exploit', $exploit);
+$ui->SetTempEnv('_PayloadName', $payloadName);
+$ui->SetTempEnv('_Payload', $payload);
+$ui->SetTempEnv('_ValidPayloads', $validPayloads);
+$exploit->ApplyAutoOpts;
+
+if (defined($exploit->Payload) && defined($payloadName) && ! defined($payload) )
+{
+  $ui->PrintLine('[*] Invalid payload specified.');
+  $ui->Payloads;
+  exit(0);
+}
+
+# Main Dispatch
+for(uc($ARG[0])) {
+  $_ eq 'S' && do { $ui->Summary; last; };
+  $_ eq 'O' && do { $ui->Options; last; };
+  $_ eq 'A' && do { $ui->AdvancedOptions; last; };
+  $_ eq 'P' && do { $ui->Payloads; last; };
+  $_ eq 'T' && do { $ui->Targets; last; };
+  $_ eq 'C' && do { $ui->Check; last; };
+  $_ eq 'E' && do { $ui->Exploit; last; };
+  Usage();
+}
+
+
+
+################################################################################
+
+sub Usage {
+    print "\nUsage: $0 <ID> [var=val] [MODE]\n";
+    print "Modes: \n";
+    print "       (S)UMMARY      Show various information about the module\n";
+    print "       (O)PTIONS      Show the available options for this module\n";
+    print "       (A)DVANCED     Show the advanced options for this module\n";
+    print "       (P)AYLOADS     Show available payloads for this module\n";
+    print "       (T)ARGETS      Show available targets for this module\n";
+    print "       (C)HECK        Determine if the target is vulnerable\n";
+    print "       (E)XPLOIT      Attempt to exploit the target\n";
+    print "\n";
+    exit(0);
+}
+sub Version {
+    my $ver = Pex::Utils::Rev2Ver($VERSION);
+    print STDERR qq{
+   Framework Version:  $FRAMEVERSION
+      Msfcli Version:  $ver
+
+};
+  exit(0);
+}
+
+sub ListExploits {
+  print "\n============\n= Exploits\n\n";
+  print $ui->DumpExploits(2, $exploits);
+  print "\n";
+}

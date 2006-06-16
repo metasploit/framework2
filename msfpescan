@@ -1,0 +1,519 @@
+#!/usr/bin/perl
+###############
+
+##
+#         Name: msfpescan
+#       Author: H D Moore <hdm [at] metasploit.com>
+#      Version: $Revision$
+#  Description: Search PE files for given opcodes
+#      License:
+#
+#      This file is part of the Metasploit Exploit Framework
+#      and is subject to the same licenses and copyrights as
+#      the rest of this package.
+#
+##
+
+require 5.6.0;
+
+use FindBin qw{$RealBin};
+use lib "$RealBin/lib";
+use Getopt::Std;
+use strict;
+
+use Pex::PEInfo;
+use Pex;
+use Pex::Nasm::Ndisasm;
+
+use Msf::ColPrint;
+use Msf::TextUI;
+
+no utf8;
+no locale;
+
+Msf::UI::ActiveStateSucks();
+Msf::UI::BrokenUTF8();
+
+my $VERSION = '$Revision$';
+
+my %opts = ();
+my %jmps =
+  (
+	"\xff\xd0" => ["eax", "call"],
+	"\xff\xe0" => ["eax", "jmp" ],
+	"\xff\xd1" => ["ecx", "call"],
+	"\xff\xe1" => ["ecx", "jmp" ],
+	"\xff\xd2" => ["edx", "call"],
+	"\xff\xe2" => ["edx", "jmp" ],
+	"\xff\xd3" => ["ebx", "call"],
+	"\xff\xe3" => ["ebx", "jmp" ],
+	"\xff\xe4" => ["esp", "jmp" ],
+	"\xff\xd5" => ["ebp", "call"],
+	"\xff\xe5" => ["ebp", "jmp" ],
+	"\xff\xd6" => ["esi", "call"],
+	"\xff\xe6" => ["esi", "jmp" ],
+	"\xff\xd7" => ["edi", "call"],
+	"\xff\xe7" => ["edi", "jmp" ],
+
+	"\x50\xc3" => ["eax", "push"],
+	"\x53\xc3" => ["ebx", "push"],
+	"\x51\xc3" => ["ecx", "push"],
+	"\x52\xc3" => ["edx", "push"],
+	"\x54\xc3" => ["esp", "push"],
+	"\x55\xc3" => ["ebp", "push"],
+	"\x56\xc3" => ["esi", "push"],
+	"\x57\xc3" => ["edi", "push"],
+  );
+
+my %pops =
+  (
+	"eax"   => "\x58",
+	"ebx"   => "\x5b",
+	"ecx"   => "\x59",
+	"edx"   => "\x5a",
+	"esi"   => "\x5e",
+	"edi"   => "\x5f",
+	"ebp"   => "\x5d",
+  );
+
+getopts("f:d:j:sx:a:B:A:I:nhvDES", \%opts);
+Usage()   if($opts{'h'});
+Version() if($opts{'v'});
+
+if ($opts{'h'} ||
+	(! defined($opts{'f'}) && ! defined($opts{'d'})) ||
+	(! defined($opts{'j'}) &&
+		! defined($opts{'x'}) &&
+		! defined($opts{'a'}) &&
+		! defined($opts{'D'}) &&
+		! defined($opts{'S'}) &&
+		! $opts{'s'})
+  )
+{
+	Usage();
+	exit(0);
+}
+
+my $func;
+my $args = { };
+
+if(exists($opts{'s'})) {
+	$func = \&popPopRet;
+}
+elsif(exists($opts{'j'})) {
+	$func = \&jmpReg;
+	$args->{'reg'} = $opts{'j'};
+}
+elsif(exists($opts{'x'})) {
+	$func = \&regex;
+	$args->{'regex'} = $opts{'x'};
+}
+elsif(exists($opts{'a'})) {
+	$func = \&address;
+	$args->{'address'} = hex($opts{'a'});
+}
+elsif(exists($opts{'D'})) {
+	$func = \&dumpinfo;
+	$args->{'dumpinfo'} = hex($opts{'D'});
+}
+elsif(exists($opts{'S'})) {
+	$func = \&identify;
+	$args->{'identify'} = hex($opts{'S'});
+}
+
+$args->{'before'} = $opts{'B'} if(exists($opts{'B'}));
+$args->{'after'} = $opts{'A'} if(exists($opts{'A'}));
+
+if($opts{'f'}) {
+
+	my $filename = $opts{'f'};
+	my $pe = Pex::PEInfo->new('File' => $filename, 'Debug' => $opts{'E'}, 'FullResources' => 1);
+
+	if (! $pe)
+	{
+		print STDERR "$0: could not load PE image from file.\n";
+		exit(0);
+	}
+
+	if ($opts{'I'}) { $pe->ImageBase($opts{'I'}) }
+
+	&{$func}($pe, $args);
+}
+else {
+	my $dir = $opts{'d'};
+	opendir(INDIR, $dir);
+	my @files = readdir(INDIR);
+	closedir(INDIR);
+	foreach my $file (@files) {
+		if($file =~ /^(.{8})\.rng/) {
+
+			#print "Good file: $dir $file\n";
+			my $pe = SkapeFoo->new($dir . '/' . $file, hex($1));
+			&{$func}($pe, $args);
+		}
+	}
+}
+
+# Identify the binary based on signatures
+sub identify {
+	my $pe = shift;
+	my $data = $pe->Raw;
+	my $args = shift;
+	my $sigf = $RealBin.'/data/msfpescan/identify.txt';
+	my %sigs = ();
+
+	my $ep       = $pe->VirtualToOffset($pe->EntryPoint + $pe->ImageBase);
+	my $filename = $pe->Filename;
+
+
+	if(! open(SIGS, "<" .$sigf)) {
+		print STDERR "[*] Could not load the signature database: $!\n";
+		return;
+	}
+
+	# If ep_only is set, only scan from the endpoint offset
+	my $edata = substr($data, $ep, 8192);
+
+	my $name;
+	my $regx;
+	my $ep_only = 0;
+	my $ep_off  = 0;
+	my $sidx = 0;
+
+	# If the entrypoint was mangled, disable ep scanning
+	if (! length($edata)) {
+		$ep_off = 1;
+	}
+
+	while (my $line = <SIGS>) {
+
+		next if $line =~ /^\s*#/;
+		
+		if ($line =~ m/\[(.*)\]/) {
+			if ($name) {
+				$sigs{$name} = [$regx, $ep_only];
+			}
+			$name = $1." [".$sidx++."]";
+			$ep_only = 0;
+			next;
+		}
+
+		if ($line =~ m/signature\s*=\s*(.*)\s*/i) {
+			my $pattern = $1;
+			$regx = '';
+			foreach my $c (split(/\s+/, $pattern)) {
+				if ($c eq '??') {
+					$regx .= '.';
+				}else{
+					$regx .= "\\x".$c;
+				}
+			}
+		}
+		if ($line =~ m/ep_only\s*=\s*T.*\s*/i) {
+			$ep_only = 1 if ! $ep_off;
+		}
+	}
+	if ($name) {
+		$sigs{$name} = [$regx, $ep_only];
+	}
+
+	foreach my $sig (keys %sigs) {
+		my $regex = $sigs{$sig}->[0];
+		my @addrs= ();
+		
+		# Only compare the entry point?
+		if ($sigs{$sig}->[1]) {
+			
+			if ($edata =~ /^($regex)/) {
+				push @addrs, $pe->EntryPoint + $pe->ImageBase;
+			}
+			
+		} else {
+			while($data =~ m/($regex)/g) {
+				my $found = $1;
+				my $index = pos($data) - length($found);
+				my $va = $pe->OffsetToVirtual($index);
+				push @addrs, $va if $va;
+			}
+		}
+		if (@addrs) {
+			print "$filename: $sig (".scalar(@addrs)." matches)\n";
+		}
+	}
+}
+
+# Scan for pop/pop/ret addresses
+sub popPopRet
+{
+	my $pe = shift;
+	my $data = $pe->Raw;
+	my $args = shift;
+	foreach my $rA (keys(%pops))
+	{
+		foreach my $rB (keys(%pops))
+		{
+			my $opc = $pops{$rA} . $pops{$rB} . "\xc3";
+			my $lst = 0;
+			my $idx = index($data,  $opc, $lst);
+			while ($idx > 0)
+			{
+				my $va = $pe->OffsetToVirtual($idx);
+				printf("0x%.8x   $rA $rB ret\n", $va) if $va;
+				$lst = $idx + 1;
+				$idx = index($data, $opc, $lst);
+			}
+		}
+	}
+}
+
+# Scan for jmp/call/push,ret addresses
+sub jmpReg
+{
+	my $pe = shift;
+	my $data = $pe->Raw;
+	my $args = shift;
+	my $reg = $args->{'reg'};
+	foreach my $opc (keys(%jmps))
+	{
+		next if ($reg && lc($reg) ne $jmps{$opc}->[0]);
+
+		my $lst = 0;
+		my $idx = index($data, $opc, $lst);
+		while ($idx > 0)
+		{
+			my ($reg, $typ) = @{$jmps{$opc}};
+
+			my $va = $pe->OffsetToVirtual($idx);
+			printf("0x%.8x   $typ $reg\n", $va) if $va;
+			$lst = $idx + 1;
+			$idx = index($data, $opc, $lst);
+		}
+	}
+}
+
+# Regex
+sub regex {
+	my $pe = shift;
+	my $data = $pe->Raw;
+	my $args = shift;
+	my $regex = $args->{'regex'};
+	$regex .= '.' x $args->{'after'} if($args->{'after'});
+	$regex = ('.' x $args->{'before'}) . $regex if($args->{'before'});
+
+	while($data =~ m/($regex)/g) {
+		my $found = $1;
+		my $index = pos($data) - length($found);
+		my $va = $pe->OffsetToVirtual($index);
+		printf("0x%.8x   %s\n", $va, hexOutput($found)) if $va;
+	}
+}
+
+sub address {
+	my $pe = shift;
+	my $data = $pe->Raw;
+	my $args = shift;
+
+	my $address = $args->{'address'} - $args->{'before'};
+	my $length = $args->{'before'} + $args->{'after'};
+	$length = 1 if(!$length);
+	my $index = $pe->VirtualToOffset($address);
+	my $found = substr($data, $index, $length);
+	return if(!defined($index) || length($found) == 0);
+	printf("0x%.8x   %s\n", $address, hexOutput($found));
+}
+
+sub dumpinfo {
+	my $pe = shift;
+	my $args = shift;
+
+	my @img_hdrs        = $pe->ImageHeaders;
+	my @opt_img_hdrs    = $pe->OptImageHeaders;
+	my $imports         = $pe->Imports;
+	my $exports         = $pe->Exports;
+	my $resources       = $pe->Resources;
+	my $version         = $pe->VersionStrings;
+	my $col;
+	my %setUEF          = ();
+	my $setUEF_IAT      = 0;
+	
+	print "\n\n[ Image Headers ]\n\n";
+	$col = Msf::ColPrint->new(4, 4);
+	foreach my $hdr (@img_hdrs) {
+		$col->AddRow($hdr, sprintf("0x%.8x",$pe->ImageHeader($hdr)));
+	}
+	print $col->GetOutput;
+
+	print "\n\n[ Optional Headers ]\n\n";
+	$col = Msf::ColPrint->new(4, 4);
+	foreach my $hdr (@opt_img_hdrs) {
+		$col->AddRow($hdr, sprintf("0x%.8x",$pe->OptImageHeader($hdr)));
+	}
+	print $col->GetOutput;
+
+	print "\n\n[ Exported Functions ]\n\n";
+	$col = Msf::ColPrint->new(4, 4);
+	foreach my $name (@{ $exports->{'ordinals'} }) {
+		my $add = $exports->{'funcs'}->{$name}->{'add'};
+		my $ord = $exports->{'funcs'}->{$name}->{'ord'};
+		next if ! $ord;
+		$col->AddRow($ord, $name, sprintf("0x%.8x",$add));
+	}
+	print $col->GetOutput;
+
+	print "\n\n[ Imported Functions ]\n\n";
+	$col = Msf::ColPrint->new(4, 4);
+	foreach my $module (keys(%{ $imports })) {
+		foreach my $func (sort(keys(%{ $imports->{$module} }))) {
+			$col->AddRow($module, $func,
+				"IAT ".sprintf("0x%.8x", $imports->{$module}->{$func}->{'iat'})
+			  );
+			
+			if (lc($func) eq 'setunhandledexceptionfilter') {
+				$setUEF_IAT = $imports->{$module}->{$func}->{'iat'};
+			}
+		}
+		$col->AddRow("", "", "");
+	}
+	print $col->GetOutput;
+
+	print "\n[ Resources ]\n\n";
+	$col = Msf::ColPrint->new(4, 4);
+	foreach my $type (sort(keys(%{ $resources->{'Types'} }))) {
+		foreach my $name (sort(keys(%{ $resources->{'Types'}->{$type} }))) {
+			my $entry = $resources->{'Entries'}->{$name};
+			$col->AddRow($name, $entry->{'Name'}, "CP ".$entry->{'Code'}, $entry->{'Size'}." bytes");
+		}
+	}
+	print $col->GetOutput;
+
+	print "\n\n[ Version Strings ]\n\n";
+	$col = Msf::ColPrint->new(4, 4);
+	foreach my $lang (keys(%{ $version })) {
+		foreach my $name (sort(keys(%{ $version->{$lang} }))) {
+			$col->AddRow($lang, $name, $version->{$lang}->{$name});
+		}
+	}
+	print $col->GetOutput;
+
+
+	return if not $setUEF_IAT;
+	
+	
+	print "\n\n[ SetUnhandledExceptionFilter ]\n\n";
+	$col = Msf::ColPrint->new(4, 4);
+
+	my $data  = $pe->Raw;
+	my $regex = "(\x68|\xff\x15)".pack("V", $setUEF_IAT);
+	$regex .= '.' x $args->{'after'} if($args->{'after'});
+	$regex = ('.' x $args->{'before'}) . $regex if($args->{'before'});
+
+	while($data =~ m/($regex)/g) {
+		my $found = $1;
+		my $index = pos($data) - length($found);
+		my $va = $pe->OffsetToVirtual($index);
+		if ($va) {
+			$col->AddRow(sprintf("0x%.8x", $va), hexOutput($found));
+		}
+	}
+	print $col->GetOutput;
+}
+
+sub hexOutput {
+	my $data = shift;
+	my $string = unpack('H*', $data);
+	if($opts{'n'}) {
+
+		#    my $tempString = $string;
+		#    $tempString =~ s/(..)/\\x$1/g;
+		$string .= "\n--- ndisasm output ---\n";
+
+		#    $string .= `echo -ne "$tempString" | ndisasm -u /dev/stdin`;
+		$string .= Pex::Nasm::Ndisasm->DisasData($data);
+		$string .= "--- ndisasm output ---";
+	}
+	return($string);
+}
+
+sub Usage
+{
+	print STDERR
+	  qq{  Usage: $0 <input> <mode> <options>
+Inputs:
+         -f  <file>    Read in PE file
+         -d  <dir>     Process memdump output
+Modes:
+         -j  <reg>     Search for jump equivalent instructions
+         -s            Search for pop+pop+ret combinations
+         -x  <regex>   Search for regex match
+         -a  <address> Show code at specified virtual address
+         -D            Display detailed PE information
+         -S            Attempt to identify the packer/compiler
+Options:
+         -A  <count>   Number of bytes to show after match
+         -B  <count>   Number of bytes to show before match
+         -I  address   Specify an alternate ImageBase
+         -n            Print disassembly of matched data
+
+};
+	exit(0);
+
+}
+sub Version {
+	my $ver = Pex::Utils::Rev2Ver($VERSION);
+	print STDERR qq{
+   Msfpescan Version:  $ver 
+
+};
+	exit(0);
+}
+
+package SkapeFoo;
+use strict;
+
+sub new {
+	my $class = shift;
+	my $self = bless({ }, $class);
+	$self->Filename(shift);
+	$self->Base(shift);
+	$self->ReadInRaw;
+	return($self);
+}
+sub Filename {
+	my $self = shift;
+	$self->{'Filename'} = shift if(@_);
+	return($self->{'Filename'});
+}
+sub Base {
+	my $self = shift;
+	$self->{'Base'} = shift if(@_);
+	return($self->{'Base'});
+}
+sub Raw {
+	my $self = shift;
+	$self->{'Raw'} = shift if(@_);
+	return($self->{'Raw'});
+}
+
+sub ReadInRaw {
+	my $self = shift;
+	open(INFILE, '<' . $self->Filename) or return(0);
+	local $/;
+	my $data = <INFILE>;
+	close(INFILE);
+	$self->Raw($data);
+	return(1);
+}
+
+sub VirtualToOffset {
+	my $self = shift;
+	my $virtual = shift;
+	return($virtual - $self->Base);
+}
+
+sub OffsetToVirtual {
+	my $self = shift;
+	my $offset = shift;
+	return($offset + $self->Base);
+}
+
+1;
