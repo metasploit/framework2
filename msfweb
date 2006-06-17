@@ -28,6 +28,7 @@ use Getopt::Std;
 no utf8;
 no locale;
 
+
 Msf::UI::ActiveStateSucks();
 Msf::UI::BrokenUTF8();
 
