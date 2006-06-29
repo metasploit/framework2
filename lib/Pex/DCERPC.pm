@@ -134,6 +134,8 @@ sub _init {
         $self->_bind($args->{'handle'}) || return;
     }
 
+	$self->{'error'} = '';
+	
     return $self;
 }
 
@@ -536,7 +538,7 @@ sub ReadResponse {
 	
 	# Check the DCERPC header
     if (! $head || length($head) < 10) {
-        warn 'not enough data for a response';
+        $self->{'error'} = 'not enough data for a response';
         delete $self->{'response'};
         return;
     }
@@ -682,7 +684,7 @@ sub DecodeResponse {
             }
         }
     } else {
-        warn "unknown response type : $type";
+        $self->{'error'} = "unknown response type : $type";
         return;
     }
 
@@ -822,7 +824,7 @@ sub _bind {
 
         my $s = Pex::Socket::Tcp->new('PeerAddr' => $host, 'PeerPort' => $port);
         if ($s->IsError) {
-            warn ("Socket error: " . $s->GetError());
+            $self->{'error'} = "Socket error: " . $s->GetError();
             return;
         }
         
@@ -831,14 +833,14 @@ sub _bind {
         if (!$self->directsmb()) {
             $x->SMBSessionRequest($target_name);
             if ($x->Error) {
-                warn("Session request failed for $target_name : " . $x->Error);
+                $self->{'error'} = "Session request failed for $target_name : " . $x->Error;
                 return;
             }
         }
 
         $x->SMBNegotiate();
         if ($x->Error) {
-            warn('Negotiate failed: ' . $x->Error);
+            $self->{'error'} = 'Negotiate failed: ' . $x->Error;
             return;
         }
         
@@ -849,7 +851,7 @@ sub _bind {
         );
 
         if ($x->Error) {
-            warn('Failed to establish a null session: ' . $x->Error);
+            $self->{'error'} = 'Failed to establish a null session: ' . $x->Error;
             return;
         }
         
@@ -859,14 +861,14 @@ sub _bind {
 
         $x->SMBTConnect($ipc);
         if ($x->Error) {
-            warn('Failed to connect to the IPC share:' . $x->Error);
+            $self->{'error'} = 'Failed to connect to the IPC share:' . $x->Error;
             return;
         }
 
 
         $x->SMBCreate($pipe);
         if ($x->Error) {
-            warn("Failed to create pipe to $pipe: " . $x->Error);
+            $self->{'error'} = "Failed to create pipe to $pipe: " . $x->Error;
             return;
         }
 
@@ -874,7 +876,7 @@ sub _bind {
 
         $x->SMBTransNP($x->LastFileID, $bind);
         if ($x->Error) {
-            warn("Failed to bind to $uuid over DCE RPC: " . $x->Error);
+            $self->{'error'} = "Failed to bind to $uuid over DCE RPC: " . $x->Error;
             return;
         }
         $self->{'_handles'}{$handle}{'connection'} = $x;
@@ -884,26 +886,26 @@ sub _bind {
         
         my $s = Pex::Socket::Tcp->new('PeerAddr' => $host, 'PeerPort' => $port);
         if ($s->IsError) {
-            warn("Socket error: " . $s->GetError());
+            $self->{'error'} = "Socket error: " . $s->GetError();
             return;
         }
         my ($bind, $ctx) = &$bind($self, $self->UUID_to_Bin($uuid), $version);
 
         my $ret = $s->Send($bind);
         if (! $ret ) {
-            warn 'service closed connection';
+            $self->{'error'} = 'service closed connection';
             return;
         }
 
         my $response = $self->ReadResponse($s);
         if (!$response) {
-            warn 'service failed to respond to bind request';
+            $self->{'error'} = 'service failed to respond to bind request';
             return;
         }
         $self->{'_handles'}{$handle}{'connection'} = $s;
         $self->{'_handles'}{$handle}{'context_id'} = $ctx;
     } else {
-        warn ("ACK, no support for $protocol yet!");
+        $self->{'error'} = "no support for $protocol yet!";
         return;
     }
 
@@ -954,14 +956,14 @@ sub request {
             }
         } else {
 			$response ||= '';
-            warn "ACK response => $response";
+            $self->{'error'} = "response => $response";
         }
     } elsif ($protocol eq 'ncacn_ip_tcp') {
         delete($self->{'response'});
         foreach my $DCE (@DCE) {
             my $ret = $connection->Send($DCE);
             if (! $ret ) {
-                warn 'SERVER CLOSED CONNECTION';
+               $self->{'error'} = 'SERVER CLOSED CONNECTION';
                 return;
             }
         }
@@ -981,7 +983,7 @@ sub request {
 
         return ('RESPONSE => ' . $self->{'response'}->{'Type'},"STUB DATA = " .  $self->bin2hex($self->{'response'}->{'StubData'}));
     } else {
-        warn ("ACK, no support for $protocol yet!");
+        $self->{'error'} = "ACK, no support for $protocol yet!";
         return;
     }
 }
