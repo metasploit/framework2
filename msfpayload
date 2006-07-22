@@ -74,7 +74,7 @@ if (! $action || $action =~ /^S/)
     exit(0);
 }
 
-Usage() if $action !~ /^C|^P|^R|^X/;
+Usage() if $action !~ /^(C|P|R|X|J)/;
 
 if ($action =~ /^R/) { print $p->Build; exit; }
 
@@ -104,6 +104,36 @@ if ($action =~ /^X/) {
 }
 
 
+# Needs to
+if ($action =~ /^J/) {
+	my $end = 'LE';
+	my (%pos, %parch);
+	map {   $pos{$_}++ } @{ $p->OS };
+	map { $parch{$_}++ } @{ $p->Arch };
+	
+	if (! scalar(keys(%parch)) || $parch{'x86'}) {
+		$end = 'LE';
+	} else {
+		$end = 'BE';
+	}
+	
+	my $out = '';
+	$out .= "// Created by msfpayload, a component of the Metasploit Framework ($FRAMEVERSION)\n";
+	$out .= "// This variable contains the ".$p->SelfEndName." payload\n";
+	$out .= "// Options:\n";
+	$out .= "//\tEndian=".$end."\n";
+	
+	foreach (keys %{ $ui->GetTempEnv() }) {
+		next if $_ =~ /^_/;
+		$out .= "//\t" . $_ ."=". $ui->GetTempEnv($_)."\n";
+	}
+	$out .= "var shellcode = unescape('";
+	$out .= Pex::Utils::JSUnescape($p->Build, $end);
+	$out .= "');\n";	
+
+	print STDOUT $out;
+	exit(0);
+}
 my $r = $action =~ /^C/ ? Pex::Text::BufferC($p->Build) : Pex::Text::BufferPerl($p->Build);
 
 print $r;
@@ -119,43 +149,10 @@ sub Usage
 }
 
 sub ExportWinPE {
-	my $pedata;
-	local $/;
-	
-	if(! open(TMP, "<$RealBin/data/msfpayload/template.exe")) {
-		print STDERR "Error: Could not access the template executable: $!\n";
-		exit(0);
-	}
-
-	$pedata = <TMP>;
-	close (TMP);
-	
 	# Comments are limited to 512 bytes
 	# Payloads are limited to 8192 bytes
 	
 	my $bin = $p->Build;
-	if (length($bin) > 8192) {
-		print STDERR "Error: The payload was too large to generate as an EXE\n";
-		exit(0);
-	}
-	
-	my $bin_off = index($pedata, 'PAYLOAD:');
-	if ($bin_off == -1) {
-		print STDERR "Error: Could not determine the payload start offset\n";
-		exit(0);
-	}
-	
-	# Replace the stub data with the actual payload
-	substr($pedata, $bin_off, 8192, pack('a8192', $bin));
-
-
-	my $com_off = index($pedata, 'COMMENT:');
-	if ($com_off == -1) {
-		print STDERR "Error: Could not determine the comment start offset\n";
-		exit(0);
-	}
-		
-	# Generate a comment for the executable
 	my $com = "Created by msfpayload, a component of the Metasploit Framework ($FRAMEVERSION). ".
 			  "This executable contains the ".$p->SelfEndName." payload, ".
 			  "generated with the following set of options: ";
@@ -165,10 +162,7 @@ sub ExportWinPE {
 		$com .= $_ ."=". $ui->GetTempEnv($_)." ";
 	}
 	
-	# Replace the stub comment with payload information
-	substr($pedata, $com_off, 512, pack('a512', $com));
-	
-	print $pedata;
+	print STDOUT Pex::Utils::CreateWin32PE($bin, $com);
 	exit(0);
 }
 

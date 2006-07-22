@@ -19,6 +19,7 @@ package Pex::Utils;
 use strict;
 #temp for move warnings
 use Pex::Text;
+use FindBin qw{$RealBin};
 
 # Returns true if array1 contains an element in array2
 sub ArrayContains {
@@ -342,8 +343,65 @@ sub FormatOverwrite {
 sub DwordAdd {
   my $num1 = shift;
   my $num2 = shift;
-#  print "Add: $num1 $num2\n";
   return(($num1 + $num2) % 4294967296);
+}
+
+# Create a Windows executable with the selected contents
+sub CreateWin32PE {
+	my $bin = shift();
+	my $com = shift() || '';
+	my $pedata;
+	local $/;
+	
+	if(! open(TMP, "<$RealBin/data/msfpayload/template.exe")) {
+		return(0);
+	}
+
+	$pedata = <TMP>;
+	close (TMP);
+	
+	# Comments are limited to 512 bytes
+	# Payloads are limited to 8192 bytes
+	
+	my $bin_off = index($pedata, 'PAYLOAD:');
+	if ($bin_off == -1) {
+		return(0);
+	}
+	
+	# Replace the stub data with the actual payload
+	substr($pedata, $bin_off, 8192, pack('a8192', $bin));
+
+	my $com_off = index($pedata, 'COMMENT:');
+	if ($com_off == -1) {
+		return(0);
+	}
+
+	# Replace the stub comment with payload information
+	substr($pedata, $com_off, 512, pack('a512', $com));
+	
+	return($pedata);
+}
+
+# Escape data into javascript array
+sub JSUnescape {
+	my $data = shift;
+	my $mode = shift() || 'LE';
+	my $code = '';
+	
+	# Encode the shellcode via %u sequences for JS's unescape() function
+	my $idx = 0;
+	while ($idx < length($data) - 1) {
+		my $c1 = ord(substr($data, $idx, 1));
+		my $c2 = ord(substr($data, $idx+1, 1));	
+		if ($mode eq 'LE') {
+			$code .= sprintf('%%u%.2x%.2x', $c2, $c1);	
+		} else {
+			$code .= sprintf('%%u%.2x%.2x', $c1, $c2);	
+		}
+		$idx += 2;
+	}
+	
+	return $code;
 }
 
 1;
