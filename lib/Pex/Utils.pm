@@ -390,6 +390,12 @@ sub JSUnescape {
 	
 	# Encode the shellcode via %u sequences for JS's unescape() function
 	my $idx = 0;
+	
+	# Pad to an even number of bytes
+	if (length($data) % 2 != 0) {
+		$data .= substr($data, -1, 1);
+	}
+	
 	while ($idx < length($data) - 1) {
 		my $c1 = ord(substr($data, $idx, 1));
 		my $c2 = ord(substr($data, $idx+1, 1));	
