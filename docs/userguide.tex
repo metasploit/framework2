@@ -29,7 +29,7 @@
 
         \huge{Metasploit Framework User Guide}
 		\ \\[10mm]
-		\large{Version 2.6}
+		\large{Version 2.7}
 		\\[120mm]
 		
         \small{\url{http://www.metasploit.com/}}
@@ -48,7 +48,7 @@
 \chapter{Introduction}
 
 \par
-This document is an attempt at a user guide for version 2.6 of the Metasploit
+This document is an attempt at a user guide for version 2.7 of the Metasploit
 Framework, its goal is to provide a basic overview of what the Framework is, how
 it works, and what you can do with it. As with most open-source projects,
 correct documentation takes back seat to actual development. If you would like
@@ -63,7 +63,7 @@ majority of the Framework is composed of object-oriented Perl code, with
 optional components written in C, assembler, and Python.  
 
 \par
-The Framework development team is made up of four full-time members and a handful
+The Framework development team is made up of two full-time members and a handful
 of part-time contributors. Please refer to the Credits exploit module for a complete
 listing of the people involved in the project. If you have contributed to the project
 and do not see your name listed there, please let us know.
@@ -144,19 +144,13 @@ of Perl in conjunction with the GNU utilities to function correctly.
     \section{Updating the Framework}
     \label{INSTALL-UPDATE}
 \par
-Starting with version 2.2, the Framework includes the \texttt{msfupdate} online update
-utility. This script can be used to download and install the latest version of
-the Framework from the metasploit.com web site. It performs per-file updates by
-comparing local file checksums with those available from the web site. This
-process occurs across a validated SSL connection, assuming that the Net::SSLeay
-module has been installed. This is not completely fail-safe and still depends on
-the security of the metasploit.com web server. To learn more about the
-\texttt{msfupdate} tool, simply execute it with the -h argument. 
+Starting with version 2.7, the Framework can be updated using a standard \texttt{Subversion}
+client. The old \texttt{msfupdate} tool has been replaced with a stub program in this version
+and should no longer be used. To obtain the latest updates, change into the Framework installation
+directory and execute \texttt{svn update}. If you are accessing the internet through a
+HTTP proxy server, please see the Subversion FAQ on proxy access:
+\url{http://subversion.tigris.org/faq.html#proxy}
 
-\par
-If you would prefer to not use the online update system, you can still download
-updated modules and the current stable snapshot package from the metasploit.com
-web site. At this time, \texttt{msfupdate} does not support proxy servers.
 \pagebreak
 
 
