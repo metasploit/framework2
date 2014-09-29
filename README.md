@@ -8,4 +8,4 @@ This was the last commit before the project officially bumped to 3.x, which was 
 Screenshot
 ==========
 
-![](https://github.com/metasploit/framework1/blob/master/images/console.png)
+![](https://github.com/metasploit/framework2/blob/master/images/console.png)
